@@ -1,0 +1,12 @@
+// my_project.rc
+
+#include "winresrc.h"
+
+#include "resource.h"
+
+// Icons
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDR_MAINFRAME           ICON                    "data\\icon.ico"
+IDI_ICON1               ICON                    "data\\icon.ico"

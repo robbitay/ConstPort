@@ -1,0 +1,9 @@
+#Application TODO List
+	[ ] Open a COM port, print the text to the command line
+	[ ] 
+
+#Platform Layer TODO List
+	[?] Load icon and use it in window creation?
+	[ ] Delete all OpenGL objects when we reset the application
+	[X] Add a mouse start press and max distance since pressed to AppInput
+	[ ] 
