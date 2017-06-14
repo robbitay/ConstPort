@@ -7,26 +7,6 @@ Date:   06\08\2017
 #ifndef _APP_STRUCTS_H
 #define _APP_STRUCTS_H
 
-struct Shader_t
-{
-	GLuint vertId;
-	GLuint fragId;
-	GLuint programId;
-	
-	GLuint vertexArray;
-	
-	GLuint worldMatrixLocation;
-	GLuint viewMatrixLocation;
-	GLuint projectionMatrixLocation;
-	GLuint diffuseTextureLocation;
-	GLuint alphaTextureLocation;
-	GLuint diffuseColorLocation;
-	GLuint secondaryColorLocation;
-	GLuint doGrayscaleGradientLocation;
-	GLuint useAlphaTextureLocation;
-	GLuint sourceRectangleLocation;
-};
-
 struct Texture_t
 {
 	GLuint id;
@@ -67,6 +47,26 @@ struct Font_t
 	u8 firstChar;
 	u8 numChars;
 	FontCharInfo_t chars[256];
+};
+
+struct Shader_t
+{
+	GLuint vertId;
+	GLuint fragId;
+	GLuint programId;
+	
+	GLuint vertexArray;
+	
+	GLuint worldMatrixLocation;
+	GLuint viewMatrixLocation;
+	GLuint projectionMatrixLocation;
+	GLuint diffuseTextureLocation;
+	GLuint alphaTextureLocation;
+	GLuint diffuseColorLocation;
+	GLuint secondaryColorLocation;
+	GLuint doGrayscaleGradientLocation;
+	GLuint useAlphaTextureLocation;
+	GLuint sourceRectangleLocation;
 };
 
 struct VertexBuffer_t

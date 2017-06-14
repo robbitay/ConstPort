@@ -10,17 +10,12 @@ Date:   06\07\2017
 struct AppData_t
 {
 	MemoryArena_t memArena;
+	RenderState_t renderState;
 	
 	Shader_t simpleShader;
 	Texture_t testTexture;
-	Texture_t dotTexture;
-	Texture_t gradientTexture;
 	Texture_t scrollBarEndcapTexture;
-	Texture_t circleTexure;
-	Texture_t glyphTexture;
 	Font_t testFont;
-	VertexBuffer_t squareBuffer;
-	VertexBuffer_t triangleBuffer;
 	
 	LineList_t lineList;
 	

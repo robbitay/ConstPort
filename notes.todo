@@ -1,9 +1,39 @@
-#Application TODO List
-	[ ] Open a COM port, print the text to the command line
+# Application TODO List
+	[X] Open a COM port, print the text to the command line
+	[ ] Move line rendering parts into seperate file
+	[ ] Add checking for COM port errors and whether or not we are still connected
+	[ ] Add a slide down menu with different buttons
+	[!] Make a function to get a list of available COM ports
+	[ ] Add a window with a list of COM ports that can be selected
+	[!] Read text input and write it to the COM port
+	[ ] Adjust Baud Rate, Parity, Stop Bits and Flow Control
+	[ ] Clear buffer button
+	[ ] Text selection
+	[ ] Copy to clipboard
+	[ ] Paste from clipboard
 	[ ] 
 
-#Platform Layer TODO List
+# Application Wish List
+	[ ] Read multiple COM ports side by side.
+	[ ] Little software LEDs to show flow control.
+	[ ] Click on flow control to toggle CTS
+	[ ] Timestamps on each line. Hover over line number to show timestamp
+	[ ] Set up regular expressions to define color of each line
+	[ ] Special characters for invalid ANSI characters
+	[ ] Hex string mode
+	[ ] Capture to file. 
+	[ ] Add an option to freeze output (read the COM port and throw away data)
+	[ ] New Line Type option for input and output
+	[ ] Option to enable auto output echo
+	[ ] Option to enable an input line that sends messages all at once (Hex or string)
+	[ ] Command board with configurable command buttons
+	[ ] Save configurations to a file and load on startup
+	[ ] Try to auto-connect to last opened COM port on startup
+	[ ] 
+
+# Platform Layer TODO List
 	[?] Load icon and use it in window creation?
 	[ ] Delete all OpenGL objects when we reset the application
 	[X] Add a mouse start press and max distance since pressed to AppInput
+	[ ] Move recent changes and reusable functions into a starter project for later use
 	[ ] 

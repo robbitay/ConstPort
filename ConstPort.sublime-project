@@ -570,6 +570,7 @@
 			"ReadComPort_f",
 			"ReadEntireFile_f",
 			"Rectangle_t",
+			"RenderState_t",
 			"Shader_t",
 			"StopBits_t",
 			"Texture_t",
