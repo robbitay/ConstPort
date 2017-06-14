@@ -15,7 +15,7 @@ set BuildFolder=build\
 
 set CompilerFlags=/FC /Zi /MDd /EHsc /nologo /GS- -DDEBUG=1 /Gm- -GR- /EHa- /Fm /Od /Oi /WX /W4 /wd4201 /wd4100 /wd4189 /wd4996 /wd4127 /wd4505 /wd4101 /wd4702
 set LinkerFlags=-incremental:no
-set IncludeDirectories=/I"W:\lib\mylib" /I"W:\lib\glew-2.0.0\include" /I"W:\lib\glfw-3.2.1\include" /I"W:\lib\stb" /I"W:\lib\freetype2\include"
+set IncludeDirectories=/I"W:\lib\mylib" /I"W:\lib\glew-2.0.0\include" /I"W:\lib\glfw-3.2.1\include" /I"W:\lib\stb"
 set LibraryDirectories=/LIBPATH:"W:\lib\glew-2.0.0\lib\Debug\x64" /LIBPATH:"W:\lib\glfw-3.2.1\build\src\Debug"
 set Libraries=gdi32.lib User32.lib Shell32.lib opengl32.lib glew32d.lib glfw3.lib
 set AppExports=/EXPORT:App_GetVersion /EXPORT:App_Initialize /EXPORT:App_Update /EXPORT:App_GetSoundSamples /EXPORT:App_Closing

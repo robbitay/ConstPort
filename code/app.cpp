@@ -16,8 +16,6 @@ Description:
 #include "stb_truetype.h"
 #include "memoryArena.h"
 #include "linkedList.h"
-#include "ft2build.h"
-#include FT_FREETYPE_H
 
 const PlatformInfo_t* Gl_PlatformInfo = nullptr;
 const AppMemory_t*    Gl_AppMemory = nullptr;
