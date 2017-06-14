@@ -86,6 +86,7 @@ struct PlatformInfo_t
 	OpenComPort_f*     OpenComPortPntr;
 	CloseComPort_f*    CloseComPortPntr;
 	ReadComPort_f*     ReadComPortPntr;
+	WriteComPort_f*    WriteComPortPntr;
 	
 	r64 timeDelta;
 	r64 programTime;

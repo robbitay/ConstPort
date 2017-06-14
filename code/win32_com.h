@@ -65,4 +65,7 @@ typedef CloseComPort_DEFINITION(CloseComPort_f);
 #define ReadComPort_DEFINITION(functionName) i32 functionName(ComPort_t* comPortPntr, void* outputBuffer, u32 outputBufferLength)
 typedef ReadComPort_DEFINITION(ReadComPort_f);
 
+#define WriteComPort_DEFINITION(functionName) void functionName(ComPort_t* comPortPntr, const char* newChars, u32 numChars)
+typedef WriteComPort_DEFINITION(WriteComPort_f);
+
 #endif // _WIN32_COM_PORT_H

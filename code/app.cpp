@@ -44,7 +44,24 @@ inline void DrawLine(AppData_t* appData, const Line_t* line, v2 startPos)
 {
 	//TODO: Add cool formatting stuff?
 	
-	appData->renderState.DrawString(line->chars, startPos, line->color, 1.0f);
+	Color_t color = Color_Foreground;
+	if (line->numChars > 0)
+	{
+		if (line->chars[0] == '@')
+		{
+			color = Color_Highlight1;
+		}
+		else if (line->chars[0] == '#')
+		{
+			color = Color_Highlight2;
+		}
+		else if (line->chars[0] == '!')
+		{
+			color = Color_Highlight3;
+		}
+	}
+	
+	appData->renderState.DrawString(line->chars, startPos, color, 1.0f);
 }
 
 //+================================================================+
@@ -60,7 +77,7 @@ AppGetVersion_DEFINITION(App_GetVersion)
 	
 	if (resetApplication != nullptr)
 	{
-		*resetApplication = true;
+		*resetApplication = false;
 	}
 	
 	return version;
@@ -98,7 +115,7 @@ AppInitialize_DEFINITION(App_Initialize)
 		1024, 1024, ' ', 96);
 	
 	FileInfo_t testFile = PlatformInfo->ReadEntireFilePntr("test.txt");
-	CreateLineList(&appData->lineList, &appData->memArena, (const char*)testFile.content);
+	CreateLineList(&appData->lineList, &appData->memArena, "");//(const char*)testFile.content);
 	PlatformInfo->FreeFileMemoryPntr(&testFile);
 	
 	DEBUG_WriteLine("Initialization Done!");
@@ -159,6 +176,7 @@ AppUpdate_DEFINITION(App_Update)
 		appData->scrollOffset += -AppInput->scrollDelta.y * SCROLL_MULTIPLIER;
 	}
 	
+	#if 0
 	if (AppInput->buttons[Button_Enter].transCount > 0 && AppInput->buttons[Button_Enter].isDown)
 	{
 		FileInfo_t testFile = PlatformInfo->ReadEntireFilePntr("test.txt");
@@ -166,6 +184,7 @@ AppUpdate_DEFINITION(App_Update)
 		CreateLineList(&appData->lineList, &appData->memArena, (const char*)testFile.content);
 		PlatformInfo->FreeFileMemoryPntr(&testFile);
 	}
+	#endif
 	
 	if (AppInput->buttons[Button_Backspace].transCount > 0 && AppInput->buttons[Button_Backspace].isDown)
 	{
@@ -211,7 +230,7 @@ AppUpdate_DEFINITION(App_Update)
 						Line_t* finishedLine = lastLine;
 						if (finishedLine->numChars >= 4 && strncmp(finishedLine->chars, "lib:", 4) == 0)
 						{
-							finishedLine->color = Color_Highlight;
+							finishedLine->color = Color_Highlight1;
 						}
 						
 						lastLine = AddLineToList(&appData->lineList, "");
@@ -234,6 +253,21 @@ AppUpdate_DEFINITION(App_Update)
 			{
 				DEBUG_PrintLine("COM port read Error!: %d", readResult);
 			}
+		}
+		
+		if (AppInput->textInputLength > 0)
+		{
+			DEBUG_PrintLine("Writing \"%.*s\"", AppInput->textInputLength, AppInput->textInput);
+			
+			PlatformInfo->WriteComPortPntr(&appData->comPort, &AppInput->textInput[0], AppInput->textInputLength);
+		}
+		
+		if (AppInput->buttons[Button_Enter].transCount > 0 && AppInput->buttons[Button_Enter].isDown)
+		{
+			DEBUG_WriteLine("Writing New Line");
+			
+			char newChar = '\n';
+			PlatformInfo->WriteComPortPntr(&appData->comPort, &newChar, 1);
 		}
 	}
 	

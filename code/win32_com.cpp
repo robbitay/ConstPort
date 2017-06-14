@@ -145,3 +145,25 @@ ReadComPort_DEFINITION(Win32_ReadComPort)
 	}
 }
 
+WriteComPort_DEFINITION(Win32_WriteComPort)
+{
+	Assert(comPortPntr != nullptr);
+	Assert(comPortPntr->isOpen);
+	Assert(comPortPntr->handle != INVALID_HANDLE_VALUE);
+	Assert(newChars != nullptr);
+	
+	DWORD numBytesWritten;
+	
+	bool32 writeResult = WriteFile(comPortPntr->handle, newChars, numChars, &numBytesWritten, NULL);
+	
+	if (writeResult)
+	{
+		Win32_PrintLine("Wrote %d bytes", numBytesWritten);
+		return;
+	}
+	else
+	{
+		Win32_WriteLine("COM port write failed");
+	}
+}
+

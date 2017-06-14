@@ -244,6 +244,7 @@ int WINAPI WinMain(HINSTANCE hInstance,
 	platformInfo.OpenComPortPntr     = Win32_OpenComPort;
 	platformInfo.CloseComPortPntr    = Win32_CloseComPort;
 	platformInfo.ReadComPortPntr     = Win32_ReadComPort;
+	platformInfo.WriteComPortPntr    = Win32_WriteComPort;
 	platformInfo.window              = window;
 	
 	//+--------------------------------------+
