@@ -21,6 +21,8 @@ struct AppData_t
 	LineList_t lineList;
 	
 	r32 scrollOffset;
+	r32 scrollOffsetGoto;
+	
 	r32 mouseScrollbarOffset;
 	bool startedOnScrollbar;
 	

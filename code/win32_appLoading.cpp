@@ -19,6 +19,7 @@ struct LoadedApp_t
 	FILETIME lastWriteTime;
 	
 	AppGetVersion_f*      AppGetVersionPntr;
+	AppReloaded_f*        AppReloadedPntr;
 	AppInitialize_f*      AppInitializePntr;
 	AppUpdate_f*          AppUpdatePntr;
 	AppGetSoundSamples_f* AppGetSoundSamplesPntr;
@@ -34,6 +35,10 @@ AppGetVersion_DEFINITION(AppGetVersion_Stub)
 	return version;
 }
 AppInitialize_DEFINITION(AppInitialize_Stub)
+{
+	
+}
+AppReloaded_DEFINITION(AppReloaded_Stub)
 {
 	
 }
@@ -73,6 +78,7 @@ bool LoadDllCode(const char* appDllName, const char* tempDllName, LoadedApp_t* l
 	{
 		loadedApp->AppGetVersionPntr =      (AppGetVersion_f*)      GetProcAddress(loadedApp->module, "App_GetVersion");
 		loadedApp->AppInitializePntr =      (AppInitialize_f*)      GetProcAddress(loadedApp->module, "App_Initialize");
+		loadedApp->AppReloadedPntr =        (AppReloaded_f*)        GetProcAddress(loadedApp->module, "App_Reloaded");
 		loadedApp->AppUpdatePntr =          (AppUpdate_f*)          GetProcAddress(loadedApp->module, "App_Update");
 		loadedApp->AppGetSoundSamplesPntr = (AppGetSoundSamples_f*) GetProcAddress(loadedApp->module, "App_GetSoundSamples");
 		loadedApp->AppClosingPntr =         (AppClosing_f*)         GetProcAddress(loadedApp->module, "App_Closing");
@@ -80,6 +86,7 @@ bool LoadDllCode(const char* appDllName, const char* tempDllName, LoadedApp_t* l
 		loadedApp->isValid = (
 			loadedApp->AppGetVersionPntr != nullptr &&
 			loadedApp->AppInitializePntr != nullptr &&
+			loadedApp->AppReloadedPntr != nullptr &&
 			loadedApp->AppUpdatePntr != nullptr &&
 			loadedApp->AppGetSoundSamplesPntr != nullptr &&
 			loadedApp->AppClosingPntr != nullptr
@@ -90,6 +97,7 @@ bool LoadDllCode(const char* appDllName, const char* tempDllName, LoadedApp_t* l
 	{
 		loadedApp->AppGetVersionPntr =      AppGetVersion_Stub;
 		loadedApp->AppInitializePntr =      AppInitialize_Stub;
+		loadedApp->AppReloadedPntr =        AppReloaded_Stub;
 		loadedApp->AppUpdatePntr =          AppUpdate_Stub;
 		loadedApp->AppGetSoundSamplesPntr = AppGetSoundSamples_Stub;
 		loadedApp->AppClosingPntr =         AppClosing_Stub;

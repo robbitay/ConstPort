@@ -47,9 +47,9 @@ Menu_t* AddMenu(MenuHandler_t* menuHandlerPntr, const char* name, rec drawRec,
 	newMenu->allowMovement = true;
 	newMenu->allowResize = false;
 	newMenu->titleBarSize = MENU_DEFAULT_TITLEBAR_SIZE;
-	newMenu->backgroundColor = MENU_DEFAULT_BACKGROUND_COLOR;
-	newMenu->borderColor = MENU_DEFAULT_BORDER_COLOR;
-	newMenu->titleBarColor = MENU_DEFAULT_TITLEBAR_COLOR;
+	newMenu->backgroundColor = Color_WindowBackground;
+	newMenu->borderColor = Color_WindowBorder;
+	newMenu->titleBarColor = Color_WindowTitleBar;
 	
 	newMenu->specialPntr = specialPntr;
 	newMenu->updateFunctionPntr = updateFunctionPntr;
@@ -156,11 +156,18 @@ void MenuHandlerDrawMenus(const PlatformInfo_t* PlatformInfo, const AppInput_t* 
 			
 			menuPntr->titleBarColor = Color_UiGray3;
 			menuPntr->backgroundColor = Color_UiGray1;
-			menuPntr->borderColor = Color_UiGray4;
+			menuPntr->borderColor = Color_UiLightGray1;
 			
 			renderState->DrawGradient(menuPntr->drawRec, menuPntr->backgroundColor, Color_UiGray2, Direction2D_Down);
 			
 			renderState->DrawRectangle(menuPntr->titleBarRec, menuPntr->titleBarColor);
+			
+			renderState->DrawRectangle(NewRectangle(
+				menuPntr->drawRec.x,
+				menuPntr->drawRec.y + menuPntr->titleBarRec.height - MENU_BORDER_WIDTH,
+				menuPntr->drawRec.width,
+				MENU_BORDER_WIDTH),
+				Color_UiGray4);
 			
 			renderState->DrawRectangle(NewRectangle(
 				menuPntr->drawRec.x,

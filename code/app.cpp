@@ -50,15 +50,15 @@ inline void DrawLine(AppData_t* appData, const Line_t* line, v2 startPos)
 	Color_t color = Color_Foreground;
 	if (line->numChars > 0)
 	{
-		if (line->chars[0] == '@')
+		if (line->chars[0] == 0x01)
 		{
 			color = Color_Highlight1;
 		}
-		else if (line->chars[0] == '#')
+		else if (line->chars[0] == 0x02)
 		{
 			color = Color_Highlight2;
 		}
-		else if (line->chars[0] == '!')
+		else if (line->chars[0] == 0x03)
 		{
 			color = Color_Highlight3;
 		}
@@ -124,27 +124,34 @@ void ComMenuUpdate(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 	
 	if (menu->show)
 	{
-		if (!AppInput->buttons[MouseButton_Left].isDown && AppInput->buttons[MouseButton_Left].transCount > 0 &&
-			AppInput->mouseMaxDist[MouseButton_Left] < 10)
+		v2 currentPos = menu->usableRec.topLeft + NewVec2(5, 5 + appData->testFont.maxExtendUp);
+		r32 maxLength = 0;
+		
+		for (u32 cIndex = 0; cIndex < appData->numComPortsAvailable; cIndex++)
 		{
-			v2 currentPos = menu->usableRec.topLeft + NewVec2(5, 5 + appData->testFont.maxExtendUp);
-			for (u32 cIndex = 0; cIndex < appData->numComPortsAvailable; cIndex++)
+			// v2 stringSize = MeasureString(&appData->testFont, appData->availableComPorts[cIndex]);
+			rec stringRec = NewRectangle(currentPos.x, currentPos.y - appData->testFont.maxExtendUp, 0, appData->testFont.lineHeight);
+			// stringRec = RectangleInflate(stringRec, 1);
+			stringRec.width = menu->usableRec.width - 5*2;
+			if (stringRec.y + stringRec.height - menu->drawRec.y > maxLength)
+				maxLength = stringRec.y + stringRec.height - menu->drawRec.y;
+			
+			if (!AppInput->buttons[MouseButton_Left].isDown && AppInput->buttons[MouseButton_Left].transCount > 0 &&
+				AppInput->mouseMaxDist[MouseButton_Left] < 10)
 			{
-				v2 stringSize = MeasureString(&appData->testFont, appData->availableComPorts[cIndex]);
-				rec stringRec = NewRectangle(currentPos.x, currentPos.y - appData->testFont.maxExtendUp, stringSize.x, appData->testFont.lineHeight);
-				stringRec = RectangleInflate(stringRec, 1);
-				if (stringRec.width < 100) stringRec.width = 100;
-				
 				if (IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], stringRec))
 				{
 					// DEBUG_PrintLine("Selected item %u", cIndex);
 					OpenComPort(cIndex);
+					menu->show = false;
 					break;
 				}
-				
-				currentPos.y += appData->testFont.lineHeight + 5;
 			}
+			
+			currentPos.y += appData->testFont.lineHeight + 5;
 		}
+		
+		menu->drawRec.height = maxLength + 5;
 	}
 }
 void ComMenuRender(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInput, RenderState_t* renderState, MenuHandler_t* menuHandler, Menu_t* menu)
@@ -156,9 +163,10 @@ void ComMenuRender(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 	{
 		const char* comString = appData->availableComPorts[cIndex];
 		v2 stringSize = MeasureString(&appData->testFont, comString);
-		rec stringRec = NewRectangle(currentPos.x, currentPos.y - appData->testFont.maxExtendUp, stringSize.x, appData->testFont.lineHeight);
+		rec stringRec = NewRectangle(currentPos.x, currentPos.y - appData->testFont.maxExtendUp, 0, appData->testFont.lineHeight);
 		stringRec = RectangleInflate(stringRec, 1);
-		if (stringRec.width < 100) stringRec.width = 100;
+		stringRec.width = menu->usableRec.width - 5*2;
+		v2 stringOffset = NewVec2(stringRec.width/2 - stringSize.x/2, 0);
 		
 		Color_t buttonColor = {Color_White};
 		Color_t borderColor {Color_Black};
@@ -181,7 +189,7 @@ void ComMenuRender(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 		}
 		
 		renderState->DrawButton(stringRec, buttonColor, borderColor);
-		renderState->DrawString(comString, currentPos, textColor);
+		renderState->DrawString(comString, currentPos + stringOffset, textColor);
 		
 		currentPos.y += appData->testFont.lineHeight + 5;
 	}
@@ -200,7 +208,7 @@ AppGetVersion_DEFINITION(App_GetVersion)
 	
 	if (resetApplication != nullptr)
 	{
-		*resetApplication = true;
+		*resetApplication = false;
 	}
 	
 	return version;
@@ -226,7 +234,8 @@ AppInitialize_DEFINITION(App_Initialize)
 	InitializeRenderState(PlatformInfo, &appData->renderState);
 	InitializeMenuHandler(&appData->menuHandler, &appData->memArena);
 	
-	Menu_t* comMenu = AddMenu(&appData->menuHandler, "COM Menu", NewRectangle(50, 50, 300, 300),
+	v2i screenSize = PlatformInfo->screenSize;
+	Menu_t* comMenu = AddMenu(&appData->menuHandler, "COM Menu", NewRectangle((r32)screenSize.x / 2 - 50, (r32)screenSize.y / 2 - 150, 100, 300),
 		ComMenuUpdate, ComMenuRender);
 	comMenu->show = false;
 	
@@ -247,7 +256,28 @@ AppInitialize_DEFINITION(App_Initialize)
 	CreateLineList(&appData->lineList, &appData->memArena, "");//(const char*)testFile.content);
 	PlatformInfo->FreeFileMemoryPntr(&testFile);
 	
+	RefreshComPortList();
+	
 	DEBUG_WriteLine("Initialization Done!");
+}
+
+//+================================================================+
+//|                        App Reloaded                            |
+//+================================================================+
+AppReloaded_DEFINITION(App_Reloaded)
+{
+	Gl_PlatformInfo = PlatformInfo;
+	Gl_AppMemory = AppMemory;
+	AppData_t* appData = (AppData_t*)AppMemory->permanantPntr;
+	GL_AppData = appData;
+	
+	DEBUG_WriteLine("App Reloaded");
+	
+	//Make sure our callbacks still match the location of the functions in the new DLL
+	Menu_t* menuPntr = GetMenuByName(&appData->menuHandler, "COM Menu");
+	menuPntr->specialPntr = nullptr;
+	menuPntr->updateFunctionPntr = ComMenuUpdate;
+	menuPntr->renderFunctionPntr = ComMenuRender;
 }
 
 //+================================================================+
@@ -259,15 +289,6 @@ AppUpdate_DEFINITION(App_Update)
 	Gl_AppMemory = AppMemory;
 	AppData_t* appData = (AppData_t*)AppMemory->permanantPntr;
 	GL_AppData = appData;
-	
-	//TODO: Move this into a AppReload function
-	//This is required in order to allow us to recompile 
-	{
-		Menu_t* menuPntr = GetMenuByName(&appData->menuHandler, "COM Menu");
-		menuPntr->specialPntr = nullptr;
-		menuPntr->updateFunctionPntr = ComMenuUpdate;
-		menuPntr->renderFunctionPntr = ComMenuRender;
-	}
 	
 	Color_t color1 = ColorFromHSV((i32)(PlatformInfo->programTime*180) % 360, 1.0f, 1.0f);
 	Color_t color2 = ColorFromHSV((i32)(PlatformInfo->programTime*180 + 125) % 360, 1.0f, 1.0f);
@@ -296,6 +317,8 @@ AppUpdate_DEFINITION(App_Update)
 		}
 	}
 	gutterWidth += 2;
+	if (gutterWidth < MIN_GUTTER_WIDTH)
+		gutterWidth = MIN_GUTTER_WIDTH;
 	rec gutterRec = NewRectangle(0, 0, gutterWidth, screenSize.y - toolbarRec.height);
 	rec viewRec = NewRectangle(
 		gutterWidth, 0,
@@ -306,13 +329,15 @@ AppUpdate_DEFINITION(App_Update)
 		0,
 		SCROLLBAR_WIDTH,
 		scrollBarGutterRec.height * (viewRec.height / fileHeight));
+	if (scrollBarRec.height < MIN_SCROLLBAR_HEIGHT)
+		scrollBarRec.height = MIN_SCROLLBAR_HEIGHT;
 	r32 maxScrollOffset = fileHeight - viewRec.height;
-	r32 scrollPercent = appData->scrollOffset / maxScrollOffset;
+	r32 scrollPercent = appData->scrollOffsetGoto / maxScrollOffset;
 	scrollBarRec.y = scrollBarGutterRec.y + (scrollBarGutterRec.height - scrollBarRec.height) * scrollPercent;
 	
 	if (AppInput->scrollDelta.y != 0)
 	{
-		appData->scrollOffset += -AppInput->scrollDelta.y * SCROLL_MULTIPLIER;
+		appData->scrollOffsetGoto += -AppInput->scrollDelta.y * SCROLL_MULTIPLIER;
 	}
 	
 	#if 0
@@ -327,7 +352,7 @@ AppUpdate_DEFINITION(App_Update)
 	
 	if (appData->comPort.isOpen)
 	{
-		bool viewAtEnd = (appData->scrollOffset + viewRec.height) >= (fileHeight - appData->testFont.lineHeight);
+		bool viewAtEnd = (appData->scrollOffsetGoto + viewRec.height) >= (fileHeight - appData->testFont.lineHeight);
 		
 		i32 readResult = 1;
 		while (readResult > 0)
@@ -355,7 +380,7 @@ AppUpdate_DEFINITION(App_Update)
 						lastLine->color = Color_Foreground;
 						if (viewAtEnd)
 						{
-							appData->scrollOffset += 19;//appData->testFont.lineHeight;
+							appData->scrollOffsetGoto += 19;//appData->testFont.lineHeight;
 						}
 					}
 					else
@@ -391,13 +416,11 @@ AppUpdate_DEFINITION(App_Update)
 	
 	if (AppInput->buttons[Button_Down].isDown)
 	{
-		appData->scrollOffset += AppInput->buttons[Button_Shift].isDown ? 16 : 5;
+		appData->scrollOffsetGoto += AppInput->buttons[Button_Shift].isDown ? 16 : 5;
 	}
 	if (AppInput->buttons[Button_Up].isDown)
 	{
-		appData->scrollOffset -= AppInput->buttons[Button_Shift].isDown ? 16 : 5;
-		if (appData->scrollOffset < 0)
-			appData->scrollOffset = 0;
+		appData->scrollOffsetGoto -= AppInput->buttons[Button_Shift].isDown ? 16 : 5;
 	}
 	
 	//Clear Console
@@ -476,6 +499,7 @@ AppUpdate_DEFINITION(App_Update)
 					{
 						appData->scrollOffset -= viewRec.height;
 					}
+					appData->scrollOffsetGoto = appData->scrollOffset;
 				}
 			}
 			else if (appData->startedOnScrollbar) //holding the button
@@ -491,17 +515,33 @@ AppUpdate_DEFINITION(App_Update)
 				}
 				
 				appData->scrollOffset = (newPixelLocation / (scrollBarGutterRec.height - scrollBarRec.height)) * maxScrollOffset;
+				appData->scrollOffsetGoto = appData->scrollOffset;
 			}
 		}
 	}
 	
 	fileHeight = (appData->lineList.numLines * (appData->testFont.lineHeight + 2));
 	maxScrollOffset = fileHeight - viewRec.height;
-	if (appData->scrollOffset < 0)
-			appData->scrollOffset = 0;
+	if (appData->scrollOffsetGoto > maxScrollOffset)
+		appData->scrollOffsetGoto = maxScrollOffset;
+	if (appData->scrollOffsetGoto < 0)
+			appData->scrollOffsetGoto = 0;
 	if (appData->scrollOffset > maxScrollOffset)
 		appData->scrollOffset = maxScrollOffset;
-	scrollPercent = appData->scrollOffset / maxScrollOffset;
+	if (appData->scrollOffset < 0)
+			appData->scrollOffset = 0;
+	
+	r32 gotoOffset = (appData->scrollOffsetGoto - appData->scrollOffset);
+	if (Abs32(gotoOffset) < 5)
+	{
+		appData->scrollOffset = appData->scrollOffsetGoto;
+	}
+	else
+	{
+		appData->scrollOffset += gotoOffset / SCROLL_SPEED_DIVIDER;
+	}
+	
+	scrollPercent = appData->scrollOffsetGoto / maxScrollOffset;
 	scrollBarRec.y = scrollBarGutterRec.y + (scrollBarGutterRec.height - scrollBarRec.height) * scrollPercent;
 	
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

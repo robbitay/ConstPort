@@ -322,6 +322,10 @@ int WINAPI WinMain(HINSTANCE hInstance,
 					
 					loadedApp.AppInitializePntr(&platformInfo, &appMemory);
 				}
+				else
+				{
+					loadedApp.AppReloadedPntr(&platformInfo, &appMemory);
+				}
 			}
 			else
 			{

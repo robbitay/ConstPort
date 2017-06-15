@@ -16,6 +16,7 @@ Description:
 #include <stdint.h>
 
 #include "win32_defines.h"
+#include "win32_intrinsics.h"
 #include "myMath.h"
 #include "win32_com.h"
 
@@ -338,6 +339,9 @@ typedef AppGetVersion_DEFINITION(AppGetVersion_f);
 
 #define AppInitialize_DEFINITION(functionName)      void functionName(const PlatformInfo_t* PlatformInfo, const AppMemory_t* AppMemory)
 typedef AppInitialize_DEFINITION(AppInitialize_f);
+
+#define AppReloaded_DEFINITION(functionName)        void functionName(const PlatformInfo_t* PlatformInfo, const AppMemory_t* AppMemory)
+typedef AppReloaded_DEFINITION(AppReloaded_f);
 
 #define AppUpdate_DEFINITION(functionName)          void functionName(const PlatformInfo_t* PlatformInfo, const AppMemory_t* AppMemory, const AppInput_t* AppInput, AppOutput_t* AppOutput)
 typedef AppUpdate_DEFINITION(AppUpdate_f);

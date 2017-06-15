@@ -4,14 +4,17 @@
 	[ ] Add checking for COM port errors and whether or not we are still connected
 	[ ] Add a slide down menu with different buttons
 	[X] Make a function to get a list of available COM ports
-	[ ] Add a window with a list of COM ports that can be selected
+	[X] Add a window with a list of COM ports that can be selected
 	[X] Read text input and write it to the COM port
 	[ ] Adjust Baud Rate, Parity, Stop Bits and Flow Control
 	[ ] Clear buffer button
 	[ ] Text selection
 	[ ] Copy to clipboard
 	[ ] Paste from clipboard
-	[ ] Add a AppReloaded function that gets called when the DLL is reloaded but not reset
+	[X] Add a AppReloaded function that gets called when the DLL is reloaded but not reset
+	[ ] Horizontal Scrolling
+	[ ] Status bar messages from anywhere in the program
+	[ ] Fix scrollbar so that it doesn't keep sliding when we have grabbed it
 	[ ] 
 
 # Application Wish List

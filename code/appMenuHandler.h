@@ -7,12 +7,6 @@ Date:   06\15\2017
 #ifndef _APP_MENU_HANDLER_H
 #define _APP_MENU_HANDLER_H
 
-#define MENU_BORDER_WIDTH              1
-#define MENU_DEFAULT_TITLEBAR_SIZE     22
-#define MENU_DEFAULT_BACKGROUND_COLOR  {Color_LightGrey}
-#define MENU_DEFAULT_BORDER_COLOR      {Color_LightBlue}
-#define MENU_DEFAULT_TITLEBAR_COLOR    {Color_Cyan}
-
 struct Menu_t
 {
 	LinkHeader_t header;
