@@ -282,6 +282,17 @@ AppUpdate_DEFINITION(App_Update)
 			appData->scrollOffset = 0;
 	}
 	
+	//Clear Console
+	if (AppInput->buttons[Button_C].transCount > 0 && AppInput->buttons[Button_C].isDown &&
+		AppInput->buttons[Button_Control].isDown && AppInput->buttons[Button_Shift].isDown)
+	{
+		DEBUG_WriteLine("Clearing Console");
+		
+		DestroyLineList(&appData->lineList);
+		CreateLineList(&appData->lineList, &appData->memArena, "");
+	}
+	
+	//Find available COM ports
 	if (AppInput->buttons[Button_O].transCount > 0 && AppInput->buttons[Button_O].isDown &&
 		AppInput->buttons[Button_Control].isDown)
 	{
@@ -292,9 +303,52 @@ AppUpdate_DEFINITION(App_Update)
 		DEBUG_PrintLine("Found %u com ports.", appData->numComPortsAvailable);
 		for (u32 cIndex = 0; cIndex < appData->numComPortsAvailable; cIndex++)
 		{
-			DEBUG_PrintLine("\"%s\"", appData->availableComPorts[cIndex]);
+			DEBUG_PrintLine("[%u] \"%s\"", cIndex+1, appData->availableComPorts[cIndex]);
 		}
 	}
+	
+	//Quick keys for opening COM ports
+	if (AppInput->buttons[Button_Control].isDown)
+	{
+		i32 cIndex = -1;
+		
+		if (AppInput->buttons[Button_1].transCount > 0 && AppInput->buttons[Button_1].isDown) cIndex = 0;
+		if (AppInput->buttons[Button_2].transCount > 0 && AppInput->buttons[Button_2].isDown) cIndex = 1;
+		if (AppInput->buttons[Button_3].transCount > 0 && AppInput->buttons[Button_3].isDown) cIndex = 2;
+		if (AppInput->buttons[Button_4].transCount > 0 && AppInput->buttons[Button_4].isDown) cIndex = 3;
+		if (AppInput->buttons[Button_5].transCount > 0 && AppInput->buttons[Button_5].isDown) cIndex = 4;
+		if (AppInput->buttons[Button_6].transCount > 0 && AppInput->buttons[Button_6].isDown) cIndex = 5;
+		if (AppInput->buttons[Button_7].transCount > 0 && AppInput->buttons[Button_7].isDown) cIndex = 6;
+		if (AppInput->buttons[Button_8].transCount > 0 && AppInput->buttons[Button_8].isDown) cIndex = 7;
+		if (AppInput->buttons[Button_9].transCount > 0 && AppInput->buttons[Button_9].isDown) cIndex = 8;
+		
+		if (cIndex >= (i32)appData->numComPortsAvailable)
+		{
+			DEBUG_PrintLine("Cannot open COM port #%d", cIndex+1);
+		}
+		else if (cIndex != -1)
+		{
+			if (appData->comPort.isOpen)
+			{
+				PlatformInfo->CloseComPortPntr(&appData->comPort);
+				DEBUG_WriteLine("Closed COM port");
+			}
+			
+			appData->comPort = PlatformInfo->OpenComPortPntr(appData->availableComPorts[cIndex],
+				BaudRate_115200, false, true, Parity_None, 8, StopBits_1);
+			
+			if (appData->comPort.isOpen)
+			{
+				DEBUG_PrintLine("%s port opened successfully", appData->availableComPorts[cIndex]);
+			}
+			else
+			{
+				DEBUG_PrintLine("Couldn't open %s port.", appData->availableComPorts[cIndex]);
+			}
+		}
+	}
+		
+	
 	
 	//Handle scrollbar interaction with mouse
 	if (AppInput->buttons[MouseButton_Left].isDown)
@@ -368,12 +422,16 @@ AppUpdate_DEFINITION(App_Update)
 	appData->renderState.DrawGradient(gutterRec, Color_UiGray1, Color_UiGray3, Direction2D_Right);
 	// appData->renderState.DrawGradient(NewRectangle(0, 0, 300, 300), color1, color2, Direction2D_Right);
 	
+	r32 lineHeight = appData->testFont.lineHeight + 2;
+	i32 firstLine = max(0, (i32)((r32)appData->scrollOffset / lineHeight));
+	i32 lastLine = min(appData->lineList.numLines, (i32)((r32)(appData->scrollOffset + viewRec.height) / lineHeight));
 	{//Items drawn relative to view
 		viewMatrix = Matrix4Translate(NewVec3(0, -appData->scrollOffset, 0));
 		appData->renderState.SetViewMatrix(viewMatrix);
 		
 		v2 currentPos = NewVec2(gutterWidth + 2, appData->testFont.maxExtendUp);
-		for (i32 lineIndex = 0; lineIndex < appData->lineList.numLines; lineIndex++)
+		currentPos.y += firstLine * lineHeight;
+		for (i32 lineIndex = firstLine; lineIndex < appData->lineList.numLines && lineIndex <= lastLine; lineIndex++)
 		{
 			Line_t* linePntr = GetLineAt(&appData->lineList, lineIndex);
 			v2 lineSize = MeasureLine(&appData->testFont, linePntr);
@@ -385,7 +443,7 @@ AppUpdate_DEFINITION(App_Update)
 			
 			DrawLine(appData, linePntr, currentPos);
 			
-			currentPos.y += appData->testFont.lineHeight + 2;
+			currentPos.y += lineHeight;
 		}
 		viewMatrix = Matrix4_Identity;
 		appData->renderState.SetViewMatrix(viewMatrix);
@@ -396,6 +454,9 @@ AppUpdate_DEFINITION(App_Update)
 	appData->renderState.PrintString( 
 		NewVec2(0, screenSize.y-appData->testFont.maxExtendDown), {Color_White}, 1.0f, 
 		"Heap: %u/%u used", appData->memArena.used, appData->memArena.size);
+	// appData->renderState.PrintString( 
+	// 	NewVec2(0, screenSize.y-appData->testFont.maxExtendDown), {Color_White}, 1.0f, 
+	// 	"First: %d Last: %d", firstLine, lastLine);
 	// PrintString(appData, appData->testFont, 
 	// 	NewVec2(0, screenSize.y-appData->testFont.maxExtendDown), {Color_White}, 1.0f, 
 	// 	"%u Lines Offset: %f (%fpx long)", appData->lineList.numLines, appData->scrollOffset, fileHeight);

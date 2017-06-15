@@ -32,7 +32,7 @@ GetComPortList_DEFINITION(Win32_GetComPortList)
 		
 		if (comHandle != INVALID_HANDLE_VALUE)
 		{
-			Win32_PrintLine("%s Exists!", nameBuffer);
+			// Win32_PrintLine("%s Exists!", nameBuffer);
 			result++;
 			CloseHandle(comHandle);
 		}
