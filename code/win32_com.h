@@ -1,6 +1,8 @@
 #ifndef _WIN32_COM_PORT_H
 #define _WIN32_COM_PORT_H
 
+#define MAX_COM_PORT_NUM   12
+
 typedef enum
 {
 	BaudRate_110 = 1,
@@ -52,6 +54,9 @@ struct ComPort_t
 	
 	HANDLE handle;
 };
+
+#define GetComPortList_DEFINITION(functionName) u32 functionName(char* arrayOut, u32 arrayOutWidth, u32 arrayOutHeight)
+typedef GetComPortList_DEFINITION(GetComPortList_f);
 
 #define OpenComPort_DEFINITION(functionName) ComPort_t functionName( \
 	const char* portName, BaudRate_t baudRate, bool useFlowControl,  \

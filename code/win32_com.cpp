@@ -8,7 +8,38 @@ Description:
 #included from win32_main.cpp
 */
 
-
+GetComPortList_DEFINITION(Win32_GetComPortList)
+{
+	u32 result = 0;
+	
+	//TODO: Is there ever a COM0?
+	for (u8 cIndex = 1; cIndex <= MAX_COM_PORT_NUM; cIndex++)
+	{
+		char* nameBuffer = &arrayOut[arrayOutWidth * result];
+		
+		u32 nameLength = snprintf(nameBuffer, arrayOutWidth-1, "COM%u", cIndex);
+		if (nameLength >= arrayOutWidth-1)
+		{
+			Win32_WriteLine("WARNING: COM port name was too long for output array width");
+			continue;
+		}
+		nameBuffer[nameLength] = '\0';
+		
+		// Win32_PrintLine("Trying to open %s...", nameBuffer);
+		
+		HANDLE comHandle = CreateFileA(nameBuffer, 
+			GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
+		
+		if (comHandle != INVALID_HANDLE_VALUE)
+		{
+			Win32_PrintLine("%s Exists!", nameBuffer);
+			result++;
+			CloseHandle(comHandle);
+		}
+	}
+	
+	return result;
+}
 
 OpenComPort_DEFINITION(Win32_OpenComPort)
 {

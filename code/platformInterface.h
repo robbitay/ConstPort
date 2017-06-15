@@ -83,6 +83,7 @@ struct PlatformInfo_t
 	DebugWriteLine_f*  DebugWriteLinePntr;
 	DebugPrint_f*      DebugPrintPntr;
 	DebugPrintLine_f*  DebugPrintLinePntr;
+	GetComPortList_f*  GetComPortListPntr;
 	OpenComPort_f*     OpenComPortPntr;
 	CloseComPort_f*    CloseComPortPntr;
 	ReadComPort_f*     ReadComPortPntr;

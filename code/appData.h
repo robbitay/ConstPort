@@ -24,6 +24,9 @@ struct AppData_t
 	bool startedOnScrollbar;
 	
 	ComPort_t comPort;
+	
+	u32 numComPortsAvailable;
+	char availableComPorts[MAX_COM_PORT_NUM][8];
 };
 
 #endif // _APP_DATA_H

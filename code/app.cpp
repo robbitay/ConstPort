@@ -194,7 +194,7 @@ AppUpdate_DEFINITION(App_Update)
 			DEBUG_WriteLine("Closed COM port");
 		}
 		
-		appData->comPort = PlatformInfo->OpenComPortPntr("COM6",
+		appData->comPort = PlatformInfo->OpenComPortPntr("COM7",
 			BaudRate_115200, false, true, Parity_None, 8, StopBits_1);
 		
 		if (appData->comPort.isOpen)
@@ -280,6 +280,20 @@ AppUpdate_DEFINITION(App_Update)
 		appData->scrollOffset -= AppInput->buttons[Button_Shift].isDown ? 16 : 5;
 		if (appData->scrollOffset < 0)
 			appData->scrollOffset = 0;
+	}
+	
+	if (AppInput->buttons[Button_O].transCount > 0 && AppInput->buttons[Button_O].isDown &&
+		AppInput->buttons[Button_Control].isDown)
+	{
+		appData->numComPortsAvailable = PlatformInfo->GetComPortListPntr(
+			&appData->availableComPorts[0][0], 
+			ArrayCount(appData->availableComPorts[0]), ArrayCount(appData->availableComPorts));
+		
+		DEBUG_PrintLine("Found %u com ports.", appData->numComPortsAvailable);
+		for (u32 cIndex = 0; cIndex < appData->numComPortsAvailable; cIndex++)
+		{
+			DEBUG_PrintLine("\"%s\"", appData->availableComPorts[cIndex]);
+		}
 	}
 	
 	//Handle scrollbar interaction with mouse
