@@ -8,6 +8,7 @@ Description:
 
 #included from app.cpp 
 */
+
 void InitializeRenderState(const PlatformInfo_t* PlatformInfo, RenderState_t* renderState)
 {
 	ClearPointer(renderState);
@@ -164,6 +165,16 @@ void RenderState_t::DrawRectangle(rec rectangle, Color_t color)
 	this->SetWorldMatrix(worldMatrix);
 	this->BindBuffer(&this->squareBuffer);
 	glDrawArrays(GL_TRIANGLES, 0, this->squareBuffer.numVertices);
+}
+
+void RenderState_t::DrawButton(rec rectangle, Color_t backgroundColor, Color_t borderColor, r32 borderWidth)
+{
+	this->DrawRectangle(rectangle, backgroundColor);
+	
+	this->DrawRectangle(NewRectangle(rectangle.x, rectangle.y, rectangle.width, borderWidth), borderColor);
+	this->DrawRectangle(NewRectangle(rectangle.x, rectangle.y, borderWidth, rectangle.height), borderColor);
+	this->DrawRectangle(NewRectangle(rectangle.x, rectangle.y + rectangle.height - borderWidth, rectangle.width, borderWidth), borderColor);
+	this->DrawRectangle(NewRectangle(rectangle.x + rectangle.width - borderWidth, rectangle.y, borderWidth, rectangle.height), borderColor);
 }
 
 void RenderState_t::DrawGradient(rec rectangle, Color_t color1, Color_t color2, Direction2D_t direction)

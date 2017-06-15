@@ -11,6 +11,7 @@ struct AppData_t
 {
 	MemoryArena_t memArena;
 	RenderState_t renderState;
+	MenuHandler_t menuHandler;
 	
 	Shader_t simpleShader;
 	Texture_t testTexture;

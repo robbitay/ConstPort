@@ -29,8 +29,10 @@ const AppMemory_t*    Gl_AppMemory = nullptr;
 #include "appStructs.h"
 #include "lineList.h"
 #include "appRenderState.h"
+#include "appMenuHandler.h"
 #include "appData.h"
 
+AppData_t* GL_AppData = nullptr;
 
 //+================================================================+
 //|                       Source Files                             |
@@ -39,6 +41,7 @@ const AppMemory_t*    Gl_AppMemory = nullptr;
 #include "appFontHelpers.cpp"
 #include "appLoadingFunctions.cpp"
 #include "appRenderState.cpp"
+#include "appMenuHandler.cpp"
 
 inline void DrawLine(AppData_t* appData, const Line_t* line, v2 startPos)
 {
@@ -64,6 +67,126 @@ inline void DrawLine(AppData_t* appData, const Line_t* line, v2 startPos)
 	appData->renderState.DrawString(line->chars, startPos, color, 1.0f);
 }
 
+void ClearConsole()
+{
+	AppData_t* appData = GL_AppData;
+	
+	DEBUG_WriteLine("Clearing Console");
+	DestroyLineList(&appData->lineList);
+	CreateLineList(&appData->lineList, &appData->memArena, "");
+}
+
+void RefreshComPortList()
+{
+	AppData_t* appData = GL_AppData;
+	const PlatformInfo_t* PlatformInfo = Gl_PlatformInfo;
+	
+	appData->numComPortsAvailable = PlatformInfo->GetComPortListPntr(
+		&appData->availableComPorts[0][0], 
+		ArrayCount(appData->availableComPorts[0]), ArrayCount(appData->availableComPorts));
+	
+	DEBUG_PrintLine("Found %u com ports.", appData->numComPortsAvailable);
+	for (u32 cIndex = 0; cIndex < appData->numComPortsAvailable; cIndex++)
+	{
+		DEBUG_PrintLine("[%u] \"%s\"", cIndex+1, appData->availableComPorts[cIndex]);
+	}
+}
+
+void OpenComPort(i32 comPortIndex)
+{
+	AppData_t* appData = GL_AppData;
+	const PlatformInfo_t* PlatformInfo = Gl_PlatformInfo;
+	
+	if (appData->comPort.isOpen)
+	{
+		PlatformInfo->CloseComPortPntr(&appData->comPort);
+		DEBUG_WriteLine("Closed COM port");
+	}
+	
+	ClearConsole();
+	
+	appData->comPort = PlatformInfo->OpenComPortPntr(appData->availableComPorts[comPortIndex],
+		BaudRate_115200, false, true, Parity_None, 8, StopBits_1);
+	
+	if (appData->comPort.isOpen)
+	{
+		DEBUG_PrintLine("%s port opened successfully", appData->availableComPorts[comPortIndex]);
+	}
+	else
+	{
+		DEBUG_PrintLine("Couldn't open %s port.", appData->availableComPorts[comPortIndex]);
+	}
+}
+
+void ComMenuUpdate(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInput, MenuHandler_t* menuHandler, Menu_t* menu)
+{
+	AppData_t* appData = GL_AppData;
+	
+	if (menu->show)
+	{
+		if (!AppInput->buttons[MouseButton_Left].isDown && AppInput->buttons[MouseButton_Left].transCount > 0 &&
+			AppInput->mouseMaxDist[MouseButton_Left] < 10)
+		{
+			v2 currentPos = menu->usableRec.topLeft + NewVec2(5, 5 + appData->testFont.maxExtendUp);
+			for (u32 cIndex = 0; cIndex < appData->numComPortsAvailable; cIndex++)
+			{
+				v2 stringSize = MeasureString(&appData->testFont, appData->availableComPorts[cIndex]);
+				rec stringRec = NewRectangle(currentPos.x, currentPos.y - appData->testFont.maxExtendUp, stringSize.x, appData->testFont.lineHeight);
+				stringRec = RectangleInflate(stringRec, 1);
+				if (stringRec.width < 100) stringRec.width = 100;
+				
+				if (IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], stringRec))
+				{
+					// DEBUG_PrintLine("Selected item %u", cIndex);
+					OpenComPort(cIndex);
+					break;
+				}
+				
+				currentPos.y += appData->testFont.lineHeight + 5;
+			}
+		}
+	}
+}
+void ComMenuRender(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInput, RenderState_t* renderState, MenuHandler_t* menuHandler, Menu_t* menu)
+{
+	AppData_t* appData = GL_AppData;
+	
+	v2 currentPos = menu->usableRec.topLeft + NewVec2(5, 5 + appData->testFont.maxExtendUp);
+	for (u32 cIndex = 0; cIndex < appData->numComPortsAvailable; cIndex++)
+	{
+		const char* comString = appData->availableComPorts[cIndex];
+		v2 stringSize = MeasureString(&appData->testFont, comString);
+		rec stringRec = NewRectangle(currentPos.x, currentPos.y - appData->testFont.maxExtendUp, stringSize.x, appData->testFont.lineHeight);
+		stringRec = RectangleInflate(stringRec, 1);
+		if (stringRec.width < 100) stringRec.width = 100;
+		
+		Color_t buttonColor = {Color_White};
+		Color_t borderColor {Color_Black};
+		Color_t textColor = {Color_Black};
+		
+		if (IsInsideRectangle(AppInput->mousePos, stringRec))
+		{
+			if (AppInput->buttons[MouseButton_Left].isDown && IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], stringRec))
+			{
+				buttonColor = Color_Highlight3;
+				borderColor = Color_Foreground;
+				textColor = Color_Foreground;
+			}
+			//TODO: Add a check to see which COM port is open and highlight it accordingly
+			// else if ()
+			else
+			{
+				buttonColor = Color_Highlight1;
+			}
+		}
+		
+		renderState->DrawButton(stringRec, buttonColor, borderColor);
+		renderState->DrawString(comString, currentPos, textColor);
+		
+		currentPos.y += appData->testFont.lineHeight + 5;
+	}
+}
+
 //+================================================================+
 //|                       App Get Version                          |
 //+================================================================+
@@ -77,7 +200,7 @@ AppGetVersion_DEFINITION(App_GetVersion)
 	
 	if (resetApplication != nullptr)
 	{
-		*resetApplication = false;
+		*resetApplication = true;
 	}
 	
 	return version;
@@ -94,12 +217,18 @@ AppInitialize_DEFINITION(App_Initialize)
 	
 	AppData_t* appData = (AppData_t*)AppMemory->permanantPntr;
 	ClearPointer(appData);
+	GL_AppData = appData;
 	
 	void* arenaBase = (void*)(appData+1);
 	u32 arenaSize = AppMemory->permanantSize - sizeof(AppData_t);
 	InitializeMemoryArenaHeap(&appData->memArena, arenaBase, arenaSize);
 	
 	InitializeRenderState(PlatformInfo, &appData->renderState);
+	InitializeMenuHandler(&appData->menuHandler, &appData->memArena);
+	
+	Menu_t* comMenu = AddMenu(&appData->menuHandler, "COM Menu", NewRectangle(50, 50, 300, 300),
+		ComMenuUpdate, ComMenuRender);
+	comMenu->show = false;
 	
 	appData->simpleShader = LoadShader(PlatformInfo,
 		"Resources/Shaders/simple-vertex.glsl",
@@ -129,6 +258,16 @@ AppUpdate_DEFINITION(App_Update)
 	Gl_PlatformInfo = PlatformInfo;
 	Gl_AppMemory = AppMemory;
 	AppData_t* appData = (AppData_t*)AppMemory->permanantPntr;
+	GL_AppData = appData;
+	
+	//TODO: Move this into a AppReload function
+	//This is required in order to allow us to recompile 
+	{
+		Menu_t* menuPntr = GetMenuByName(&appData->menuHandler, "COM Menu");
+		menuPntr->specialPntr = nullptr;
+		menuPntr->updateFunctionPntr = ComMenuUpdate;
+		menuPntr->renderFunctionPntr = ComMenuRender;
+	}
 	
 	Color_t color1 = ColorFromHSV((i32)(PlatformInfo->programTime*180) % 360, 1.0f, 1.0f);
 	Color_t color2 = ColorFromHSV((i32)(PlatformInfo->programTime*180 + 125) % 360, 1.0f, 1.0f);
@@ -185,27 +324,6 @@ AppUpdate_DEFINITION(App_Update)
 		PlatformInfo->FreeFileMemoryPntr(&testFile);
 	}
 	#endif
-	
-	if (AppInput->buttons[Button_Backspace].transCount > 0 && AppInput->buttons[Button_Backspace].isDown)
-	{
-		if (appData->comPort.isOpen)
-		{
-			PlatformInfo->CloseComPortPntr(&appData->comPort);
-			DEBUG_WriteLine("Closed COM port");
-		}
-		
-		appData->comPort = PlatformInfo->OpenComPortPntr("COM7",
-			BaudRate_115200, false, true, Parity_None, 8, StopBits_1);
-		
-		if (appData->comPort.isOpen)
-		{
-			DEBUG_WriteLine("COM port opened successfully");
-		}
-		else
-		{
-			DEBUG_WriteLine("Couldn't open COM port.");
-		}
-	}
 	
 	if (appData->comPort.isOpen)
 	{
@@ -286,24 +404,25 @@ AppUpdate_DEFINITION(App_Update)
 	if (AppInput->buttons[Button_C].transCount > 0 && AppInput->buttons[Button_C].isDown &&
 		AppInput->buttons[Button_Control].isDown && AppInput->buttons[Button_Shift].isDown)
 	{
-		DEBUG_WriteLine("Clearing Console");
-		
-		DestroyLineList(&appData->lineList);
-		CreateLineList(&appData->lineList, &appData->memArena, "");
+		ClearConsole();
 	}
 	
 	//Find available COM ports
 	if (AppInput->buttons[Button_O].transCount > 0 && AppInput->buttons[Button_O].isDown &&
 		AppInput->buttons[Button_Control].isDown)
 	{
-		appData->numComPortsAvailable = PlatformInfo->GetComPortListPntr(
-			&appData->availableComPorts[0][0], 
-			ArrayCount(appData->availableComPorts[0]), ArrayCount(appData->availableComPorts));
+		Menu_t* comMenu = GetMenuByName(&appData->menuHandler, "COM Menu");
+		Assert(comMenu != nullptr);
 		
-		DEBUG_PrintLine("Found %u com ports.", appData->numComPortsAvailable);
-		for (u32 cIndex = 0; cIndex < appData->numComPortsAvailable; cIndex++)
+		if (comMenu->show)
 		{
-			DEBUG_PrintLine("[%u] \"%s\"", cIndex+1, appData->availableComPorts[cIndex]);
+			comMenu->show = false;
+		}
+		else
+		{
+			comMenu->show = true;
+			
+			RefreshComPortList();
 		}
 	}
 	
@@ -328,27 +447,11 @@ AppUpdate_DEFINITION(App_Update)
 		}
 		else if (cIndex != -1)
 		{
-			if (appData->comPort.isOpen)
-			{
-				PlatformInfo->CloseComPortPntr(&appData->comPort);
-				DEBUG_WriteLine("Closed COM port");
-			}
-			
-			appData->comPort = PlatformInfo->OpenComPortPntr(appData->availableComPorts[cIndex],
-				BaudRate_115200, false, true, Parity_None, 8, StopBits_1);
-			
-			if (appData->comPort.isOpen)
-			{
-				DEBUG_PrintLine("%s port opened successfully", appData->availableComPorts[cIndex]);
-			}
-			else
-			{
-				DEBUG_PrintLine("Couldn't open %s port.", appData->availableComPorts[cIndex]);
-			}
+			OpenComPort(cIndex);
 		}
 	}
 		
-	
+	MenuHandlerUpdate(PlatformInfo, AppInput, &appData->menuHandler);
 	
 	//Handle scrollbar interaction with mouse
 	if (AppInput->buttons[MouseButton_Left].isDown)
@@ -483,6 +586,8 @@ AppUpdate_DEFINITION(App_Update)
 	appData->renderState.DisableAlphaTexture();
 	appData->renderState.DrawGradient(centerScrollBarRec, Color_UiGray1, Color_UiGray3, Direction2D_Right);
 	
+	MenuHandlerDrawMenus(PlatformInfo, AppInput, &appData->renderState, &appData->menuHandler);
+	
 	// DrawTexture(appData, appData->glyphTexture, NewRectangle(10, 10, 500, 500), {Color_White});
 	
 	// DrawCircle(appData, AppInput->mouseStartPos[MouseButton_Left], AppInput->mouseMaxDist[MouseButton_Left], {Color_Red});
@@ -504,6 +609,8 @@ AppGetSoundSamples_DEFINITION(App_GetSoundSamples)
 	Gl_PlatformInfo = PlatformInfo;
 	Gl_AppMemory = AppMemory;
 	AppData_t* appData = (AppData_t*)AppMemory->permanantPntr;
+	GL_AppData = appData;
+	
 	
 }
 
@@ -515,6 +622,7 @@ AppClosing_DEFINITION(App_Closing)
 	Gl_PlatformInfo = PlatformInfo;
 	Gl_AppMemory = AppMemory;
 	AppData_t* appData = (AppData_t*)AppMemory->permanantPntr;
+	GL_AppData = appData;
 	
 	DEBUG_WriteLine("Application closing!");
 	
