@@ -62,6 +62,10 @@ inline void DrawLine(AppData_t* appData, const Line_t* line, v2 startPos)
 		{
 			color = Color_Highlight3;
 		}
+		else if (line->chars[0] == 0x04)
+		{
+			color = Color_Highlight4;
+		}
 	}
 	
 	appData->renderState.DrawString(line->chars, startPos, color, 1.0f);

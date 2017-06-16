@@ -262,7 +262,7 @@ void RenderState_t::DrawString(const char* string, u32 numCharacters, v2 positio
 			currentPos.x += this->boundFont->chars[spaceIndex].advanceX * TAB_WIDTH * scale;
 		}
 		else if (string[cIndex] == '\r' ||
-			string[cIndex] == 0x01 || string[cIndex] == 0x02 || string[cIndex] == 0x03)
+			string[cIndex] == 0x01 || string[cIndex] == 0x02 || string[cIndex] == 0x03 || string[cIndex] == 0x04)
 		{
 			//Don't do anything
 		}

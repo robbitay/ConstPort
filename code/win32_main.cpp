@@ -36,8 +36,8 @@ Description:
 #define WINDOW_MAX_HEIGHT         1080
 #define WINDOW_ASPECT_RATIO       16,9
 #define ALLOW_RESIZE_WINDOW       true
-#define TOPMOST_WINDOW            true
-#define OPEN_CONSOLE_WINDOW       true
+#define TOPMOST_WINDOW            false
+#define OPEN_CONSOLE_WINDOW       false
 
 //NOTE: This must match resource.h in build directory!
 #define IDI_ICON1               101

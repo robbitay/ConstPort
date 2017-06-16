@@ -33,6 +33,7 @@
 	[ ] Command board with configurable command buttons
 	[ ] Save configurations to a file and load on startup
 	[ ] Try to auto-connect to last opened COM port on startup
+	[ ] Add a mark to a line by clicking on line number or shortcut
 	[ ] 
 
 # Platform Layer TODO List
