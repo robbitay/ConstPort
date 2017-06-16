@@ -54,9 +54,9 @@ VertexBuffer_t CreateVertexBuffer(const Vertex_t* vertices, u32 numVertices)
 	return result;
 }
 
-Shader_t LoadShader(const PlatformInfo_t* PlatformInfo,
-	const char* vertShaderFileName, const char* fragShaderFileName)
+Shader_t LoadShader(const char* vertShaderFileName, const char* fragShaderFileName)
 {
+	const PlatformInfo_t* PlatformInfo = Gl_PlatformInfo;
 	Shader_t result = {};
 	GLint compiled;
 	int logLength;
@@ -142,9 +142,9 @@ Shader_t LoadShader(const PlatformInfo_t* PlatformInfo,
 	return result;
 }
 
-Texture_t LoadTexture(const PlatformInfo_t* PlatformInfo,
-	const char* fileName, bool pixelated = false, bool repeat = true)
+Texture_t LoadTexture(const char* fileName, bool pixelated = false, bool repeat = true)
 {
+	const PlatformInfo_t* PlatformInfo = Gl_PlatformInfo;
 	Texture_t result = {};
 	
 	FileInfo_t textureFile = PlatformInfo->ReadEntireFilePntr(fileName);
@@ -163,10 +163,11 @@ Texture_t LoadTexture(const PlatformInfo_t* PlatformInfo,
 	return result;
 }
 
-Font_t LoadFont(const PlatformInfo_t* PlatformInfo,
-	const char* fileName, r32 fontSize, i32 bitmapWidth, i32 bitmapHeight,
+Font_t LoadFont(const char* fileName, 
+	r32 fontSize, i32 bitmapWidth, i32 bitmapHeight,
 	u8 firstCharacter, u8 numCharacters)
 {
+	const PlatformInfo_t* PlatformInfo = Gl_PlatformInfo;
 	Font_t result = {};
 	
 	FileInfo_t fontFile = PlatformInfo->ReadEntireFilePntr(fileName);

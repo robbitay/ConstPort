@@ -239,18 +239,15 @@ AppInitialize_DEFINITION(App_Initialize)
 		ComMenuUpdate, ComMenuRender);
 	comMenu->show = false;
 	
-	appData->simpleShader = LoadShader(PlatformInfo,
+	appData->simpleShader = LoadShader(
 		"Resources/Shaders/simple-vertex.glsl",
 		"Resources/Shaders/simple-fragment.glsl");
 	
-	appData->testTexture = LoadTexture(PlatformInfo,
-		"Resources/Sprites/test.png");
-	appData->scrollBarEndcapTexture = LoadTexture(PlatformInfo,
-		"Resources/Sprites/scrollBarEndcap.png", false, false);
+	appData->testTexture = LoadTexture("Resources/Sprites/test.png");
+	appData->scrollBarEndcapTexture = LoadTexture("Resources/Sprites/scrollBarEndcap.png", false, false);
 	
-	appData->testFont = LoadFont(PlatformInfo,
-		"Resources/Fonts/consola.ttf", 16,
-		1024, 1024, ' ', 96);
+	appData->testFont = LoadFont("Resources/Fonts/consola.ttf", 
+		16, 1024, 1024, ' ', 96);
 	
 	FileInfo_t testFile = PlatformInfo->ReadEntireFilePntr("test.txt");
 	CreateLineList(&appData->lineList, &appData->memArena, "");//(const char*)testFile.content);

@@ -35,6 +35,7 @@ struct MenuHandler_t
 {
 	MemoryArena_t* memArena;
 	LinkedList_t menuList;
+	Texture_t closeTexture;
 	
 	bool movingMenu;
 	v2 grabMenuOffset;

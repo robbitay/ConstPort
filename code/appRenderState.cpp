@@ -25,10 +25,8 @@ void InitializeRenderState(const PlatformInfo_t* PlatformInfo, RenderState_t* re
 	};
 	renderState->squareBuffer = CreateVertexBuffer(squareVertices, ArrayCount(squareVertices));
 	
-	renderState->gradientTexture = LoadTexture(PlatformInfo,
-		"Resources/Textures/gradient.png");
-	renderState->circleTexture = LoadTexture(PlatformInfo,
-		"Resources/Sprites/circle.png", false, false);
+	renderState->gradientTexture = LoadTexture("Resources/Textures/gradient.png");
+	renderState->circleTexture = LoadTexture("Resources/Sprites/circle.png", false, false);
 	
 	Color_t textureData = {Color_White};
 	renderState->dotTexture = CreateTexture((u8*)&textureData, 1, 1);

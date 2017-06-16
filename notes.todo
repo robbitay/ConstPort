@@ -15,7 +15,7 @@
 	[ ] Horizontal Scrolling
 	[ ] Status bar messages from anywhere in the program
 	[ ] Fix scrollbar so that it doesn't keep sliding when we have grabbed it
-	[ ] 
+	[!] Add an excape icon to windows
 
 # Application Wish List
 	[ ] Read multiple COM ports side by side.

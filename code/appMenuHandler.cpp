@@ -14,7 +14,9 @@ void InitializeMenuHandler(MenuHandler_t* menuHandlerPntr, MemoryArena_t* memAre
 	ClearPointer(menuHandlerPntr);
 	
 	menuHandlerPntr->memArena = memArena;
-	CreateLinkedList(&menuHandlerPntr->menuList);	
+	CreateLinkedList(&menuHandlerPntr->menuList);
+	
+	menuHandlerPntr->closeTexture = LoadTexture("Resources/Sprites/close.png");	
 }
 
 void UpdateMenuRecs(Menu_t* menu)
@@ -84,38 +86,57 @@ void MenuHandlerUpdate(const PlatformInfo_t* PlatformInfo, const AppInput_t* App
 		if (menuPntr->alive)
 		{
 			UpdateMenuRecs(menuPntr);
+			rec closeRec = NewRectangle(
+				menuPntr->titleBarRec.x + menuPntr->titleBarRec.width - menuPntr->titleBarRec.height, 
+				menuPntr->titleBarRec.y,
+				menuPntr->titleBarRec.height,
+				menuPntr->titleBarRec.height);
+			closeRec = RectangleInflate(closeRec, -5);
 			
-			if (menuHandler->activeMenuIndex == mIndex ||
-				(!menuHandler->movingMenu && 
-				!menuHandler->resizingMenuVert && !menuHandler->resizingMenuHor))
+			if (menuPntr->allowMovement)
 			{
-				v2 mousePos = AppInput->mousePos;
-				v2 mouseStart = AppInput->mouseStartPos[MouseButton_Left];
-				r32 mouseMaxDist = AppInput->mouseMaxDist[MouseButton_Left];
-				
-				if (AppInput->buttons[MouseButton_Left].isDown)
+				if (menuHandler->activeMenuIndex == mIndex ||
+					(!menuHandler->movingMenu && 
+					!menuHandler->resizingMenuVert && !menuHandler->resizingMenuHor))
 				{
-					if (AppInput->buttons[MouseButton_Left].transCount > 0)
+					v2 mousePos = AppInput->mousePos;
+					v2 mouseStart = AppInput->mouseStartPos[MouseButton_Left];
+					r32 mouseMaxDist = AppInput->mouseMaxDist[MouseButton_Left];
+					
+					if (AppInput->buttons[MouseButton_Left].isDown)
 					{
-						if (IsInsideRectangle(mousePos, menuPntr->titleBarRec))
+						if (AppInput->buttons[MouseButton_Left].transCount > 0)
 						{
-							menuHandler->movingMenu = true;
-							menuHandler->resizingMenuVert = false;
-							menuHandler->resizingMenuHor = false;
-							menuHandler->grabMenuOffset = mousePos - menuPntr->titleBarRec.topLeft;
-							menuHandler->activeMenuIndex = mIndex;
+							if (IsInsideRectangle(mousePos, menuPntr->titleBarRec))
+							{
+								menuHandler->movingMenu = true;
+								menuHandler->resizingMenuVert = false;
+								menuHandler->resizingMenuHor = false;
+								menuHandler->grabMenuOffset = mousePos - menuPntr->titleBarRec.topLeft;
+								menuHandler->activeMenuIndex = mIndex;
+							}
+						}
+						else if (menuHandler->movingMenu)
+						{
+							menuPntr->drawRec.topLeft = mousePos - menuHandler->grabMenuOffset;
 						}
 					}
-					else if (menuHandler->movingMenu)
+					else
 					{
-						menuPntr->drawRec.topLeft = mousePos - menuHandler->grabMenuOffset;
+						menuHandler->movingMenu = false;
+						menuHandler->resizingMenuVert = false;
+						menuHandler->resizingMenuHor = false;
 					}
 				}
-				else
+			}
+			
+			if (!AppInput->buttons[MouseButton_Left].isDown && AppInput->buttons[MouseButton_Left].transCount > 0 &&
+				AppInput->mouseMaxDist[MouseButton_Left] < 10)
+			{
+				if (IsInsideRectangle(AppInput->mousePos, closeRec) &&
+					IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], closeRec))
 				{
-					menuHandler->movingMenu = false;
-					menuHandler->resizingMenuVert = false;
-					menuHandler->resizingMenuHor = false;
+					menuPntr->show = false;
 				}
 			}
 			
@@ -153,6 +174,12 @@ void MenuHandlerDrawMenus(const PlatformInfo_t* PlatformInfo, const AppInput_t* 
 		if (menuPntr->show)
 		{
 			UpdateMenuRecs(menuPntr);
+			rec closeRec = NewRectangle(
+				menuPntr->titleBarRec.x + menuPntr->titleBarRec.width - menuPntr->titleBarRec.height, 
+				menuPntr->titleBarRec.y,
+				menuPntr->titleBarRec.height,
+				menuPntr->titleBarRec.height);
+			closeRec = RectangleInflate(closeRec, -5);
 			
 			menuPntr->titleBarColor = Color_UiGray3;
 			menuPntr->backgroundColor = Color_UiGray1;
@@ -161,6 +188,16 @@ void MenuHandlerDrawMenus(const PlatformInfo_t* PlatformInfo, const AppInput_t* 
 			renderState->DrawGradient(menuPntr->drawRec, menuPntr->backgroundColor, Color_UiGray2, Direction2D_Down);
 			
 			renderState->DrawRectangle(menuPntr->titleBarRec, menuPntr->titleBarColor);
+			
+			renderState->BindTexture(&menuHandler->closeTexture);
+			if (IsInsideRectangle(AppInput->mousePos, closeRec))
+			{
+				renderState->DrawTexturedRec(closeRec, {Color_Gray});
+			}
+			else
+			{
+				renderState->DrawTexturedRec(closeRec, {Color_White});
+			}
 			
 			renderState->DrawRectangle(NewRectangle(
 				menuPntr->drawRec.x,
