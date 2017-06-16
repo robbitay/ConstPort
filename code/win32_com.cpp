@@ -133,6 +133,16 @@ OpenComPort_DEFINITION(Win32_OpenComPort)
 		return result;
 	}
 	
+	COMMTIMEOUTS comTimeouts = {};
+	comTimeouts.ReadIntervalTimeout = MAXDWORD;//ms
+	
+	if (!SetCommTimeouts(comHandle, &comTimeouts))
+	{
+		Win32_WriteLine("Could not set the COM timeouts.");
+		CloseHandle(comHandle);
+		return result;
+	}
+	
 	result.handle = comHandle;
 	result.baudRate = baudRate;
 	result.parity = parity;
