@@ -30,9 +30,11 @@ struct AppData_t
 	bool startedOnScrollbar;
 	
 	ComPort_t comPort;
-	
 	u32 numComPortsAvailable;
 	char availableComPorts[MAX_COM_PORT_NUM][8];
+	
+	TextLocation_t selectionStart;
+	TextLocation_t selectionEnd;
 };
 
 #endif // _APP_DATA_H

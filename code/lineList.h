@@ -24,4 +24,19 @@ struct LineList_t
 	MemoryArena_t* arenaPntr;
 };
 
+union TextLocation_t
+{
+	v2i vec;
+	struct
+	{
+		i32 lineNum;
+		i32 charIndex;
+	};
+};
+
+inline TextLocation_t NewTextLocation(i32 lineNum, i32 charIndex)
+{
+	return { lineNum, charIndex };
+}
+
 #endif // _LINE_LIST_H

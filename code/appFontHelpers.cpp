@@ -24,17 +24,18 @@ inline u32 GetFontCharIndex(const Font_t* font, char character)
 	return cIndex;
 }
 
-inline v2 MeasureString(const Font_t* font, const char* string)
+inline v2 MeasureString(const Font_t* font, const char* string, u32 numChars)
 {
 	v2 currentPos = Vec2_Zero;
-	for (i32 cIndex = 0; cIndex < string[cIndex] != '\0'; cIndex++)
+	for (u32 cIndex = 0; cIndex < numChars; cIndex++)
 	{
 		if (string[cIndex] == '\t')
 		{
 			u32 spaceIndex = GetFontCharIndex(font, ' ');
 			currentPos.x += font->chars[spaceIndex].advanceX * TAB_WIDTH;
 		}
-		else if (string[cIndex] == '\r')
+		else if (string[cIndex] == '\r' || 
+			string[cIndex] == 0x01 || string[cIndex] == 0x02 || string[cIndex] == 0x03 || string[cIndex] == 0x04)
 		{
 			//Don't do anything
 		}
@@ -49,7 +50,7 @@ inline v2 MeasureString(const Font_t* font, const char* string)
 	return NewVec2(currentPos.x, font->lineHeight);
 }
 
-inline v2 MeasureLine(const Font_t* font, const Line_t* line)
+inline v2 MeasureString(const Font_t* font, const char* nullTermString)
 {
-	return MeasureString(font, line->chars);
+	return MeasureString(font, nullTermString, (u32)strlen(nullTermString));
 }

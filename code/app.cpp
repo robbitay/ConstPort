@@ -37,8 +37,8 @@ AppData_t* GL_AppData = nullptr;
 //+================================================================+
 //|                       Source Files                             |
 //+================================================================+
-#include "lineList.cpp"
 #include "appFontHelpers.cpp"
+#include "lineList.cpp"
 #include "appLoadingFunctions.cpp"
 #include "appRenderState.cpp"
 #include "appMenuHandler.cpp"
@@ -349,6 +349,8 @@ AppUpdate_DEFINITION(App_Update)
 		gutterWidth, 0,
 		screenSize.x - gutterWidth - scrollBarGutterRec.width, 
 		screenSize.y - toolbarRec.height);
+	TextLocation_t hoverLocation = PointToTextLocation(&appData->lineList, &appData->testFont, 
+		mousePos - NewVec2(LINE_SPACING + gutterWidth, -appData->scrollOffset));
 	rec scrollBarRec = NewRectangle(
 		scrollBarGutterRec.x + SCROLLBAR_PADDING,
 		0,
@@ -509,9 +511,9 @@ AppUpdate_DEFINITION(App_Update)
 		
 	MenuHandlerUpdate(PlatformInfo, AppInput, &appData->menuHandler);
 	
-	//Handle scrollbar interaction with mouse
 	if (AppInput->buttons[MouseButton_Left].isDown)
 	{
+		//Handle scrollbar interaction with mouse
 		if (IsInsideRectangle(mouseStartPos, scrollBarGutterRec))
 		{
 			if (AppInput->buttons[MouseButton_Left].transCount > 0)//Pressed the button down
@@ -549,6 +551,18 @@ AppUpdate_DEFINITION(App_Update)
 				
 				appData->scrollOffset = (newPixelLocation / (scrollBarGutterRec.height - scrollBarRec.height)) * maxScrollOffset;
 				appData->scrollOffsetGoto = appData->scrollOffset;
+			}
+		}
+		else if (IsInsideRectangle(mouseStartPos, viewRec))
+		{
+			if (AppInput->buttons[MouseButton_Left].transCount > 0)//Pressed the button down
+			{
+				appData->selectionStart = hoverLocation;
+				appData->selectionEnd = hoverLocation;
+			}
+			else if (IsInsideRectangle(mousePos, viewRec)) //Mouse Button Holding
+			{
+				appData->selectionEnd = hoverLocation;
 			}
 		}
 	}
@@ -607,31 +621,41 @@ AppUpdate_DEFINITION(App_Update)
 	//+--------------------------------------+
 	//|            Render Lines              |
 	//+--------------------------------------+
-	r32 lineHeight = appData->testFont.lineHeight + 2;
-	i32 firstLine = max(0, (i32)((r32)appData->scrollOffset / lineHeight));
-	i32 lastLine = min(appData->lineList.numLines, (i32)((r32)(appData->scrollOffset + viewRec.height) / lineHeight));
-	{//Items drawn relative to view
-		viewMatrix = Matrix4Translate(NewVec3(0, -appData->scrollOffset, 0));
-		rs->SetViewMatrix(viewMatrix);
+	{
+		r32 lineHeight = appData->testFont.lineHeight + LINE_SPACING;
+		i32 firstLine = max(0, (i32)((r32)appData->scrollOffset / lineHeight));
+		i32 lastLine = min(appData->lineList.numLines, (i32)((r32)(appData->scrollOffset + viewRec.height) / lineHeight));
 		
-		v2 currentPos = NewVec2(gutterWidth + 2, appData->testFont.maxExtendUp);
-		currentPos.y += firstLine * lineHeight;
-		for (i32 lineIndex = firstLine; lineIndex < appData->lineList.numLines && lineIndex <= lastLine; lineIndex++)
-		{
-			Line_t* linePntr = GetLineAt(&appData->lineList, lineIndex);
-			v2 lineSize = MeasureLine(&appData->testFont, linePntr);
-			rec backRec = NewRectangle(currentPos.x, currentPos.y - appData->testFont.maxExtendUp, lineSize.x, appData->testFont.lineHeight);
-			backRec = RectangleInflate(backRec, 1);
-			// rs->DrawGradient(backRec, {0x80494949}, {0x80404040}, Direction2D_Down);
+		rs->SetViewMatrix(Matrix4Translate(NewVec3(0, -appData->scrollOffset, 0)));
+		{//Items drawn relative to view
 			
-			rs->PrintString(NewVec2(0, currentPos.y), {Color_White}, 1.0f, "%u", lineIndex+1);
+			v2 currentPos = NewVec2(gutterWidth + LINE_SPACING, firstLine * lineHeight + appData->testFont.maxExtendUp);
+			for (i32 lineIndex = firstLine; lineIndex < appData->lineList.numLines && lineIndex <= lastLine; lineIndex++)
+			{
+				Line_t* linePntr = GetLineAt(&appData->lineList, lineIndex);
+				v2 lineSize = MeasureLine(&appData->testFont, linePntr);
+				rec backRec = NewRectangle(currentPos.x, currentPos.y - appData->testFont.maxExtendUp, lineSize.x, appData->testFont.lineHeight);
+				backRec = RectangleInflate(backRec, 1);
+				// rs->DrawGradient(backRec, {0x80494949}, {0x80404040}, Direction2D_Down);
+				
+				rs->PrintString(NewVec2(0, currentPos.y), {Color_White}, 1.0f, "%u", lineIndex+1);
+				
+				DrawLine(appData, linePntr, currentPos);
+				
+				if (lineIndex == hoverLocation.lineNum)
+				{
+					v2 skipSize = MeasureString(&appData->testFont, linePntr->chars, hoverLocation.charIndex);
+					rec cursorRec = backRec;
+					cursorRec.x += skipSize.x;
+					cursorRec.width = 1;
+					rs->DrawGradient(cursorRec, color1, color2, Direction2D_Down);
+				}
+				
+				currentPos.y += lineHeight;
+			}
 			
-			DrawLine(appData, linePntr, currentPos);
-			
-			currentPos.y += lineHeight;
 		}
-		viewMatrix = Matrix4_Identity;
-		rs->SetViewMatrix(viewMatrix);
+		rs->SetViewMatrix(Matrix4_Identity);
 	}
 	
 	//+--------------------------------------+
@@ -639,9 +663,12 @@ AppUpdate_DEFINITION(App_Update)
 	//+--------------------------------------+
 	rs->DrawGradient(toolbarRec, Color_UiGray1, Color_UiGray3, Direction2D_Right);
 	// rs->DrawGradient(NewRectangle(10, 10, 300, 300), color1, color2, Direction2D_Right);
+	// rs->PrintString( 
+	// 	NewVec2(0, screenSize.y-appData->testFont.maxExtendDown), {Color_White}, 1.0f, 
+	// 	"Heap: %u/%u used", appData->memArena.used, appData->memArena.size);
 	rs->PrintString( 
 		NewVec2(0, screenSize.y-appData->testFont.maxExtendDown), {Color_White}, 1.0f, 
-		"Heap: %u/%u used", appData->memArena.used, appData->memArena.size);
+		"Hover Location: Line %d Char %d", hoverLocation.lineNum+1, hoverLocation.charIndex);
 	// rs->PrintString( 
 	// 	NewVec2(0, screenSize.y-appData->testFont.maxExtendDown), {Color_White}, 1.0f, 
 	// 	"First: %d Last: %d", firstLine, lastLine);
@@ -675,25 +702,6 @@ AppUpdate_DEFINITION(App_Update)
 	
 	// DrawThings();
 	
-	//+--------------------------------------+
-	//|           Post Processing            |
-	//+--------------------------------------+
-	rs->BindFrameBuffer(&appData->frameBuffer);
-	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	
-	DrawThings(AppInput);
-	
-	rs->BindFrameBuffer(nullptr);
-	rs->BindShader(&appData->outlineShader);
-	rs->UpdateShader();
-	
-	
-	rs->SetSecondaryColor(NewColor(0, 0, 0, 20));
-	rs->BindTexture(&appData->frameTexture);
-	rs->DrawTexturedRec(NewRectangle(0, screenSize.y, (r32)appData->frameTexture.width, (r32)-appData->frameTexture.height), {Color_White});
-	
-	
 	// DrawCircle(appData, AppInput->mouseStartPos[MouseButton_Left], AppInput->mouseMaxDist[MouseButton_Left], {Color_Red});
 	// DrawCircle(appData, AppInput->mouseStartPos[MouseButton_Right], AppInput->mouseMaxDist[MouseButton_Right], {Color_Blue});
 	// DrawCircle(appData, AppInput->mouseStartPos[MouseButton_Middle], AppInput->mouseMaxDist[MouseButton_Middle], {Color_Green});
@@ -703,6 +711,77 @@ AppUpdate_DEFINITION(App_Update)
 	// rs->DrawRectangle(scrollBarRec, {Color_Blue});
 	// rs->DrawRectangle(NewRectangle(0, 0, gutterWidth, screenSize.y - toolbarRec.height), {Color_Orange});
 	// rs->DrawRectangle(toolbarRec, {Color_Yellow});
+	
+	rs->BindFrameBuffer(&appData->frameBuffer);
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	
+	//+--------------------------------------+
+	//|          Render Selection            |
+	//+--------------------------------------+
+	if (appData->selectionStart.lineNum != appData->selectionEnd.lineNum ||
+		appData->selectionStart.charIndex != appData->selectionEnd.charIndex)
+	{
+		TextLocation_t minLocation = TextLocationMin(appData->selectionStart, appData->selectionEnd);
+		TextLocation_t maxLocation = TextLocationMax(appData->selectionStart, appData->selectionEnd); 
+		r32 lineHeight = appData->testFont.lineHeight + LINE_SPACING;
+		i32 firstLine = max(0, max(minLocation.lineNum, (i32)((r32)appData->scrollOffset / lineHeight)));
+		i32 lastLine = min(appData->lineList.numLines, min(maxLocation.lineNum, (i32)((r32)(appData->scrollOffset + viewRec.height) / lineHeight)));
+		
+		rs->SetViewMatrix(Matrix4Translate(NewVec3(0, -appData->scrollOffset, 0)));
+		{//Items drawn relative to view
+			
+			v2 currentPos = NewVec2(gutterWidth + LINE_SPACING, firstLine * lineHeight + appData->testFont.maxExtendUp);
+			for (i32 lineIndex = firstLine; lineIndex < appData->lineList.numLines && lineIndex <= lastLine; lineIndex++)
+			{
+				Line_t* linePntr = GetLineAt(&appData->lineList, lineIndex);
+				v2 skipSize = Vec2_Zero;
+				v2 selectionSize = Vec2_Zero;
+				if (lineIndex == minLocation.lineNum &&
+					lineIndex == maxLocation.lineNum)
+				{
+					skipSize = MeasureString(&appData->testFont, linePntr->chars, minLocation.charIndex);
+					selectionSize = MeasureString(&appData->testFont, &linePntr->chars[minLocation.charIndex], maxLocation.charIndex - minLocation.charIndex);
+				}
+				else if (lineIndex == minLocation.lineNum)
+				{
+					skipSize = MeasureString(&appData->testFont, linePntr->chars, minLocation.charIndex);
+					selectionSize = MeasureString(&appData->testFont, &linePntr->chars[minLocation.charIndex]);
+					// selectionSize.x += MeasureString(&appData->testFont, " ", 1).x;
+				}
+				else if (lineIndex == maxLocation.lineNum)
+				{
+					selectionSize = MeasureString(&appData->testFont, linePntr->chars, maxLocation.charIndex);
+				}
+				else
+				{
+					Assert(lineIndex > minLocation.lineNum && lineIndex < maxLocation.lineNum);
+					
+					selectionSize = MeasureString(&appData->testFont, linePntr->chars);
+					// selectionSize.x += MeasureString(&appData->testFont, " ", 1).x;
+				}
+				
+				rec backRec = NewRectangle(currentPos.x + skipSize.x, currentPos.y - appData->testFont.maxExtendUp, selectionSize.x, appData->testFont.lineHeight);
+				backRec = RectangleInflate(backRec, LINE_SPACING);
+				rs->DrawRectangle(backRec, color1);
+				
+				currentPos.y += lineHeight;
+			}
+			
+		}
+		rs->SetViewMatrix(Matrix4_Identity);
+	}
+	
+	//+--------------------------------------+
+	//|           Post Processing            |
+	//+--------------------------------------+
+	rs->BindFrameBuffer(nullptr);
+	rs->BindShader(&appData->outlineShader);
+	rs->UpdateShader();
+	
+	rs->SetSecondaryColor(NewColor(0, 0, 0, 20));
+	rs->BindTexture(&appData->frameTexture);
+	rs->DrawTexturedRec(NewRectangle(0, screenSize.y, (r32)appData->frameTexture.width, (r32)-appData->frameTexture.height), {Color_White});
 }
 
 //+================================================================+

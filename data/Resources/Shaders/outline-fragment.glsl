@@ -60,48 +60,48 @@ void main()
 	vec4 innerColor = frag_colour * vec4(1, 1, 1, SecondaryColor.a);
 	if (frag_colour.a >= 0.5)
 	{
-		if      (texture2D(DiffuseTexture, fTexCoord + vec2(-1,-2)*pixelSize).a < 0.5)
-			frag_colour = outlineColor;
-		else if (texture2D(DiffuseTexture, fTexCoord + vec2( 0,-2)*pixelSize).a < 0.5)
-			frag_colour = outlineColor;
-		else if (texture2D(DiffuseTexture, fTexCoord + vec2( 1,-2)*pixelSize).a < 0.5)
-			frag_colour = outlineColor;
-		else if (texture2D(DiffuseTexture, fTexCoord + vec2(-2,-1)*pixelSize).a < 0.5)
-			frag_colour = outlineColor;
-		else if (texture2D(DiffuseTexture, fTexCoord + vec2(-1,-1)*pixelSize).a < 0.5)
+		// if (texture2D(DiffuseTexture, fTexCoord + vec2(-1,-2)*pixelSize).a < 0.5)
+		// 	frag_colour = outlineColor;
+		// else if (texture2D(DiffuseTexture, fTexCoord + vec2( 0,-2)*pixelSize).a < 0.5)
+		// 	frag_colour = outlineColor;
+		// else if (texture2D(DiffuseTexture, fTexCoord + vec2( 1,-2)*pixelSize).a < 0.5)
+		// 	frag_colour = outlineColor;
+		// else if (texture2D(DiffuseTexture, fTexCoord + vec2(-2,-1)*pixelSize).a < 0.5)
+		// 	frag_colour = outlineColor;
+		if (texture2D(DiffuseTexture, fTexCoord + vec2(-1,-1)*pixelSize).a < 0.5)
 			frag_colour = outlineColor;
 		else if (texture2D(DiffuseTexture, fTexCoord + vec2( 0,-1)*pixelSize).a < 0.5)
 			frag_colour = outlineColor;
 		else if (texture2D(DiffuseTexture, fTexCoord + vec2( 1,-1)*pixelSize).a < 0.5)
 			frag_colour = outlineColor;
-		else if (texture2D(DiffuseTexture, fTexCoord + vec2( 2,-1)*pixelSize).a < 0.5)
-			frag_colour = outlineColor;
-		else if (texture2D(DiffuseTexture, fTexCoord + vec2(-2, 0)*pixelSize).a < 0.5)
-			frag_colour = outlineColor;
+		// else if (texture2D(DiffuseTexture, fTexCoord + vec2( 2,-1)*pixelSize).a < 0.5)
+		// 	frag_colour = outlineColor;
+		// else if (texture2D(DiffuseTexture, fTexCoord + vec2(-2, 0)*pixelSize).a < 0.5)
+		// 	frag_colour = outlineColor;
 		else if (texture2D(DiffuseTexture, fTexCoord + vec2(-1, 0)*pixelSize).a < 0.5)
 			frag_colour = outlineColor;
 		// else if (texture2D(DiffuseTexture, fTexCoord + vec2( 0, 0)*pixelSize).a < 0.5)
 		// 	frag_colour = outlineColor;
 		else if (texture2D(DiffuseTexture, fTexCoord + vec2( 1, 0)*pixelSize).a < 0.5)
 			frag_colour = outlineColor;
-		else if (texture2D(DiffuseTexture, fTexCoord + vec2( 2, 0)*pixelSize).a < 0.5)
-			frag_colour = outlineColor;
-		else if (texture2D(DiffuseTexture, fTexCoord + vec2(-2, 1)*pixelSize).a < 0.5)
-			frag_colour = outlineColor;
+		// else if (texture2D(DiffuseTexture, fTexCoord + vec2( 2, 0)*pixelSize).a < 0.5)
+		// 	frag_colour = outlineColor;
+		// else if (texture2D(DiffuseTexture, fTexCoord + vec2(-2, 1)*pixelSize).a < 0.5)
+		// 	frag_colour = outlineColor;
 		else if (texture2D(DiffuseTexture, fTexCoord + vec2(-1, 1)*pixelSize).a < 0.5)
 			frag_colour = outlineColor;
 		else if (texture2D(DiffuseTexture, fTexCoord + vec2( 0, 1)*pixelSize).a < 0.5)
 			frag_colour = outlineColor;
 		else if (texture2D(DiffuseTexture, fTexCoord + vec2( 1, 1)*pixelSize).a < 0.5)
 			frag_colour = outlineColor;
-		else if (texture2D(DiffuseTexture, fTexCoord + vec2( 2, 1)*pixelSize).a < 0.5)
-			frag_colour = outlineColor;
-		else if (texture2D(DiffuseTexture, fTexCoord + vec2(-1, 2)*pixelSize).a < 0.5)
-			frag_colour = outlineColor;
-		else if (texture2D(DiffuseTexture, fTexCoord + vec2( 0, 2)*pixelSize).a < 0.5)
-			frag_colour = outlineColor;
-		else if (texture2D(DiffuseTexture, fTexCoord + vec2( 1, 2)*pixelSize).a < 0.5)
-			frag_colour = outlineColor;
+		// else if (texture2D(DiffuseTexture, fTexCoord + vec2( 2, 1)*pixelSize).a < 0.5)
+		// 	frag_colour = outlineColor;
+		// else if (texture2D(DiffuseTexture, fTexCoord + vec2(-1, 2)*pixelSize).a < 0.5)
+		// 	frag_colour = outlineColor;
+		// else if (texture2D(DiffuseTexture, fTexCoord + vec2( 0, 2)*pixelSize).a < 0.5)
+		// 	frag_colour = outlineColor;
+		// else if (texture2D(DiffuseTexture, fTexCoord + vec2( 1, 2)*pixelSize).a < 0.5)
+		// 	frag_colour = outlineColor;
 		else
 			frag_colour = innerColor;
 	}

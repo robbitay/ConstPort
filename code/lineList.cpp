@@ -113,3 +113,106 @@ void DestroyLineList(LineList_t* lineList)
 	lineList->numLines = 0;
 	lineList->arenaPntr = 0;
 }
+
+inline v2 MeasureLine(const Font_t* font, const Line_t* line)
+{
+	return MeasureString(font, line->chars);
+}
+
+inline TextLocation_t TextLocationMin(TextLocation_t location1, TextLocation_t location2)
+{
+	if (location1.lineNum == location2.lineNum)
+	{
+		if (location1.charIndex >= location2.charIndex)
+		{
+			return location2;
+		}
+		else
+		{
+			return location1;
+		}
+	}
+	else if (location1.lineNum > location2.lineNum)
+	{
+		return location2;
+	}
+	else
+	{
+		return location1;
+	}
+}
+inline TextLocation_t TextLocationMax(TextLocation_t location1, TextLocation_t location2)
+{
+	if (location1.lineNum == location2.lineNum)
+	{
+		if (location1.charIndex >= location2.charIndex)
+		{
+			return location1;
+		}
+		else
+		{
+			return location2;
+		}
+	}
+	else if (location1.lineNum > location2.lineNum)
+	{
+		return location1;
+	}
+	else
+	{
+		return location2;
+	}
+}
+
+TextLocation_t PointToTextLocation(LineList_t* lineList, const Font_t* font, v2 position)
+{
+	TextLocation_t result = NewTextLocation(0, 0);
+	
+	if (position.y < 0 || lineList->list.numItems == 0)
+	{
+		return result;
+	}
+	
+	result.lineNum = (i32)(position.y / (font->lineHeight+LINE_SPACING));
+	
+	if (result.lineNum >= lineList->list.numItems)
+	{
+		result.lineNum = lineList->list.numItems - 1;
+	}
+	if (position.x < 0)
+	{
+		return result;
+	}
+	
+	// DEBUG_PrintLine("(%f, %f)", position.x, position.y);
+	
+	Line_t* linePntr = GetLineAt(lineList, result.lineNum);
+	
+	if (linePntr->chars[0] == '\0')
+	{
+		return result;
+	}
+	
+	v2 lastStringSize = Vec2_Zero;
+	for (u32 cIndex = 1; linePntr->chars[cIndex] != '\0'; cIndex++)
+	{
+		v2 stringSize = MeasureString(font, linePntr->chars, cIndex+1);
+		if (stringSize.x > position.x || linePntr->chars[cIndex+1] == '\0')
+		{
+			if (cIndex > 0 && Abs32(position.x - lastStringSize.x) < Abs32(position.x - stringSize.x))
+			{
+				result.charIndex = cIndex;
+			}
+			else
+			{
+				result.charIndex = cIndex+1;
+			}
+			
+			break;
+		}
+		
+		lastStringSize = stringSize;
+	}
+	
+	return result;
+}
