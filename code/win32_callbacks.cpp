@@ -24,6 +24,7 @@ void GlfwWindowSizeCallback(GLFWwindow* window, i32 screenWidth, i32 screenHeigh
 	Win32_PrintLine("Resized: %dx%d", screenWidth, screenHeight);
 	
 	GL_PlatformInfo->screenSize = NewVec2i(screenWidth, screenHeight);
+	GL_PlatformInfo->windowResized = true;
 }
 void GlfwWindowMoveCallback(GLFWwindow* window, i32 posX, i32 posY)
 {

@@ -11,7 +11,7 @@ in vec3 fPosition;
 in vec4 fColor;
 in vec2 fTexCoord;
 
-out vec4 frag_colour;
+layout(location = 0) out vec4 frag_colour;
 
 void main()
 {

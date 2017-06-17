@@ -74,6 +74,7 @@ struct PlatformInfo_t
 	PlatformType_t platformType;
 	
 	v2i screenSize;
+	bool windowResized;
 	bool windowHasFocus;
 	bool windowIsMinimized;
 	

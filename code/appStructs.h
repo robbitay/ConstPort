@@ -67,6 +67,7 @@ struct Shader_t
 	GLuint doGrayscaleGradientLocation;
 	GLuint useAlphaTextureLocation;
 	GLuint sourceRectangleLocation;
+	GLuint textureSizeLocation;
 };
 
 struct VertexBuffer_t
@@ -93,6 +94,13 @@ struct Vertex_t
 		v2 texCoord;
 		struct { r32 x, y; };
 	};
+};
+
+struct FrameBuffer_t
+{
+	GLuint id;
+	GLuint depthBuffer;
+	const Texture_t* renderTexture;
 };
 
 #endif // _APP_STRUCTS_H

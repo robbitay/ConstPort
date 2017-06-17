@@ -9,11 +9,17 @@ Date:   06\13\2017
 
 struct RenderState_t
 {
+	rec viewport;
+	
 	const Shader_t* boundShader;
 	const Font_t* boundFont;
 	const Texture_t* boundTexture;
 	const Texture_t* boundAlphaTexture;
 	const VertexBuffer_t* boundBuffer;
+	const FrameBuffer_t* boundFrameBuffer;
+	Matrix4_t worldMatrix;
+	Matrix4_t viewMatrix;
+	Matrix4_t projectionMatrix;
 	
 	VertexBuffer_t squareBuffer;
 	Texture_t dotTexture;
@@ -26,14 +32,17 @@ struct RenderState_t
 	//|       State Change Functions         |
 	//+--------------------------------------+
 	void BindShader(const Shader_t* shaderPntr);
+	void UpdateShader();
 	void BindFont(const Font_t* fontPntr);
 	void BindTexture(const Texture_t* texturePntr);
 	void BindAlphaTexture(const Texture_t* texturePntr);
 	void DisableAlphaTexture();
 	void BindBuffer(const VertexBuffer_t* vertBuffer);
+	void BindFrameBuffer(const FrameBuffer_t* frameBuffer);
 	void SetWorldMatrix(const Matrix4_t& worldMatrix);
 	void SetViewMatrix(const Matrix4_t& viewMatrix);
 	void SetProjectionMatrix(const Matrix4_t& projectionMatrix);
+	void SetViewport(rec viewport);
 	void SetColor(Color_t color);
 	void SetSecondaryColor(Color_t color);
 	void SetSourceRectangle(rec sourceRectangle);

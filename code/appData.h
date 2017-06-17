@@ -14,9 +14,12 @@ struct AppData_t
 	MenuHandler_t menuHandler;
 	
 	Shader_t simpleShader;
+	Shader_t outlineShader;
 	Texture_t testTexture;
 	Texture_t scrollBarEndcapTexture;
 	Font_t testFont;
+	FrameBuffer_t frameBuffer;
+	Texture_t frameTexture;
 	
 	LineList_t lineList;
 	

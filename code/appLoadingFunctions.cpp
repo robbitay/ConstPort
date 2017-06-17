@@ -54,6 +54,28 @@ VertexBuffer_t CreateVertexBuffer(const Vertex_t* vertices, u32 numVertices)
 	return result;
 }
 
+FrameBuffer_t CreateFrameBuffer(const Texture_t* texture)
+{
+	FrameBuffer_t result = {};
+	
+	glGenFramebuffers(1, &result.id);
+	glBindFramebuffer(GL_FRAMEBUFFER, result.id);
+	
+	glGenRenderbuffers(1, &result.depthBuffer);
+	glBindRenderbuffer(GL_RENDERBUFFER, result.depthBuffer);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, texture->width, texture->height);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, result.depthBuffer);
+	
+	glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, texture->id, 0);
+	
+	GLenum DrawBuffers[1] = {GL_COLOR_ATTACHMENT0};
+	glDrawBuffers(1, DrawBuffers);
+	
+	result.renderTexture = texture;
+	
+	return result;
+}
+
 Shader_t LoadShader(const char* vertShaderFileName, const char* fragShaderFileName)
 {
 	const PlatformInfo_t* PlatformInfo = Gl_PlatformInfo;
@@ -132,6 +154,7 @@ Shader_t LoadShader(const char* vertShaderFileName, const char* fragShaderFileNa
 	result.doGrayscaleGradientLocation = glGetUniformLocation(result.programId, "DoGrayscaleGradient");
 	result.sourceRectangleLocation     = glGetUniformLocation(result.programId, "SourceRectangle");
 	result.useAlphaTextureLocation     = glGetUniformLocation(result.programId, "UseAlphaTexture");
+	result.textureSizeLocation         = glGetUniformLocation(result.programId, "TextureSize");
 	
 	glGenVertexArrays(1, &result.vertexArray);
 	glBindVertexArray(result.vertexArray);
@@ -251,4 +274,3 @@ Font_t LoadFont(const char* fileName,
 	
 	return result;
 }
-

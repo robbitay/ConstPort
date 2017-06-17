@@ -246,12 +246,22 @@ AppInitialize_DEFINITION(App_Initialize)
 	appData->simpleShader = LoadShader(
 		"Resources/Shaders/simple-vertex.glsl",
 		"Resources/Shaders/simple-fragment.glsl");
+	appData->outlineShader = LoadShader(
+		"Resources/Shaders/outline-vertex.glsl",
+		"Resources/Shaders/outline-fragment.glsl");
 	
-	appData->testTexture = LoadTexture("Resources/Sprites/test.png");
+	appData->testTexture = LoadTexture("Resources/Sprites/buttonIcon3.png");
 	appData->scrollBarEndcapTexture = LoadTexture("Resources/Sprites/scrollBarEndcap.png", false, false);
 	
 	appData->testFont = LoadFont("Resources/Fonts/consola.ttf", 
 		16, 1024, 1024, ' ', 96);
+	
+	appData->frameTexture = CreateTexture(nullptr, 2048, 2048);
+	appData->frameBuffer = CreateFrameBuffer(&appData->frameTexture);
+	if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+	{
+		DEBUG_WriteLine("FrameBuffer incomplete!");
+	}
 	
 	FileInfo_t testFile = PlatformInfo->ReadEntireFilePntr("test.txt");
 	CreateLineList(&appData->lineList, &appData->memArena, "");//(const char*)testFile.content);
@@ -281,6 +291,17 @@ AppReloaded_DEFINITION(App_Reloaded)
 	menuPntr->renderFunctionPntr = ComMenuRender;
 }
 
+void DrawThings(const AppInput_t* AppInput)
+{
+	AppData_t* appData = GL_AppData;
+	RenderState_t* rs = &appData->renderState;
+	
+	rs->BindTexture(&appData->testTexture);
+	rs->DrawTexturedRec(NewRectangle(10, 10, 500, 500), {Color_White});
+	rs->DrawTexturedRec(NewRectangle(90, 70, 500, 500), {Color_White});
+	rs->DrawTexturedRec(NewRectangle(AppInput->mousePos.x - 250, AppInput->mousePos.y - 250, 500, 500), {Color_White});
+}
+
 //+================================================================+
 //|                         App Update                             |
 //+================================================================+
@@ -291,6 +312,7 @@ AppUpdate_DEFINITION(App_Update)
 	AppData_t* appData = (AppData_t*)AppMemory->permanantPntr;
 	GL_AppData = appData;
 	
+	Menu_t* comMenu = GetMenuByName(&appData->menuHandler, "COM Menu");
 	Color_t color1 = ColorFromHSV((i32)(PlatformInfo->programTime*180) % 360, 1.0f, 1.0f);
 	Color_t color2 = ColorFromHSV((i32)(PlatformInfo->programTime*180 + 125) % 360, 1.0f, 1.0f);
 	v2 mousePos = AppInput->mousePos;
@@ -300,11 +322,13 @@ AppUpdate_DEFINITION(App_Update)
 	rec toolbarRec = NewRectangle(
 		0, 
 		screenSize.y-appData->testFont.lineHeight, 
-		screenSize.x - (SCROLLBAR_WIDTH+SCROLLBAR_PADDING*2), 
+		screenSize.x, 
 		appData->testFont.lineHeight);
 	rec scrollBarGutterRec = NewRectangle(
-		screenSize.x - SCROLLBAR_WIDTH - SCROLLBAR_PADDING*2, 0, 
-		SCROLLBAR_WIDTH + SCROLLBAR_PADDING*2, screenSize.y);
+		screenSize.x - SCROLLBAR_WIDTH - SCROLLBAR_PADDING*2, 
+		0, 
+		SCROLLBAR_WIDTH + SCROLLBAR_PADDING*2, 
+		screenSize.y - toolbarRec.height);
 	char gutterNumberBuffer[10] = {};
 	r32 gutterWidth = 0;
 	for (i32 lineIndex = 0; lineIndex < appData->lineList.numLines; lineIndex++)
@@ -332,6 +356,8 @@ AppUpdate_DEFINITION(App_Update)
 		scrollBarGutterRec.height * (viewRec.height / fileHeight));
 	if (scrollBarRec.height < MIN_SCROLLBAR_HEIGHT)
 		scrollBarRec.height = MIN_SCROLLBAR_HEIGHT;
+	if (scrollBarRec.height > scrollBarGutterRec.height)
+		scrollBarRec.height = scrollBarGutterRec.height;
 	r32 maxScrollOffset = fileHeight - viewRec.height;
 	r32 scrollPercent = appData->scrollOffsetGoto / maxScrollOffset;
 	scrollBarRec.y = scrollBarGutterRec.y + (scrollBarGutterRec.height - scrollBarRec.height) * scrollPercent;
@@ -435,7 +461,6 @@ AppUpdate_DEFINITION(App_Update)
 	if (AppInput->buttons[Button_O].transCount > 0 && AppInput->buttons[Button_O].isDown &&
 		AppInput->buttons[Button_Control].isDown)
 	{
-		Menu_t* comMenu = GetMenuByName(&appData->menuHandler, "COM Menu");
 		Assert(comMenu != nullptr);
 		
 		if (comMenu->show)
@@ -473,6 +498,13 @@ AppUpdate_DEFINITION(App_Update)
 		{
 			OpenComPort(cIndex);
 		}
+	}
+	
+	if (PlatformInfo->windowResized)
+	{
+		comMenu->drawRec.topLeft = NewVec2(
+			PlatformInfo->screenSize.x / 2 - comMenu->drawRec.width/2,
+			PlatformInfo->screenSize.y / 2 - comMenu->drawRec.height/2);
 	}
 		
 	MenuHandlerUpdate(PlatformInfo, AppInput, &appData->menuHandler);
@@ -545,33 +577,42 @@ AppUpdate_DEFINITION(App_Update)
 	scrollPercent = appData->scrollOffsetGoto / maxScrollOffset;
 	scrollBarRec.y = scrollBarGutterRec.y + (scrollBarGutterRec.height - scrollBarRec.height) * scrollPercent;
 	
+	//+--------------------------------------+
+	//|           Rendering Setup            |
+	//+--------------------------------------+
+	RenderState_t* rs = &appData->renderState;
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_BLEND);
+	rs->SetViewport(NewRectangle(0, 0, screenSize.x, screenSize.y));
 	
 	glClearColor((Color_Background.r/255.f), (Color_Background.g/255.f), (Color_Background.b/255.f), 1.0f);
 	// glClearColor((200/255.f), (200/255.f), (200/255.f), 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	
-	appData->renderState.BindShader(&appData->simpleShader);
-	appData->renderState.BindFont(&appData->testFont);
-	appData->renderState.SetGradientEnabled(false);
+	rs->BindFrameBuffer(nullptr);
+	rs->BindShader(&appData->simpleShader);
+	rs->BindFont(&appData->testFont);
+	rs->SetGradientEnabled(false);
 	
 	Matrix4_t worldMatrix, viewMatrix, projMatrix;
 	viewMatrix = Matrix4_Identity;
 	projMatrix = Matrix4Scale(NewVec3(2.0f/PlatformInfo->screenSize.x, -2.0f/PlatformInfo->screenSize.y, 1.0f));
 	projMatrix = Mat4Mult(projMatrix, Matrix4Translate(NewVec3(-PlatformInfo->screenSize.x/2.0f, -PlatformInfo->screenSize.y/2.0f, 0.0f)));
-	appData->renderState.SetViewMatrix(viewMatrix);
-	appData->renderState.SetProjectionMatrix(projMatrix);
+	rs->SetViewMatrix(viewMatrix);
+	rs->SetProjectionMatrix(projMatrix);
 	
-	appData->renderState.DrawGradient(gutterRec, Color_UiGray1, Color_UiGray3, Direction2D_Right);
-	// appData->renderState.DrawGradient(NewRectangle(0, 0, 300, 300), color1, color2, Direction2D_Right);
+	rs->DrawGradient(gutterRec, Color_UiGray1, Color_UiGray3, Direction2D_Right);
+	// rs->DrawGradient(NewRectangle(0, 0, 300, 300), color1, color2, Direction2D_Right);
 	
+	//+--------------------------------------+
+	//|            Render Lines              |
+	//+--------------------------------------+
 	r32 lineHeight = appData->testFont.lineHeight + 2;
 	i32 firstLine = max(0, (i32)((r32)appData->scrollOffset / lineHeight));
 	i32 lastLine = min(appData->lineList.numLines, (i32)((r32)(appData->scrollOffset + viewRec.height) / lineHeight));
 	{//Items drawn relative to view
 		viewMatrix = Matrix4Translate(NewVec3(0, -appData->scrollOffset, 0));
-		appData->renderState.SetViewMatrix(viewMatrix);
+		rs->SetViewMatrix(viewMatrix);
 		
 		v2 currentPos = NewVec2(gutterWidth + 2, appData->testFont.maxExtendUp);
 		currentPos.y += firstLine * lineHeight;
@@ -581,24 +622,27 @@ AppUpdate_DEFINITION(App_Update)
 			v2 lineSize = MeasureLine(&appData->testFont, linePntr);
 			rec backRec = NewRectangle(currentPos.x, currentPos.y - appData->testFont.maxExtendUp, lineSize.x, appData->testFont.lineHeight);
 			backRec = RectangleInflate(backRec, 1);
-			// appData->renderState.DrawGradient(backRec, {0x80494949}, {0x80404040}, Direction2D_Down);
+			// rs->DrawGradient(backRec, {0x80494949}, {0x80404040}, Direction2D_Down);
 			
-			appData->renderState.PrintString(NewVec2(0, currentPos.y), {Color_White}, 1.0f, "%u", lineIndex+1);
+			rs->PrintString(NewVec2(0, currentPos.y), {Color_White}, 1.0f, "%u", lineIndex+1);
 			
 			DrawLine(appData, linePntr, currentPos);
 			
 			currentPos.y += lineHeight;
 		}
 		viewMatrix = Matrix4_Identity;
-		appData->renderState.SetViewMatrix(viewMatrix);
+		rs->SetViewMatrix(viewMatrix);
 	}
 	
-	appData->renderState.DrawGradient(toolbarRec, Color_UiGray1, Color_UiGray3, Direction2D_Right);
-	// appData->renderState.DrawGradient(NewRectangle(10, 10, 300, 300), color1, color2, Direction2D_Right);
-	appData->renderState.PrintString( 
+	//+--------------------------------------+
+	//|         Render UI Elements           |
+	//+--------------------------------------+
+	rs->DrawGradient(toolbarRec, Color_UiGray1, Color_UiGray3, Direction2D_Right);
+	// rs->DrawGradient(NewRectangle(10, 10, 300, 300), color1, color2, Direction2D_Right);
+	rs->PrintString( 
 		NewVec2(0, screenSize.y-appData->testFont.maxExtendDown), {Color_White}, 1.0f, 
 		"Heap: %u/%u used", appData->memArena.used, appData->memArena.size);
-	// appData->renderState.PrintString( 
+	// rs->PrintString( 
 	// 	NewVec2(0, screenSize.y-appData->testFont.maxExtendDown), {Color_White}, 1.0f, 
 	// 	"First: %d Last: %d", firstLine, lastLine);
 	// PrintString(appData, appData->testFont, 
@@ -606,9 +650,9 @@ AppUpdate_DEFINITION(App_Update)
 	// 	"%u Lines Offset: %f (%fpx long)", appData->lineList.numLines, appData->scrollOffset, fileHeight);
 	
 	//Draw Scrollbar
-	appData->renderState.DrawGradient(NewRectangle(scrollBarGutterRec.x - 8, 0, 8, screenSize.y), 
+	rs->DrawGradient(NewRectangle(scrollBarGutterRec.x - 8, scrollBarGutterRec.y, 8, scrollBarGutterRec.height), 
 		{Color_TransparentBlack}, {Color_HalfTransparentBlack}, Direction2D_Right);
-	appData->renderState.DrawGradient(scrollBarGutterRec, Color_Background, Color_UiGray3, Direction2D_Right);
+	rs->DrawGradient(scrollBarGutterRec, Color_Background, Color_UiGray3, Direction2D_Right);
 	
 	rec centerScrollBarRec = scrollBarRec;
 	centerScrollBarRec.y += scrollBarRec.width;
@@ -617,29 +661,48 @@ AppUpdate_DEFINITION(App_Update)
 	rec endCapRec = NewRectangle(scrollBarRec.x, scrollBarRec.y + scrollBarRec.height - scrollBarRec.width, scrollBarRec.width, scrollBarRec.width);
 	endCapRec.y += endCapRec.height;
 	endCapRec.height = -endCapRec.height;
-	appData->renderState.DrawRectangle(RectangleInflate(centerScrollBarRec, 1), Color_UiGray4);
-	appData->renderState.BindAlphaTexture(&appData->scrollBarEndcapTexture);
-	appData->renderState.DrawRectangle(RectangleInflate(startCapRec, 1), Color_UiGray4);
-	appData->renderState.DrawRectangle(RectangleInflate(endCapRec, 1), Color_UiGray4);
+	rs->DrawRectangle(RectangleInflate(centerScrollBarRec, 1), Color_UiGray4);
+	rs->BindAlphaTexture(&appData->scrollBarEndcapTexture);
+	rs->DrawRectangle(RectangleInflate(startCapRec, 1), Color_UiGray4);
+	rs->DrawRectangle(RectangleInflate(endCapRec, 1), Color_UiGray4);
 	
-	appData->renderState.DrawGradient(startCapRec, Color_UiGray1, Color_UiGray3, Direction2D_Right);
-	appData->renderState.DrawGradient(endCapRec, Color_UiGray1, Color_UiGray3, Direction2D_Right);
-	appData->renderState.DisableAlphaTexture();
-	appData->renderState.DrawGradient(centerScrollBarRec, Color_UiGray1, Color_UiGray3, Direction2D_Right);
+	rs->DrawGradient(startCapRec, Color_UiGray1, Color_UiGray3, Direction2D_Right);
+	rs->DrawGradient(endCapRec, Color_UiGray1, Color_UiGray3, Direction2D_Right);
+	rs->DisableAlphaTexture();
+	rs->DrawGradient(centerScrollBarRec, Color_UiGray1, Color_UiGray3, Direction2D_Right);
 	
 	MenuHandlerDrawMenus(PlatformInfo, AppInput, &appData->renderState, &appData->menuHandler);
 	
-	// DrawTexture(appData, appData->glyphTexture, NewRectangle(10, 10, 500, 500), {Color_White});
+	// DrawThings();
+	
+	//+--------------------------------------+
+	//|           Post Processing            |
+	//+--------------------------------------+
+	rs->BindFrameBuffer(&appData->frameBuffer);
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	
+	DrawThings(AppInput);
+	
+	rs->BindFrameBuffer(nullptr);
+	rs->BindShader(&appData->outlineShader);
+	rs->UpdateShader();
+	
+	
+	rs->SetSecondaryColor(NewColor(0, 0, 0, 20));
+	rs->BindTexture(&appData->frameTexture);
+	rs->DrawTexturedRec(NewRectangle(0, screenSize.y, (r32)appData->frameTexture.width, (r32)-appData->frameTexture.height), {Color_White});
+	
 	
 	// DrawCircle(appData, AppInput->mouseStartPos[MouseButton_Left], AppInput->mouseMaxDist[MouseButton_Left], {Color_Red});
 	// DrawCircle(appData, AppInput->mouseStartPos[MouseButton_Right], AppInput->mouseMaxDist[MouseButton_Right], {Color_Blue});
 	// DrawCircle(appData, AppInput->mouseStartPos[MouseButton_Middle], AppInput->mouseMaxDist[MouseButton_Middle], {Color_Green});
 	
-	// appData->renderState.DrawRectangle(scrollBarGutterRec, {Color_Red});
-	// appData->renderState.DrawRectangle(scrollBarRec, {Color_Blue});
-	// appData->renderState.DrawRectangle(NewRectangle(0, 0, gutterWidth, screenSize.y), {Color_Orange});
-	// appData->renderState.DrawRectangle(toolbarRec, {Color_Yellow});
-	// appData->renderState.DrawRectangle(toolbarRec, {Color_Yellow});
+	// rs->DrawRectangle(toolbarRec, {Color_Yellow});
+	// rs->DrawRectangle(scrollBarGutterRec, {Color_Red});
+	// rs->DrawRectangle(scrollBarRec, {Color_Blue});
+	// rs->DrawRectangle(NewRectangle(0, 0, gutterWidth, screenSize.y - toolbarRec.height), {Color_Orange});
+	// rs->DrawRectangle(toolbarRec, {Color_Yellow});
 }
 
 //+================================================================+

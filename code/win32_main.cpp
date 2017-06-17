@@ -28,16 +28,16 @@ Description:
 #define WINDOW_TITLE              "Const Port"
 #define APPLICATION_DLL_NAME      "ConstPort.dll"
 #define APPLICATION_DLL_TEMP_NAME "ConstPort_TEMP.dll"
-#define WINDOW_WIDTH              1200
-#define WINDOW_HEIGHT             700
+#define WINDOW_WIDTH              600
+#define WINDOW_HEIGHT             350
 #define WINDOW_MIN_WIDTH          600
 #define WINDOW_MIN_HEIGHT         350
 #define WINDOW_MAX_WIDTH          1920
 #define WINDOW_MAX_HEIGHT         1080
 #define WINDOW_ASPECT_RATIO       16,9
 #define ALLOW_RESIZE_WINDOW       true
-#define TOPMOST_WINDOW            false
-#define OPEN_CONSOLE_WINDOW       false
+#define TOPMOST_WINDOW            true
+#define OPEN_CONSOLE_WINDOW       true
 
 //NOTE: This must match resource.h in build directory!
 #define IDI_ICON1               101
@@ -349,6 +349,8 @@ int WINAPI WinMain(HINSTANCE hInstance,
 		{
 			currentInput->buttons[bIndex].transCount = 0;
 		}
+		
+		platformInfo.windowResized = false;
 		
 		// Set the user pointer on the window so we can access 
 		// the input from the callbacks

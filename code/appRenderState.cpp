@@ -30,6 +30,11 @@ void InitializeRenderState(const PlatformInfo_t* PlatformInfo, RenderState_t* re
 	
 	Color_t textureData = {Color_White};
 	renderState->dotTexture = CreateTexture((u8*)&textureData, 1, 1);
+	
+	renderState->viewport = NewRectangle(0, 0, (r32)PlatformInfo->screenSize.x, (r32)PlatformInfo->screenSize.y);
+	renderState->worldMatrix = Matrix4_Identity;
+	renderState->viewMatrix = Matrix4_Identity;
+	renderState->projectionMatrix = Matrix4_Identity;
 }
 
 
@@ -43,6 +48,57 @@ void RenderState_t::BindShader(const Shader_t* shaderPntr)
 	glUseProgram(shaderPntr->programId);
 }
 
+void RenderState_t::UpdateShader()
+{
+	Assert(this->boundShader != nullptr);
+	
+	if (this->boundBuffer != nullptr)
+	{
+		glBindVertexArray(this->boundShader->vertexArray);
+		glBindBuffer(GL_ARRAY_BUFFER, this->boundBuffer->id);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex_t), (void*)0);
+		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex_t), (void*)sizeof(v3));
+		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex_t), (void*)(sizeof(v3)+sizeof(v4)));
+	}
+	if (this->boundTexture != nullptr)
+	{
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, this->boundTexture->id);
+		glUniform1i(this->boundShader->diffuseTextureLocation, 0);
+		glUniform2f(this->boundShader->textureSizeLocation, (r32)this->boundTexture->width, (r32)this->boundTexture->height);
+	}
+	if (this->boundAlphaTexture != nullptr)
+	{
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, this->boundAlphaTexture->id);
+		glUniform1i(this->boundShader->alphaTextureLocation, 1);
+		glUniform1i(this->boundShader->useAlphaTextureLocation, 1);
+	}
+	else
+	{
+		glUniform1i(this->boundShader->useAlphaTextureLocation, 0);
+	}
+	if (this->boundFrameBuffer != nullptr)
+	{
+		glBindFramebuffer(GL_FRAMEBUFFER, this->boundFrameBuffer->id);
+	}
+	else
+	{
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	}
+	
+	glViewport(
+		(i32)this->viewport.x, 
+		(i32)this->viewport.y, 
+		(i32)this->viewport.width, 
+		(i32)this->viewport.height
+	);
+	
+	glUniformMatrix4fv(this->boundShader->worldMatrixLocation,      1, GL_FALSE, &this->worldMatrix.values[0][0]);
+	glUniformMatrix4fv(this->boundShader->viewMatrixLocation,       1, GL_FALSE, &this->viewMatrix.values[0][0]);
+	glUniformMatrix4fv(this->boundShader->projectionMatrixLocation, 1, GL_FALSE, &this->projectionMatrix.values[0][0]);
+}
+
 void RenderState_t::BindFont(const Font_t* fontPntr)
 {
 	this->boundFont = fontPntr;
@@ -53,8 +109,9 @@ void RenderState_t::BindTexture(const Texture_t* texturePntr)
 	this->boundTexture = texturePntr;
 	
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, texturePntr->id);
+	glBindTexture(GL_TEXTURE_2D, this->boundTexture->id);
 	glUniform1i(this->boundShader->diffuseTextureLocation, 0);
+	glUniform2f(this->boundShader->textureSizeLocation, (r32)this->boundTexture->width, (r32)this->boundTexture->height);
 }
 
 void RenderState_t::BindAlphaTexture(const Texture_t* texturePntr)
@@ -84,17 +141,46 @@ void RenderState_t::BindBuffer(const VertexBuffer_t* vertBufferPntr)
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex_t), (void*)(sizeof(v3)+sizeof(v4)));
 }
 
+void RenderState_t::BindFrameBuffer(const FrameBuffer_t* frameBuffer)
+{
+	this->boundFrameBuffer = frameBuffer;
+	
+	if (frameBuffer == nullptr)
+	{
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	}
+	else
+	{
+		glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer->id);
+	}
+}
+
 void RenderState_t::SetWorldMatrix(const Matrix4_t& worldMatrix)
 {
+	this->worldMatrix = worldMatrix;
 	glUniformMatrix4fv(this->boundShader->worldMatrixLocation, 1, GL_FALSE, &worldMatrix.values[0][0]);
 }
 void RenderState_t::SetViewMatrix(const Matrix4_t& viewMatrix)
 {
+	this->viewMatrix = viewMatrix;
 	glUniformMatrix4fv(this->boundShader->viewMatrixLocation, 1, GL_FALSE, &viewMatrix.values[0][0]);
 }
 void RenderState_t::SetProjectionMatrix(const Matrix4_t& projectionMatrix)
 {
+	this->projectionMatrix = projectionMatrix;
 	glUniformMatrix4fv(this->boundShader->projectionMatrixLocation, 1, GL_FALSE, &projectionMatrix.values[0][0]);
+}
+
+void RenderState_t::SetViewport(rec viewport)
+{
+	this->viewport = viewport;
+	
+	glViewport(
+		(i32)this->viewport.x, 
+		(i32)this->viewport.y, 
+		(i32)this->viewport.width, 
+		(i32)this->viewport.height
+	);
 }
 
 void RenderState_t::SetColor(Color_t color)
