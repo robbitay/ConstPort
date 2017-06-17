@@ -15,6 +15,7 @@ struct Line_t
 	char* chars;
 	
 	Color_t color;
+	u64 timestamp;
 };
 
 struct LineList_t

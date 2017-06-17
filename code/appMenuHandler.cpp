@@ -174,12 +174,6 @@ void MenuHandlerDrawMenus(const PlatformInfo_t* PlatformInfo, const AppInput_t* 
 		if (menuPntr->show)
 		{
 			UpdateMenuRecs(menuPntr);
-			rec closeRec = NewRectangle(
-				menuPntr->titleBarRec.x + menuPntr->titleBarRec.width - menuPntr->titleBarRec.height, 
-				menuPntr->titleBarRec.y,
-				menuPntr->titleBarRec.height,
-				menuPntr->titleBarRec.height);
-			closeRec = RectangleInflate(closeRec, -5);
 			
 			menuPntr->titleBarColor = Color_UiGray3;
 			menuPntr->backgroundColor = Color_UiGray1;
@@ -189,14 +183,24 @@ void MenuHandlerDrawMenus(const PlatformInfo_t* PlatformInfo, const AppInput_t* 
 			
 			renderState->DrawRectangle(menuPntr->titleBarRec, menuPntr->titleBarColor);
 			
-			renderState->BindTexture(&menuHandler->closeTexture);
-			if (IsInsideRectangle(AppInput->mousePos, closeRec))
+			if (menuPntr->titleBarSize > 0)
 			{
-				renderState->DrawTexturedRec(closeRec, {Color_Gray});
-			}
-			else
-			{
-				renderState->DrawTexturedRec(closeRec, {Color_White});
+				rec closeRec = NewRectangle(
+					menuPntr->titleBarRec.x + menuPntr->titleBarRec.width - menuPntr->titleBarRec.height, 
+					menuPntr->titleBarRec.y,
+					menuPntr->titleBarRec.height,
+					menuPntr->titleBarRec.height);
+				closeRec = RectangleInflate(closeRec, -5);
+				
+				renderState->BindTexture(&menuHandler->closeTexture);
+				if (IsInsideRectangle(AppInput->mousePos, closeRec))
+				{
+					renderState->DrawTexturedRec(closeRec, {Color_Gray});
+				}
+				else
+				{
+					renderState->DrawTexturedRec(closeRec, {Color_White});
+				}
 			}
 			
 			renderState->DrawRectangle(NewRectangle(

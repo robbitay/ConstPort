@@ -199,6 +199,193 @@ void ComMenuRender(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 	}
 }
 
+void ContextMenuUpdate(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInput, MenuHandler_t* menuHandler, Menu_t* menu)
+{
+	AppData_t* appData = GL_AppData;
+	
+	char printBuffer[256] = {};
+	v2 mousePos = NewVec2(AppInput->mousePos.x, AppInput->mousePos.y);
+	r32 gutterWidth = 0;
+	if (gutterWidth < MIN_GUTTER_WIDTH)
+		gutterWidth = MIN_GUTTER_WIDTH;
+	for (i32 lineIndex = 0; lineIndex < appData->lineList.numLines; lineIndex++)
+	{
+		ClearArray(printBuffer);
+		snprintf(printBuffer, ArrayCount(printBuffer)-1, "%u", lineIndex+1);
+		v2 stringSize = MeasureString(&appData->testFont, printBuffer);
+		if (stringSize.x > gutterWidth)
+		{
+			gutterWidth = stringSize.x;
+		}
+	}
+	gutterWidth += 2;
+	TextLocation_t hoverLocation = PointToTextLocation(&appData->lineList, &appData->testFont, 
+		mousePos - NewVec2(LINE_SPACING + gutterWidth, -appData->scrollOffset));
+	ClearArray(printBuffer);
+	
+	if (mousePos.x <= gutterWidth && AppInput->buttons[Button_Control].isDown)
+	{
+		Line_t* linePntr = GetLineAt(&appData->lineList, hoverLocation.lineNum);
+		
+		if (linePntr != nullptr && linePntr->timestamp != 0)
+		{
+			RealTime_t lineTime = RealTimeAt(linePntr->timestamp);
+			// rs->PrintString( 
+			// 	NewVec2(400, screenSize.y-appData->testFont.maxExtendDown), {Color_White}, 1.0f, 
+			// 	"%s %u:%02u%s (%s %s, %u) [%u]",
+			// 	GetDayOfWeekStr(GetDayOfWeek(lineTime)), 
+			// 	Convert24HourTo12Hour(lineTime.hour), lineTime.minute,
+			// 	IsPostMeridian(lineTime.hour) ? "pm" : "am",
+			// 	GetMonthStr((Month_t)lineTime.month), GetDayOfMonthString(lineTime.day), lineTime.year,
+			// 	hoverLine->timestamp);
+			// if (AppInput->buttons[MouseButton_Left].isDown)
+			// {
+			// 	int asdasd = 0;
+			// }
+			i64 secondsDifference = SubtractTimes(PlatformInfo->localTime, lineTime, TimeUnit_Seconds);
+			i64 absDifference = Abs64i(secondsDifference);
+			u32 numDays = (u32)(absDifference/(60*60*24));
+			u32 numHours = (u32)(absDifference/(60*60)) - (numDays*24);
+			u32 numMinutes = (u32)(absDifference/60) - (numDays*60*24) - (numHours*60);
+			u32 numSeconds = (u32)(absDifference) - (numDays*60*60*24) - (numHours*60*60) - (numMinutes*60);
+			// DEBUG_PrintLine("Diff %d", secondsDifference);
+			if (numDays > 0)
+			{
+				snprintf(printBuffer, sizeof(printBuffer)-1,  
+					"%ud %uh %um %us %s", numDays, numHours, numMinutes, numSeconds,
+					secondsDifference >= 0 ? "Ago" : "In the future?");
+			}
+			else if (numHours > 0)
+			{
+				snprintf(printBuffer, sizeof(printBuffer)-1,  
+					"%uh %um %us %s", numHours, numMinutes, numSeconds,
+					secondsDifference >= 0 ? "Ago" : "In the future?");
+			}
+			else if (numMinutes > 0)
+			{
+				snprintf(printBuffer, sizeof(printBuffer)-1,  
+					"%um %us %s", numMinutes, numSeconds,
+					secondsDifference >= 0 ? "Ago" : "In the future?");
+			}
+			else
+			{
+				snprintf(printBuffer, sizeof(printBuffer)-1,  
+					"%us %s", numSeconds, 
+					secondsDifference >= 0 ? "Ago" : "In the future?");
+			}
+			// snprintf(printBuffer, sizeof(printBuffer)-1, "Timestamp: %llu", linePntr->timestamp);
+		}
+		else
+		{
+			menu->show = false;
+			return;
+		}
+	}
+	else
+	{
+		menu->show = false;
+		return;
+	}
+	
+	v2 textSize = MeasureString(&appData->testFont, printBuffer);
+	
+	menu->drawRec.size = textSize;
+	menu->drawRec = RectangleInflate(menu->drawRec, 5);
+	menu->drawRec.topLeft = mousePos + NewVec2(0, -menu->drawRec.height);
+	UpdateMenuRecs(menu);
+}
+void ContextMenuRender(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInput, RenderState_t* renderState, MenuHandler_t* menuHandler, Menu_t* menu)
+{
+	AppData_t* appData = GL_AppData;
+	
+	char printBuffer[256] = {};
+	v2 mousePos = NewVec2(AppInput->mousePos.x, AppInput->mousePos.y);
+	r32 gutterWidth = 0;
+	if (gutterWidth < MIN_GUTTER_WIDTH)
+		gutterWidth = MIN_GUTTER_WIDTH;
+	for (i32 lineIndex = 0; lineIndex < appData->lineList.numLines; lineIndex++)
+	{
+		ClearArray(printBuffer);
+		snprintf(printBuffer, ArrayCount(printBuffer)-1, "%u", lineIndex+1);
+		v2 stringSize = MeasureString(&appData->testFont, printBuffer);
+		if (stringSize.x > gutterWidth)
+		{
+			gutterWidth = stringSize.x;
+		}
+	}
+	gutterWidth += 2;
+	TextLocation_t hoverLocation = PointToTextLocation(&appData->lineList, &appData->testFont, 
+		mousePos - NewVec2(LINE_SPACING + gutterWidth, -appData->scrollOffset));
+	ClearArray(printBuffer);
+	
+	if (mousePos.x <= gutterWidth && AppInput->buttons[Button_Control].isDown)
+	{
+		Line_t* linePntr = GetLineAt(&appData->lineList, hoverLocation.lineNum);
+		
+		if (linePntr != nullptr && linePntr->timestamp != 0)
+		{
+			RealTime_t lineTime = RealTimeAt(linePntr->timestamp);
+			// rs->PrintString( 
+			// 	NewVec2(400, screenSize.y-appData->testFont.maxExtendDown), {Color_White}, 1.0f, 
+			// 	"%s %u:%02u%s (%s %s, %u) [%u]",
+			// 	GetDayOfWeekStr(GetDayOfWeek(lineTime)), 
+			// 	Convert24HourTo12Hour(lineTime.hour), lineTime.minute,
+			// 	IsPostMeridian(lineTime.hour) ? "pm" : "am",
+			// 	GetMonthStr((Month_t)lineTime.month), GetDayOfMonthString(lineTime.day), lineTime.year,
+			// 	hoverLine->timestamp);
+			// if (AppInput->buttons[MouseButton_Left].isDown)
+			// {
+			// 	int asdasd = 0;
+			// }
+			i64 secondsDifference = SubtractTimes(PlatformInfo->localTime, lineTime, TimeUnit_Seconds);
+			i64 absDifference = Abs64i(secondsDifference);
+			u32 numDays = (u32)(absDifference/(60*60*24));
+			u32 numHours = (u32)(absDifference/(60*60)) - (numDays*24);
+			u32 numMinutes = (u32)(absDifference/60) - (numDays*60*24) - (numHours*60);
+			u32 numSeconds = (u32)(absDifference) - (numDays*60*60*24) - (numHours*60*60) - (numMinutes*60);
+			// DEBUG_PrintLine("Diff %d", secondsDifference);
+			if (numDays > 0)
+			{
+				snprintf(printBuffer, sizeof(printBuffer)-1,  
+					"%ud %uh %um %us %s", numDays, numHours, numMinutes, numSeconds,
+					secondsDifference >= 0 ? "Ago" : "In the future?");
+			}
+			else if (numHours > 0)
+			{
+				snprintf(printBuffer, sizeof(printBuffer)-1,  
+					"%uh %um %us %s", numHours, numMinutes, numSeconds,
+					secondsDifference >= 0 ? "Ago" : "In the future?");
+			}
+			else if (numMinutes > 0)
+			{
+				snprintf(printBuffer, sizeof(printBuffer)-1,  
+					"%um %us %s", numMinutes, numSeconds,
+					secondsDifference >= 0 ? "Ago" : "In the future?");
+			}
+			else
+			{
+				snprintf(printBuffer, sizeof(printBuffer)-1,  
+					"%us %s", numSeconds, 
+					secondsDifference >= 0 ? "Ago" : "In the future?");
+			}
+			// snprintf(printBuffer, sizeof(printBuffer)-1, "Timestamp: %llu", linePntr->timestamp);
+		}
+		else
+		{
+			menu->show = false;
+			return;
+		}
+	}
+	else
+	{
+		menu->show = false;
+		return;
+	}
+	
+	v2 textPos = menu->usableRec.topLeft + NewVec2(5, appData->testFont.maxExtendUp);
+	appData->renderState.DrawString(printBuffer, textPos, Color_Foreground);
+}
+
 //+================================================================+
 //|                       App Get Version                          |
 //+================================================================+
@@ -242,6 +429,10 @@ AppInitialize_DEFINITION(App_Initialize)
 	Menu_t* comMenu = AddMenu(&appData->menuHandler, "COM Menu", NewRectangle((r32)screenSize.x / 2 - 50, (r32)screenSize.y / 2 - 150, 100, 300),
 		ComMenuUpdate, ComMenuRender);
 	comMenu->show = false;
+	Menu_t* contextMenu = AddMenu(&appData->menuHandler, "Context Menu", NewRectangle(0, 0, 100, 100),
+		ContextMenuUpdate, ContextMenuRender);
+	contextMenu->titleBarSize = 0;
+	contextMenu->show = true;
 	
 	appData->simpleShader = LoadShader(
 		"Resources/Shaders/simple-vertex.glsl",
@@ -289,6 +480,10 @@ AppReloaded_DEFINITION(App_Reloaded)
 	menuPntr->specialPntr = nullptr;
 	menuPntr->updateFunctionPntr = ComMenuUpdate;
 	menuPntr->renderFunctionPntr = ComMenuRender;
+	menuPntr = GetMenuByName(&appData->menuHandler, "Context Menu");
+	menuPntr->specialPntr = nullptr;
+	menuPntr->updateFunctionPntr = ContextMenuUpdate;
+	menuPntr->renderFunctionPntr = ContextMenuRender;
 }
 
 void DrawThings(const AppInput_t* AppInput)
@@ -297,9 +492,9 @@ void DrawThings(const AppInput_t* AppInput)
 	RenderState_t* rs = &appData->renderState;
 	
 	rs->BindTexture(&appData->testTexture);
-	rs->DrawTexturedRec(NewRectangle(10, 10, 500, 500), {Color_White});
-	rs->DrawTexturedRec(NewRectangle(90, 70, 500, 500), {Color_White});
-	rs->DrawTexturedRec(NewRectangle(AppInput->mousePos.x - 250, AppInput->mousePos.y - 250, 500, 500), {Color_White});
+	rs->DrawTexturedRec(NewRectangle(10, 10, 500, 500), {Color_Yellow});
+	rs->DrawTexturedRec(NewRectangle(90, 70, 500, 500), {Color_Red});
+	rs->DrawTexturedRec(NewRectangle(AppInput->mousePos.x - 250, AppInput->mousePos.y - 250, 500, 500), {Color_Blue});
 }
 
 //+================================================================+
@@ -313,6 +508,7 @@ AppUpdate_DEFINITION(App_Update)
 	GL_AppData = appData;
 	
 	Menu_t* comMenu = GetMenuByName(&appData->menuHandler, "COM Menu");
+	Menu_t* contextMenu = GetMenuByName(&appData->menuHandler, "Context Menu");
 	Color_t color1 = ColorFromHSV((i32)(PlatformInfo->programTime*180) % 360, 1.0f, 1.0f);
 	Color_t color2 = ColorFromHSV((i32)(PlatformInfo->programTime*180 + 125) % 360, 1.0f, 1.0f);
 	v2 mousePos = AppInput->mousePos;
@@ -378,6 +574,11 @@ AppUpdate_DEFINITION(App_Update)
 		PlatformInfo->FreeFileMemoryPntr(&testFile);
 	}
 	#endif
+	
+	if (mousePos.x <= gutterWidth && AppInput->buttons[Button_Control].isDown)
+	{
+		contextMenu->show = true;
+	}
 	
 	if (appData->comPort.isOpen)
 	{
@@ -588,6 +789,8 @@ AppUpdate_DEFINITION(App_Update)
 		appData->scrollOffset += gotoOffset / SCROLL_SPEED_DIVIDER;
 	}
 	
+	hoverLocation = PointToTextLocation(&appData->lineList, &appData->testFont, 
+		mousePos - NewVec2(LINE_SPACING + gutterWidth, -appData->scrollOffset));
 	scrollPercent = appData->scrollOffsetGoto / maxScrollOffset;
 	scrollBarRec.y = scrollBarGutterRec.y + (scrollBarGutterRec.height - scrollBarRec.height) * scrollPercent;
 	
@@ -634,15 +837,18 @@ AppUpdate_DEFINITION(App_Update)
 			{
 				Line_t* linePntr = GetLineAt(&appData->lineList, lineIndex);
 				v2 lineSize = MeasureLine(&appData->testFont, linePntr);
-				rec backRec = NewRectangle(currentPos.x, currentPos.y - appData->testFont.maxExtendUp, lineSize.x, appData->testFont.lineHeight);
-				backRec = RectangleInflate(backRec, 1);
-				// rs->DrawGradient(backRec, {0x80494949}, {0x80404040}, Direction2D_Down);
+				rec backRec = NewRectangle(currentPos.x, currentPos.y - appData->testFont.maxExtendUp, viewRec.width, appData->testFont.lineHeight);
+				// backRec = RectangleInflate(backRec, 1);
+				if (lineIndex == hoverLocation.lineNum && IsInsideRectangle(mousePos, viewRec))
+				{
+					rs->DrawRectangle(backRec, Color_UiGray3);
+				}
 				
 				rs->PrintString(NewVec2(0, currentPos.y), {Color_White}, 1.0f, "%u", lineIndex+1);
 				
 				DrawLine(appData, linePntr, currentPos);
 				
-				if (lineIndex == hoverLocation.lineNum)
+				if (lineIndex == hoverLocation.lineNum && IsInsideRectangle(mousePos, viewRec))
 				{
 					v2 skipSize = MeasureString(&appData->testFont, linePntr->chars, hoverLocation.charIndex);
 					rec cursorRec = backRec;
@@ -666,9 +872,66 @@ AppUpdate_DEFINITION(App_Update)
 	// rs->PrintString( 
 	// 	NewVec2(0, screenSize.y-appData->testFont.maxExtendDown), {Color_White}, 1.0f, 
 	// 	"Heap: %u/%u used", appData->memArena.used, appData->memArena.size);
-	rs->PrintString( 
-		NewVec2(0, screenSize.y-appData->testFont.maxExtendDown), {Color_White}, 1.0f, 
-		"Hover Location: Line %d Char %d", hoverLocation.lineNum+1, hoverLocation.charIndex);
+	// rs->PrintString( 
+	// 	NewVec2(0, screenSize.y-appData->testFont.maxExtendDown), {Color_White}, 1.0f, 
+	// 	"Hover Location: Line %d Char %d", hoverLocation.lineNum+1, hoverLocation.charIndex);
+	// rs->PrintString( 
+	// 	NewVec2(0, screenSize.y-appData->testFont.maxExtendDown), {Color_White}, 1.0f, 
+	// 	"%s %u:%02u%s (%s %s, %u) [%u]",
+	// 	GetDayOfWeekStr(GetDayOfWeek(PlatformInfo->localTime)), 
+	// 	Convert24HourTo12Hour(PlatformInfo->localTime.hour), PlatformInfo->localTime.minute,
+	// 	IsPostMeridian(PlatformInfo->localTime.hour) ? "pm" : "am",
+	// 	GetMonthStr((Month_t)PlatformInfo->localTime.month), GetDayOfMonthString(PlatformInfo->localTime.day), PlatformInfo->localTime.year,
+	// 	GetTimestamp(PlatformInfo->localTime));
+	Line_t* hoverLine = GetLineAt(&appData->lineList, hoverLocation.lineNum);
+	RealTime_t lineTime = RealTimeAt(hoverLine->timestamp);
+	// rs->PrintString( 
+	// 	NewVec2(400, screenSize.y-appData->testFont.maxExtendDown), {Color_White}, 1.0f, 
+	// 	"%s %u:%02u%s (%s %s, %u) [%u]",
+	// 	GetDayOfWeekStr(GetDayOfWeek(lineTime)), 
+	// 	Convert24HourTo12Hour(lineTime.hour), lineTime.minute,
+	// 	IsPostMeridian(lineTime.hour) ? "pm" : "am",
+	// 	GetMonthStr((Month_t)lineTime.month), GetDayOfMonthString(lineTime.day), lineTime.year,
+	// 	hoverLine->timestamp);
+	// if (AppInput->buttons[MouseButton_Left].isDown)
+	// {
+	// 	int asdasd = 0;
+	// }
+	i64 secondsDifference = SubtractTimes(PlatformInfo->localTime, lineTime, TimeUnit_Seconds);
+	i64 absDifference = Abs64i(secondsDifference);
+	u32 numDays = (u32)(absDifference/(60*60*24));
+	u32 numHours = (u32)(absDifference/(60*60)) - (numDays*24);
+	u32 numMinutes = (u32)(absDifference/60) - (numDays*60*24) - (numHours*60);
+	u32 numSeconds = (u32)(absDifference) - (numDays*60*60*24) - (numHours*60*60) - (numMinutes*60);
+	// DEBUG_PrintLine("Diff %d", secondsDifference);
+	if (numDays > 0)
+	{
+		rs->PrintString( 
+			NewVec2(0, screenSize.y-appData->testFont.maxExtendDown), {Color_White}, 1.0f, 
+			"%ud %uh %um %us %s", numDays, numHours, numMinutes, numSeconds,
+			secondsDifference >= 0 ? "Ago" : "In the future?");
+	}
+	else if (numHours > 0)
+	{
+		rs->PrintString( 
+			NewVec2(0, screenSize.y-appData->testFont.maxExtendDown), {Color_White}, 1.0f, 
+			"%uh %um %us %s", numHours, numMinutes, numSeconds,
+			secondsDifference >= 0 ? "Ago" : "In the future?");
+	}
+	else if (numMinutes > 0)
+	{
+		rs->PrintString( 
+			NewVec2(0, screenSize.y-appData->testFont.maxExtendDown), {Color_White}, 1.0f, 
+			"%um %us %s", numMinutes, numSeconds,
+			secondsDifference >= 0 ? "Ago" : "In the future?");
+	}
+	else
+	{
+		rs->PrintString( 
+			NewVec2(0, screenSize.y-appData->testFont.maxExtendDown), {Color_White}, 1.0f, 
+			"%us %s", numSeconds, 
+			secondsDifference >= 0 ? "Ago" : "In the future?");
+	}
 	// rs->PrintString( 
 	// 	NewVec2(0, screenSize.y-appData->testFont.maxExtendDown), {Color_White}, 1.0f, 
 	// 	"First: %d Last: %d", firstLine, lastLine);
@@ -716,6 +979,7 @@ AppUpdate_DEFINITION(App_Update)
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	
+	// DrawThings(AppInput);
 	//+--------------------------------------+
 	//|          Render Selection            |
 	//+--------------------------------------+

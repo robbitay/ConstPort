@@ -19,6 +19,7 @@ Description:
 #include "win32_intrinsics.h"
 #include "myMath.h"
 #include "win32_com.h"
+#include "timeStructs.h"
 
 struct FileInfo_t
 {
@@ -93,6 +94,8 @@ struct PlatformInfo_t
 	
 	r64 timeDelta;
 	r64 programTime;
+	RealTime_t systemTime;
+	RealTime_t localTime;
 	
 	GLFWwindow* window;
 };

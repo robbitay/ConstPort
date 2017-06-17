@@ -59,6 +59,11 @@ inline void LineAppend(LineList_t* lineList, Line_t* line, char newCharacter)
 	ArenaPop(lineList->arenaPntr, line->chars);
 	line->chars = newLocation;
 	line->chars[line->numChars] = newCharacter;
+	//First Character to come in on this line, record the timestamp
+	if (line->numChars == 0)
+	{
+		line->timestamp = GetTimestamp(Gl_PlatformInfo->localTime);
+	}
 	line->numChars++;
 	line->chars[line->numChars] = '\0';
 }

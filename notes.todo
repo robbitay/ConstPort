@@ -8,20 +8,23 @@
 	[X] Read text input and write it to the COM port
 	[ ] Adjust Baud Rate, Parity, Stop Bits and Flow Control
 	[ ] Clear buffer button
-	[ ] Text selection
+	[X] Text selection
 	[ ] Copy to clipboard
 	[ ] Paste from clipboard
 	[X] Add a AppReloaded function that gets called when the DLL is reloaded but not reset
 	[ ] Horizontal Scrolling
 	[ ] Status bar messages from anywhere in the program
 	[ ] Fix scrollbar so that it doesn't keep sliding when we have grabbed it
-	[!] Add an excape icon to windows
+	[X] Add an escape icon to windows
+	[!] Fix scrollbar dissappear when grabbed on empty screen
+	[!] Fix selection render order
+	[!] Add a shortcut for showing full date time format on line number hover
 
 # Application Wish List
 	[ ] Read multiple COM ports side by side.
 	[ ] Little software LEDs to show flow control.
 	[ ] Click on flow control to toggle CTS
-	[ ] Timestamps on each line. Hover over line number to show timestamp
+	[X] Timestamps on each line. Hover over line number to show timestamp (Preferably with times difference formatting)
 	[ ] Set up regular expressions to define color of each line
 	[ ] Special characters for invalid ANSI characters
 	[ ] Hex string mode
@@ -33,7 +36,8 @@
 	[ ] Command board with configurable command buttons
 	[ ] Save configurations to a file and load on startup
 	[ ] Try to auto-connect to last opened COM port on startup
-	[ ] Add a mark to a line by clicking on line number or shortcut
+	[!] Add a mark to a line by clicking on line number or shortcut
+	[ ] Automatically add marks to lines when a certain amount of time has passed between characters receives
 	[ ] 
 
 # Platform Layer TODO List
@@ -41,4 +45,5 @@
 	[ ] Delete all OpenGL objects when we reset the application
 	[X] Add a mouse start press and max distance since pressed to AppInput
 	[ ] Move recent changes and reusable functions into a starter project for later use
+	[!] Get the real time
 	[ ] 

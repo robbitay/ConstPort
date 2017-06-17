@@ -369,6 +369,28 @@ int WINAPI WinMain(HINSTANCE hInstance,
 		platformInfo.programTime = glfwGetTime();
 		platformInfo.timeDelta = platformInfo.programTime - lastTime;
 		
+		SYSTEMTIME systemTime = {};
+		SYSTEMTIME localTime = {};
+		GetSystemTime(&systemTime);
+		GetLocalTime(&localTime);
+		
+		platformInfo.systemTime = {};
+		platformInfo.systemTime.year        = systemTime.wYear;
+		platformInfo.systemTime.month       = (systemTime.wMonth-1);
+		platformInfo.systemTime.day         = (systemTime.wDay-1);
+		platformInfo.systemTime.hour        = systemTime.wHour;
+		platformInfo.systemTime.minute      = systemTime.wMinute;
+		platformInfo.systemTime.second      = systemTime.wSecond;
+		platformInfo.systemTime.millisecond = systemTime.wMilliseconds;
+		platformInfo.localTime = {};
+		platformInfo.localTime.year         = localTime.wYear;
+		platformInfo.localTime.month        = (localTime.wMonth-1);
+		platformInfo.localTime.day          = (localTime.wDay-1);
+		platformInfo.localTime.hour         = localTime.wHour;
+		platformInfo.localTime.minute       = localTime.wMinute;
+		platformInfo.localTime.second       = localTime.wSecond;
+		platformInfo.localTime.millisecond  = localTime.wMilliseconds;
+		
 		ClearStruct(appOutput);
 		loadedApp.AppUpdatePntr(&platformInfo, &appMemory, currentInput, &appOutput);
 		
