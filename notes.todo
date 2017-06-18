@@ -10,9 +10,9 @@
 	[ ] Ability to set Flow Control mode
 	[ ] Clear buffer button
 	[X] Text selection
-	[!] Copy to clipboard
+	[X] Copy to clipboard
 	[!] Copy to file
-	[ ] Paste from clipboard
+	[!] Paste from clipboard
 	[X] Add a AppReloaded function that gets called when the DLL is reloaded but not reset
 	[ ] Horizontal Scrolling
 	[ ] Status bar messages from anywhere in the program

@@ -37,7 +37,7 @@ Description:
 #define WINDOW_ASPECT_RATIO       16,9
 #define ALLOW_RESIZE_WINDOW       true
 #define TOPMOST_WINDOW            true
-#define OPEN_CONSOLE_WINDOW       true
+#define OPEN_CONSOLE_WINDOW       DEBUG
 
 //NOTE: This must match resource.h in build directory!
 #define IDI_ICON1               101
@@ -251,45 +251,47 @@ int WINAPI WinMain(HINSTANCE hInstance,
 	AppOutput_t appOutput = {};
 	while (glfwWindowShouldClose(window) == false)
 	{
-		//TOOD: Delay this so we don't get double loads
-		//Check to see if we should reload the application DLL
-		FILETIME newDllFiletime = GetFileWriteTime(appDllFullPath);
-		if (CompareFileTime(&newDllFiletime, &loadedApp.lastWriteTime) != 0)
-		{
-			FreeDllCode(&loadedApp);
-			
-			if (LoadDllCode(appDllFullPath, tempDllFullPath, &loadedApp))
+		#if DEBUG
+			//TOOD: Delay this so we don't get double loads
+			//Check to see if we should reload the application DLL
+			FILETIME newDllFiletime = GetFileWriteTime(appDllFullPath);
+			if (CompareFileTime(&newDllFiletime, &loadedApp.lastWriteTime) != 0)
 			{
-				Win32_PrintLine("Loaded application version %u.%u:%03u",
-					loadedApp.version.major, loadedApp.version.minor, loadedApp.version.build);
+				FreeDllCode(&loadedApp);
 				
-				bool resetApplication = false;
-				loadedApp.AppGetVersionPntr(&resetApplication);
-				if (resetApplication)
+				if (LoadDllCode(appDllFullPath, tempDllFullPath, &loadedApp))
 				{
-					Win32_WriteLine("Resetting application");
+					Win32_PrintLine("Loaded application version %u.%u:%03u",
+						loadedApp.version.major, loadedApp.version.minor, loadedApp.version.build);
 					
-					memset(appMemory.permanantPntr, 0x00, appMemory.permanantSize);
-					memset(appMemory.transientPntr, 0x00, appMemory.transientSize);
-					
-					//TODO: Find a way to reset the opengl context or
-					//		maybe re-open the window altogether
-					
-					loadedApp.AppInitializePntr(&platformInfo, &appMemory);
+					bool resetApplication = false;
+					loadedApp.AppGetVersionPntr(&resetApplication);
+					if (resetApplication)
+					{
+						Win32_WriteLine("Resetting application");
+						
+						memset(appMemory.permanantPntr, 0x00, appMemory.permanantSize);
+						memset(appMemory.transientPntr, 0x00, appMemory.transientSize);
+						
+						//TODO: Find a way to reset the opengl context or
+						//		maybe re-open the window altogether
+						
+						loadedApp.AppInitializePntr(&platformInfo, &appMemory);
+					}
+					else
+					{
+						loadedApp.AppReloadedPntr(&platformInfo, &appMemory);
+					}
 				}
 				else
 				{
-					loadedApp.AppReloadedPntr(&platformInfo, &appMemory);
+					glfwTerminate();
+					HandleError("Could not load application DLL!");
 				}
+				
+				UpdateWindowTitle(window, &PlatformVersion, &loadedApp.version);
 			}
-			else
-			{
-				glfwTerminate();
-				HandleError("Could not load application DLL!");
-			}
-			
-			UpdateWindowTitle(window, &PlatformVersion, &loadedApp.version);
-		}
+		#endif
 		
 		//Swap the pointers for current and last input
 		AppInput_t* tempInputPointer = lastInput;

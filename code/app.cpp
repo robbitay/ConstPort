@@ -468,6 +468,9 @@ AppUpdate_DEFINITION(App_Update)
 	Menu_t* contextMenu = GetMenuByName(&appData->menuHandler, "Context Menu");
 	Color_t color1 = ColorFromHSV((i32)(PlatformInfo->programTime*180) % 360, 1.0f, 1.0f);
 	Color_t color2 = ColorFromHSV((i32)(PlatformInfo->programTime*180 + 125) % 360, 1.0f, 1.0f);
+	Color_t selectionColor = ColorLerp({Color_White}, {Color_Gray}, (Sin32((r32)PlatformInfo->programTime*6.0f) + 1.0f) / 2.0f);
+	Color_t hoverLocColor = ColorLerp(Color_Foreground, Color_Background, (Sin32((r32)PlatformInfo->programTime*8.0f) + 1.0f) / 2.0f);
+	// Color_t selectionColor = ColorFromHSV(180, 1.0f, (r32)(Sin32((r32)PlatformInfo->programTime*5) + 1.0f) / 2.0f);
 	
 	appData->hoverLocation = PointToTextLocation(&appData->lineList, &appData->testFont, 
 		ui->mousePos - NewVec2(LINE_SPACING + ui->gutterRec.width, -ui->scrollOffset));
@@ -833,7 +836,7 @@ AppUpdate_DEFINITION(App_Update)
 					rec cursorRec = backRec;
 					cursorRec.x += skipSize.x;
 					cursorRec.width = 1;
-					rs->DrawGradient(cursorRec, color1, color2, Direction2D_Down);
+					rs->DrawRectangle(cursorRec, hoverLocColor);
 				}
 				
 				currentPos.y += ui->lineHeight;
@@ -895,7 +898,7 @@ AppUpdate_DEFINITION(App_Update)
 				
 				rec backRec = NewRectangle(currentPos.x + skipSize.x, currentPos.y - appData->testFont.maxExtendUp, selectionSize.x, appData->testFont.lineHeight);
 				backRec = RectangleInflate(backRec, LINE_SPACING);
-				rs->DrawRectangle(backRec, color1);
+				rs->DrawRectangle(backRec, selectionColor);
 				
 				currentPos.y += lineHeight;
 			}
@@ -924,25 +927,40 @@ AppUpdate_DEFINITION(App_Update)
 	rs->DrawGradient(ui->statusBarRec, Color_UiGray1, Color_UiGray3, Direction2D_Right);
 	// rs->DrawGradient(NewRectangle(10, 10, 300, 300), color1, color2, Direction2D_Right);
 	// rs->PrintString( 
-	// 	NewVec2(0, ui->screenSize.y-appData->testFont.maxExtendDown), {Color_White}, 1.0f, 
+	// 	NewVec2(0, ui->screenSize.y-appData->testFont.maxExtendDown), Color_Foreground, 1.0f, 
 	// 	"Heap: %u/%u used", appData->memArena.used, appData->memArena.size);
-	// rs->PrintString( 
-	// 	NewVec2(0, ui->screenSize.y-appData->testFont.maxExtendDown), {Color_White}, 1.0f, 
-	// 	"Hover Location: Line %d Char %d", hoverLocation.lineNum+1, hoverLocation.charIndex);
 	rs->PrintString( 
-		NewVec2(0, ui->screenSize.y-appData->testFont.maxExtendDown), {Color_White}, 1.0f, 
-		"%s %u:%02u%s (%s %s, %u) [%u]",
-		GetDayOfWeekStr(GetDayOfWeek(PlatformInfo->localTime)), 
-		Convert24HourTo12Hour(PlatformInfo->localTime.hour), PlatformInfo->localTime.minute,
-		IsPostMeridian(PlatformInfo->localTime.hour) ? "pm" : "am",
-		GetMonthStr((Month_t)PlatformInfo->localTime.month), GetDayOfMonthString(PlatformInfo->localTime.day), PlatformInfo->localTime.year,
-		GetTimestamp(PlatformInfo->localTime));
+		NewVec2(0, ui->screenSize.y-appData->testFont.maxExtendDown), Color_Foreground, 1.0f, 
+		"Line %d Char %d", appData->hoverLocation.lineNum+1, appData->hoverLocation.charIndex);
 	// rs->PrintString( 
-	// 	NewVec2(0, ui->screenSize.y-appData->testFont.maxExtendDown), {Color_White}, 1.0f, 
+	// 	NewVec2(0, ui->screenSize.y-appData->testFont.maxExtendDown), Color_Foreground, 1.0f, 
+	// 	"%s %u:%02u%s (%s %s, %u) [%u]",
+	// 	GetDayOfWeekStr(GetDayOfWeek(PlatformInfo->localTime)), 
+	// 	Convert24HourTo12Hour(PlatformInfo->localTime.hour), PlatformInfo->localTime.minute,
+	// 	IsPostMeridian(PlatformInfo->localTime.hour) ? "pm" : "am",
+	// 	GetMonthStr((Month_t)PlatformInfo->localTime.month), GetDayOfMonthString(PlatformInfo->localTime.day), PlatformInfo->localTime.year,
+	// 	GetTimestamp(PlatformInfo->localTime));
+	// rs->PrintString( 
+	// 	NewVec2(0, ui->screenSize.y-appData->testFont.maxExtendDown), Color_Foreground, 1.0f, 
 	// 	"First: %d Last: %d", firstLine, lastLine);
 	// PrintString(appData, appData->testFont, 
-	// 	NewVec2(0, ui->screenSize.y-appData->testFont.maxExtendDown), {Color_White}, 1.0f, 
+	// 	NewVec2(0, ui->screenSize.y-appData->testFont.maxExtendDown), Color_Foreground, 1.0f, 
 	// 	"%u Lines Offset: %f (%fpx long)", appData->lineList.numLines, ui->scrollOffset, ui->fileHeight);
+	
+	if (appData->selectionStart.lineNum != appData->selectionEnd.lineNum ||
+		appData->selectionStart.charIndex != appData->selectionEnd.charIndex)
+	{
+		rs->PrintString( 
+			NewVec2(170, ui->screenSize.y-appData->testFont.maxExtendDown), Color_Foreground, 1.0f, 
+			"Selection: %u chars", GetSelection());
+	}
+	if (appData->comPort.isOpen)
+	{
+		v2 comNameSize = MeasureString(&appData->testFont, appData->comPort.name);
+		rs->DrawString(appData->comPort.name,
+			NewVec2(ui->screenSize.x - comNameSize.x - 10, ui->screenSize.y-appData->testFont.maxExtendDown), 
+			Color_Foreground, 1.0f);
+	}
 	
 	//Draw Scrollbar
 	rs->DrawGradient(NewRectangle(ui->scrollBarGutterRec.x - 8, ui->scrollBarGutterRec.y, 8, ui->scrollBarGutterRec.height), 

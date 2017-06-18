@@ -160,10 +160,16 @@ void UpdateWindowTitle(GLFWwindow* window, Version_t* platformVersion, Version_t
 {
 	char windowTitle[128] = {};
 	
-	snprintf(windowTitle, ArrayCount(windowTitle),
-		WINDOW_TITLE " (Platform %u.%u:%03u App %u.%u:%03u)",
-		platformVersion->major, platformVersion->minor, platformVersion->build,
-		appVersion->major, appVersion->minor, appVersion->build);
+	#if DEBUG
+		snprintf(windowTitle, ArrayCount(windowTitle),
+			WINDOW_TITLE " (Platform %u.%u:%03u App %u.%u:%03u)",
+			platformVersion->major, platformVersion->minor, platformVersion->build,
+			appVersion->major, appVersion->minor, appVersion->build);
+	#else
+		snprintf(windowTitle, ArrayCount(windowTitle),
+			WINDOW_TITLE " (v%u.%u)",
+			appVersion->major, appVersion->minor);
+	#endif
 	
 	glfwSetWindowTitle(window, windowTitle);
 }

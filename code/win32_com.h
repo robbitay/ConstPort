@@ -47,6 +47,7 @@ typedef enum
 struct ComPort_t
 {
 	bool isOpen;
+	char name[8];
 	
 	BaudRate_t baudRate;
 	Parity_t   parity;

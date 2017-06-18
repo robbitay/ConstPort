@@ -65,14 +65,18 @@ bool LoadDllCode(const char* appDllName, const char* tempDllName, LoadedApp_t* l
 	
 	loadedApp->lastWriteTime = GetFileWriteTime(appDllName);
 	
-	u32 copyTries = 0;
-	while (!CopyFileA(appDllName, tempDllName, false))
-	{
-		copyTries++;
-		//TODO: Should we break from this loop?
-	}
+	#if DEBUG
+		u32 copyTries = 0;
+		while (!CopyFileA(appDllName, tempDllName, false))
+		{
+			copyTries++;
+			//TODO: Should we break from this loop?
+		}
+		loadedApp->module = LoadLibraryA(tempDllName);
+	#else
+		loadedApp->module = LoadLibraryA(appDllName);
+	#endif
 	
-	loadedApp->module = LoadLibraryA(tempDllName);
 	
 	if (loadedApp->module != 0)
 	{

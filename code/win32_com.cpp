@@ -44,6 +44,7 @@ GetComPortList_DEFINITION(Win32_GetComPortList)
 OpenComPort_DEFINITION(Win32_OpenComPort)
 {
 	ComPort_t result = {};
+	strncpy(result.name, portName, sizeof(result.name)-1);
 	result.handle = INVALID_HANDLE_VALUE;
 	
 	HANDLE comHandle = CreateFileA(portName, 
