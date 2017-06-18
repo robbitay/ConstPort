@@ -26,6 +26,7 @@ folder into a directory and run ConstPort.exe.
 
 
 # Controls
+Ctrl + A:         Select/Deselect All
 Ctrl + C:         Copy selected text to clipboard
 Ctrl + Shift + C: Clear console of all text
 Ctrl + O:         Show the COM menu

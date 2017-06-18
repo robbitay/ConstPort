@@ -48,6 +48,7 @@ of the debug behavior can be toggled on/off by changing -DDEBUG=1 to -DDEBUG=0
 
 
 # Controls
+Ctrl + A:         Select/Deselect All
 Ctrl + C:         Copy selected text to clipboard
 Ctrl + Shift + C: Clear console of all text
 Ctrl + O:         Show the COM menu
