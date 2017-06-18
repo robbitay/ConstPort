@@ -225,6 +225,120 @@ void ContextMenuRender(const PlatformInfo_t* PlatformInfo, const AppInput_t* App
 	appData->renderState.DrawString(ui->contextStringBuffer, textPos, Color_Foreground);
 }
 
+u32 SanatizeString(const char* charPntr, u32 numChars, char* outputBuffer = nullptr)
+{
+	u32 result = 0;
+	
+	char* outPntr = outputBuffer;
+	for (u32 cIndex = 0; cIndex < numChars; cIndex++)
+	{
+		if (charPntr[cIndex] == 0x01 || charPntr[cIndex] == 0x02 || charPntr[cIndex] == 0x03 || charPntr[cIndex] == 0x04)
+		{
+			//Ignore these characters
+		}
+		else
+		{
+			result++;
+			if (outputBuffer != nullptr)
+			{
+				*outPntr = charPntr[cIndex];
+				outPntr++;
+			}
+		}
+	}
+	
+	return result;
+}
+
+//NOTE: This function serves as a measuring function AS WELL AS
+//		a buffer filling function if not passed nullptr for bufferOutput
+u32 GetSelection(char* bufferOutput = nullptr)
+{
+	const PlatformInfo_t* PlatformInfo = Gl_PlatformInfo;
+	AppData_t* appData = GL_AppData;
+	
+	TextLocation_t minLocation = TextLocationMin(appData->selectionStart, appData->selectionEnd);
+	TextLocation_t maxLocation = TextLocationMax(appData->selectionStart, appData->selectionEnd);
+	
+	if (minLocation.lineNum == maxLocation.lineNum &&
+		minLocation.charIndex == maxLocation.charIndex)
+	{
+		//No selection made
+		return 0;
+	}
+	
+	u8 newLineSize = (PlatformInfo->platformType == Platform_Windows) ? 2 : 1;
+	char newLine[2] = {};
+	if (PlatformInfo->platformType == Platform_Windows)
+	{
+		newLine[0] = '\r';
+		newLine[1] = '\n';
+	}
+	else
+	{
+		newLine[0] = '\n';
+	}
+	u32 bufferLength = 0;
+	char* outputPntr = bufferOutput;
+	
+	if (minLocation.lineNum == maxLocation.lineNum)
+	{
+		Line_t* linePntr = GetLineAt(&appData->lineList, minLocation.lineNum);
+		bufferLength = maxLocation.charIndex - minLocation.charIndex;
+		
+		if (bufferOutput != nullptr)
+		{
+			memcpy(outputPntr, &linePntr->chars[minLocation.charIndex], bufferLength);
+			outputPntr += bufferLength;
+		}
+	}
+	else
+	{
+		{ //First Line
+			Line_t* minLinePntr = GetLineAt(&appData->lineList, minLocation.lineNum);
+			bufferLength += SanatizeString(&minLinePntr->chars[minLocation.charIndex], minLinePntr->numChars - minLocation.charIndex);
+			bufferLength += newLineSize;
+			if (bufferOutput != nullptr)
+			{
+				outputPntr += SanatizeString(&minLinePntr->chars[minLocation.charIndex], minLinePntr->numChars - minLocation.charIndex, outputPntr);
+				memcpy(outputPntr, newLine, newLineSize);
+				outputPntr += newLineSize;
+			}
+		}
+		
+		//In Between Lines
+		for (i32 lineIndex = minLocation.lineNum+1; lineIndex < maxLocation.lineNum && lineIndex < appData->lineList.numLines; lineIndex++)
+		{
+			Line_t* linePntr = GetLineAt(&appData->lineList, lineIndex);
+			bufferLength += SanatizeString(linePntr->chars, linePntr->numChars);
+			bufferLength += newLineSize;
+			if (bufferOutput != nullptr)
+			{
+				outputPntr += SanatizeString(linePntr->chars, linePntr->numChars, outputPntr);
+				memcpy(outputPntr, newLine, newLineSize);
+				outputPntr += newLineSize;
+			}
+		}
+		
+		{ //Last Line
+			Line_t* maxLinePntr = GetLineAt(&appData->lineList, maxLocation.lineNum);
+			bufferLength += SanatizeString(maxLinePntr->chars, maxLocation.charIndex);
+			if (bufferOutput != nullptr)
+			{
+				outputPntr += SanatizeString(maxLinePntr->chars, maxLocation.charIndex, outputPntr);
+			}
+		}
+	}
+	
+	bufferLength += 1; //For null terminator
+	if (bufferOutput != nullptr)
+	{
+		*outputPntr = '\0';
+	}
+	
+	return bufferLength;
+}
+
 //+================================================================+
 //|                       App Get Version                          |
 //+================================================================+
@@ -482,7 +596,7 @@ AppUpdate_DEFINITION(App_Update)
 			PlatformInfo->screenSize.x / 2 - comMenu->drawRec.width/2,
 			PlatformInfo->screenSize.y / 2 - comMenu->drawRec.height/2);
 	}
-	// Show COM Menu
+	// Show COM Menu with Ctrl+O
 	if (AppInput->buttons[Button_O].transCount > 0 && AppInput->buttons[Button_O].isDown &&
 		AppInput->buttons[Button_Control].isDown)
 	{
@@ -500,14 +614,47 @@ AppUpdate_DEFINITION(App_Update)
 		}
 	}
 	
-	// Clear Console
+	// Clear Console and Copy to Clipboard with Ctrl(+Shift)+C
 	if (AppInput->buttons[Button_C].transCount > 0 && AppInput->buttons[Button_C].isDown &&
-		AppInput->buttons[Button_Control].isDown && AppInput->buttons[Button_Shift].isDown)
+		AppInput->buttons[Button_Control].isDown)
 	{
-		ClearConsole();
+		if (AppInput->buttons[Button_Shift].isDown)
+		{
+			ClearConsole();
+		}
+		else
+		{
+			u32 selectionSize = GetSelection();
+			char* selectionTempBuffer = (char*)malloc(selectionSize);
+			GetSelection(selectionTempBuffer);
+			
+			PlatformInfo->CopyToClipboardPntr(selectionTempBuffer, selectionSize);
+			
+			free(selectionTempBuffer);
+		}
 	}
 	
-	// Quick keys for opening COM ports
+	//Select/Deselect all with Ctrl+A
+	if (AppInput->buttons[Button_A].transCount > 0 && AppInput->buttons[Button_A].isDown &&
+		AppInput->buttons[Button_Control].isDown)
+	{
+		if (appData->selectionStart.lineNum == appData->selectionEnd.lineNum &&
+			appData->selectionStart.charIndex == appData->selectionEnd.charIndex)
+		{
+			//Select all
+			appData->selectionStart = NewTextLocation(0, 0);
+			Line_t* lastLinePntr = GetLastLine(&appData->lineList);
+			appData->selectionEnd = NewTextLocation(appData->lineList.numLines-1, lastLinePntr->numChars);
+		}
+		else
+		{
+			//Deselect all
+			appData->selectionStart = NewTextLocation(0, 0);
+			appData->selectionEnd = NewTextLocation(0, 0);
+		}
+	}
+	
+	// Quick keys for opening COM ports with Ctrl+(1-9)
 	if (AppInput->buttons[Button_Control].isDown)
 	{
 		i32 cIndex = -1;

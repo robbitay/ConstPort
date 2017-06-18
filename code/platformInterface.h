@@ -52,6 +52,13 @@ typedef DebugPrint_DEFINITION(DebugPrint_f);
 #define DebugPrintLine_DEFINITION(functionName) void functionName(const char* formatString, ...)
 typedef DebugPrintLine_DEFINITION(DebugPrintLine_f);
 
+
+#define CopyToClipboard_DEFINITION(functionName) void functionName(const void* dataPntr, u32 dataSize)
+typedef CopyToClipboard_DEFINITION(CopyToClipboard_f);
+
+#define CopyFromClipboard_DEFINITION(functionName) u32 functionName(void* outputBuffer, u32 maxSize)
+typedef CopyFromClipboard_DEFINITION(CopyFromClipboard_f);
+
 //+================================================================+
 //|                          Structures                            |
 //+================================================================+
@@ -79,18 +86,20 @@ struct PlatformInfo_t
 	bool windowHasFocus;
 	bool windowIsMinimized;
 	
-	FreeFileMemory_f*  FreeFileMemoryPntr;
-	ReadEntireFile_f*  ReadEntireFilePntr;
-	WriteEntireFile_f* WriteEntireFilePntr;
-	DebugWrite_f*      DebugWritePntr;
-	DebugWriteLine_f*  DebugWriteLinePntr;
-	DebugPrint_f*      DebugPrintPntr;
-	DebugPrintLine_f*  DebugPrintLinePntr;
-	GetComPortList_f*  GetComPortListPntr;
-	OpenComPort_f*     OpenComPortPntr;
-	CloseComPort_f*    CloseComPortPntr;
-	ReadComPort_f*     ReadComPortPntr;
-	WriteComPort_f*    WriteComPortPntr;
+	FreeFileMemory_f*    FreeFileMemoryPntr;
+	ReadEntireFile_f*    ReadEntireFilePntr;
+	WriteEntireFile_f*   WriteEntireFilePntr;
+	DebugWrite_f*        DebugWritePntr;
+	DebugWriteLine_f*    DebugWriteLinePntr;
+	DebugPrint_f*        DebugPrintPntr;
+	DebugPrintLine_f*    DebugPrintLinePntr;
+	GetComPortList_f*    GetComPortListPntr;
+	OpenComPort_f*       OpenComPortPntr;
+	CloseComPort_f*      CloseComPortPntr;
+	ReadComPort_f*       ReadComPortPntr;
+	WriteComPort_f*      WriteComPortPntr;
+	CopyToClipboard_f*   CopyToClipboardPntr;
+	CopyFromClipboard_f* CopyFromClipboardPntr;
 	
 	r64 timeDelta;
 	r64 programTime;

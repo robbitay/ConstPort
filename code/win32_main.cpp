@@ -67,6 +67,7 @@ static Version_t PlatformVersion = {
 #include "win32_keymap.cpp"
 #include "win32_callbacks.cpp"
 #include "win32_com.cpp"
+#include "win32_clipboard.cpp"
 
 //+================================================================+
 //|                      Windows Entry Point                       |
@@ -92,54 +93,6 @@ int WINAPI WinMain(HINSTANCE hInstance,
 	AppInput_t inputRingBuffer[2] = {};
 	AppInput_t* currentInput = &inputRingBuffer[0];
 	AppInput_t* lastInput = &inputRingBuffer[1];
-	
-	Win32_WriteLine("Testing FreeType");
-	// {
-	// 	FT_Library       font_library;
-	// 	FT_Face          font_face;
-	// 	FT_Bitmap        bitmap;
-	// 	FT_GlyphSlot     cur_glyph;
-	// 	FT_Glyph_Metrics glyph_metrics;
-		
-	// 	int  glyph_ind;
-	// 	int  num_chars;
-	// 	char char_name[256];
-		
-		
-	// 	if ( FT_Init_FreeType( &font_library ) )
-	// 		Assert(false);
-	// 	if ( FT_New_Face( font_library, "Resources/Fonts/consola.ttf", 0 , &font_face ) )
-	// 		Assert(false);
-	// 	if ( FT_Set_Char_Size( font_face , 0 , 768 , 300 , 300 ) )
-	// 		Assert(false);
-		
-	// 	num_chars = (int)font_face->num_glyphs;
-	// 	FT_Set_Transform( font_face , NULL , NULL );
-		
-	// 	for ( glyph_ind = 0 ; glyph_ind < num_chars; glyph_ind++ )
-	// 	{
-	// 		if ( FT_Load_Glyph( font_face, glyph_ind, FT_LOAD_DEFAULT ) )
-	// 			Assert(false);
-	// 		cur_glyph = font_face->glyph;
-	// 		if ( cur_glyph->format != FT_GLYPH_FORMAT_BITMAP )
-	// 			if ( FT_Render_Glyph( font_face->glyph, FT_RENDER_MODE_LCD ) )
-	// 				Assert(false);
-	// 		// if ( FT_Get_Glyph_Name( font_face, glyph_ind, char_name, 16 ) )
-	// 		// 	Assert(false);
-			
-	// 		bitmap = cur_glyph->bitmap;
-	// 		glyph_metrics = cur_glyph->metrics;
-			
-	// 		Win32_PrintLine( "Glyph %d (%d, %d) %ld %ld %ld %d %d",
-	// 			glyph_ind,
-	// 			cur_glyph->bitmap_left, cur_glyph->bitmap_top,
-	// 			// char_name,
-	// 			glyph_metrics.horiBearingX / 64,
-	// 			glyph_metrics.horiBearingY / 64,
-	// 			glyph_metrics.horiAdvance / 64,
-	// 			bitmap.width , bitmap.rows );
-	// 	}
-	// }
 	
 	Win32_WriteLine("Application Starting...");
 	
@@ -179,7 +132,7 @@ int WINAPI WinMain(HINSTANCE hInstance,
 	
 	//TODO: Create load_icon function to make this work!
 	// GLFWimage images[1];
-	// images[0] = load_icon("Resources/Sprites/tiger.png");
+	// images[0] = load_icon("Resources/Sprites/test.png");
 	// glfwSetWindowIcon(window, 1, images);
 	
 	glfwMakeContextCurrent(window);
@@ -231,22 +184,24 @@ int WINAPI WinMain(HINSTANCE hInstance,
 	//+--------------------------------------+
 	//|        Fill Platform Info            |
 	//+--------------------------------------+
-	platformInfo.platformType        = Platform_Windows;
-	platformInfo.screenSize          = NewVec2i(screenWidth, screenHeight);
-	platformInfo.windowHasFocus      = true;
-	platformInfo.DebugWritePntr      = Win32_Write;
-	platformInfo.DebugWriteLinePntr  = Win32_WriteLine;
-	platformInfo.DebugPrintPntr      = Win32_Print;
-	platformInfo.DebugPrintLinePntr  = Win32_PrintLine;
-	platformInfo.FreeFileMemoryPntr  = Win32_FreeFileMemory;
-	platformInfo.ReadEntireFilePntr  = Win32_ReadEntireFile;
-	platformInfo.WriteEntireFilePntr = Win32_WriteEntireFile;
-	platformInfo.GetComPortListPntr  = Win32_GetComPortList;
-	platformInfo.OpenComPortPntr     = Win32_OpenComPort;
-	platformInfo.CloseComPortPntr    = Win32_CloseComPort;
-	platformInfo.ReadComPortPntr     = Win32_ReadComPort;
-	platformInfo.WriteComPortPntr    = Win32_WriteComPort;
-	platformInfo.window              = window;
+	platformInfo.platformType          = Platform_Windows;
+	platformInfo.screenSize            = NewVec2i(screenWidth, screenHeight);
+	platformInfo.windowHasFocus        = true;
+	platformInfo.DebugWritePntr        = Win32_Write;
+	platformInfo.DebugWriteLinePntr    = Win32_WriteLine;
+	platformInfo.DebugPrintPntr        = Win32_Print;
+	platformInfo.DebugPrintLinePntr    = Win32_PrintLine;
+	platformInfo.FreeFileMemoryPntr    = Win32_FreeFileMemory;
+	platformInfo.ReadEntireFilePntr    = Win32_ReadEntireFile;
+	platformInfo.WriteEntireFilePntr   = Win32_WriteEntireFile;
+	platformInfo.GetComPortListPntr    = Win32_GetComPortList;
+	platformInfo.OpenComPortPntr       = Win32_OpenComPort;
+	platformInfo.CloseComPortPntr      = Win32_CloseComPort;
+	platformInfo.ReadComPortPntr       = Win32_ReadComPort;
+	platformInfo.WriteComPortPntr      = Win32_WriteComPort;
+	platformInfo.CopyToClipboardPntr   = Win32_CopyToClipboard;
+	platformInfo.CopyFromClipboardPntr = Win32_CopyFromClipboard;
+	platformInfo.window                = window;
 	
 	//+--------------------------------------+
 	//|         Application Memory           |
