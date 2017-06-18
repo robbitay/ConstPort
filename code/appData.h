@@ -33,6 +33,9 @@ struct AppData_t
 	u32 numComPortsAvailable;
 	char availableComPorts[MAX_COM_PORT_NUM][8];
 	
+	UiElements_t uiElements;
+	
+	TextLocation_t hoverLocation;
 	TextLocation_t selectionStart;
 	TextLocation_t selectionEnd;
 };

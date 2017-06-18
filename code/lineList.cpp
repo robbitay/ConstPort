@@ -21,6 +21,7 @@ Line_t* AddLineToList(LineList_t* lineList, const char* string, u32 stringLength
 	newLine->numChars = stringLength;
 	newLine->chars = newStringBuffer;
 	newLine->color = Color_Foreground;
+	newLine->timestamp = 0;
 	
 	lineList->numLines++;
 	

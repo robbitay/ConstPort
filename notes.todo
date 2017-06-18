@@ -6,19 +6,25 @@
 	[X] Make a function to get a list of available COM ports
 	[X] Add a window with a list of COM ports that can be selected
 	[X] Read text input and write it to the COM port
-	[ ] Adjust Baud Rate, Parity, Stop Bits and Flow Control
+	[ ] Ability to configure Baud Rate, Parity, and Stop Bits
+	[ ] Ability to set Flow Control mode
 	[ ] Clear buffer button
 	[X] Text selection
-	[ ] Copy to clipboard
+	[!] Copy to clipboard
+	[!] Copy to file
 	[ ] Paste from clipboard
 	[X] Add a AppReloaded function that gets called when the DLL is reloaded but not reset
 	[ ] Horizontal Scrolling
 	[ ] Status bar messages from anywhere in the program
 	[ ] Fix scrollbar so that it doesn't keep sliding when we have grabbed it
 	[X] Add an escape icon to windows
-	[!] Fix scrollbar dissappear when grabbed on empty screen
-	[!] Fix selection render order
-	[!] Add a shortcut for showing full date time format on line number hover
+	[X] Fix scrollbar dissappear when grabbed on empty screen
+	[X] Fix selection render order
+	[X] Add a shortcut for showing full date time format on line number hover
+	[!] Make The currently connected COM port show up in the title bar and status bar
+	[ ] Make sure the currently connected COM port shows up in the COM Menu
+	[X] Page Up, Page Down, End, and Home buttons works as expected
+	[ ] 
 
 # Application Wish List
 	[ ] Read multiple COM ports side by side.

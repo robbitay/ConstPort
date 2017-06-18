@@ -17,6 +17,7 @@ Date:   06\08\2017
 #define MENU_BORDER_WIDTH              1
 #define MENU_DEFAULT_TITLEBAR_SIZE     22
 #define LINE_SPACING                   2
+#define CONTEXT_MENU_PADDING           5
 
 #define Color_Background               NewColor(33, 33, 33, 255)
 #define Color_Foreground               {0xFFF8F8F2}
