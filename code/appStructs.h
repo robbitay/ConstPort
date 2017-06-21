@@ -57,6 +57,10 @@ struct Shader_t
 	
 	GLuint vertexArray;
 	
+	GLint positionAttribLocation;
+	GLint colorAttribLocation;
+	GLint texCoordAttribLocation;
+	
 	GLint worldMatrixLocation;
 	GLint viewMatrixLocation;
 	GLint projectionMatrixLocation;

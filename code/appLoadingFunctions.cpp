@@ -144,6 +144,10 @@ Shader_t LoadShader(const char* vertShaderFileName, const char* fragShaderFileNa
 		Assert(false);
 	}
 	
+	result.positionAttribLocation      = glGetAttribLocation(result.programId, "inPosition");
+	result.colorAttribLocation         = glGetAttribLocation(result.programId, "inColor");
+	result.texCoordAttribLocation      = glGetAttribLocation(result.programId, "inTexCoord");
+	
 	result.worldMatrixLocation         = glGetUniformLocation(result.programId, "WorldMatrix");
 	result.viewMatrixLocation          = glGetUniformLocation(result.programId, "ViewMatrix");
 	result.projectionMatrixLocation    = glGetUniformLocation(result.programId, "ProjectionMatrix");
@@ -158,9 +162,9 @@ Shader_t LoadShader(const char* vertShaderFileName, const char* fragShaderFileNa
 	
 	glGenVertexArrays(1, &result.vertexArray);
 	glBindVertexArray(result.vertexArray);
-	glEnableVertexAttribArray(0);
-	glEnableVertexAttribArray(1);
-	glEnableVertexAttribArray(2);
+	glEnableVertexAttribArray(result.positionAttribLocation);
+	glEnableVertexAttribArray(result.colorAttribLocation);
+	glEnableVertexAttribArray(result.texCoordAttribLocation);
 	
 	return result;
 }

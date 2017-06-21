@@ -1,4 +1,4 @@
-#version 400
+#version 130
 
 uniform vec4 DiffuseColor;
 uniform vec4 SecondaryColor;
@@ -11,7 +11,7 @@ in vec3 fPosition;
 in vec4 fColor;
 in vec2 fTexCoord;
 
-layout(location = 0) out vec4 frag_colour;
+out vec4 frag_colour;
 
 void main()
 {

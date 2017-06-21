@@ -97,6 +97,8 @@ int WINAPI WinMain(HINSTANCE hInstance,
 	
 	Win32_WriteLine("Application Starting...");
 	
+	glfwSetErrorCallback(GlfwErrorCallback);
+	
 	if (!glfwInit())
 	{
 		HandleError("GLFW Initialization Failed!");
@@ -105,11 +107,11 @@ int WINAPI WinMain(HINSTANCE hInstance,
 	//+--------------------------------------+
 	//|           Window Creation            |
 	//+--------------------------------------+
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); //Makes MacOSX happy?
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_ANY_PROFILE);//GLFW_OPENGL_CORE_PROFILE
 	glfwWindowHint(GLFW_RESIZABLE, ALLOW_RESIZE_WINDOW);
 	glfwWindowHint(GLFW_FLOATING, TOPMOST_WINDOW);
 	glfwWindowHint(GLFW_DECORATED, GL_TRUE);
@@ -173,7 +175,6 @@ int WINAPI WinMain(HINSTANCE hInstance,
 	//+--------------------------------------+
 	//|         Register Callbacks           |
 	//+--------------------------------------+
-	glfwSetErrorCallback(                  GlfwErrorCallback);
 	glfwSetWindowCloseCallback(window,     GlfwWindowCloseCallback);
 	glfwSetFramebufferSizeCallback(window, GlfwWindowSizeCallback);
 	glfwSetWindowPosCallback(window,       GlfwWindowMoveCallback);

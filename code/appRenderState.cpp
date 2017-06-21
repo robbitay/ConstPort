@@ -56,9 +56,9 @@ void RenderState_t::UpdateShader()
 	{
 		glBindVertexArray(this->boundShader->vertexArray);
 		glBindBuffer(GL_ARRAY_BUFFER, this->boundBuffer->id);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex_t), (void*)0);
-		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex_t), (void*)sizeof(v3));
-		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex_t), (void*)(sizeof(v3)+sizeof(v4)));
+		glVertexAttribPointer(this->boundShader->positionAttribLocation, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex_t), (void*)0);
+		glVertexAttribPointer(this->boundShader->colorAttribLocation,    4, GL_FLOAT, GL_FALSE, sizeof(Vertex_t), (void*)sizeof(v3));
+		glVertexAttribPointer(this->boundShader->texCoordAttribLocation, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex_t), (void*)(sizeof(v3)+sizeof(v4)));
 	}
 	if (this->boundTexture != nullptr)
 	{
@@ -136,9 +136,9 @@ void RenderState_t::BindBuffer(const VertexBuffer_t* vertBufferPntr)
 	
 	glBindVertexArray(this->boundShader->vertexArray);
 	glBindBuffer(GL_ARRAY_BUFFER, vertBufferPntr->id);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex_t), (void*)0);
-	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex_t), (void*)sizeof(v3));
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex_t), (void*)(sizeof(v3)+sizeof(v4)));
+	glVertexAttribPointer(this->boundShader->positionAttribLocation, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex_t), (void*)0);
+	glVertexAttribPointer(this->boundShader->colorAttribLocation,    4, GL_FLOAT, GL_FALSE, sizeof(Vertex_t), (void*)sizeof(v3));
+	glVertexAttribPointer(this->boundShader->texCoordAttribLocation, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex_t), (void*)(sizeof(v3)+sizeof(v4)));
 }
 
 void RenderState_t::BindFrameBuffer(const FrameBuffer_t* frameBuffer)
