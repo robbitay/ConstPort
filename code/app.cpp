@@ -771,14 +771,15 @@ AppUpdate_DEFINITION(App_Update)
 		}
 	}
 	
-	if (ButtonReleased(MouseButton_Left) && AppInput->mouseMaxDist[MouseButton_Left] < MOUSE_CLICK_TOLERANCE &&
+	ui->markIndex = -1;
+	if (//AppInput->mouseMaxDist[MouseButton_Left] < MOUSE_CLICK_TOLERANCE &&
 		IsInsideRectangle(ui->mousePos, ui->gutterRec) && IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], ui->gutterRec))
 	{
-		i32 markIndex = (u32)((r32)(ui->mousePos.y + ui->scrollOffset) / ui->lineHeight - 0.5f);
-		
-		if (markIndex >= 0 && markIndex < appData->lineList.numLines)
+		ui->markIndex = (u32)((r32)(ui->mousePos.y + ui->scrollOffset) / ui->lineHeight - 0.5f);
+		if (ButtonReleased(MouseButton_Left) && 
+			ui->markIndex >= 0 && ui->markIndex < appData->lineList.numLines)
 		{
-			Line_t* linePntr = GetLineAt(&appData->lineList, markIndex);
+			Line_t* linePntr = GetLineAt(&appData->lineList, ui->markIndex);
 			
 			if (!IsFlagSet(linePntr->flags, LineFlag_MarkBelow) || 
 				(ButtonDown(Button_Shift) && !IsFlagSet(linePntr->flags, LineFlag_ThickMark)))
@@ -797,6 +798,35 @@ AppUpdate_DEFINITION(App_Update)
 			{
 				FlagUnset(linePntr->flags, LineFlag_MarkBelow);
 			}
+		}
+	}
+	
+	if (ButtonDown(Button_Control) && ButtonPressed(Button_M))
+	{
+		i32 lastIndex = appData->lineList.numLines - 1;
+		Line_t* linePntr = GetLineAt(&appData->lineList, lastIndex);
+		if (linePntr->numChars == 0 && lastIndex > 0)
+		{
+			linePntr = GetLineAt(&appData->lineList, lastIndex - 1);
+		}
+		
+		//Set mark
+		if (!IsFlagSet(linePntr->flags, LineFlag_MarkBelow) || 
+				(ButtonDown(Button_Shift) && !IsFlagSet(linePntr->flags, LineFlag_ThickMark)))
+		{
+			FlagSet(linePntr->flags, LineFlag_MarkBelow);
+			if (ButtonDown(Button_Shift))
+			{
+				FlagSet(linePntr->flags, LineFlag_ThickMark);
+			}
+			else
+			{
+				FlagUnset(linePntr->flags, LineFlag_ThickMark);
+			}
+		}
+		else
+		{
+			FlagUnset(linePntr->flags, LineFlag_MarkBelow);
 		}
 	}
 	
@@ -869,7 +899,8 @@ AppUpdate_DEFINITION(App_Update)
 					rs->DrawRectangle(cursorRec, hoverLocColor);
 				}
 				
-				if (IsFlagSet(linePntr->flags, LineFlag_MarkBelow))
+				if (IsFlagSet(linePntr->flags, LineFlag_MarkBelow) ||
+					(ButtonDown(MouseButton_Left) && ui->markIndex != -1 && ui->markIndex == lineIndex))
 				{
 					rec markRec = NewRectangle(
 						ui->gutterRec.x, 
@@ -877,12 +908,13 @@ AppUpdate_DEFINITION(App_Update)
 						ui->gutterRec.width + ui->viewRec.width,
 						MARK_SIZE
 					);
-					if (IsFlagSet(linePntr->flags, LineFlag_ThickMark))
+					if (IsFlagSet(linePntr->flags, LineFlag_ThickMark) ||
+						(ui->markIndex == lineIndex && ButtonDown(Button_Shift)))
 					{
 						markRec.y -= 1;
 						markRec.height = THICK_MARK_SIZE;
 					}
-					rs->DrawRectangle(markRec, Color_MarkColor);
+					rs->DrawRectangle(markRec, (ui->markIndex == lineIndex) ? Color_Highlight2 : Color_MarkColor);
 				}
 				
 				currentPos.y += ui->lineHeight;
