@@ -340,6 +340,8 @@ struct AppOutput_t
 	bool recenterMouse;
 	bool showMouse;
 	bool closeWindow;
+	
+	char windowTitle[64];
 };
 
 

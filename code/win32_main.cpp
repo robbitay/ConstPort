@@ -32,11 +32,12 @@ Description:
 #define WINDOW_HEIGHT             350
 #define WINDOW_MIN_WIDTH          600
 #define WINDOW_MIN_HEIGHT         350
-#define WINDOW_MAX_WIDTH          1920
-#define WINDOW_MAX_HEIGHT         1080
+#define WINDOW_MAX_WIDTH          GLFW_DONT_CARE
+#define WINDOW_MAX_HEIGHT         GLFW_DONT_CARE
+#define ENFORCE_ASPECT_RATIO      false
 #define WINDOW_ASPECT_RATIO       16,9
 #define ALLOW_RESIZE_WINDOW       true
-#define TOPMOST_WINDOW            true
+#define TOPMOST_WINDOW            DEBUG
 #define OPEN_CONSOLE_WINDOW       DEBUG
 
 //NOTE: This must match resource.h in build directory!
@@ -161,7 +162,9 @@ int WINAPI WinMain(HINSTANCE hInstance,
 	glfwSetWindowSizeLimits(window, 
 		WINDOW_MIN_WIDTH, WINDOW_MIN_HEIGHT,
 		WINDOW_MAX_WIDTH, WINDOW_MAX_HEIGHT);
-	// glfwSetWindowAspectRatio(window, WINDOW_ASPECT_RATIO);
+	#if ENFORCE_ASPECT_RATIO
+	glfwSetWindowAspectRatio(window, WINDOW_ASPECT_RATIO);
+	#endif
 	glfwGetFramebufferSize(window, &screenWidth, &screenHeight);
 	glViewport(0, 0, screenWidth, screenHeight);
 	Win32_PrintLine("Screen Size: %dx%d", screenWidth, screenHeight);
@@ -241,7 +244,7 @@ int WINAPI WinMain(HINSTANCE hInstance,
 		HandleError("Could not load application DLL!");
 	}
 	
-	UpdateWindowTitle(window, &PlatformVersion, &loadedApp.version);
+	UpdateWindowTitle(window, WINDOW_TITLE, &PlatformVersion, &loadedApp.version);
 	
 	loadedApp.AppInitializePntr(&platformInfo, &appMemory);
 	
@@ -289,7 +292,7 @@ int WINAPI WinMain(HINSTANCE hInstance,
 					HandleError("Could not load application DLL!");
 				}
 				
-				UpdateWindowTitle(window, &PlatformVersion, &loadedApp.version);
+				// UpdateWindowTitle(window, &PlatformVersion, &loadedApp.version);
 			}
 		#endif
 		
@@ -352,6 +355,8 @@ int WINAPI WinMain(HINSTANCE hInstance,
 		loadedApp.AppUpdatePntr(&platformInfo, &appMemory, currentInput, &appOutput);
 		
 		glfwSwapBuffers(window);
+		
+		UpdateWindowTitle(window, appOutput.windowTitle, &PlatformVersion, &loadedApp.version);
 	}
 	
 	glfwTerminate();

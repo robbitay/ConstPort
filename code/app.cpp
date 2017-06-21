@@ -462,6 +462,18 @@ AppUpdate_DEFINITION(App_Update)
 	UiElements_t* ui = &appData->uiElements;
 	RenderState_t* rs = &appData->renderState;
 	
+	ClearArray(AppOutput->windowTitle);
+	if (appData->comPort.isOpen)
+	{
+		snprintf(AppOutput->windowTitle, sizeof(AppOutput->windowTitle)-1, 
+			"Const Port %s", appData->comPort.name);
+	}
+	else
+	{
+		snprintf(AppOutput->windowTitle, sizeof(AppOutput->windowTitle)-1, 
+			"Const Port [Disconnected]");
+	}
+	
 	RecalculateUiElements(AppInput->mousePos, ui);
 	
 	Menu_t* comMenu = GetMenuByName(&appData->menuHandler, "COM Menu");
@@ -1025,6 +1037,13 @@ AppUpdate_DEFINITION(App_Update)
 	// 	NewVec2(0, ui->screenSize.y-appData->testFont.maxExtendDown), Color_Foreground, 1.0f, 
 	// 	"%u Lines Offset: %f (%fpx long)", appData->lineList.numLines, ui->scrollOffset, ui->fileHeight);
 	
+	Line_t* lastLine = GetLastLine(&appData->lineList);
+	// DEBUG_PrintLine("Last Item: %p", lastLine->header.lastItem);
+	if (lastLine->timestamp == 0 && appData->lineList.numLines > 1)
+	{
+		lastLine = GetLineAt(&appData->lineList, appData->lineList.numLines-1 - 1);
+	}
+	
 	if (appData->selectionStart.lineNum != appData->selectionEnd.lineNum ||
 		appData->selectionStart.charIndex != appData->selectionEnd.charIndex)
 	{
@@ -1032,6 +1051,50 @@ AppUpdate_DEFINITION(App_Update)
 			NewVec2(170, ui->screenSize.y-appData->testFont.maxExtendDown), Color_Foreground, 1.0f, 
 			"Selection: %u chars", GetSelection());
 	}
+	//Print elapsed time since last receive
+	else if (lastLine != nullptr && lastLine->timestamp != 0)
+	{
+		RealTime_t lineTime = RealTimeAt(lastLine->timestamp);
+		i64 secondsDifference = SubtractTimes(PlatformInfo->localTime, lineTime, TimeUnit_Seconds);
+		i64 absDifference = Abs64i(secondsDifference);
+		if (absDifference >= MIN_SECONDS_STATUS_BAR)
+		{
+			u32 numDays = (u32)(absDifference/(60*60*24));
+			u32 numHours = (u32)(absDifference/(60*60)) - (numDays*24);
+			u32 numMinutes = (u32)(absDifference/60) - (numDays*60*24) - (numHours*60);
+			u32 numSeconds = (u32)(absDifference) - (numDays*60*60*24) - (numHours*60*60) - (numMinutes*60);
+			// DEBUG_PrintLine("Diff %d", secondsDifference);
+			if (numDays > 0)
+			{
+				rs->PrintString( 
+					NewVec2(170, ui->screenSize.y-appData->testFont.maxExtendDown), Color_Foreground, 1.0f, 
+					"%ud %uh %um %us %s", numDays, numHours, numMinutes, numSeconds,
+					secondsDifference >= 0 ? "Ago" : "In the future?");
+			}
+			else if (numHours > 0)
+			{
+				rs->PrintString( 
+					NewVec2(170, ui->screenSize.y-appData->testFont.maxExtendDown), Color_Foreground, 1.0f, 
+					"%uh %um %us %s", numHours, numMinutes, numSeconds,
+					secondsDifference >= 0 ? "Ago" : "In the future?");
+			}
+			else if (numMinutes > 0)
+			{
+				rs->PrintString( 
+					NewVec2(170, ui->screenSize.y-appData->testFont.maxExtendDown), Color_Foreground, 1.0f, 
+					"%um %us %s", numMinutes, numSeconds,
+					secondsDifference >= 0 ? "Ago" : "In the future?");
+			}
+			else
+			{
+				rs->PrintString( 
+					NewVec2(170, ui->screenSize.y-appData->testFont.maxExtendDown), Color_Foreground, 1.0f, 
+					"%us %s", numSeconds,
+					secondsDifference >= 0 ? "Ago" : "In the future?");
+			}
+		}
+	}
+	
 	if (appData->comPort.isOpen)
 	{
 		v2 comNameSize = MeasureString(&appData->testFont, appData->comPort.name);

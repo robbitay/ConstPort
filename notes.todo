@@ -11,9 +11,10 @@
 	[X] Fix selection render order
 	[X] Add a shortcut for showing full date time format on line number hover
 	[X] Page Up, Page Down, End, and Home buttons works as expected
-	[!] Add a mark to a line by clicking on line number or shortcut
+	[X] Add a mark to a line by clicking on line number or shortcut
+	[X] Make The currently connected COM port show up in the title bar and status bar
+	[!] Make a function that measures the whole buffer with ability to support word wrap and spacers
 	[!] Add elapsed time spacers between lines
-	[!] Make The currently connected COM port show up in the title bar and status bar
 	[!] Copy to file (static name)
 	[!] Paste from clipboard
 	[ ] Move line rendering parts into seperate file

@@ -21,6 +21,7 @@ Date:   06\08\2017
 #define MARK_SIZE                      1  //px
 #define THICK_MARK_SIZE                3  //px
 #define MOUSE_CLICK_TOLERANCE          10 //Distance
+#define MIN_SECONDS_STATUS_BAR         1 //seconds
 
 #define Color_Background               NewColor(33, 33, 33, 255)
 #define Color_Foreground               {0xFFF8F8F2}
