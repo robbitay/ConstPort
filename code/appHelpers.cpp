@@ -39,3 +39,7 @@ Description:
 		Gl_PlatformInfo->DebugPrintLinePntr(formatStr, __VA_ARGS__); \
 	}                                                                   \
 } while (0)
+
+#define ButtonPressed(button) ((AppInput->buttons[button].isDown && AppInput->buttons[button].transCount > 0) || AppInput->buttons[button].transCount >= 2)
+#define ButtonReleased(button) ((!AppInput->buttons[button].isDown && AppInput->buttons[button].transCount > 0) || AppInput->buttons[button].transCount >= 2)
+#define ButtonDown(button) (AppInput->buttons[button].isDown)

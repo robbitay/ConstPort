@@ -7,17 +7,20 @@ Date:   06\08\2017
 #ifndef _APP_DEFINES_H
 #define _APP_DEFINES_H
 
-#define SCROLLBAR_WIDTH                12
-#define MIN_SCROLLBAR_HEIGHT           32
-#define SCROLLBAR_PADDING              3
-#define SCROLL_SPEED_DIVIDER           4
-#define MIN_GUTTER_WIDTH               40
-#define TAB_WIDTH                      4
-#define SCROLL_MULTIPLIER              40
-#define MENU_BORDER_WIDTH              1
-#define MENU_DEFAULT_TITLEBAR_SIZE     22
-#define LINE_SPACING                   2
-#define CONTEXT_MENU_PADDING           5
+#define SCROLLBAR_WIDTH                12 //px
+#define MIN_SCROLLBAR_HEIGHT           32 //px
+#define SCROLLBAR_PADDING              3  //px
+#define SCROLL_SPEED_DIVIDER           4  //divisor
+#define MIN_GUTTER_WIDTH               40 //px
+#define TAB_WIDTH                      4  //num spaces
+#define SCROLL_MULTIPLIER              40 //divisor
+#define MENU_BORDER_WIDTH              1  //px
+#define MENU_DEFAULT_TITLEBAR_SIZE     22 //px
+#define LINE_SPACING                   2  //px
+#define CONTEXT_MENU_PADDING           5  //px
+#define MARK_SIZE                      1  //px
+#define THICK_MARK_SIZE                2.5f  //px
+#define MOUSE_CLICK_TOLERANCE          10 //Distance
 
 #define Color_Background               NewColor(33, 33, 33, 255)
 #define Color_Foreground               {0xFFF8F8F2}
@@ -34,5 +37,6 @@ Date:   06\08\2017
 #define Color_WindowTitleBar           Color_UiGray3
 #define Color_WindowBackground         Color_UiGray1
 #define Color_WindowBorder             Color_UiLightGray1
+#define Color_MarkColor                {0xFFA0A0A0}
 
 #endif // _APP_DEFINES_H

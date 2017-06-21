@@ -770,6 +770,36 @@ AppUpdate_DEFINITION(App_Update)
 			}
 		}
 	}
+	
+	if (ButtonReleased(MouseButton_Left) && AppInput->mouseMaxDist[MouseButton_Left] < MOUSE_CLICK_TOLERANCE &&
+		IsInsideRectangle(ui->mousePos, ui->gutterRec) && IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], ui->gutterRec))
+	{
+		i32 markIndex = (u32)((r32)(ui->mousePos.y + ui->scrollOffset) / ui->lineHeight - 0.5f);
+		
+		if (markIndex >= 0 && markIndex < appData->lineList.numLines)
+		{
+			Line_t* linePntr = GetLineAt(&appData->lineList, markIndex);
+			
+			if (!IsFlagSet(linePntr->flags, LineFlag_MarkBelow) || 
+				(ButtonDown(Button_Shift) && !IsFlagSet(linePntr->flags, LineFlag_ThickMark)))
+			{
+				FlagSet(linePntr->flags, LineFlag_MarkBelow);
+				if (ButtonDown(Button_Shift))
+				{
+					FlagSet(linePntr->flags, LineFlag_ThickMark);
+				}
+				else
+				{
+					FlagUnset(linePntr->flags, LineFlag_ThickMark);
+				}
+			}
+			else
+			{
+				FlagUnset(linePntr->flags, LineFlag_MarkBelow);
+			}
+		}
+	}
+	
 	// Update Menus
 	MenuHandlerUpdate(PlatformInfo, AppInput, &appData->menuHandler);
 	
@@ -839,6 +869,22 @@ AppUpdate_DEFINITION(App_Update)
 					rs->DrawRectangle(cursorRec, hoverLocColor);
 				}
 				
+				if (IsFlagSet(linePntr->flags, LineFlag_MarkBelow))
+				{
+					rec markRec = NewRectangle(
+						ui->gutterRec.x, 
+						currentPos.y + appData->testFont.maxExtendDown, 
+						ui->gutterRec.width + ui->viewRec.width,
+						MARK_SIZE
+					);
+					if (IsFlagSet(linePntr->flags, LineFlag_ThickMark))
+					{
+						markRec.y -= 1;
+						markRec.height = THICK_MARK_SIZE;
+					}
+					rs->DrawRectangle(markRec, Color_MarkColor);
+				}
+				
 				currentPos.y += ui->lineHeight;
 			}
 			
@@ -898,7 +944,7 @@ AppUpdate_DEFINITION(App_Update)
 				
 				rec backRec = NewRectangle(currentPos.x + skipSize.x, currentPos.y - appData->testFont.maxExtendUp, selectionSize.x, appData->testFont.lineHeight);
 				backRec = RectangleInflate(backRec, LINE_SPACING);
-				rs->DrawRectangle(backRec, selectionColor);
+				rs->DrawRectangle(backRec, color1);//selectionColor);
 				
 				currentPos.y += lineHeight;
 			}
