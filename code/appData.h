@@ -35,6 +35,7 @@ struct AppData_t
 	
 	UiElements_t uiElements;
 	
+	
 	TextLocation_t hoverLocation;
 	TextLocation_t selectionStart;
 	TextLocation_t selectionEnd;

@@ -375,6 +375,7 @@ AppInitialize_DEFINITION(App_Initialize)
 	u32 arenaSize = AppMemory->permanantSize - sizeof(AppData_t);
 	InitializeMemoryArenaHeap(&appData->memArena, arenaBase, arenaSize);
 	
+	InitializeUiElements(&appData->uiElements);
 	InitializeRenderState(PlatformInfo, &appData->renderState);
 	InitializeMenuHandler(&appData->menuHandler, &appData->memArena);
 	
@@ -485,7 +486,7 @@ AppUpdate_DEFINITION(App_Update)
 	// Color_t selectionColor = ColorFromHSV(180, 1.0f, (r32)(Sin32((r32)PlatformInfo->programTime*5) + 1.0f) / 2.0f);
 	
 	appData->hoverLocation = PointToTextLocation(&appData->lineList, &appData->testFont, 
-		ui->mousePos - NewVec2(LINE_SPACING + ui->gutterRec.width, -ui->scrollOffset));
+		ui->mousePos - NewVec2(LINE_SPACING + ui->gutterRec.width, ui->viewRec.y - ui->scrollOffset));
 	
 	//Context Menu Showing/Filling
 	contextMenu->show = false;
@@ -787,7 +788,7 @@ AppUpdate_DEFINITION(App_Update)
 	if (//AppInput->mouseMaxDist[MouseButton_Left] < MOUSE_CLICK_TOLERANCE &&
 		IsInsideRectangle(ui->mousePos, ui->gutterRec) && IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], ui->gutterRec))
 	{
-		ui->markIndex = (u32)((r32)(ui->mousePos.y + ui->scrollOffset) / ui->lineHeight - 0.5f);
+		ui->markIndex = (u32)((r32)(ui->mousePos.y - ui->viewRec.y + ui->scrollOffset) / ui->lineHeight - 0.5f);
 		if (ButtonReleased(MouseButton_Left) && 
 			ui->markIndex >= 0 && ui->markIndex < appData->lineList.numLines)
 		{
@@ -848,7 +849,7 @@ AppUpdate_DEFINITION(App_Update)
 	UpdateUiElements(AppInput, ui);
 	RecalculateUiElements(AppInput->mousePos, ui);
 	appData->hoverLocation = PointToTextLocation(&appData->lineList, &appData->testFont, 
-		ui->mousePos - NewVec2(LINE_SPACING + ui->gutterRec.width, -ui->scrollOffset));
+		ui->mousePos - NewVec2(LINE_SPACING + ui->gutterRec.width, ui->viewRec.y - ui->scrollOffset));
 	
 	//+--------------------------------------+
 	//|           Rendering Setup            |
@@ -883,7 +884,7 @@ AppUpdate_DEFINITION(App_Update)
 		i32 firstLine = max(0, (i32)((r32)ui->scrollOffset / ui->lineHeight));
 		i32 lastLine = min(appData->lineList.numLines, (i32)((r32)(ui->scrollOffset + ui->viewRec.height) / ui->lineHeight));
 		
-		rs->SetViewMatrix(Matrix4Translate(NewVec3(0, -ui->scrollOffset, 0)));
+		rs->SetViewMatrix(Matrix4Translate(NewVec3(0, ui->viewRec.y - ui->scrollOffset, 0)));
 		{//Items drawn relative to view
 			
 			v2 currentPos = NewVec2(ui->gutterRec.width + LINE_SPACING, firstLine * ui->lineHeight + appData->testFont.maxExtendUp);
@@ -953,7 +954,7 @@ AppUpdate_DEFINITION(App_Update)
 		i32 firstLine = max(0, max(minLocation.lineNum, (i32)((r32)ui->scrollOffset / lineHeight)));
 		i32 lastLine = min(appData->lineList.numLines, min(maxLocation.lineNum, (i32)((r32)(ui->scrollOffset + ui->viewRec.height) / lineHeight)));
 		
-		rs->SetViewMatrix(Matrix4Translate(NewVec3(0, -ui->scrollOffset, 0)));
+		rs->SetViewMatrix(Matrix4Translate(NewVec3(0, ui->viewRec.y - ui->scrollOffset, 0)));
 		{//Items drawn relative to view
 			
 			v2 currentPos = NewVec2(ui->gutterRec.width + LINE_SPACING, firstLine * lineHeight + appData->testFont.maxExtendUp);
@@ -1124,6 +1125,40 @@ AppUpdate_DEFINITION(App_Update)
 	rs->DrawGradient(endCapRec, Color_UiGray1, Color_UiGray3, Direction2D_Right);
 	rs->DisableAlphaTexture();
 	rs->DrawGradient(centerScrollBarRec, Color_UiGray1, Color_UiGray3, Direction2D_Right);
+	
+	//Draw Main Menu
+	rs->DrawGradient(ui->mainMenuRec, Color_UiGray1, Color_UiGray3, Direction2D_Down);
+	rs->DrawRectangle(NewRectangle(0, ui->mainMenuRec.height-1, ui->mainMenuRec.width, 1), Color_UiGray4);
+	
+	for (u32 bIndex = 0; bIndex < NumMainMenuButtons; bIndex++)
+	{
+		rec buttonRec = ui->buttonRecs[bIndex];
+		Color_t baseColor = {Color_White};
+		Color_t highlightColor = {Color_White};
+		Color_t iconColor = {Color_White};
+		
+		if (IsInsideRectangle(ui->mousePos, buttonRec))
+		{
+			if (ButtonDown(MouseButton_Left) && IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], buttonRec))
+			{
+				// iconColor = Color_Highlight2;
+				highlightColor = Color_Highlight4;
+			}
+		}
+		highlightColor.a = 200;
+		
+		rs->BindTexture(&ui->buttonBaseTexture);
+		rs->DrawTexturedRec(buttonRec, baseColor);
+		
+		if (IsInsideRectangle(ui->mousePos, buttonRec))
+		{
+			rs->BindTexture(&ui->buttonHighlightTexture);
+			rs->DrawTexturedRec(buttonRec, highlightColor);
+		}
+		
+		rs->BindTexture(&ui->buttonTextures[bIndex]);
+		rs->DrawTexturedRec(buttonRec, iconColor);
+	}
 	
 	MenuHandlerDrawMenus(PlatformInfo, AppInput, &appData->renderState, &appData->menuHandler);
 	

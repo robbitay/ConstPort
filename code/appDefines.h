@@ -21,7 +21,9 @@ Date:   06\08\2017
 #define MARK_SIZE                      1  //px
 #define THICK_MARK_SIZE                3  //px
 #define MOUSE_CLICK_TOLERANCE          10 //Distance
-#define MIN_SECONDS_STATUS_BAR         1 //seconds
+#define MIN_SECONDS_STATUS_BAR         1  //seconds
+#define MAIN_MENU_BUTTON_PADDING       10  //px
+#define MAIN_MENU_HEIGHT               (48+MAIN_MENU_BUTTON_PADDING*2) //px
 
 #define Color_Background               NewColor(33, 33, 33, 255)
 #define Color_Foreground               {0xFFF8F8F2}

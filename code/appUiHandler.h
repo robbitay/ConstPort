@@ -1,6 +1,16 @@
 #ifndef _APP_UI_HANDLER_H
 #define _APP_UI_HANDLER_H
 
+enum
+{
+	Button_ComPort = 0,
+	Button_ConsoleSettings,
+	Button_Settings,	
+	Button_Help,
+	
+	NumMainMenuButtons,
+	
+} MainMenuButtons_t;
 
 struct UiElements_t
 {
@@ -19,13 +29,19 @@ struct UiElements_t
 	bool followingEndOfFile;
 	bool startedOnScrollbar;
 	
+	rec mainMenuRec;
 	rec statusBarRec;
 	rec scrollBarGutterRec;
 	rec gutterRec;
 	rec viewRec;
 	rec scrollBarRec;
+	rec buttonRecs[NumMainMenuButtons];
 	
 	char contextStringBuffer[256];
+	Texture_t buttonBaseTexture;
+	Texture_t buttonDarkenTexture;
+	Texture_t buttonHighlightTexture;
+	Texture_t buttonTextures[NumMainMenuButtons];
 };
 
 #endif // _APP_UI_HANDLER_H
