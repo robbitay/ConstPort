@@ -137,6 +137,11 @@ void ComMenuUpdate(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 		v2 currentPos = menu->usableRec.topLeft + NewVec2(5, 5 + appData->testFont.maxExtendUp);
 		r32 maxLength = 0;
 		
+		if (ButtonPressed(Button_Escape))
+		{
+			menu->show = false;
+		}
+		
 		for (u32 cIndex = 0; cIndex < appData->numComPortsAvailable; cIndex++)
 		{
 			// v2 stringSize = MeasureString(&appData->testFont, appData->availableComPorts[cIndex]);
@@ -194,7 +199,7 @@ void ComMenuRender(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 			// else if ()
 			else
 			{
-				buttonColor = Color_Highlight1;
+				buttonColor = Color_Highlight2;
 			}
 		}
 		
@@ -724,6 +729,40 @@ AppUpdate_DEFINITION(App_Update)
 	if (AppInput->buttons[Button_PageDown].isDown && AppInput->buttons[Button_PageDown].transCount > 0)
 	{
 		ui->scrollOffsetGoto += ui->viewRec.height;
+	}
+	
+	//Main Menu Buttons
+	if (ButtonReleased(MouseButton_Left) && IsInsideRectangle(ui->mousePos, ui->mainMenuRec) &&
+		IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], ui->mainMenuRec))
+	{
+		for (u32 bIndex = 0; bIndex < ArrayCount(ui->buttonRecs); bIndex++)
+		{
+			if (IsInsideRectangle(ui->mousePos, ui->buttonRecs[bIndex]) &&
+				IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], ui->buttonRecs[bIndex]))
+			{
+				switch (bIndex)
+				{
+					case Button_ComPort:
+					{
+						if (comMenu->show)
+						{
+							comMenu->show = false;
+						}
+						else
+						{
+							comMenu->show = true;
+							
+							RefreshComPortList();
+						}
+					} break;
+					
+					default:
+					{
+						DEBUG_WriteLine("Button does nothing.");
+					};
+				};
+			}
+		}
 	}
 	
 	//Scrollbar Interaction
