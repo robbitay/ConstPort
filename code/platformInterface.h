@@ -335,11 +335,24 @@ struct AppInput_t
 	char textInput[64];
 };
 
+typedef enum
+{
+	Cursor_Default,
+	Cursor_Text,
+	Cursor_Pointer,
+	Cursor_ResizeHorizontal,
+	Cursor_ResizeVertical,
+	
+	NumCursorTypes,
+} CursorType_t;
+
 struct AppOutput_t
 {
 	bool recenterMouse;
 	bool showMouse;
 	bool closeWindow;
+	
+	CursorType_t cursorType;
 	
 	char windowTitle[64];
 };

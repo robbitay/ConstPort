@@ -70,8 +70,13 @@ bool LoadDllCode(const char* appDllName, const char* tempDllName, LoadedApp_t* l
 		while (!CopyFileA(appDllName, tempDllName, false))
 		{
 			copyTries++;
-			//TODO: Should we break from this loop?
+			if (copyTries >= 5000)
+			{
+				Win32_WriteLine("Could not copy DLL.");
+				return false;
+			}
 		}
+		// Win32_PrintLine("Tried to copy %u times", copyTries);
 		loadedApp->module = LoadLibraryA(tempDllName);
 	#else
 		loadedApp->module = LoadLibraryA(appDllName);

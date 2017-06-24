@@ -52,9 +52,10 @@
 	[X] Add a mouse start press and max distance since pressed to AppInput
 	[X] Get the real time
 	[X] Support older versions of OpenGL
-	[!] Show a dialog box for startup errors
-	[!] Load icon and use it in window creation
+	[X] Show a dialog box for startup errors
+	[X] Load icon and use it in window creation
 	[ ] Delete all OpenGL objects when we reset the application
+	[ ] Close open COM ports when resetting application
 	[ ] Move recent changes and reusable functions into a starter project for later use
 	[ ] Save to file using Windows File Dialog
 	[ ] 

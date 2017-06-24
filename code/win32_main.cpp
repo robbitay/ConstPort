@@ -8,6 +8,7 @@ Description:
 
 //Standard Libraries
 #include <windows.h>
+#include "Shlwapi.h"
 #include <stdio.h>
 #include <iostream>
 #include <string.h>
@@ -16,6 +17,8 @@ Description:
 //External Libraries
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 
 //Project Headers
 #include "platformInterface.h"
@@ -43,9 +46,10 @@ Description:
 //NOTE: This must match resource.h in build directory!
 #define IDI_ICON1               101
 
-#define HandleError(outputString) do { \
-		Win32_WriteLine(outputString); \
-		return 1;                      \
+#define HandleError(outputString) do {                                               \
+		Win32_WriteLine(outputString);                                               \
+		MessageBoxA(NULL, outputString, "Initialization Error Encountered!", MB_OK); \
+		return 1;                                                                    \
 	} while(0)
 
 //+================================================================+
@@ -94,6 +98,8 @@ int WINAPI WinMain(HINSTANCE hInstance,
 	AppInput_t inputRingBuffer[2] = {};
 	AppInput_t* currentInput = &inputRingBuffer[0];
 	AppInput_t* lastInput = &inputRingBuffer[1];
+	CursorType_t currentCursor;
+	GLFWcursor* glfwCursors[NumCursorTypes];
 	
 	Win32_WriteLine("Application Starting...");
 	
@@ -105,7 +111,7 @@ int WINAPI WinMain(HINSTANCE hInstance,
 	}
 	
 	//+--------------------------------------+
-	//|           Window Creation            |
+	//|        GLFW Window Creation          |
 	//+--------------------------------------+
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
@@ -130,13 +136,51 @@ int WINAPI WinMain(HINSTANCE hInstance,
 	if (window == nullptr)
 	{
 		glfwTerminate();
-		HandleError("Window could not be created!");
+		HandleError("GLFW window creation failed!");
 	}
 	
-	//TODO: Create load_icon function to make this work!
-	// GLFWimage images[1];
-	// images[0] = load_icon("Resources/Sprites/test.png");
-	// glfwSetWindowIcon(window, 1, images);
+	//+--------------------------------------+
+	//|             Window Icon              |
+	//+--------------------------------------+
+	{
+		FileInfo_t iconFile16 = Win32_ReadEntireFile("Resources/Sprites/icon16.png");
+		FileInfo_t iconFile32 = Win32_ReadEntireFile("Resources/Sprites/icon32.png");
+		
+		i32 numChannels16, numChannels32;
+		i32 width16, height16, width32, height32;
+		u8* imageData16 = stbi_load_from_memory(
+			(u8*)iconFile16.content, iconFile16.size,
+			&width16, &height16, &numChannels16, 4);
+		u8* imageData32 = stbi_load_from_memory(
+			(u8*)iconFile32.content, iconFile32.size,
+			&width32, &height32, &numChannels32, 4);
+		
+		GLFWimage images[2];
+		images[0].width = width16;
+		images[0].height = height16;
+		images[0].pixels = imageData16;
+		images[1].width = width32;
+		images[1].height = height32;
+		images[1].pixels = imageData32;
+		
+		glfwSetWindowIcon(window, 2, images);
+		
+		stbi_image_free(imageData16);
+		stbi_image_free(imageData32);
+		Win32_FreeFileMemory(&iconFile16);
+		Win32_FreeFileMemory(&iconFile32);
+	}
+	
+	//+--------------------------------------+
+	//|               Cursors                |
+	//+--------------------------------------+
+	glfwCursors[Cursor_Default]          = glfwCreateStandardCursor(GLFW_ARROW_CURSOR);
+	glfwCursors[Cursor_Text]             = glfwCreateStandardCursor(GLFW_IBEAM_CURSOR);
+	glfwCursors[Cursor_Pointer]          = glfwCreateStandardCursor(GLFW_HAND_CURSOR);
+	glfwCursors[Cursor_ResizeHorizontal] = glfwCreateStandardCursor(GLFW_HRESIZE_CURSOR);
+	glfwCursors[Cursor_ResizeVertical]   = glfwCreateStandardCursor(GLFW_VRESIZE_CURSOR);
+	glfwSetCursor(window, glfwCursors[Cursor_Default]);
+	currentCursor = Cursor_Default;
 	
 	glfwMakeContextCurrent(window);
 	
@@ -233,6 +277,12 @@ int WINAPI WinMain(HINSTANCE hInstance,
 	Assert(catSuccess);
 	catSuccess = CatStrings(exePath, APPLICATION_DLL_TEMP_NAME, tempDllFullPath, ArrayCount(tempDllFullPath));
 	Assert(catSuccess);
+	
+	if (PathFileExists(appDllFullPath) == false)
+	{
+		glfwTerminate();
+		HandleError("Could not find application DLL");
+	}
 	
 	if (LoadDllCode(appDllFullPath, tempDllFullPath, &loadedApp))
 	{
@@ -358,6 +408,12 @@ int WINAPI WinMain(HINSTANCE hInstance,
 		glfwSwapBuffers(window);
 		
 		UpdateWindowTitle(window, appOutput.windowTitle, &PlatformVersion, &loadedApp.version);
+		
+		if (appOutput.cursorType != currentCursor)
+		{
+			glfwSetCursor(window, glfwCursors[appOutput.cursorType]);
+			currentCursor = appOutput.cursorType;
+		}
 	}
 	
 	glfwTerminate();

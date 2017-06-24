@@ -1,0 +1,8 @@
+test.txt
+
+Hello World!
+This is some random text that will be useful for testing purposes.
+
+void RecalculateUiElements(v2 mousePos, UiElements_t* ui);
+
+This is some random text that will be useful for testing purposes. This is some random text that will be useful for testing purposes. This is some random text that will be useful for testing purposes.

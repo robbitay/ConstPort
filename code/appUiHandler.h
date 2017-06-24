@@ -28,6 +28,7 @@ struct UiElements_t
 	
 	bool followingEndOfFile;
 	bool startedOnScrollbar;
+	bool mouseInMenu;
 	
 	rec mainMenuRec;
 	rec statusBarRec;

@@ -77,6 +77,21 @@ Menu_t* GetMenuByName(MenuHandler_t* menuHandlerPntr, const char* name)
 	return nullptr;
 }
 
+Menu_t* GetMenuAtPoint(MenuHandler_t* menuHandlerPntr, v2 point)
+{
+	for (i32 mIndex = 0; mIndex < menuHandlerPntr->menuList.numItems; mIndex++)
+	{
+		Menu_t* menuPntr = (Menu_t*)LinkedListGetItem(&menuHandlerPntr->menuList, mIndex);
+		
+		if (menuPntr->alive && menuPntr->show && IsInsideRectangle(point, menuPntr->drawRec))
+		{
+			return menuPntr;
+		}
+	}
+	
+	return nullptr;
+}
+
 void MenuHandlerUpdate(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInput, MenuHandler_t* menuHandler)
 {
 	for (i32 mIndex = 0; mIndex < menuHandler->menuList.numItems; mIndex++)

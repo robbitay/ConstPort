@@ -414,7 +414,7 @@ AppInitialize_DEFINITION(App_Initialize)
 	}
 	
 	FileInfo_t testFile = PlatformInfo->ReadEntireFilePntr("test.txt");
-	CreateLineList(&appData->lineList, &appData->memArena, "");//(const char*)testFile.content);
+	CreateLineList(&appData->lineList, &appData->memArena, (const char*)testFile.content);
 	PlatformInfo->FreeFileMemoryPntr(&testFile);
 	
 	RefreshComPortList();
@@ -481,6 +481,7 @@ AppUpdate_DEFINITION(App_Update)
 	}
 	
 	RecalculateUiElements(AppInput->mousePos, ui);
+	ui->mouseInMenu = (GetMenuAtPoint(&appData->menuHandler, AppInput->mousePos) != nullptr);
 	
 	Menu_t* comMenu = GetMenuByName(&appData->menuHandler, "COM Menu");
 	Menu_t* contextMenu = GetMenuByName(&appData->menuHandler, "Context Menu");
@@ -495,7 +496,8 @@ AppUpdate_DEFINITION(App_Update)
 	
 	//Context Menu Showing/Filling
 	contextMenu->show = false;
-	if (AppInput->buttons[Button_Control].isDown &&// && mousePos.x <= ui->gutterRec.width)
+	if (ui->mouseInMenu == false &&
+		AppInput->buttons[Button_Control].isDown &&// && mousePos.x <= ui->gutterRec.width)
 		(IsInsideRectangle(ui->mousePos, ui->viewRec) || IsInsideRectangle(ui->mousePos, ui->gutterRec)))
 	{
 		Line_t* linePntr = GetLineAt(&appData->lineList, appData->hoverLocation.lineNum);
@@ -552,6 +554,7 @@ AppUpdate_DEFINITION(App_Update)
 		}
 	}
 	
+	//Read COM port information
 	if (appData->comPort.isOpen)
 	{
 		i32 readResult = 1;
@@ -732,7 +735,8 @@ AppUpdate_DEFINITION(App_Update)
 	}
 	
 	//Main Menu Buttons
-	if (ButtonReleased(MouseButton_Left) && IsInsideRectangle(ui->mousePos, ui->mainMenuRec) &&
+	if (ui->mouseInMenu == false &&
+		ButtonReleased(MouseButton_Left) && IsInsideRectangle(ui->mousePos, ui->mainMenuRec) &&
 		IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], ui->mainMenuRec))
 	{
 		for (u32 bIndex = 0; bIndex < ArrayCount(ui->buttonRecs); bIndex++)
@@ -765,8 +769,8 @@ AppUpdate_DEFINITION(App_Update)
 		}
 	}
 	
-	//Scrollbar Interaction
-	if (AppInput->buttons[MouseButton_Left].isDown)
+	//Scrollbar Interaction and Text Selection
+	if (AppInput->buttons[MouseButton_Left].isDown && !ui->mouseInMenu)
 	{
 		//Handle scrollbar interaction with mouse
 		if (IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], ui->scrollBarGutterRec) &&
@@ -816,15 +820,17 @@ AppUpdate_DEFINITION(App_Update)
 				appData->selectionStart = appData->hoverLocation;
 				appData->selectionEnd = appData->hoverLocation;
 			}
-			else if (IsInsideRectangle(ui->mousePos, ui->viewRec)) //Mouse Button Holding
+			else //if (IsInsideRectangle(ui->mousePos, ui->viewRec)) //Mouse Button Holding
 			{
 				appData->selectionEnd = appData->hoverLocation;
 			}
 		}
 	}
 	
+	//Mark lines using the mouse
 	ui->markIndex = -1;
 	if (//AppInput->mouseMaxDist[MouseButton_Left] < MOUSE_CLICK_TOLERANCE &&
+		ui->mouseInMenu == false &&
 		IsInsideRectangle(ui->mousePos, ui->gutterRec) && IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], ui->gutterRec))
 	{
 		ui->markIndex = (u32)((r32)(ui->mousePos.y - ui->viewRec.y + ui->scrollOffset) / ui->lineHeight - 0.5f);
@@ -890,6 +896,15 @@ AppUpdate_DEFINITION(App_Update)
 	appData->hoverLocation = PointToTextLocation(&appData->lineList, &appData->testFont, 
 		ui->mousePos - NewVec2(LINE_SPACING + ui->gutterRec.width, ui->viewRec.y - ui->scrollOffset));
 	
+	if (IsInsideRectangle(ui->mousePos, ui->viewRec) && !ui->mouseInMenu)
+	{
+		AppOutput->cursorType = Cursor_Text;
+	}
+	else
+	{
+		AppOutput->cursorType = Cursor_Default;
+	}
+	
 	//+--------------------------------------+
 	//|           Rendering Setup            |
 	//+--------------------------------------+
@@ -933,7 +948,7 @@ AppUpdate_DEFINITION(App_Update)
 				v2 lineSize = MeasureString(&appData->testFont, linePntr->chars);
 				rec backRec = NewRectangle(currentPos.x, currentPos.y - appData->testFont.maxExtendUp, ui->viewRec.width, appData->testFont.lineHeight);
 				// backRec = RectangleInflate(backRec, 1);
-				if (lineIndex == appData->hoverLocation.lineNum && IsInsideRectangle(ui->mousePos, ui->viewRec))
+				if (lineIndex == appData->hoverLocation.lineNum && IsInsideRectangle(ui->mousePos, ui->viewRec) && !ui->mouseInMenu)
 				{
 					rs->DrawRectangle(backRec, Color_UiGray3);
 				}
@@ -942,7 +957,7 @@ AppUpdate_DEFINITION(App_Update)
 				
 				DrawLine(appData, linePntr, currentPos);
 				
-				if (lineIndex == appData->hoverLocation.lineNum && IsInsideRectangle(ui->mousePos, ui->viewRec))
+				if (lineIndex == appData->hoverLocation.lineNum && IsInsideRectangle(ui->mousePos, ui->viewRec) && !ui->mouseInMenu)
 				{
 					v2 skipSize = MeasureString(&appData->testFont, linePntr->chars, appData->hoverLocation.charIndex);
 					rec cursorRec = backRec;
@@ -1173,15 +1188,15 @@ AppUpdate_DEFINITION(App_Update)
 	{
 		rec buttonRec = ui->buttonRecs[bIndex];
 		Color_t baseColor = {Color_White};
-		Color_t highlightColor = {Color_White};
+		Color_t highlightColor = {Color_LightGrey};
 		Color_t iconColor = {Color_White};
 		
-		if (IsInsideRectangle(ui->mousePos, buttonRec))
+		if (IsInsideRectangle(ui->mousePos, buttonRec) && !ui->mouseInMenu)
 		{
 			if (ButtonDown(MouseButton_Left) && IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], buttonRec))
 			{
 				// iconColor = Color_Highlight2;
-				highlightColor = Color_Highlight4;
+				highlightColor = {Color_Black};//Color_Highlight4;
 			}
 		}
 		highlightColor.a = 200;
@@ -1189,7 +1204,7 @@ AppUpdate_DEFINITION(App_Update)
 		rs->BindTexture(&ui->buttonBaseTexture);
 		rs->DrawTexturedRec(buttonRec, baseColor);
 		
-		if (IsInsideRectangle(ui->mousePos, buttonRec))
+		if (IsInsideRectangle(ui->mousePos, buttonRec) && !ui->mouseInMenu)
 		{
 			rs->BindTexture(&ui->buttonHighlightTexture);
 			rs->DrawTexturedRec(buttonRec, highlightColor);
