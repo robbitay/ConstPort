@@ -601,7 +601,7 @@ AppInitialize_DEFINITION(App_Initialize)
 	}
 	
 	FileInfo_t testFile = PlatformInfo->ReadEntireFilePntr("test.txt");
-	CreateLineList(&appData->lineList, &appData->memArena, (const char*)testFile.content);
+	CreateLineList(&appData->lineList, &appData->memArena, "");//(const char*)testFile.content);
 	PlatformInfo->FreeFileMemoryPntr(&testFile);
 	
 	RefreshComPortList();
