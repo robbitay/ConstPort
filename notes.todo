@@ -14,6 +14,7 @@
 	[X] Add a mark to a line by clicking on line number or shortcut
 	[X] Make The currently connected COM port show up in the title bar and status bar
 	[X] Add a slide down menu with different buttons
+	[X] Make sure the currently connected COM port shows up in the COM Menu
 	[!] Expand the COM menu to include Baud Rate, Parity, Stop Bits, and Bit Count
 	[ ] Make a function that measures the whole buffer with ability to support word wrap and spacers
 	[ ] Add elapsed time spacers between lines
@@ -26,7 +27,6 @@
 	[ ] Horizontal Scrolling
 	[ ] Status bar messages from anywhere in the program
 	[ ] Fix scrollbar so that it doesn't keep sliding when we have grabbed it
-	[ ] Make sure the currently connected COM port shows up in the COM Menu
 	[ ] 
 
 # Application Wish List

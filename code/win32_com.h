@@ -24,7 +24,7 @@ typedef enum
 
 typedef enum
 {
-	BaudRate_110 = 1,
+	BaudRate_110 = 0,
 	BaudRate_300,
 	BaudRate_600,
 	BaudRate_1200,
@@ -38,6 +38,8 @@ typedef enum
 	BaudRate_115200,
 	BaudRate_128000,
 	BaudRate_256000,
+	
+	NumBaudRates,
 } BaudRate_t;
 
 typedef enum
@@ -47,13 +49,17 @@ typedef enum
 	Parity_Odd,
 	Parity_Mark,
 	Parity_Space,
+	
+	NumParityTypes,
 } Parity_t;
 
 typedef enum
 {
-	StopBits_1 = 1,
+	StopBits_1 = 0,
 	StopBits_1_5,
 	StopBits_2,
+	
+	NumStopBitTypes,
 } StopBits_t;
 
 typedef enum
@@ -110,7 +116,44 @@ const char* GetComPortName(ComPortIndex_t comIndex)
 		case ComPort_11: return "COM11";
 		case ComPort_12: return "COM12";
 		
-		default:         return "COM1";
+		default:         return "UNK";
+	};
+}
+
+const char* GetBaudRateString(BaudRate_t baudRate)
+{
+	switch (baudRate)
+	{
+		case BaudRate_110:    return "110";
+		case BaudRate_300:    return "300";
+		case BaudRate_600:    return "600";
+		case BaudRate_1200:   return "1200";
+		case BaudRate_2400:   return "2400";
+		case BaudRate_4800:   return "4800";
+		case BaudRate_9600:   return "9600";
+		case BaudRate_14400:  return "14400";
+		case BaudRate_19200:  return "19200";
+		case BaudRate_38400:  return "38400";
+		case BaudRate_57600:  return "57600";
+		case BaudRate_115200: return "115200";
+		case BaudRate_128000: return "128000";
+		case BaudRate_256000: return "256000";
+		
+		default:              return "Unknown";
+	};
+}
+
+const char* GetParityString(Parity_t parity)
+{
+	switch(parity)
+	{
+		case Parity_None:  return "None";
+		case Parity_Even:  return "Even";
+		case Parity_Odd:   return "Odd";
+		case Parity_Mark:  return "Mark";
+		case Parity_Space: return "Space";
+		
+		default:           return "Unknown";
 	};
 }
 

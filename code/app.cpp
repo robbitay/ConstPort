@@ -130,97 +130,112 @@ void OpenComPort(ComPortIndex_t comPortIndex)
 	}
 }
 
-void ComMenuUpdate(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInput, MenuHandler_t* menuHandler, Menu_t* menu)
+void ComMenuUpdate(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInput, MenuHandler_t* menuHandler, Menu_t* menuPntr)
 {
 	AppData_t* appData = GL_AppData;
 	
-	if (menu->show)
+	if (menuPntr->show)
 	{
-		v2 currentPos = menu->usableRec.topLeft + NewVec2(5, 5 + appData->testFont.maxExtendUp);
-		r32 maxLength = 0;
-		
 		if (ButtonPressed(Button_Escape))
 		{
-			menu->show = false;
+			menuPntr->show = false;
 		}
 		
-		u32 buttonIndex = 0;
-		for (u32 cIndex = 0; cIndex < ArrayCount(appData->availableComPorts); cIndex++)
+		u32 numTabs = appData->numComPortsAvailable + (appData->comPort.isOpen ? 1 : 0);
+		
+		//Update the menu size
 		{
-			if (appData->availableComPorts[cIndex] == true || 
-				(appData->comPort.isOpen && (ComPortIndex_t)cIndex == appData->comPort.index))
+			v2 comNameSize = MeasureString(&appData->testFont, GetComPortName(ComPort_12));
+			r32 tabMinimumWidth = comNameSize.x + COM_MENU_TAB_PADDING*2;
+			v2 menuSize = NewVec2(300, 300);
+			
+			if (menuSize.x / (r32)numTabs < tabMinimumWidth)
 			{
-				// v2 stringSize = MeasureString(&appData->testFont, GetComPortName((ComPortIndex_t)cIndex));
-				rec stringRec = NewRectangle(currentPos.x, currentPos.y - appData->testFont.maxExtendUp, 0, appData->testFont.lineHeight);
-				// stringRec = RectangleInflate(stringRec, 1);
-				stringRec.width = menu->usableRec.width - 5*2;
-				if (stringRec.y + stringRec.height - menu->drawRec.y > maxLength)
-					maxLength = stringRec.y + stringRec.height - menu->drawRec.y;
+				menuSize.x = tabMinimumWidth * numTabs;
+			}
+			
+			menuPntr->drawRec.size = menuSize;
+			UpdateMenuRecs(menuPntr);
+		}
+		
+		v2 tabSize = NewVec2(menuPntr->usableRec.width / numTabs, COM_MENU_TAB_HEIGHT);
+		
+		//Check for tab Presses
+		u32 tabIndex = 0;
+		for (u32 comIndex = 0; comIndex < ArrayCount(appData->availableComPorts); comIndex++)
+		{
+			if (appData->availableComPorts[comIndex] == true ||
+				(appData->comPort.isOpen && (ComPortIndex_t)comIndex == appData->comPort.index))
+			{
+				rec tabRec = NewRectangle(tabIndex * tabSize.x, 0, tabSize.x, tabSize.y);
+				tabRec.topLeft += menuPntr->usableRec.topLeft;
 				
-				if (!AppInput->buttons[MouseButton_Left].isDown && AppInput->buttons[MouseButton_Left].transCount > 0 &&
-					AppInput->mouseMaxDist[MouseButton_Left] < 10)
+				if (ButtonReleased(MouseButton_Left) && AppInput->mouseMaxDist[MouseButton_Left] < 10 &&
+					IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], tabRec))
 				{
-					if (IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], stringRec))
-					{
-						// DEBUG_PrintLine("Selected item %u", cIndex);
-						OpenComPort((ComPortIndex_t)cIndex);
-						menu->show = false;
-						break;
-					}
+					OpenComPort((ComPortIndex_t)comIndex);
+					menuPntr->show = false;
 				}
 				
-				currentPos.y += appData->testFont.lineHeight + 5;
-				buttonIndex++;
+				tabIndex++;
 			}
 		}
-		
-		menu->drawRec.height = maxLength + 5;
 	}
 }
-void ComMenuRender(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInput, RenderState_t* renderState, MenuHandler_t* menuHandler, Menu_t* menu)
+void ComMenuRender(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInput, RenderState_t* renderState, MenuHandler_t* menuHandler, Menu_t* menuPntr)
 {
 	AppData_t* appData = GL_AppData;
 	
-	v2 currentPos = menu->usableRec.topLeft + NewVec2(5, 5 + appData->testFont.maxExtendUp);
-	u32 buttonIndex = 0;
-	for (u32 cIndex = 0; cIndex < ArrayCount(appData->availableComPorts); cIndex++)
+	if (menuPntr->show)
 	{
-		if (appData->availableComPorts[cIndex] == true || 
-			(appData->comPort.isOpen && (ComPortIndex_t)cIndex == appData->comPort.index))
+		u32 numTabs = appData->numComPortsAvailable + (appData->comPort.isOpen ? 1 : 0);
+		v2 tabSize = NewVec2(menuPntr->usableRec.width / numTabs, COM_MENU_TAB_HEIGHT);
+		
+		//Check for tab Presses
+		u32 tabIndex = 0;
+		for (u32 comIndex = 0; comIndex < ArrayCount(appData->availableComPorts); comIndex++)
 		{
-			v2 stringSize = MeasureString(&appData->testFont, GetComPortName((ComPortIndex_t)cIndex));
-			rec stringRec = NewRectangle(currentPos.x, currentPos.y - appData->testFont.maxExtendUp, 0, appData->testFont.lineHeight);
-			stringRec = RectangleInflate(stringRec, 1);
-			stringRec.width = menu->usableRec.width - 5*2;
-			v2 stringOffset = NewVec2(stringRec.width/2 - stringSize.x/2, 0);
-			
-			Color_t buttonColor = {Color_White};
-			Color_t borderColor {Color_Black};
-			Color_t textColor = {Color_Black};
-			
-			if (IsInsideRectangle(AppInput->mousePos, stringRec))
+			if (appData->availableComPorts[comIndex] == true ||
+				(appData->comPort.isOpen && (ComPortIndex_t)comIndex == appData->comPort.index))
 			{
-				if (AppInput->buttons[MouseButton_Left].isDown && IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], stringRec))
+				v2 stringSize = MeasureString(&appData->testFont, GetComPortName((ComPortIndex_t)comIndex));
+				rec tabRec = NewRectangle(tabIndex * tabSize.x, 0, tabSize.x, tabSize.y);
+				tabRec.topLeft += menuPntr->usableRec.topLeft;
+				v2 stringPosition = tabRec.topLeft + NewVec2(tabRec.width/2 - stringSize.x/2, tabRec.height/2);
+				
+				Color_t buttonColor = {Color_White};
+				Color_t borderColor {Color_Black};
+				Color_t textColor = {Color_Black};
+				
+				if (ButtonReleased(MouseButton_Left) && AppInput->mouseMaxDist[MouseButton_Left] < 10 &&
+					IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], tabRec))
 				{
-					buttonColor = Color_Highlight3;
-					borderColor = Color_Foreground;
-					textColor = Color_Foreground;
+					OpenComPort((ComPortIndex_t)comIndex);
 				}
-				else
+				if (IsInsideRectangle(AppInput->mousePos, tabRec))
 				{
-					buttonColor = Color_Highlight1;
+					if (AppInput->buttons[MouseButton_Left].isDown && 
+						IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], tabRec))
+					{
+						buttonColor = Color_Highlight3;
+						borderColor = Color_Foreground;
+						textColor = Color_Foreground;
+					}
+					else
+					{
+						buttonColor = Color_Highlight1;
+					}
 				}
+				else if (appData->comPort.isOpen && (ComPortIndex_t)comIndex == appData->comPort.index)
+				{
+					buttonColor = Color_Highlight2;
+				}
+				
+				renderState->DrawButton(tabRec, buttonColor, borderColor);
+				renderState->DrawString(GetComPortName((ComPortIndex_t)comIndex), stringPosition, textColor);
+				
+				tabIndex++;
 			}
-			else if (appData->comPort.isOpen && (ComPortIndex_t)cIndex == appData->comPort.index)
-			{
-				buttonColor = Color_Highlight2;
-			}
-			
-			renderState->DrawButton(stringRec, buttonColor, borderColor);
-			renderState->DrawString(GetComPortName((ComPortIndex_t)cIndex), currentPos + stringOffset, textColor);
-			
-			currentPos.y += appData->testFont.lineHeight + 5;
-			buttonIndex++;
 		}
 	}
 }
@@ -234,7 +249,7 @@ void ContextMenuUpdate(const PlatformInfo_t* PlatformInfo, const AppInput_t* App
 	
 	menu->drawRec.size = textSize;
 	menu->drawRec = RectangleInflate(menu->drawRec, CONTEXT_MENU_PADDING);
-	menu->drawRec.topLeft = ui->mousePos + NewVec2(0, -menu->drawRec.height);
+	menu->drawRec.topLeft = ui->mousePos + NewVec2(0, -3 - menu->drawRec.height);
 }
 void ContextMenuRender(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInput, RenderState_t* renderState, MenuHandler_t* menuHandler, Menu_t* menu)
 {
@@ -496,10 +511,11 @@ AppUpdate_DEFINITION(App_Update)
 	}
 	
 	RecalculateUiElements(AppInput->mousePos, ui);
-	ui->mouseInMenu = (GetMenuAtPoint(&appData->menuHandler, AppInput->mousePos) != nullptr);
 	
 	Menu_t* comMenu = GetMenuByName(&appData->menuHandler, "COM Menu");
 	Menu_t* contextMenu = GetMenuByName(&appData->menuHandler, "Context Menu");
+	Menu_t* hoverMenu = GetMenuAtPoint(&appData->menuHandler, AppInput->mousePos);
+	ui->mouseInMenu = (hoverMenu != nullptr && hoverMenu != contextMenu);
 	Color_t color1 = ColorFromHSV((i32)(PlatformInfo->programTime*180) % 360, 1.0f, 1.0f);
 	Color_t color2 = ColorFromHSV((i32)(PlatformInfo->programTime*180 + 125) % 360, 1.0f, 1.0f);
 	Color_t selectionColor = ColorLerp({Color_White}, {Color_Gray}, (Sin32((r32)PlatformInfo->programTime*6.0f) + 1.0f) / 2.0f);
@@ -569,7 +585,7 @@ AppUpdate_DEFINITION(App_Update)
 		}
 	}
 	
-	//Read COM port information
+	//Read and write COM port
 	if (appData->comPort.isOpen)
 	{
 		i32 readResult = 1;
@@ -629,6 +645,7 @@ AppUpdate_DEFINITION(App_Update)
 		}
 	}
 	
+	//Recenter COM menu
 	if (PlatformInfo->windowResized)
 	{
 		comMenu->drawRec.topLeft = NewVec2(

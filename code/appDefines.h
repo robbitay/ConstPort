@@ -24,6 +24,10 @@ Date:   06\08\2017
 #define MIN_SECONDS_STATUS_BAR         1  //seconds
 #define MAIN_MENU_BUTTON_PADDING       10  //px
 #define MAIN_MENU_HEIGHT               (40+MAIN_MENU_BUTTON_PADDING*2) //px
+#define COM_MENU_TAB_PADDING           5
+#define COM_MENU_TAB_HEIGHT            35
+#define COM_MENU_OUTER_PADDING         5
+#define COM_MENU_INNER_PADDING         10
 
 #define Color_Background               NewColor(33, 33, 33, 255)
 #define Color_Foreground               {0xFFF8F8F2}
