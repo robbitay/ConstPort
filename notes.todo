@@ -13,14 +13,14 @@
 	[X] Page Up, Page Down, End, and Home buttons works as expected
 	[X] Add a mark to a line by clicking on line number or shortcut
 	[X] Make The currently connected COM port show up in the title bar and status bar
-	[!] Make a function that measures the whole buffer with ability to support word wrap and spacers
-	[!] Add elapsed time spacers between lines
-	[!] Copy to file (static name)
-	[!] Paste from clipboard
+	[X] Add a slide down menu with different buttons
+	[!] Expand the COM menu to include Baud Rate, Parity, Stop Bits, and Bit Count
+	[ ] Make a function that measures the whole buffer with ability to support word wrap and spacers
+	[ ] Add elapsed time spacers between lines
+	[ ] Copy to file (static name)
+	[ ] Paste from clipboard
 	[ ] Move line rendering parts into seperate file
 	[ ] Add checking for COM port errors and whether or not we are still connected
-	[ ] Add a slide down menu with different buttons
-	[ ] Ability to configure Baud Rate, Parity, and Stop Bits
 	[ ] Ability to set Flow Control mode
 	[ ] Clear buffer button
 	[ ] Horizontal Scrolling

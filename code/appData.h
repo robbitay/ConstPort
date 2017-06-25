@@ -30,8 +30,11 @@ struct AppData_t
 	bool startedOnScrollbar;
 	
 	ComPort_t comPort;
+	
+	//NOTE: This list will not contain the comPort that is
+	//		currently connected.
 	u32 numComPortsAvailable;
-	char availableComPorts[MAX_COM_PORT_NUM][8];
+	bool availableComPorts[NumComPorts];
 	
 	UiElements_t uiElements;
 	

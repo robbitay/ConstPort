@@ -12,29 +12,26 @@ GetComPortList_DEFINITION(Win32_GetComPortList)
 {
 	u32 result = 0;
 	
-	//TODO: Is there ever a COM0?
-	for (u8 cIndex = 1; cIndex <= MAX_COM_PORT_NUM; cIndex++)
+	for (u8 cIndex = 0; cIndex < arrayOutSize && cIndex < NumComPorts; cIndex++)
 	{
-		char* nameBuffer = &arrayOut[arrayOutWidth * result];
+		ComPortIndex_t comIndex = (ComPortIndex_t)cIndex;
+		bool* boolPntr = &arrayOut[cIndex]; 
 		
-		u32 nameLength = snprintf(nameBuffer, arrayOutWidth-1, "COM%u", cIndex);
-		if (nameLength >= arrayOutWidth-1)
-		{
-			Win32_WriteLine("WARNING: COM port name was too long for output array width");
-			continue;
-		}
-		nameBuffer[nameLength] = '\0';
+		// Win32_PrintLine("Trying to open %s...", GetComPortName(comIndex));
 		
-		// Win32_PrintLine("Trying to open %s...", nameBuffer);
-		
-		HANDLE comHandle = CreateFileA(nameBuffer, 
+		HANDLE comHandle = CreateFileA(GetComPortName(comIndex), 
 			GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
 		
 		if (comHandle != INVALID_HANDLE_VALUE)
 		{
-			// Win32_PrintLine("%s Exists!", nameBuffer);
+			// Win32_PrintLine("%s Exists!", GetComPortName(comIndex));
+			*boolPntr = true;
 			result++;
 			CloseHandle(comHandle);
+		}
+		else
+		{
+			*boolPntr = false;
 		}
 	}
 	
@@ -44,10 +41,10 @@ GetComPortList_DEFINITION(Win32_GetComPortList)
 OpenComPort_DEFINITION(Win32_OpenComPort)
 {
 	ComPort_t result = {};
-	strncpy(result.name, portName, sizeof(result.name)-1);
+	result.index = portIndex;
 	result.handle = INVALID_HANDLE_VALUE;
 	
-	HANDLE comHandle = CreateFileA(portName, 
+	HANDLE comHandle = CreateFileA(GetComPortName(portIndex), 
 		GENERIC_READ | GENERIC_WRITE, 
 		0,
 		NULL,

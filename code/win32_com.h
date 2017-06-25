@@ -3,6 +3,25 @@
 
 #define MAX_COM_PORT_NUM   12
 
+//TODO: Is there ever a COM0?
+typedef enum
+{
+	ComPort_1 = 0,
+	ComPort_2,
+	ComPort_3,
+	ComPort_4,
+	ComPort_5,
+	ComPort_6,
+	ComPort_7,
+	ComPort_8,
+	ComPort_9,
+	ComPort_10,
+	ComPort_11,
+	ComPort_12,
+	
+	NumComPorts,
+} ComPortIndex_t;
+
 typedef enum
 {
 	BaudRate_110 = 1,
@@ -47,7 +66,7 @@ typedef enum
 struct ComPort_t
 {
 	bool isOpen;
-	char name[8];
+	ComPortIndex_t index;
 	
 	BaudRate_t baudRate;
 	Parity_t   parity;
@@ -56,11 +75,11 @@ struct ComPort_t
 	HANDLE handle;
 };
 
-#define GetComPortList_DEFINITION(functionName) u32 functionName(char* arrayOut, u32 arrayOutWidth, u32 arrayOutHeight)
+#define GetComPortList_DEFINITION(functionName) u32 functionName(bool* arrayOut, u32 arrayOutSize)
 typedef GetComPortList_DEFINITION(GetComPortList_f);
 
 #define OpenComPort_DEFINITION(functionName) ComPort_t functionName( \
-	const char* portName, BaudRate_t baudRate, bool useFlowControl,  \
+	ComPortIndex_t portIndex, BaudRate_t baudRate, bool useFlowControl,  \
 	bool parityEnabled, Parity_t parity,                             \
 	u8 numBits, StopBits_t stopBits)
 typedef OpenComPort_DEFINITION(OpenComPort_f);
@@ -73,5 +92,26 @@ typedef ReadComPort_DEFINITION(ReadComPort_f);
 
 #define WriteComPort_DEFINITION(functionName) void functionName(ComPort_t* comPortPntr, const char* newChars, u32 numChars)
 typedef WriteComPort_DEFINITION(WriteComPort_f);
+
+const char* GetComPortName(ComPortIndex_t comIndex)
+{
+	switch (comIndex)
+	{
+		case ComPort_1:  return "COM1";
+		case ComPort_2:  return "COM2";
+		case ComPort_3:  return "COM3";
+		case ComPort_4:  return "COM4";
+		case ComPort_5:  return "COM5";
+		case ComPort_6:  return "COM6";
+		case ComPort_7:  return "COM7";
+		case ComPort_8:  return "COM8";
+		case ComPort_9:  return "COM9";
+		case ComPort_10: return "COM10";
+		case ComPort_11: return "COM11";
+		case ComPort_12: return "COM12";
+		
+		default:         return "COM1";
+	};
+}
 
 #endif // _WIN32_COM_PORT_H

@@ -92,17 +92,19 @@ void RefreshComPortList()
 	const PlatformInfo_t* PlatformInfo = Gl_PlatformInfo;
 	
 	appData->numComPortsAvailable = PlatformInfo->GetComPortListPntr(
-		&appData->availableComPorts[0][0], 
-		ArrayCount(appData->availableComPorts[0]), ArrayCount(appData->availableComPorts));
+		&appData->availableComPorts[0], ArrayCount(appData->availableComPorts));
 	
 	DEBUG_PrintLine("Found %u com ports.", appData->numComPortsAvailable);
-	for (u32 cIndex = 0; cIndex < appData->numComPortsAvailable; cIndex++)
+	for (u32 cIndex = 0; cIndex < ArrayCount(appData->availableComPorts); cIndex++)
 	{
-		DEBUG_PrintLine("[%u] \"%s\"", cIndex+1, appData->availableComPorts[cIndex]);
+		if (appData->availableComPorts[cIndex] == true)
+		{
+			DEBUG_PrintLine("\"%s\"Available!", GetComPortName((ComPortIndex_t)cIndex));
+		}
 	}
 }
 
-void OpenComPort(i32 comPortIndex)
+void OpenComPort(ComPortIndex_t comPortIndex)
 {
 	AppData_t* appData = GL_AppData;
 	const PlatformInfo_t* PlatformInfo = Gl_PlatformInfo;
@@ -110,21 +112,21 @@ void OpenComPort(i32 comPortIndex)
 	if (appData->comPort.isOpen)
 	{
 		PlatformInfo->CloseComPortPntr(&appData->comPort);
-		DEBUG_WriteLine("Closed COM port");
+		DEBUG_PrintLine("Closed %s", GetComPortName(appData->comPort.index));
 	}
 	
 	ClearConsole();
 	
-	appData->comPort = PlatformInfo->OpenComPortPntr(appData->availableComPorts[comPortIndex],
+	appData->comPort = PlatformInfo->OpenComPortPntr(comPortIndex,
 		BaudRate_115200, false, true, Parity_None, 8, StopBits_1);
 	
 	if (appData->comPort.isOpen)
 	{
-		DEBUG_PrintLine("%s port opened successfully", appData->availableComPorts[comPortIndex]);
+		DEBUG_PrintLine("%s port opened successfully", GetComPortName(comPortIndex));
 	}
 	else
 	{
-		DEBUG_PrintLine("Couldn't open %s port.", appData->availableComPorts[comPortIndex]);
+		DEBUG_PrintLine("Couldn't open %s port.", GetComPortName(comPortIndex));
 	}
 }
 
@@ -142,28 +144,34 @@ void ComMenuUpdate(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 			menu->show = false;
 		}
 		
-		for (u32 cIndex = 0; cIndex < appData->numComPortsAvailable; cIndex++)
+		u32 buttonIndex = 0;
+		for (u32 cIndex = 0; cIndex < ArrayCount(appData->availableComPorts); cIndex++)
 		{
-			// v2 stringSize = MeasureString(&appData->testFont, appData->availableComPorts[cIndex]);
-			rec stringRec = NewRectangle(currentPos.x, currentPos.y - appData->testFont.maxExtendUp, 0, appData->testFont.lineHeight);
-			// stringRec = RectangleInflate(stringRec, 1);
-			stringRec.width = menu->usableRec.width - 5*2;
-			if (stringRec.y + stringRec.height - menu->drawRec.y > maxLength)
-				maxLength = stringRec.y + stringRec.height - menu->drawRec.y;
-			
-			if (!AppInput->buttons[MouseButton_Left].isDown && AppInput->buttons[MouseButton_Left].transCount > 0 &&
-				AppInput->mouseMaxDist[MouseButton_Left] < 10)
+			if (appData->availableComPorts[cIndex] == true || 
+				(appData->comPort.isOpen && (ComPortIndex_t)cIndex == appData->comPort.index))
 			{
-				if (IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], stringRec))
+				// v2 stringSize = MeasureString(&appData->testFont, GetComPortName((ComPortIndex_t)cIndex));
+				rec stringRec = NewRectangle(currentPos.x, currentPos.y - appData->testFont.maxExtendUp, 0, appData->testFont.lineHeight);
+				// stringRec = RectangleInflate(stringRec, 1);
+				stringRec.width = menu->usableRec.width - 5*2;
+				if (stringRec.y + stringRec.height - menu->drawRec.y > maxLength)
+					maxLength = stringRec.y + stringRec.height - menu->drawRec.y;
+				
+				if (!AppInput->buttons[MouseButton_Left].isDown && AppInput->buttons[MouseButton_Left].transCount > 0 &&
+					AppInput->mouseMaxDist[MouseButton_Left] < 10)
 				{
-					// DEBUG_PrintLine("Selected item %u", cIndex);
-					OpenComPort(cIndex);
-					menu->show = false;
-					break;
+					if (IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], stringRec))
+					{
+						// DEBUG_PrintLine("Selected item %u", cIndex);
+						OpenComPort((ComPortIndex_t)cIndex);
+						menu->show = false;
+						break;
+					}
 				}
+				
+				currentPos.y += appData->testFont.lineHeight + 5;
+				buttonIndex++;
 			}
-			
-			currentPos.y += appData->testFont.lineHeight + 5;
 		}
 		
 		menu->drawRec.height = maxLength + 5;
@@ -174,39 +182,46 @@ void ComMenuRender(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 	AppData_t* appData = GL_AppData;
 	
 	v2 currentPos = menu->usableRec.topLeft + NewVec2(5, 5 + appData->testFont.maxExtendUp);
-	for (u32 cIndex = 0; cIndex < appData->numComPortsAvailable; cIndex++)
+	u32 buttonIndex = 0;
+	for (u32 cIndex = 0; cIndex < ArrayCount(appData->availableComPorts); cIndex++)
 	{
-		const char* comString = appData->availableComPorts[cIndex];
-		v2 stringSize = MeasureString(&appData->testFont, comString);
-		rec stringRec = NewRectangle(currentPos.x, currentPos.y - appData->testFont.maxExtendUp, 0, appData->testFont.lineHeight);
-		stringRec = RectangleInflate(stringRec, 1);
-		stringRec.width = menu->usableRec.width - 5*2;
-		v2 stringOffset = NewVec2(stringRec.width/2 - stringSize.x/2, 0);
-		
-		Color_t buttonColor = {Color_White};
-		Color_t borderColor {Color_Black};
-		Color_t textColor = {Color_Black};
-		
-		if (IsInsideRectangle(AppInput->mousePos, stringRec))
+		if (appData->availableComPorts[cIndex] == true || 
+			(appData->comPort.isOpen && (ComPortIndex_t)cIndex == appData->comPort.index))
 		{
-			if (AppInput->buttons[MouseButton_Left].isDown && IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], stringRec))
+			v2 stringSize = MeasureString(&appData->testFont, GetComPortName((ComPortIndex_t)cIndex));
+			rec stringRec = NewRectangle(currentPos.x, currentPos.y - appData->testFont.maxExtendUp, 0, appData->testFont.lineHeight);
+			stringRec = RectangleInflate(stringRec, 1);
+			stringRec.width = menu->usableRec.width - 5*2;
+			v2 stringOffset = NewVec2(stringRec.width/2 - stringSize.x/2, 0);
+			
+			Color_t buttonColor = {Color_White};
+			Color_t borderColor {Color_Black};
+			Color_t textColor = {Color_Black};
+			
+			if (IsInsideRectangle(AppInput->mousePos, stringRec))
 			{
-				buttonColor = Color_Highlight3;
-				borderColor = Color_Foreground;
-				textColor = Color_Foreground;
+				if (AppInput->buttons[MouseButton_Left].isDown && IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], stringRec))
+				{
+					buttonColor = Color_Highlight3;
+					borderColor = Color_Foreground;
+					textColor = Color_Foreground;
+				}
+				else
+				{
+					buttonColor = Color_Highlight1;
+				}
 			}
-			//TODO: Add a check to see which COM port is open and highlight it accordingly
-			// else if ()
-			else
+			else if (appData->comPort.isOpen && (ComPortIndex_t)cIndex == appData->comPort.index)
 			{
 				buttonColor = Color_Highlight2;
 			}
+			
+			renderState->DrawButton(stringRec, buttonColor, borderColor);
+			renderState->DrawString(GetComPortName((ComPortIndex_t)cIndex), currentPos + stringOffset, textColor);
+			
+			currentPos.y += appData->testFont.lineHeight + 5;
+			buttonIndex++;
 		}
-		
-		renderState->DrawButton(stringRec, buttonColor, borderColor);
-		renderState->DrawString(comString, currentPos + stringOffset, textColor);
-		
-		currentPos.y += appData->testFont.lineHeight + 5;
 	}
 }
 
@@ -472,7 +487,7 @@ AppUpdate_DEFINITION(App_Update)
 	if (appData->comPort.isOpen)
 	{
 		snprintf(AppOutput->windowTitle, sizeof(AppOutput->windowTitle)-1, 
-			"Const Port %s", appData->comPort.name);
+			"[%s] Const Port", GetComPortName(appData->comPort.index));
 	}
 	else
 	{
@@ -681,25 +696,28 @@ AppUpdate_DEFINITION(App_Update)
 	// Quick keys for opening COM ports with Ctrl+(1-9)
 	if (AppInput->buttons[Button_Control].isDown)
 	{
-		i32 cIndex = -1;
+		ComPortIndex_t cIndex = NumComPorts;
 		
-		if (AppInput->buttons[Button_1].transCount > 0 && AppInput->buttons[Button_1].isDown) cIndex = 0;
-		if (AppInput->buttons[Button_2].transCount > 0 && AppInput->buttons[Button_2].isDown) cIndex = 1;
-		if (AppInput->buttons[Button_3].transCount > 0 && AppInput->buttons[Button_3].isDown) cIndex = 2;
-		if (AppInput->buttons[Button_4].transCount > 0 && AppInput->buttons[Button_4].isDown) cIndex = 3;
-		if (AppInput->buttons[Button_5].transCount > 0 && AppInput->buttons[Button_5].isDown) cIndex = 4;
-		if (AppInput->buttons[Button_6].transCount > 0 && AppInput->buttons[Button_6].isDown) cIndex = 5;
-		if (AppInput->buttons[Button_7].transCount > 0 && AppInput->buttons[Button_7].isDown) cIndex = 6;
-		if (AppInput->buttons[Button_8].transCount > 0 && AppInput->buttons[Button_8].isDown) cIndex = 7;
-		if (AppInput->buttons[Button_9].transCount > 0 && AppInput->buttons[Button_9].isDown) cIndex = 8;
+		if (AppInput->buttons[Button_1].transCount > 0 && AppInput->buttons[Button_1].isDown) cIndex = ComPort_1;
+		if (AppInput->buttons[Button_2].transCount > 0 && AppInput->buttons[Button_2].isDown) cIndex = ComPort_2;
+		if (AppInput->buttons[Button_3].transCount > 0 && AppInput->buttons[Button_3].isDown) cIndex = ComPort_3;
+		if (AppInput->buttons[Button_4].transCount > 0 && AppInput->buttons[Button_4].isDown) cIndex = ComPort_4;
+		if (AppInput->buttons[Button_5].transCount > 0 && AppInput->buttons[Button_5].isDown) cIndex = ComPort_5;
+		if (AppInput->buttons[Button_6].transCount > 0 && AppInput->buttons[Button_6].isDown) cIndex = ComPort_6;
+		if (AppInput->buttons[Button_7].transCount > 0 && AppInput->buttons[Button_7].isDown) cIndex = ComPort_7;
+		if (AppInput->buttons[Button_8].transCount > 0 && AppInput->buttons[Button_8].isDown) cIndex = ComPort_8;
+		if (AppInput->buttons[Button_9].transCount > 0 && AppInput->buttons[Button_9].isDown) cIndex = ComPort_9;
 		
-		if (cIndex >= (i32)appData->numComPortsAvailable)
+		if (cIndex != NumComPorts)
 		{
-			DEBUG_PrintLine("Cannot open COM port #%d", cIndex+1);
-		}
-		else if (cIndex != -1)
-		{
-			OpenComPort(cIndex);
+			if (appData->availableComPorts[cIndex] == false)
+			{
+				DEBUG_PrintLine("%s not Available!", GetComPortName(cIndex));
+			}
+			else
+			{
+				OpenComPort(cIndex);
+			}
 		}
 	}
 	
@@ -1152,8 +1170,8 @@ AppUpdate_DEFINITION(App_Update)
 	
 	if (appData->comPort.isOpen)
 	{
-		v2 comNameSize = MeasureString(&appData->testFont, appData->comPort.name);
-		rs->DrawString(appData->comPort.name,
+		v2 comNameSize = MeasureString(&appData->testFont, GetComPortName(appData->comPort.index));
+		rs->DrawString(GetComPortName(appData->comPort.index),
 			NewVec2(ui->screenSize.x - comNameSize.x - 10, ui->screenSize.y-appData->testFont.maxExtendDown), 
 			Color_Foreground, 1.0f);
 	}
@@ -1188,7 +1206,7 @@ AppUpdate_DEFINITION(App_Update)
 	{
 		rec buttonRec = ui->buttonRecs[bIndex];
 		Color_t baseColor = {Color_White};
-		Color_t highlightColor = {Color_LightGrey};
+		Color_t highlightColor = {Color_Red};
 		Color_t iconColor = {Color_White};
 		
 		if (IsInsideRectangle(ui->mousePos, buttonRec) && !ui->mouseInMenu)
