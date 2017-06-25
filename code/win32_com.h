@@ -116,7 +116,7 @@ const char* GetComPortName(ComPortIndex_t comIndex)
 		case ComPort_11: return "COM11";
 		case ComPort_12: return "COM12";
 		
-		default:         return "UNK";
+		default:         return "Unkwn";
 	};
 }
 
@@ -139,7 +139,7 @@ const char* GetBaudRateString(BaudRate_t baudRate)
 		case BaudRate_128000: return "128000";
 		case BaudRate_256000: return "256000";
 		
-		default:              return "Unknown";
+		default:              return "Unknwn";
 	};
 }
 
@@ -153,7 +153,19 @@ const char* GetParityString(Parity_t parity)
 		case Parity_Mark:  return "Mark";
 		case Parity_Space: return "Space";
 		
-		default:           return "Unknown";
+		default:           return "Unkwn";
+	};
+}
+
+const char* GetStopBitsString(StopBits_t stopBits)
+{
+	switch(stopBits)
+	{
+		case StopBits_1:   return "1";
+		case StopBits_1_5: return "1.5";
+		case StopBits_2:   return "2";
+		
+		default:           return "Unk";
 	};
 }
 

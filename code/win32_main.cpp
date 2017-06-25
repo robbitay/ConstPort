@@ -31,10 +31,10 @@ Description:
 #define WINDOW_TITLE              "Const Port"
 #define APPLICATION_DLL_NAME      "ConstPort.dll"
 #define APPLICATION_DLL_TEMP_NAME "ConstPort_TEMP.dll"
-#define WINDOW_WIDTH              600
-#define WINDOW_HEIGHT             350
-#define WINDOW_MIN_WIDTH          600
-#define WINDOW_MIN_HEIGHT         350
+#define WINDOW_WIDTH              500
+#define WINDOW_HEIGHT             400
+#define WINDOW_MIN_WIDTH          350
+#define WINDOW_MIN_HEIGHT         400
 #define WINDOW_MAX_WIDTH          GLFW_DONT_CARE
 #define WINDOW_MAX_HEIGHT         GLFW_DONT_CARE
 #define ENFORCE_ASPECT_RATIO      false

@@ -142,12 +142,37 @@ void ComMenuUpdate(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 		}
 		
 		u32 numTabs = appData->numComPortsAvailable + (appData->comPort.isOpen ? 1 : 0);
+		v2 tabSize = NewVec2(menuPntr->usableRec.width / numTabs, COM_MENU_TAB_HEIGHT);
+		rec baudRateRec = NewRectangle(
+			COM_MENU_OUTER_PADDING,
+			menuPntr->titleBarSize + tabSize.y + appData->testFont.lineHeight + COM_MENU_OUTER_PADDING,
+			78, appData->testFont.lineHeight * NumBaudRates
+		);
+		rec numBitsRec = NewRectangle(
+			baudRateRec.x + baudRateRec.width + COM_MENU_INNER_PADDING,
+			tabSize.y + appData->testFont.lineHeight + COM_MENU_OUTER_PADDING,
+			55, appData->testFont.lineHeight * 8
+		);
+		rec parityTypesRec = NewRectangle(
+			numBitsRec.x + numBitsRec.width + COM_MENU_INNER_PADDING,
+			tabSize.y + appData->testFont.lineHeight + COM_MENU_OUTER_PADDING,
+			60, appData->testFont.lineHeight * NumParityTypes
+		);
+		rec stopBitsRec = NewRectangle(
+			parityTypesRec.x + parityTypesRec.width + COM_MENU_INNER_PADDING,
+			tabSize.y + appData->testFont.lineHeight + COM_MENU_OUTER_PADDING,
+			80, appData->testFont.lineHeight * NumStopBitTypes
+		);
+		
+		tabSize.x = menuPntr->usableRec.width / numTabs;
 		
 		//Update the menu size
 		{
 			v2 comNameSize = MeasureString(&appData->testFont, GetComPortName(ComPort_12));
 			r32 tabMinimumWidth = comNameSize.x + COM_MENU_TAB_PADDING*2;
-			v2 menuSize = NewVec2(300, 300);
+			v2 menuSize = NewVec2(
+				stopBitsRec.x + stopBitsRec.width + COM_MENU_OUTER_PADDING, 
+				baudRateRec.y + baudRateRec.height + COM_MENU_OUTER_PADDING);
 			
 			if (menuSize.x / (r32)numTabs < tabMinimumWidth)
 			{
@@ -158,7 +183,6 @@ void ComMenuUpdate(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 			UpdateMenuRecs(menuPntr);
 		}
 		
-		v2 tabSize = NewVec2(menuPntr->usableRec.width / numTabs, COM_MENU_TAB_HEIGHT);
 		
 		//Check for tab Presses
 		u32 tabIndex = 0;
@@ -190,6 +214,139 @@ void ComMenuRender(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 	{
 		u32 numTabs = appData->numComPortsAvailable + (appData->comPort.isOpen ? 1 : 0);
 		v2 tabSize = NewVec2(menuPntr->usableRec.width / numTabs, COM_MENU_TAB_HEIGHT);
+		rec baudRateRec = NewRectangle(
+			menuPntr->usableRec.x + COM_MENU_OUTER_PADDING,
+			menuPntr->usableRec.y + tabSize.y + appData->testFont.lineHeight + COM_MENU_OUTER_PADDING,
+			78, appData->testFont.lineHeight * NumBaudRates
+		);
+		rec numBitsRec = NewRectangle(
+			baudRateRec.x + baudRateRec.width + COM_MENU_INNER_PADDING,
+			menuPntr->usableRec.y + tabSize.y + appData->testFont.lineHeight + COM_MENU_OUTER_PADDING,
+			55, appData->testFont.lineHeight * 8
+		);
+		rec parityTypesRec = NewRectangle(
+			numBitsRec.x + numBitsRec.width + COM_MENU_INNER_PADDING,
+			menuPntr->usableRec.y + tabSize.y + appData->testFont.lineHeight + COM_MENU_OUTER_PADDING,
+			60, appData->testFont.lineHeight * NumParityTypes
+		);
+		rec stopBitsRec = NewRectangle(
+			parityTypesRec.x + parityTypesRec.width + COM_MENU_INNER_PADDING,
+			menuPntr->usableRec.y + tabSize.y + appData->testFont.lineHeight + COM_MENU_OUTER_PADDING,
+			80, appData->testFont.lineHeight * NumStopBitTypes
+		);
+		
+		renderState->DrawString("Baud Rate", NewVec2(baudRateRec.x, baudRateRec.y - appData->testFont.maxExtendDown), {Color_Foreground});
+		renderState->DrawRectangle(baudRateRec, Color_Foreground);
+		for (i32 baudIndex = 0; baudIndex < NumBaudRates; baudIndex++)
+		{
+			const char* baudString = GetBaudRateString((BaudRate_t)baudIndex);
+			rec currentRec = NewRectangle(baudRateRec.x, 
+				baudRateRec.y + baudIndex*appData->testFont.lineHeight, 
+				baudRateRec.width, appData->testFont.lineHeight
+			);
+			Color_t textColor = Color_Background;
+			if (IsInsideRectangle(AppInput->mousePos, currentRec))
+			{
+				Color_t backColor = Color_UiLightGray1;
+				if (ButtonDown(MouseButton_Left) && IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], currentRec))
+				{
+					backColor = Color_Highlight3;
+					textColor = Color_Foreground;
+				}
+				
+				renderState->DrawRectangle(currentRec, backColor);
+			}
+			renderState->DrawString(baudString,
+				baudRateRec.topLeft + NewVec2(
+					baudRateRec.width/2 - MeasureString(&appData->testFont, baudString).x/2, 
+					appData->testFont.maxExtendUp + baudIndex*appData->testFont.lineHeight),
+				textColor);
+		}
+		
+		renderState->DrawString("# Bits", NewVec2(numBitsRec.x, numBitsRec.y - appData->testFont.maxExtendDown), {Color_Foreground});
+		renderState->DrawRectangle(numBitsRec, Color_Foreground);
+		for (i32 bitIndex = 0; bitIndex < 8; bitIndex++)
+		{
+			char numBitsString[4] = {};
+			snprintf(numBitsString, ArrayCount(numBitsString)-1, "%d", bitIndex+1);
+			rec currentRec = NewRectangle(numBitsRec.x, 
+				numBitsRec.y + bitIndex*appData->testFont.lineHeight, 
+				numBitsRec.width, appData->testFont.lineHeight
+			);
+			Color_t textColor = Color_Background;
+			if (IsInsideRectangle(AppInput->mousePos, currentRec))
+			{
+				Color_t backColor = Color_UiLightGray1;
+				if (ButtonDown(MouseButton_Left) && IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], currentRec))
+				{
+					backColor = Color_Highlight3;
+					textColor = Color_Foreground;
+				}
+				
+				renderState->DrawRectangle(currentRec, backColor);
+			}
+			renderState->DrawString(numBitsString,
+				numBitsRec.topLeft + NewVec2(
+					numBitsRec.width/2 - MeasureString(&appData->testFont, numBitsString).x/2, 
+					appData->testFont.maxExtendUp + bitIndex*appData->testFont.lineHeight),
+				textColor);
+		}
+		
+		renderState->DrawString("Parity", NewVec2(parityTypesRec.x, parityTypesRec.y - appData->testFont.maxExtendDown), {Color_Foreground});
+		renderState->DrawRectangle(parityTypesRec, Color_Foreground);
+		for (i32 parityIndex = 0; parityIndex < NumParityTypes; parityIndex++)
+		{
+			const char* parityString = GetParityString((Parity_t)parityIndex);
+			rec currentRec = NewRectangle(parityTypesRec.x, 
+				parityTypesRec.y + parityIndex*appData->testFont.lineHeight, 
+				parityTypesRec.width, appData->testFont.lineHeight
+			);
+			Color_t textColor = Color_Background;
+			if (IsInsideRectangle(AppInput->mousePos, currentRec))
+			{
+				Color_t backColor = Color_UiLightGray1;
+				if (ButtonDown(MouseButton_Left) && IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], currentRec))
+				{
+					backColor = Color_Highlight3;
+					textColor = Color_Foreground;
+				}
+				
+				renderState->DrawRectangle(currentRec, backColor);
+			}
+			renderState->DrawString(parityString,
+				parityTypesRec.topLeft + NewVec2(
+					parityTypesRec.width/2 - MeasureString(&appData->testFont, parityString).x/2, 
+					appData->testFont.maxExtendUp + parityIndex*appData->testFont.lineHeight),
+				textColor);
+		}
+		
+		renderState->DrawString("Stop Bits", NewVec2(stopBitsRec.x, stopBitsRec.y - appData->testFont.maxExtendDown), {Color_Foreground});
+		renderState->DrawRectangle(stopBitsRec, Color_Foreground);
+		for (i32 stopBitIndex = 0; stopBitIndex < NumStopBitTypes; stopBitIndex++)
+		{
+			const char* stopBitsString = GetStopBitsString((StopBits_t)stopBitIndex);
+			rec currentRec = NewRectangle(stopBitsRec.x, 
+				stopBitsRec.y + stopBitIndex*appData->testFont.lineHeight, 
+				stopBitsRec.width, appData->testFont.lineHeight
+			);
+			Color_t textColor = Color_Background;
+			if (IsInsideRectangle(AppInput->mousePos, currentRec))
+			{
+				Color_t backColor = Color_UiLightGray1;
+				if (ButtonDown(MouseButton_Left) && IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], currentRec))
+				{
+					backColor = Color_Highlight3;
+					textColor = Color_Foreground;
+				}
+				
+				renderState->DrawRectangle(currentRec, backColor);
+			}
+			renderState->DrawString(stopBitsString,
+				stopBitsRec.topLeft + NewVec2(
+					stopBitsRec.width/2 - MeasureString(&appData->testFont, stopBitsString).x/2, 
+					appData->testFont.maxExtendUp + stopBitIndex*appData->testFont.lineHeight),
+				textColor);
+		}
 		
 		//Check for tab Presses
 		u32 tabIndex = 0;
@@ -223,7 +380,7 @@ void ComMenuRender(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 					}
 					else
 					{
-						buttonColor = Color_Highlight1;
+						buttonColor = Color_UiLightGray1;
 					}
 				}
 				else if (appData->comPort.isOpen && (ComPortIndex_t)comIndex == appData->comPort.index)
@@ -415,7 +572,7 @@ AppInitialize_DEFINITION(App_Initialize)
 	InitializeMenuHandler(&appData->menuHandler, &appData->memArena);
 	
 	v2i screenSize = PlatformInfo->screenSize;
-	Menu_t* comMenu = AddMenu(&appData->menuHandler, "COM Menu", NewRectangle((r32)screenSize.x / 2 - 50, (r32)screenSize.y / 2 - 150, 100, 300),
+	Menu_t* comMenu = AddMenu(&appData->menuHandler, "COM Menu", NewRectangle((r32)screenSize.x / 2 - 50, (r32)screenSize.y / 2 - 150, 400, 300),
 		ComMenuUpdate, ComMenuRender);
 	comMenu->show = false;
 	Menu_t* contextMenu = AddMenu(&appData->menuHandler, "Context Menu", NewRectangle(0, 0, 100, 100),
@@ -834,7 +991,7 @@ AppUpdate_DEFINITION(App_Update)
 			}
 			else if (ui->startedOnScrollbar) //holding the button
 			{
-				r32 newPixelLocation = ui->mousePos.y - ui->mouseScrollbarOffset;
+				r32 newPixelLocation = ui->mousePos.y - ui->mouseScrollbarOffset - ui->scrollBarGutterRec.y;
 				if (newPixelLocation > ui->scrollBarGutterRec.y + (ui->scrollBarGutterRec.height - ui->scrollBarRec.height))
 				{
 					newPixelLocation = ui->scrollBarGutterRec.y + (ui->scrollBarGutterRec.height - ui->scrollBarRec.height);
