@@ -117,8 +117,7 @@ void OpenComPort(ComPortIndex_t comPortIndex)
 	
 	ClearConsole();
 	
-	appData->comPort = PlatformInfo->OpenComPortPntr(comPortIndex,
-		BaudRate_115200, false, true, Parity_None, 8, StopBits_1);
+	appData->comPort = PlatformInfo->OpenComPortPntr(comPortIndex, appData->comPort.settings);
 	
 	if (appData->comPort.isOpen)
 	{
@@ -256,6 +255,10 @@ void ComMenuRender(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 				
 				renderState->DrawRectangle(currentRec, backColor);
 			}
+			else if ((BaudRate_t)baudIndex == appData->comPort.settings.baudRate)
+			{
+				renderState->DrawRectangle(currentRec, Color_Highlight4);
+			}
 			renderState->DrawString(baudString,
 				baudRateRec.topLeft + NewVec2(
 					baudRateRec.width/2 - MeasureString(&appData->testFont, baudString).x/2, 
@@ -285,6 +288,10 @@ void ComMenuRender(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 				
 				renderState->DrawRectangle(currentRec, backColor);
 			}
+			else if ((u8)(bitIndex+1) == appData->comPort.settings.numBits)
+			{
+				renderState->DrawRectangle(currentRec, Color_Highlight4);
+			}
 			renderState->DrawString(numBitsString,
 				numBitsRec.topLeft + NewVec2(
 					numBitsRec.width/2 - MeasureString(&appData->testFont, numBitsString).x/2, 
@@ -313,6 +320,10 @@ void ComMenuRender(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 				
 				renderState->DrawRectangle(currentRec, backColor);
 			}
+			else if ((Parity_t)(parityIndex) == appData->comPort.settings.parity)
+			{
+				renderState->DrawRectangle(currentRec, Color_Highlight4);
+			}
 			renderState->DrawString(parityString,
 				parityTypesRec.topLeft + NewVec2(
 					parityTypesRec.width/2 - MeasureString(&appData->testFont, parityString).x/2, 
@@ -340,6 +351,10 @@ void ComMenuRender(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 				}
 				
 				renderState->DrawRectangle(currentRec, backColor);
+			}
+			else if ((StopBits_t)stopBitIndex == appData->comPort.settings.stopBits)
+			{
+				renderState->DrawRectangle(currentRec, Color_Highlight4);
 			}
 			renderState->DrawString(stopBitsString,
 				stopBitsRec.topLeft + NewVec2(
@@ -385,7 +400,8 @@ void ComMenuRender(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 				}
 				else if (appData->comPort.isOpen && (ComPortIndex_t)comIndex == appData->comPort.index)
 				{
-					buttonColor = Color_Highlight2;
+					buttonColor = Color_Highlight4;
+					borderColor = Color_Foreground;
 				}
 				
 				renderState->DrawButton(tabRec, buttonColor, borderColor);
@@ -603,6 +619,11 @@ AppInitialize_DEFINITION(App_Initialize)
 	FileInfo_t testFile = PlatformInfo->ReadEntireFilePntr("test.txt");
 	CreateLineList(&appData->lineList, &appData->memArena, "");//(const char*)testFile.content);
 	PlatformInfo->FreeFileMemoryPntr(&testFile);
+	
+	appData->comPort.settings.baudRate = BaudRate_115200;
+	appData->comPort.settings.parity = Parity_None;
+	appData->comPort.settings.stopBits = StopBits_1;
+	appData->comPort.settings.numBits = 8;
 	
 	RefreshComPortList();
 	

@@ -68,7 +68,7 @@ OpenComPort_DEFINITION(Win32_OpenComPort)
 	}
 	
 	// dcb.DCBlength = sizeof(DCB);
-	switch (baudRate)
+	switch (settings.baudRate)
 	{
 		case BaudRate_110:    dcb.BaudRate = CBR_110; break;
 		case BaudRate_300:    dcb.BaudRate = CBR_300; break;
@@ -86,7 +86,7 @@ OpenComPort_DEFINITION(Win32_OpenComPort)
 		case BaudRate_256000: dcb.BaudRate = CBR_256000; break;
 		default:              dcb.BaudRate = CBR_9600; break;
 	};
-	switch (parity)
+	switch (settings.parity)
 	{
 		case Parity_None:  dcb.Parity = NOPARITY; break;
 		case Parity_Even:  dcb.Parity = EVENPARITY; break;
@@ -95,7 +95,7 @@ OpenComPort_DEFINITION(Win32_OpenComPort)
 		case Parity_Space: dcb.Parity = SPACEPARITY; break;
 		default:           dcb.Parity = NOPARITY; break;
 	};
-	switch (stopBits)
+	switch (settings.stopBits)
 	{
 		case StopBits_1:   dcb.StopBits = ONESTOPBIT; break;
 		case StopBits_1_5: dcb.StopBits = ONE5STOPBITS; break;
@@ -117,7 +117,7 @@ OpenComPort_DEFINITION(Win32_OpenComPort)
 	// dcb.fAbortOnError     = FALSE; //TODO: Should we use this and make sure we handle errors calling ClearCommError()?
 	// dcb.XonLim            = useFlowControl ? 16 : 0; //TODO: Make this an input?
 	// dcb.XoffLim           = useFlowControl ? 4 : 0; //TODO: Make this an input?
-	dcb.ByteSize          = numBits;
+	dcb.ByteSize          = settings.numBits;
 	// dcb.XonChar           = '~'; //TODO: Do we need to set this?
 	// dcb.XoffChar          = '~'; //TODO: Do we need to set this?
 	// dcb.ErrorChar         = '?';
@@ -142,9 +142,7 @@ OpenComPort_DEFINITION(Win32_OpenComPort)
 	}
 	
 	result.handle = comHandle;
-	result.baudRate = baudRate;
-	result.parity = parity;
-	result.stopBits = stopBits;
+	result.settings = settings;
 	result.isOpen = true;
 	
 	return result;

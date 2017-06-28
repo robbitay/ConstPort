@@ -69,14 +69,21 @@ typedef enum
 	
 } ComError_t;
 
+struct ComSettings_t
+{
+	BaudRate_t baudRate;
+	Parity_t parity;
+	StopBits_t stopBits;
+	u8 numBits;
+	bool flowControlEnabled;
+};
+
 struct ComPort_t
 {
 	bool isOpen;
 	ComPortIndex_t index;
 	
-	BaudRate_t baudRate;
-	Parity_t   parity;
-	StopBits_t stopBits;
+	ComSettings_t settings;
 	
 	HANDLE handle;
 };
@@ -84,10 +91,7 @@ struct ComPort_t
 #define GetComPortList_DEFINITION(functionName) u32 functionName(bool* arrayOut, u32 arrayOutSize)
 typedef GetComPortList_DEFINITION(GetComPortList_f);
 
-#define OpenComPort_DEFINITION(functionName) ComPort_t functionName( \
-	ComPortIndex_t portIndex, BaudRate_t baudRate, bool useFlowControl,  \
-	bool parityEnabled, Parity_t parity,                             \
-	u8 numBits, StopBits_t stopBits)
+#define OpenComPort_DEFINITION(functionName) ComPort_t functionName(ComPortIndex_t portIndex, ComSettings_t settings)
 typedef OpenComPort_DEFINITION(OpenComPort_f);
 
 #define CloseComPort_DEFINITION(functionName) void functionName(ComPort_t* comPortPntr)

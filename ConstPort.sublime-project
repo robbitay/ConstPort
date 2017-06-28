@@ -642,6 +642,7 @@
 			"ComError_t",
 			"ComPortIndex_t",
 			"ComPort_t",
+			"ComSettings_t",
 			"CopyFromClipboard_f",
 			"CopyToClipboard_f",
 			"CursorType_t",
