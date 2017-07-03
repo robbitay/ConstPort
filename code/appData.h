@@ -29,6 +29,7 @@ struct AppData_t
 	r32 mouseScrollbarOffset;
 	bool startedOnScrollbar;
 	
+	ComPort_t comMenuOptions;
 	ComPort_t comPort;
 	
 	//NOTE: This list will not contain the comPort that is

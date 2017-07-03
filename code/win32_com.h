@@ -78,6 +78,27 @@ struct ComSettings_t
 	bool flowControlEnabled;
 };
 
+bool operator == (ComSettings_t left, ComSettings_t right)
+{
+	if (left.baudRate == right.baudRate &&
+		left.parity == right.parity &&
+		left.stopBits == right.stopBits &&
+		left.numBits == right.numBits &&
+		left.flowControlEnabled == right.flowControlEnabled)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+bool operator != (ComSettings_t left, ComSettings_t right)
+{
+	return !(left == right);
+}
+
 struct ComPort_t
 {
 	bool isOpen;

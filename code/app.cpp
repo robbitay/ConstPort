@@ -104,7 +104,7 @@ void RefreshComPortList()
 	}
 }
 
-void OpenComPort(ComPortIndex_t comPortIndex)
+void OpenComPort(ComPortIndex_t comPortIndex, ComSettings_t settings)
 {
 	AppData_t* appData = GL_AppData;
 	const PlatformInfo_t* PlatformInfo = Gl_PlatformInfo;
@@ -117,7 +117,7 @@ void OpenComPort(ComPortIndex_t comPortIndex)
 	
 	ClearConsole();
 	
-	appData->comPort = PlatformInfo->OpenComPortPntr(comPortIndex, appData->comPort.settings);
+	appData->comPort = PlatformInfo->OpenComPortPntr(comPortIndex, settings);
 	
 	if (appData->comPort.isOpen)
 	{
@@ -143,23 +143,23 @@ void ComMenuUpdate(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 		u32 numTabs = appData->numComPortsAvailable + (appData->comPort.isOpen ? 1 : 0);
 		v2 tabSize = NewVec2(menuPntr->usableRec.width / numTabs, COM_MENU_TAB_HEIGHT);
 		rec baudRateRec = NewRectangle(
-			COM_MENU_OUTER_PADDING,
-			menuPntr->titleBarSize + tabSize.y + appData->testFont.lineHeight + COM_MENU_OUTER_PADDING,
+			menuPntr->usableRec.x + COM_MENU_OUTER_PADDING,
+			menuPntr->usableRec.y + tabSize.y + appData->testFont.lineHeight + COM_MENU_OUTER_PADDING,
 			78, appData->testFont.lineHeight * NumBaudRates
 		);
 		rec numBitsRec = NewRectangle(
 			baudRateRec.x + baudRateRec.width + COM_MENU_INNER_PADDING,
-			tabSize.y + appData->testFont.lineHeight + COM_MENU_OUTER_PADDING,
+			menuPntr->usableRec.y + tabSize.y + appData->testFont.lineHeight + COM_MENU_OUTER_PADDING,
 			55, appData->testFont.lineHeight * 8
 		);
 		rec parityTypesRec = NewRectangle(
 			numBitsRec.x + numBitsRec.width + COM_MENU_INNER_PADDING,
-			tabSize.y + appData->testFont.lineHeight + COM_MENU_OUTER_PADDING,
+			menuPntr->usableRec.y + tabSize.y + appData->testFont.lineHeight + COM_MENU_OUTER_PADDING,
 			60, appData->testFont.lineHeight * NumParityTypes
 		);
 		rec stopBitsRec = NewRectangle(
 			parityTypesRec.x + parityTypesRec.width + COM_MENU_INNER_PADDING,
-			tabSize.y + appData->testFont.lineHeight + COM_MENU_OUTER_PADDING,
+			menuPntr->usableRec.y + tabSize.y + appData->testFont.lineHeight + COM_MENU_OUTER_PADDING,
 			80, appData->testFont.lineHeight * NumStopBitTypes
 		);
 		
@@ -170,18 +170,75 @@ void ComMenuUpdate(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 			v2 comNameSize = MeasureString(&appData->testFont, GetComPortName(ComPort_12));
 			r32 tabMinimumWidth = comNameSize.x + COM_MENU_TAB_PADDING*2;
 			v2 menuSize = NewVec2(
-				stopBitsRec.x + stopBitsRec.width + COM_MENU_OUTER_PADDING, 
-				baudRateRec.y + baudRateRec.height + COM_MENU_OUTER_PADDING);
+				stopBitsRec.x + stopBitsRec.width + COM_MENU_OUTER_PADDING - menuPntr->drawRec.x, 
+				baudRateRec.y + baudRateRec.height + COM_MENU_OUTER_PADDING - menuPntr->drawRec.y);
 			
-			if (menuSize.x / (r32)numTabs < tabMinimumWidth)
-			{
-				menuSize.x = tabMinimumWidth * numTabs;
-			}
+			// if (menuSize.x / (r32)numTabs < tabMinimumWidth)
+			// {
+			// 	menuSize.x = tabMinimumWidth * numTabs;
+			// }
 			
 			menuPntr->drawRec.size = menuSize;
 			UpdateMenuRecs(menuPntr);
 		}
 		
+		rec connectButtonRec = NewRectangle(
+			menuPntr->usableRec.x + menuPntr->usableRec.width - CONNECT_BUTTON_WIDTH - COM_MENU_OUTER_PADDING,
+			menuPntr->usableRec.y + menuPntr->usableRec.height - CONNECT_BUTTON_HEIGHT - COM_MENU_OUTER_PADDING,
+			CONNECT_BUTTON_WIDTH, CONNECT_BUTTON_HEIGHT
+		);
+		
+		for (i32 baudIndex = 0; baudIndex < NumBaudRates; baudIndex++)
+		{
+			rec currentRec = NewRectangle(baudRateRec.x, 
+				baudRateRec.y + baudIndex*appData->testFont.lineHeight, 
+				baudRateRec.width, appData->testFont.lineHeight
+			);
+			if (IsInsideRectangle(AppInput->mousePos, currentRec) && IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], currentRec) &&
+				ButtonReleased(MouseButton_Left))
+			{
+				appData->comMenuOptions.settings.baudRate = (BaudRate_t)baudIndex;
+			}
+		}
+		
+		for (i32 bitIndex = 0; bitIndex < 8; bitIndex++)
+		{
+			rec currentRec = NewRectangle(numBitsRec.x, 
+				numBitsRec.y + bitIndex*appData->testFont.lineHeight, 
+				numBitsRec.width, appData->testFont.lineHeight
+			);
+			if (IsInsideRectangle(AppInput->mousePos, currentRec) && IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], currentRec) &&
+				ButtonReleased(MouseButton_Left))
+			{
+				appData->comMenuOptions.settings.numBits = (u8)(bitIndex+1);
+			}
+		}
+		
+		for (i32 parityIndex = 0; parityIndex < NumParityTypes; parityIndex++)
+		{
+			rec currentRec = NewRectangle(parityTypesRec.x, 
+				parityTypesRec.y + parityIndex*appData->testFont.lineHeight, 
+				parityTypesRec.width, appData->testFont.lineHeight
+			);
+			if (IsInsideRectangle(AppInput->mousePos, currentRec) && IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], currentRec) &&
+				ButtonReleased(MouseButton_Left))
+			{
+				appData->comMenuOptions.settings.parity = (Parity_t)parityIndex;
+			}
+		}
+		
+		for (i32 stopBitIndex = 0; stopBitIndex < NumStopBitTypes; stopBitIndex++)
+		{
+			rec currentRec = NewRectangle(stopBitsRec.x, 
+				stopBitsRec.y + stopBitIndex*appData->testFont.lineHeight, 
+				stopBitsRec.width, appData->testFont.lineHeight
+			);
+			if (IsInsideRectangle(AppInput->mousePos, currentRec) && IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], currentRec) &&
+				ButtonReleased(MouseButton_Left))
+			{
+				appData->comMenuOptions.settings.stopBits = (StopBits_t)stopBitIndex;
+			}
+		}
 		
 		//Check for tab Presses
 		u32 tabIndex = 0;
@@ -196,11 +253,23 @@ void ComMenuUpdate(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 				if (ButtonReleased(MouseButton_Left) && AppInput->mouseMaxDist[MouseButton_Left] < 10 &&
 					IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], tabRec))
 				{
-					OpenComPort((ComPortIndex_t)comIndex);
-					menuPntr->show = false;
+					appData->comMenuOptions.index = (ComPortIndex_t)comIndex;
+					appData->comMenuOptions.isOpen = true;
 				}
 				
 				tabIndex++;
+			}
+		}
+		
+		//Check for connect button press
+		if (appData->comMenuOptions.isOpen &&
+			IsInsideRectangle(AppInput->mousePos, connectButtonRec))
+		{
+			if (ButtonReleased(MouseButton_Left) && 
+				IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], connectButtonRec))
+			{
+				OpenComPort(appData->comMenuOptions.index, appData->comMenuOptions.settings);
+				menuPntr->show = false;
 			}
 		}
 	}
@@ -233,6 +302,11 @@ void ComMenuRender(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 			menuPntr->usableRec.y + tabSize.y + appData->testFont.lineHeight + COM_MENU_OUTER_PADDING,
 			80, appData->testFont.lineHeight * NumStopBitTypes
 		);
+		rec connectButtonRec = NewRectangle(
+			menuPntr->usableRec.x + menuPntr->usableRec.width - CONNECT_BUTTON_WIDTH - COM_MENU_OUTER_PADDING,
+			menuPntr->usableRec.y + menuPntr->usableRec.height - CONNECT_BUTTON_HEIGHT - COM_MENU_OUTER_PADDING,
+			CONNECT_BUTTON_WIDTH, CONNECT_BUTTON_HEIGHT
+		);
 		
 		renderState->DrawString("Baud Rate", NewVec2(baudRateRec.x, baudRateRec.y - appData->testFont.maxExtendDown), {Color_Foreground});
 		renderState->DrawRectangle(baudRateRec, Color_Foreground);
@@ -244,7 +318,11 @@ void ComMenuRender(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 				baudRateRec.width, appData->testFont.lineHeight
 			);
 			Color_t textColor = Color_Background;
-			if (IsInsideRectangle(AppInput->mousePos, currentRec))
+			if ((BaudRate_t)baudIndex == appData->comMenuOptions.settings.baudRate)
+			{
+				renderState->DrawRectangle(currentRec, Color_Highlight4);
+			}
+			else if (IsInsideRectangle(AppInput->mousePos, currentRec))
 			{
 				Color_t backColor = Color_UiLightGray1;
 				if (ButtonDown(MouseButton_Left) && IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], currentRec))
@@ -254,10 +332,6 @@ void ComMenuRender(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 				}
 				
 				renderState->DrawRectangle(currentRec, backColor);
-			}
-			else if ((BaudRate_t)baudIndex == appData->comPort.settings.baudRate)
-			{
-				renderState->DrawRectangle(currentRec, Color_Highlight4);
 			}
 			renderState->DrawString(baudString,
 				baudRateRec.topLeft + NewVec2(
@@ -277,7 +351,11 @@ void ComMenuRender(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 				numBitsRec.width, appData->testFont.lineHeight
 			);
 			Color_t textColor = Color_Background;
-			if (IsInsideRectangle(AppInput->mousePos, currentRec))
+			if ((u8)(bitIndex+1) == appData->comMenuOptions.settings.numBits)
+			{
+				renderState->DrawRectangle(currentRec, Color_Highlight4);
+			}
+			else if (IsInsideRectangle(AppInput->mousePos, currentRec))
 			{
 				Color_t backColor = Color_UiLightGray1;
 				if (ButtonDown(MouseButton_Left) && IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], currentRec))
@@ -287,10 +365,6 @@ void ComMenuRender(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 				}
 				
 				renderState->DrawRectangle(currentRec, backColor);
-			}
-			else if ((u8)(bitIndex+1) == appData->comPort.settings.numBits)
-			{
-				renderState->DrawRectangle(currentRec, Color_Highlight4);
 			}
 			renderState->DrawString(numBitsString,
 				numBitsRec.topLeft + NewVec2(
@@ -309,7 +383,11 @@ void ComMenuRender(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 				parityTypesRec.width, appData->testFont.lineHeight
 			);
 			Color_t textColor = Color_Background;
-			if (IsInsideRectangle(AppInput->mousePos, currentRec))
+			if ((Parity_t)(parityIndex) == appData->comMenuOptions.settings.parity)
+			{
+				renderState->DrawRectangle(currentRec, Color_Highlight4);
+			}
+			else if (IsInsideRectangle(AppInput->mousePos, currentRec))
 			{
 				Color_t backColor = Color_UiLightGray1;
 				if (ButtonDown(MouseButton_Left) && IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], currentRec))
@@ -319,10 +397,6 @@ void ComMenuRender(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 				}
 				
 				renderState->DrawRectangle(currentRec, backColor);
-			}
-			else if ((Parity_t)(parityIndex) == appData->comPort.settings.parity)
-			{
-				renderState->DrawRectangle(currentRec, Color_Highlight4);
 			}
 			renderState->DrawString(parityString,
 				parityTypesRec.topLeft + NewVec2(
@@ -341,7 +415,12 @@ void ComMenuRender(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 				stopBitsRec.width, appData->testFont.lineHeight
 			);
 			Color_t textColor = Color_Background;
-			if (IsInsideRectangle(AppInput->mousePos, currentRec))
+			
+			if ((StopBits_t)stopBitIndex == appData->comMenuOptions.settings.stopBits)
+			{
+				renderState->DrawRectangle(currentRec, Color_Highlight4);
+			}
+			else if (IsInsideRectangle(AppInput->mousePos, currentRec))
 			{
 				Color_t backColor = Color_UiLightGray1;
 				if (ButtonDown(MouseButton_Left) && IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], currentRec))
@@ -352,10 +431,6 @@ void ComMenuRender(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 				
 				renderState->DrawRectangle(currentRec, backColor);
 			}
-			else if ((StopBits_t)stopBitIndex == appData->comPort.settings.stopBits)
-			{
-				renderState->DrawRectangle(currentRec, Color_Highlight4);
-			}
 			renderState->DrawString(stopBitsString,
 				stopBitsRec.topLeft + NewVec2(
 					stopBitsRec.width/2 - MeasureString(&appData->testFont, stopBitsString).x/2, 
@@ -363,7 +438,7 @@ void ComMenuRender(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 				textColor);
 		}
 		
-		//Check for tab Presses
+		//Draw the tabs
 		u32 tabIndex = 0;
 		for (u32 comIndex = 0; comIndex < ArrayCount(appData->availableComPorts); comIndex++)
 		{
@@ -379,12 +454,12 @@ void ComMenuRender(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 				Color_t borderColor {Color_Black};
 				Color_t textColor = {Color_Black};
 				
-				if (ButtonReleased(MouseButton_Left) && AppInput->mouseMaxDist[MouseButton_Left] < 10 &&
-					IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], tabRec))
+				if (appData->comMenuOptions.isOpen == true && (ComPortIndex_t)comIndex == appData->comMenuOptions.index)
 				{
-					OpenComPort((ComPortIndex_t)comIndex);
+					buttonColor = Color_Highlight4;
+					borderColor = Color_Foreground;
 				}
-				if (IsInsideRectangle(AppInput->mousePos, tabRec))
+				else if (IsInsideRectangle(AppInput->mousePos, tabRec))
 				{
 					if (AppInput->buttons[MouseButton_Left].isDown && 
 						IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], tabRec))
@@ -398,17 +473,56 @@ void ComMenuRender(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 						buttonColor = Color_UiLightGray1;
 					}
 				}
-				else if (appData->comPort.isOpen && (ComPortIndex_t)comIndex == appData->comPort.index)
-				{
-					buttonColor = Color_Highlight4;
-					borderColor = Color_Foreground;
-				}
 				
 				renderState->DrawButton(tabRec, buttonColor, borderColor);
 				renderState->DrawString(GetComPortName((ComPortIndex_t)comIndex), stringPosition, textColor);
 				
 				tabIndex++;
 			}
+		}
+		
+		//Draw the connect button
+		{
+			const char* connectButtonText = "Connect";
+			v2 textSize = MeasureString(&appData->testFont, connectButtonText);
+			v2 stringPosition = NewVec2(
+				connectButtonRec.x + connectButtonRec.width/2 - textSize.x/2,
+				connectButtonRec.y + connectButtonRec.height/2 + appData->testFont.lineHeight/2 - appData->testFont.maxExtendDown 
+			);
+			bool settingsHaveChanged = ((!appData->comPort.isOpen && appData->comMenuOptions.isOpen) || 
+				appData->comMenuOptions.settings != appData->comPort.settings || 
+				appData->comMenuOptions.index != appData->comPort.index);
+			
+			Color_t buttonColor = {Color_White};
+			Color_t borderColor = Color_UiGray4;
+			Color_t textColor = Color_UiGray4;
+			
+			if (!appData->comMenuOptions.isOpen)
+			{
+				buttonColor = Color_UiGray1;
+			}
+			else if (IsInsideRectangle(AppInput->mousePos, connectButtonRec))
+			{
+				if (AppInput->buttons[MouseButton_Left].isDown && 
+					IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], connectButtonRec))
+				{
+					buttonColor = Color_Highlight3;
+					borderColor = Color_Foreground;
+					textColor = Color_Foreground;
+				}
+				else
+				{
+					buttonColor = Color_UiLightGray1;
+				}
+			}
+			else if (settingsHaveChanged)
+			{
+				buttonColor = Color_Highlight2;
+				borderColor = Color_Foreground;
+			}
+			
+			renderState->DrawButton(connectButtonRec, buttonColor, borderColor);
+			renderState->DrawString(connectButtonText, stringPosition, textColor);
 		}
 	}
 }
@@ -845,6 +959,7 @@ AppUpdate_DEFINITION(App_Update)
 			comMenu->show = true;
 			
 			RefreshComPortList();
+			appData->comMenuOptions = appData->comPort;
 		}
 	}
 	
@@ -911,7 +1026,7 @@ AppUpdate_DEFINITION(App_Update)
 			}
 			else
 			{
-				OpenComPort(cIndex);
+				OpenComPort(cIndex, appData->comPort.settings);
 			}
 		}
 	}
@@ -970,6 +1085,7 @@ AppUpdate_DEFINITION(App_Update)
 							comMenu->show = true;
 							
 							RefreshComPortList();
+							appData->comMenuOptions = appData->comPort;
 						}
 					} break;
 					

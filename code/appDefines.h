@@ -28,6 +28,8 @@ Date:   06\08\2017
 #define COM_MENU_TAB_HEIGHT            35
 #define COM_MENU_OUTER_PADDING         5
 #define COM_MENU_INNER_PADDING         10
+#define CONNECT_BUTTON_WIDTH           80
+#define CONNECT_BUTTON_HEIGHT          25
 
 #define Color_Background               NewColor(33, 33, 33, 255)
 #define Color_Foreground               {0xFFF8F8F2}
