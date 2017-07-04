@@ -15,7 +15,10 @@
 	[X] Make The currently connected COM port show up in the title bar and status bar
 	[X] Add a slide down menu with different buttons
 	[X] Make sure the currently connected COM port shows up in the COM Menu
-	[!] Expand the COM menu to include Baud Rate, Parity, Stop Bits, and Bit Count
+	[X] Expand the COM menu to include Baud Rate, Parity, Stop Bits, and Bit Count
+	[!] Add software LEDs to indicate RX and TX
+	[!] Horizontal Scrolling
+	[!] Clear buffer button
 	[ ] Make a function that measures the whole buffer with ability to support word wrap and spacers
 	[ ] Add elapsed time spacers between lines
 	[ ] Copy to file (static name)
@@ -23,8 +26,6 @@
 	[ ] Move line rendering parts into seperate file
 	[ ] Add checking for COM port errors and whether or not we are still connected
 	[ ] Ability to set Flow Control mode
-	[ ] Clear buffer button
-	[ ] Horizontal Scrolling
 	[ ] Status bar messages from anywhere in the program
 	[ ] Fix scrollbar so that it doesn't keep sliding when we have grabbed it
 	[ ] 
