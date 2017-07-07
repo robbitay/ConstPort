@@ -31,6 +31,8 @@ Date:   06\08\2017
 #define CONNECT_BUTTON_WIDTH           80
 #define CONNECT_BUTTON_HEIGHT          25
 #define RX_TX_LED_SIZE                 8
+#define CLEAR_BUTTON_WIDTH             60
+#define CLEAR_BUTTON_HEIGHT            20
 
 #define Color_Background               NewColor(33, 33, 33, 255)
 #define Color_Foreground               {0xFFF8F8F2}

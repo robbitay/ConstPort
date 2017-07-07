@@ -940,6 +940,7 @@ AppUpdate_DEFINITION(App_Update)
 			
 			char newChar = '\n';
 			PlatformInfo->WriteComPortPntr(&appData->comPort, &newChar, 1);
+			appData->txShiftRegister |= 0x80;
 		}
 	}
 	
@@ -1101,6 +1102,16 @@ AppUpdate_DEFINITION(App_Update)
 					};
 				};
 			}
+		}
+	}
+	
+	//Clear Button Press
+	if (IsInsideRectangle(AppInput->mousePos, ui->clearButtonRec))
+	{
+		if (ButtonReleased(MouseButton_Left) && 
+			IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], ui->clearButtonRec))
+		{
+			ClearConsole();
 		}
 	}
 	
@@ -1561,10 +1572,24 @@ AppUpdate_DEFINITION(App_Update)
 		appData->rxTxShiftCountdown--;
 	}
 	
-	//Draw TX RX software LEDs
+	//+--------------------------------------+
+	//|           Rx and Tx LEDs             |
+	//+--------------------------------------+
 	{
-		rs->DrawRectangle(ui->rxLedRec, Color_UiGray4);
-		rs->DrawRectangle(ui->txLedRec, Color_UiGray4);
+		Color_t centerColor = Color_UiGray4;
+		if ((appData->rxShiftRegister&0x80) > 0 ||
+			(appData->rxShiftRegister&0x40) > 0)
+		{
+			centerColor = Color_Highlight3;
+		}
+		rs->DrawRectangle(ui->rxLedRec, centerColor);
+		centerColor = Color_UiGray4;
+		if ((appData->txShiftRegister&0x80) > 0 ||
+			(appData->txShiftRegister&0x40) > 0)
+		{
+			centerColor = Color_Highlight4;
+		}
+		rs->DrawRectangle(ui->txLedRec, centerColor);
 		for (u32 shift = 0; shift < sizeof(u8)*8; shift++)
 		{
 			
@@ -1583,6 +1608,37 @@ AppUpdate_DEFINITION(App_Update)
 		
 		// rs->DrawButton(ui->rxLedRec, {Color_TransparentBlack}, rxLedColor, 1);
 		// rs->DrawButton(ui->txLedRec, {Color_TransparentBlack}, txLedColor, 1);
+	}
+	
+	//+--------------------------------------+
+	//|            Clear Button              |
+	//+--------------------------------------+
+	{
+		const char* clearStr = "Clear";
+		v2 textSize = MeasureString(&appData->testFont, clearStr);
+		v2 textPos = NewVec2(
+			ui->clearButtonRec.x + ui->clearButtonRec.width/2 - textSize.x/2,
+			ui->clearButtonRec.y + ui->clearButtonRec.height/2 + appData->testFont.lineHeight/2 - appData->testFont.maxExtendDown
+		);
+		Color_t buttonColor = {Color_White};
+		Color_t textColor = Color_Background;
+		Color_t borderColor = Color_UiGray4;
+		
+		if (IsInsideRectangle(AppInput->mousePos, ui->clearButtonRec))
+		{
+			if (ButtonDown(MouseButton_Left) && IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], ui->clearButtonRec))
+			{
+				buttonColor = Color_Highlight3;
+				textColor = Color_Foreground;
+			}
+			else
+			{
+				buttonColor = Color_UiLightGray1;
+			}
+		}
+		
+		rs->DrawButton(ui->clearButtonRec, buttonColor, borderColor);
+		rs->DrawString(clearStr, textPos, textColor);
 	}
 	
 	MenuHandlerDrawMenus(PlatformInfo, AppInput, &appData->renderState, &appData->menuHandler);

@@ -48,13 +48,18 @@ void RecalculateUiElements(v2 mousePos, UiElements_t* ui)
 	}
 	ui->rxLedRec = NewRectangle(
 		ui->mainMenuRec.x + ui->mainMenuRec.width - RX_TX_LED_SIZE - 16,
-		ui->mainMenuRec.y + 16,
+		ui->mainMenuRec.y + 10,
 		RX_TX_LED_SIZE, RX_TX_LED_SIZE
 	);
 	ui->txLedRec = NewRectangle(
-		ui->rxLedRec.x - RX_TX_LED_SIZE - 24,
+		ui->rxLedRec.x - RX_TX_LED_SIZE - 16 - 4,
 		ui->rxLedRec.y,
 		RX_TX_LED_SIZE, RX_TX_LED_SIZE
+	);
+	ui->clearButtonRec = NewRectangle(
+		ui->mainMenuRec.x + ui->mainMenuRec.width - CLEAR_BUTTON_WIDTH - MAIN_MENU_BUTTON_PADDING,
+		ui->rxLedRec.y + ui->rxLedRec.height + 8 ,
+		CLEAR_BUTTON_WIDTH, CLEAR_BUTTON_HEIGHT
 	);
 	ui->statusBarRec = NewRectangle(
 		0, 

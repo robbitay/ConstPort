@@ -17,8 +17,8 @@
 	[X] Make sure the currently connected COM port shows up in the COM Menu
 	[X] Expand the COM menu to include Baud Rate, Parity, Stop Bits, and Bit Count
 	[X] Add software LEDs to indicate RX and TX
+	[X] Clear buffer button
 	[!] Horizontal Scrolling
-	[!] Clear buffer button
 	[!] Status bar messages from anywhere in the program
 	[ ] Make a function that measures the whole buffer with ability to support word wrap and spacers
 	[ ] Add elapsed time spacers between lines

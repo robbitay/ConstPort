@@ -39,6 +39,7 @@ struct UiElements_t
 	rec buttonRecs[NumMainMenuButtons];
 	rec rxLedRec;
 	rec txLedRec;
+	rec clearButtonRec;
 	
 	char contextStringBuffer[256];
 	Texture_t buttonBaseTexture;
