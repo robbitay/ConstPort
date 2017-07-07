@@ -68,6 +68,8 @@ inline void LineAppend(LineList_t* lineList, Line_t* line, char newCharacter)
 	}
 	line->numChars++;
 	line->chars[line->numChars] = '\0';
+	
+	
 }
 
 void CreateLineList(LineList_t* lineList, MemoryArena_t* arenaPntr, const char* contents)
@@ -221,5 +223,37 @@ TextLocation_t PointToTextLocation(LineList_t* lineList, const Font_t* font, v2 
 		lastStringSize = stringSize;
 	}
 	
+	return result;
+}
+
+v2 MeasureLines(LineList_t* lineList, const Font_t* font)
+{
+	v2 result = Vec2_Zero;
+	Line_t* linePntr = (Line_t*)lineList->list.firstItem;
+	u32 numCharsMax = 0;
+	u32 lineIndex = 0;
+	
+	while (linePntr != nullptr)
+	{
+		if (linePntr->numChars > numCharsMax)
+		{
+			v2 lineSize = MeasureString(font, linePntr->chars);
+			if (result.x < lineSize.x)
+			{
+				result.x = lineSize.x;
+				// DEBUG_PrintLine("Line %u is %u chars and %f wide", lineIndex, linePntr->numChars, lineSize.x);
+			}
+			numCharsMax = linePntr->numChars;
+		}
+		
+		if (result.y != 0)
+			result.y += LINE_SPACING;
+		result.y += font->lineHeight;
+		
+		linePntr = (Line_t*)linePntr->header.nextItem;
+		lineIndex++;
+	}
+	
+	// DEBUG_PrintLine("Returned (%f, %f)", result.x, result.y);
 	return result;
 }

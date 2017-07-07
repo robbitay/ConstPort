@@ -806,7 +806,7 @@ AppUpdate_DEFINITION(App_Update)
 			"Const Port [Disconnected]");
 	}
 	
-	RecalculateUiElements(AppInput->mousePos, ui);
+	RecalculateUiElements(AppInput->mousePos, ui, true);
 	
 	Menu_t* comMenu = GetMenuByName(&appData->menuHandler, "COM Menu");
 	Menu_t* contextMenu = GetMenuByName(&appData->menuHandler, "Context Menu");
@@ -819,7 +819,7 @@ AppUpdate_DEFINITION(App_Update)
 	// Color_t selectionColor = ColorFromHSV(180, 1.0f, (r32)(Sin32((r32)PlatformInfo->programTime*5) + 1.0f) / 2.0f);
 	
 	appData->hoverLocation = PointToTextLocation(&appData->lineList, &appData->testFont, 
-		ui->mousePos - NewVec2(LINE_SPACING + ui->gutterRec.width, ui->viewRec.y - ui->scrollOffset));
+		ui->mousePos - ui->viewRec.topLeft + ui->scrollOffset);
 	
 	//Context Menu Showing/Filling
 	contextMenu->show = false;
@@ -905,10 +905,6 @@ AppUpdate_DEFINITION(App_Update)
 						
 						lastLine = AddLineToList(&appData->lineList, "");
 						lastLine->color = Color_Foreground;
-						if (ui->followingEndOfFile)
-						{
-							ui->scrollOffsetGoto += 19;//appData->testFont.lineHeight;
-						}
 					}
 					else
 					{
@@ -1038,35 +1034,50 @@ AppUpdate_DEFINITION(App_Update)
 		}
 	}
 	
-	RecalculateUiElements(AppInput->mousePos, ui);
+	RecalculateUiElements(AppInput->mousePos, ui, false);
 	
+	if (AppInput->buttons[Button_Right].isDown)
+	{
+		ui->scrollOffsetGoto.x += AppInput->buttons[Button_Shift].isDown ? 16 : 5;
+	}
+	if (AppInput->buttons[Button_Left].isDown)
+	{
+		ui->scrollOffsetGoto.x -= AppInput->buttons[Button_Shift].isDown ? 16 : 5;
+	}
 	if (AppInput->buttons[Button_Down].isDown)
 	{
-		ui->scrollOffsetGoto += AppInput->buttons[Button_Shift].isDown ? 16 : 5;
+		ui->scrollOffsetGoto.y += AppInput->buttons[Button_Shift].isDown ? 16 : 5;
 	}
 	if (AppInput->buttons[Button_Up].isDown)
 	{
-		ui->scrollOffsetGoto -= AppInput->buttons[Button_Shift].isDown ? 16 : 5;
+		ui->scrollOffsetGoto.y -= AppInput->buttons[Button_Shift].isDown ? 16 : 5;
+		ui->followingEndOfFile = false;
 	}
 	if (AppInput->scrollDelta.y != 0)
 	{
-		ui->scrollOffsetGoto -= AppInput->scrollDelta.y * SCROLL_MULTIPLIER;
+		ui->scrollOffsetGoto.y -= AppInput->scrollDelta.y * SCROLL_MULTIPLIER;
+		if (AppInput->scrollDelta.y > 0)
+		{
+			ui->followingEndOfFile = false;
+		}
 	}
 	if (AppInput->buttons[Button_End].isDown && AppInput->buttons[Button_End].transCount > 0)
 	{
-		ui->scrollOffsetGoto = ui->maxScrollOffset;
+		ui->followingEndOfFile = true;
 	}
 	if (AppInput->buttons[Button_Home].isDown && AppInput->buttons[Button_Home].transCount > 0)
 	{
-		ui->scrollOffsetGoto = 0;
+		ui->scrollOffsetGoto.y = 0;
+		ui->followingEndOfFile = false;
 	}
 	if (AppInput->buttons[Button_PageUp].isDown && AppInput->buttons[Button_PageUp].transCount > 0)
 	{
-		ui->scrollOffsetGoto -= ui->viewRec.height;
+		ui->scrollOffsetGoto.y -= ui->viewRec.height;
+		ui->followingEndOfFile = false;
 	}
 	if (AppInput->buttons[Button_PageDown].isDown && AppInput->buttons[Button_PageDown].transCount > 0)
 	{
-		ui->scrollOffsetGoto += ui->viewRec.height;
+		ui->scrollOffsetGoto.y += ui->viewRec.height;
 	}
 	
 	//Main Menu Buttons
@@ -1134,13 +1145,13 @@ AppUpdate_DEFINITION(App_Update)
 					ui->startedOnScrollbar = false;
 					if (ui->mouseScrollbarOffset > 0)
 					{
-						ui->scrollOffset += ui->viewRec.height;
+						ui->scrollOffset.y += ui->viewRec.height;
 					}
 					else
 					{
-						ui->scrollOffset -= ui->viewRec.height;
+						ui->scrollOffset.y -= ui->viewRec.height;
 					}
-					ui->scrollOffsetGoto = ui->scrollOffset;
+					ui->scrollOffsetGoto.y = ui->scrollOffset.y;
 				}
 			}
 			else if (ui->startedOnScrollbar) //holding the button
@@ -1175,11 +1186,10 @@ AppUpdate_DEFINITION(App_Update)
 	
 	//Mark lines using the mouse
 	ui->markIndex = -1;
-	if (//AppInput->mouseMaxDist[MouseButton_Left] < MOUSE_CLICK_TOLERANCE &&
-		ui->mouseInMenu == false &&
+	if (ui->mouseInMenu == false &&
 		IsInsideRectangle(ui->mousePos, ui->gutterRec) && IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], ui->gutterRec))
 	{
-		ui->markIndex = (u32)((r32)(ui->mousePos.y - ui->viewRec.y + ui->scrollOffset) / ui->lineHeight - 0.5f);
+		ui->markIndex = (u32)((r32)(ui->mousePos.y - ui->viewRec.y + ui->scrollOffset.y) / ui->lineHeight - 0.5f);
 		if (ButtonReleased(MouseButton_Left) && 
 			ui->markIndex >= 0 && ui->markIndex < appData->lineList.numLines)
 		{
@@ -1238,10 +1248,15 @@ AppUpdate_DEFINITION(App_Update)
 	MenuHandlerUpdate(PlatformInfo, AppInput, &appData->menuHandler);
 	
 	UpdateUiElements(AppInput, ui);
-	RecalculateUiElements(AppInput->mousePos, ui);
+	RecalculateUiElements(AppInput->mousePos, ui, false);
+	if (ui->followingEndOfFile)
+	{
+		ui->scrollOffsetGoto.y = ui->maxScrollOffset.y;
+	}
 	appData->hoverLocation = PointToTextLocation(&appData->lineList, &appData->testFont, 
-		ui->mousePos - NewVec2(LINE_SPACING + ui->gutterRec.width, ui->viewRec.y - ui->scrollOffset));
+		ui->mousePos - ui->viewRec.topLeft + ui->scrollOffset);
 	
+	//Cursor Type
 	if (IsInsideRectangle(ui->mousePos, ui->viewRec) && !ui->mouseInMenu)
 	{
 		AppOutput->cursorType = Cursor_Text;
@@ -1274,20 +1289,19 @@ AppUpdate_DEFINITION(App_Update)
 	rs->SetViewMatrix(viewMatrix);
 	rs->SetProjectionMatrix(projMatrix);
 	
-	rs->DrawGradient(ui->gutterRec, Color_UiGray1, Color_UiGray3, Direction2D_Right);
 	// rs->DrawGradient(NewRectangle(0, 0, 300, 300), color1, color2, Direction2D_Right);
 	
 	//+--------------------------------------+
 	//|            Render Lines              |
 	//+--------------------------------------+
 	{
-		i32 firstLine = max(0, (i32)((r32)ui->scrollOffset / ui->lineHeight));
-		i32 lastLine = min(appData->lineList.numLines, (i32)((r32)(ui->scrollOffset + ui->viewRec.height) / ui->lineHeight));
+		i32 firstLine = max(0, (i32)((r32)ui->scrollOffset.y / ui->lineHeight));
+		i32 lastLine = min(appData->lineList.numLines, (i32)((r32)(ui->scrollOffset.y + ui->viewRec.height) / ui->lineHeight));
 		
-		rs->SetViewMatrix(Matrix4Translate(NewVec3(0, ui->viewRec.y - ui->scrollOffset, 0)));
+		rs->SetViewMatrix(Matrix4Translate(NewVec3(ui->viewRec.x - ui->scrollOffset.x, ui->viewRec.y - ui->scrollOffset.y, 0)));
 		{//Items drawn relative to view
 			
-			v2 currentPos = NewVec2(ui->gutterRec.width + LINE_SPACING, firstLine * ui->lineHeight + appData->testFont.maxExtendUp);
+			v2 currentPos = NewVec2(LINE_SPACING, firstLine * ui->lineHeight + appData->testFont.maxExtendUp);
 			for (i32 lineIndex = firstLine; lineIndex < appData->lineList.numLines && lineIndex <= lastLine; lineIndex++)
 			{
 				Line_t* linePntr = GetLineAt(&appData->lineList, lineIndex);
@@ -1298,8 +1312,6 @@ AppUpdate_DEFINITION(App_Update)
 				{
 					rs->DrawRectangle(backRec, Color_UiGray3);
 				}
-				
-				rs->PrintString(NewVec2(0, currentPos.y), {Color_White}, 1.0f, "%u", lineIndex+1);
 				
 				DrawLine(appData, linePntr, currentPos);
 				
@@ -1351,13 +1363,13 @@ AppUpdate_DEFINITION(App_Update)
 		TextLocation_t minLocation = TextLocationMin(appData->selectionStart, appData->selectionEnd);
 		TextLocation_t maxLocation = TextLocationMax(appData->selectionStart, appData->selectionEnd); 
 		r32 lineHeight = appData->testFont.lineHeight + LINE_SPACING;
-		i32 firstLine = max(0, max(minLocation.lineNum, (i32)((r32)ui->scrollOffset / lineHeight)));
-		i32 lastLine = min(appData->lineList.numLines, min(maxLocation.lineNum, (i32)((r32)(ui->scrollOffset + ui->viewRec.height) / lineHeight)));
+		i32 firstLine = max(0, max(minLocation.lineNum, (i32)((r32)ui->scrollOffset.y / lineHeight)));
+		i32 lastLine = min(appData->lineList.numLines, min(maxLocation.lineNum, (i32)((r32)(ui->scrollOffset.y + ui->viewRec.height) / lineHeight)));
 		
-		rs->SetViewMatrix(Matrix4Translate(NewVec3(0, ui->viewRec.y - ui->scrollOffset, 0)));
+		rs->SetViewMatrix(Matrix4Translate(NewVec3(ui->viewRec.x - ui->scrollOffset.x, ui->viewRec.y - ui->scrollOffset.y, 0)));
 		{//Items drawn relative to view
 			
-			v2 currentPos = NewVec2(ui->gutterRec.width + LINE_SPACING, firstLine * lineHeight + appData->testFont.maxExtendUp);
+			v2 currentPos = NewVec2(LINE_SPACING, firstLine * lineHeight + appData->testFont.maxExtendUp);
 			for (i32 lineIndex = firstLine; lineIndex < appData->lineList.numLines && lineIndex <= lastLine; lineIndex++)
 			{
 				Line_t* linePntr = GetLineAt(&appData->lineList, lineIndex);
@@ -1415,93 +1427,26 @@ AppUpdate_DEFINITION(App_Update)
 	//+--------------------------------------+
 	//|         Render UI Elements           |
 	//+--------------------------------------+
-	rs->DrawGradient(ui->statusBarRec, Color_UiGray1, Color_UiGray3, Direction2D_Right);
-	// rs->DrawGradient(NewRectangle(10, 10, 300, 300), color1, color2, Direction2D_Right);
-	// rs->PrintString( 
-	// 	NewVec2(0, ui->screenSize.y-appData->testFont.maxExtendDown), Color_Foreground, 1.0f, 
-	// 	"Heap: %u/%u used", appData->memArena.used, appData->memArena.size);
-	rs->PrintString( 
-		NewVec2(0, ui->screenSize.y-appData->testFont.maxExtendDown), Color_Foreground, 1.0f, 
-		"Line %d Char %d", appData->hoverLocation.lineNum+1, appData->hoverLocation.charIndex);
-	// rs->PrintString( 
-	// 	NewVec2(0, ui->screenSize.y-appData->testFont.maxExtendDown), Color_Foreground, 1.0f, 
-	// 	"%s %u:%02u%s (%s %s, %u) [%u]",
-	// 	GetDayOfWeekStr(GetDayOfWeek(PlatformInfo->localTime)), 
-	// 	Convert24HourTo12Hour(PlatformInfo->localTime.hour), PlatformInfo->localTime.minute,
-	// 	IsPostMeridian(PlatformInfo->localTime.hour) ? "pm" : "am",
-	// 	GetMonthStr((Month_t)PlatformInfo->localTime.month), GetDayOfMonthString(PlatformInfo->localTime.day), PlatformInfo->localTime.year,
-	// 	GetTimestamp(PlatformInfo->localTime));
-	// rs->PrintString( 
-	// 	NewVec2(0, ui->screenSize.y-appData->testFont.maxExtendDown), Color_Foreground, 1.0f, 
-	// 	"First: %d Last: %d", firstLine, lastLine);
-	// PrintString(appData, appData->testFont, 
-	// 	NewVec2(0, ui->screenSize.y-appData->testFont.maxExtendDown), Color_Foreground, 1.0f, 
-	// 	"%u Lines Offset: %f (%fpx long)", appData->lineList.numLines, ui->scrollOffset, ui->fileHeight);
 	
-	Line_t* lastLine = GetLastLine(&appData->lineList);
-	// DEBUG_PrintLine("Last Item: %p", lastLine->header.lastItem);
-	if (lastLine->timestamp == 0 && appData->lineList.numLines > 1)
+	//Draw Line Number Gutter
+	rs->DrawGradient(ui->gutterRec, Color_UiGray1, Color_UiGray3, Direction2D_Right);
 	{
-		lastLine = GetLineAt(&appData->lineList, appData->lineList.numLines-1 - 1);
-	}
-	
-	if (appData->selectionStart.lineNum != appData->selectionEnd.lineNum ||
-		appData->selectionStart.charIndex != appData->selectionEnd.charIndex)
-	{
-		rs->PrintString( 
-			NewVec2(170, ui->screenSize.y-appData->testFont.maxExtendDown), Color_Foreground, 1.0f, 
-			"Selection: %u chars", GetSelection());
-	}
-	//Print elapsed time since last receive
-	else if (lastLine != nullptr && lastLine->timestamp != 0)
-	{
-		RealTime_t lineTime = RealTimeAt(lastLine->timestamp);
-		i64 secondsDifference = SubtractTimes(PlatformInfo->localTime, lineTime, TimeUnit_Seconds);
-		i64 absDifference = Abs64i(secondsDifference);
-		if (absDifference >= MIN_SECONDS_STATUS_BAR)
-		{
-			u32 numDays = (u32)(absDifference/(60*60*24));
-			u32 numHours = (u32)(absDifference/(60*60)) - (numDays*24);
-			u32 numMinutes = (u32)(absDifference/60) - (numDays*60*24) - (numHours*60);
-			u32 numSeconds = (u32)(absDifference) - (numDays*60*60*24) - (numHours*60*60) - (numMinutes*60);
-			// DEBUG_PrintLine("Diff %d", secondsDifference);
-			if (numDays > 0)
+		i32 firstLine = max(0, (i32)((r32)ui->scrollOffset.y / ui->lineHeight));
+		i32 lastLine = min(appData->lineList.numLines, (i32)((r32)(ui->scrollOffset.y + ui->viewRec.height) / ui->lineHeight));
+		
+		rs->SetViewMatrix(Matrix4Translate(NewVec3(ui->gutterRec.x, ui->gutterRec.y - ui->scrollOffset.y, 0)));
+		{//Items drawn relative to view
+			
+			v2 currentPos = NewVec2(0, firstLine * ui->lineHeight + appData->testFont.maxExtendUp);
+			for (i32 lineIndex = firstLine; lineIndex < appData->lineList.numLines && lineIndex <= lastLine; lineIndex++)
 			{
-				rs->PrintString( 
-					NewVec2(170, ui->screenSize.y-appData->testFont.maxExtendDown), Color_Foreground, 1.0f, 
-					"%ud %uh %um %us %s", numDays, numHours, numMinutes, numSeconds,
-					secondsDifference >= 0 ? "Ago" : "In the future?");
+				rs->PrintString(NewVec2(currentPos.x, currentPos.y), {Color_White}, 1.0f, "%u", lineIndex+1);
+				
+				currentPos.y += ui->lineHeight;
 			}
-			else if (numHours > 0)
-			{
-				rs->PrintString( 
-					NewVec2(170, ui->screenSize.y-appData->testFont.maxExtendDown), Color_Foreground, 1.0f, 
-					"%uh %um %us %s", numHours, numMinutes, numSeconds,
-					secondsDifference >= 0 ? "Ago" : "In the future?");
-			}
-			else if (numMinutes > 0)
-			{
-				rs->PrintString( 
-					NewVec2(170, ui->screenSize.y-appData->testFont.maxExtendDown), Color_Foreground, 1.0f, 
-					"%um %us %s", numMinutes, numSeconds,
-					secondsDifference >= 0 ? "Ago" : "In the future?");
-			}
-			else
-			{
-				rs->PrintString( 
-					NewVec2(170, ui->screenSize.y-appData->testFont.maxExtendDown), Color_Foreground, 1.0f, 
-					"%us %s", numSeconds,
-					secondsDifference >= 0 ? "Ago" : "In the future?");
-			}
+			
 		}
-	}
-	
-	if (appData->comPort.isOpen)
-	{
-		v2 comNameSize = MeasureString(&appData->testFont, GetComPortName(appData->comPort.index));
-		rs->DrawString(GetComPortName(appData->comPort.index),
-			NewVec2(ui->screenSize.x - comNameSize.x - 10, ui->screenSize.y-appData->testFont.maxExtendDown), 
-			Color_Foreground, 1.0f);
+		rs->SetViewMatrix(Matrix4_Identity);
 	}
 	
 	//Draw Scrollbar
@@ -1525,6 +1470,98 @@ AppUpdate_DEFINITION(App_Update)
 	rs->DrawGradient(endCapRec, Color_UiGray1, Color_UiGray3, Direction2D_Right);
 	rs->DisableAlphaTexture();
 	rs->DrawGradient(centerScrollBarRec, Color_UiGray1, Color_UiGray3, Direction2D_Right);
+	
+	//Status Bar
+	{
+		rs->DrawGradient(ui->statusBarRec, Color_UiGray1, Color_UiGray3, Direction2D_Right);
+		// rs->DrawGradient(NewRectangle(10, 10, 300, 300), color1, color2, Direction2D_Right);
+		// rs->PrintString( 
+		// 	NewVec2(0, ui->screenSize.y-appData->testFont.maxExtendDown), Color_Foreground, 1.0f, 
+		// 	"Heap: %u/%u used", appData->memArena.used, appData->memArena.size);
+		rs->PrintString( 
+			NewVec2(0, ui->screenSize.y-appData->testFont.maxExtendDown), Color_Foreground, 1.0f, 
+			"Line %d Char %d", appData->hoverLocation.lineNum+1, appData->hoverLocation.charIndex);
+		// rs->PrintString( 
+		// 	NewVec2(0, ui->screenSize.y-appData->testFont.maxExtendDown), Color_Foreground, 1.0f, 
+		// 	"%s %u:%02u%s (%s %s, %u) [%u]",
+		// 	GetDayOfWeekStr(GetDayOfWeek(PlatformInfo->localTime)), 
+		// 	Convert24HourTo12Hour(PlatformInfo->localTime.hour), PlatformInfo->localTime.minute,
+		// 	IsPostMeridian(PlatformInfo->localTime.hour) ? "pm" : "am",
+		// 	GetMonthStr((Month_t)PlatformInfo->localTime.month), GetDayOfMonthString(PlatformInfo->localTime.day), PlatformInfo->localTime.year,
+		// 	GetTimestamp(PlatformInfo->localTime));
+		// rs->PrintString( 
+		// 	NewVec2(0, ui->screenSize.y-appData->testFont.maxExtendDown), Color_Foreground, 1.0f, 
+		// 	"First: %d Last: %d", firstLine, lastLine);
+		// PrintString(appData, appData->testFont, 
+		// 	NewVec2(0, ui->screenSize.y-appData->testFont.maxExtendDown), Color_Foreground, 1.0f, 
+		// 	"%u Lines Offset: %f (%fpx long)", appData->lineList.numLines, ui->scrollOffset, ui->fileHeight);
+		
+		Line_t* lastLine = GetLastLine(&appData->lineList);
+		// DEBUG_PrintLine("Last Item: %p", lastLine->header.lastItem);
+		if (lastLine->timestamp == 0 && appData->lineList.numLines > 1)
+		{
+			lastLine = GetLineAt(&appData->lineList, appData->lineList.numLines-1 - 1);
+		}
+		
+		if (appData->selectionStart.lineNum != appData->selectionEnd.lineNum ||
+			appData->selectionStart.charIndex != appData->selectionEnd.charIndex)
+		{
+			rs->PrintString( 
+				NewVec2(170, ui->screenSize.y-appData->testFont.maxExtendDown), Color_Foreground, 1.0f, 
+				"Selection: %u chars", GetSelection());
+		}
+		//Print elapsed time since last receive
+		else if (lastLine != nullptr && lastLine->timestamp != 0)
+		{
+			RealTime_t lineTime = RealTimeAt(lastLine->timestamp);
+			i64 secondsDifference = SubtractTimes(PlatformInfo->localTime, lineTime, TimeUnit_Seconds);
+			i64 absDifference = Abs64i(secondsDifference);
+			if (absDifference >= MIN_SECONDS_STATUS_BAR)
+			{
+				u32 numDays = (u32)(absDifference/(60*60*24));
+				u32 numHours = (u32)(absDifference/(60*60)) - (numDays*24);
+				u32 numMinutes = (u32)(absDifference/60) - (numDays*60*24) - (numHours*60);
+				u32 numSeconds = (u32)(absDifference) - (numDays*60*60*24) - (numHours*60*60) - (numMinutes*60);
+				// DEBUG_PrintLine("Diff %d", secondsDifference);
+				if (numDays > 0)
+				{
+					rs->PrintString( 
+						NewVec2(170, ui->screenSize.y-appData->testFont.maxExtendDown), Color_Foreground, 1.0f, 
+						"%ud %uh %um %us %s", numDays, numHours, numMinutes, numSeconds,
+						secondsDifference >= 0 ? "Ago" : "In the future?");
+				}
+				else if (numHours > 0)
+				{
+					rs->PrintString( 
+						NewVec2(170, ui->screenSize.y-appData->testFont.maxExtendDown), Color_Foreground, 1.0f, 
+						"%uh %um %us %s", numHours, numMinutes, numSeconds,
+						secondsDifference >= 0 ? "Ago" : "In the future?");
+				}
+				else if (numMinutes > 0)
+				{
+					rs->PrintString( 
+						NewVec2(170, ui->screenSize.y-appData->testFont.maxExtendDown), Color_Foreground, 1.0f, 
+						"%um %us %s", numMinutes, numSeconds,
+						secondsDifference >= 0 ? "Ago" : "In the future?");
+				}
+				else
+				{
+					rs->PrintString( 
+						NewVec2(170, ui->screenSize.y-appData->testFont.maxExtendDown), Color_Foreground, 1.0f, 
+						"%us %s", numSeconds,
+						secondsDifference >= 0 ? "Ago" : "In the future?");
+				}
+			}
+		}
+		
+		if (appData->comPort.isOpen)
+		{
+			v2 comNameSize = MeasureString(&appData->testFont, GetComPortName(appData->comPort.index));
+			rs->DrawString(GetComPortName(appData->comPort.index),
+				NewVec2(ui->screenSize.x - comNameSize.x - 10, ui->screenSize.y-appData->testFont.maxExtendDown), 
+				Color_Foreground, 1.0f);
+		}
+	}
 	
 	//Draw Main Menu
 	rs->DrawGradient(ui->mainMenuRec, Color_UiGray1, Color_UiGray3, Direction2D_Down);

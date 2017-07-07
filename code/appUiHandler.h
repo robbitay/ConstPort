@@ -20,11 +20,11 @@ struct UiElements_t
 	r32 mouseScrollbarOffset;
 	
 	r32 lineHeight;
-	r32 fileHeight;
-	r32 scrollOffset;
-	r32 scrollOffsetGoto;
-	r32 maxScrollOffset;
-	r32 scrollPercent;
+	v2  fileSize;
+	v2  scrollOffset;
+	v2  scrollOffsetGoto;
+	v2  maxScrollOffset;
+	v2  scrollPercent;
 	
 	bool followingEndOfFile;
 	bool startedOnScrollbar;
