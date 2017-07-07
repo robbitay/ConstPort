@@ -1155,6 +1155,7 @@ AppUpdate_DEFINITION(App_Update)
 					else
 					{
 						ui->scrollOffset.y -= ui->viewRec.height;
+						ui->followingEndOfFile = false;
 					}
 					ui->scrollOffsetGoto.y = ui->scrollOffset.y;
 				}
