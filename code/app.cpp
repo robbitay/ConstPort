@@ -137,13 +137,18 @@ void ComMenuUpdate(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 {
 	AppData_t* appData = GL_AppData;
 	
+	if (ButtonPressed(Button_Escape))
+	{
+		menuPntr->show = !menuPntr->show;
+		if (menuPntr->show)
+		{
+			RefreshComPortList();
+			appData->comMenuOptions = appData->comPort;
+		}
+	}
+	
 	if (menuPntr->show)
 	{
-		if (ButtonPressed(Button_Escape))
-		{
-			menuPntr->show = false;
-		}
-		
 		u32 numTabs = appData->numComPortsAvailable + (appData->comPort.isOpen ? 1 : 0);
 		v2 tabSize = NewVec2(menuPntr->usableRec.width / numTabs, COM_MENU_TAB_HEIGHT);
 		rec baudRateRec = NewRectangle(
@@ -1329,24 +1334,6 @@ AppUpdate_DEFINITION(App_Update)
 					rs->DrawRectangle(cursorRec, hoverLocColor);
 				}
 				
-				if (IsFlagSet(linePntr->flags, LineFlag_MarkBelow) ||
-					(ButtonDown(MouseButton_Left) && ui->markIndex != -1 && ui->markIndex == lineIndex))
-				{
-					rec markRec = NewRectangle(
-						ui->gutterRec.x, 
-						currentPos.y + appData->testFont.maxExtendDown, 
-						ui->gutterRec.width + ui->viewRec.width,
-						MARK_SIZE
-					);
-					if (IsFlagSet(linePntr->flags, LineFlag_ThickMark) ||
-						(ui->markIndex == lineIndex && ButtonDown(Button_Shift)))
-					{
-						markRec.y -= 1;
-						markRec.height = THICK_MARK_SIZE;
-					}
-					rs->DrawRectangle(markRec, (ui->markIndex == lineIndex) ? Color_Highlight2 : Color_MarkColor);
-				}
-				
 				currentPos.y += ui->lineHeight;
 			}
 			
@@ -1445,7 +1432,27 @@ AppUpdate_DEFINITION(App_Update)
 			v2 currentPos = NewVec2(0, firstLine * ui->lineHeight + appData->testFont.maxExtendUp);
 			for (i32 lineIndex = firstLine; lineIndex < appData->lineList.numLines && lineIndex <= lastLine; lineIndex++)
 			{
+				Line_t* linePntr = GetLineAt(&appData->lineList, lineIndex);
+				
 				rs->PrintString(NewVec2(currentPos.x, currentPos.y), {Color_White}, 1.0f, "%u", lineIndex+1);
+				
+				if (IsFlagSet(linePntr->flags, LineFlag_MarkBelow) ||
+					(ButtonDown(MouseButton_Left) && ui->markIndex != -1 && ui->markIndex == lineIndex))
+				{
+					rec markRec = NewRectangle(
+						ui->gutterRec.x, 
+						currentPos.y + appData->testFont.maxExtendDown, 
+						ui->gutterRec.width + ui->viewRec.width,
+						MARK_SIZE
+					);
+					if (IsFlagSet(linePntr->flags, LineFlag_ThickMark) ||
+						(ui->markIndex == lineIndex && ButtonDown(Button_Shift)))
+					{
+						markRec.y -= 1;
+						markRec.height = THICK_MARK_SIZE;
+					}
+					rs->DrawRectangle(markRec, (ui->markIndex == lineIndex) ? Color_Highlight2 : Color_MarkColor);
+				}
 				
 				currentPos.y += ui->lineHeight;
 			}
