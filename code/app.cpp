@@ -68,6 +68,10 @@ inline void DrawLine(AppData_t* appData, const Line_t* line, v2 startPos)
 		{
 			color = Color_Highlight4;
 		}
+		else if (line->chars[0] == 0x05)
+		{
+			color = Color_Highlight5;
+		}
 	}
 	
 	appData->renderState.DrawString(line->chars, startPos, color, 1.0f);
@@ -909,11 +913,11 @@ AppUpdate_DEFINITION(App_Update)
 					else
 					{
 						LineAppend(&appData->lineList, lastLine, newChar);
+						
 					}
 				}
 				
-				// LineAppend(&appData->lineList, lastLine, ']');
-				// LineAppend(&appData->lineList, lastLine, ']');
+				appData->rxShiftRegister |= 0x80;
 			}
 			else if (readResult < 0)
 			{
@@ -926,6 +930,8 @@ AppUpdate_DEFINITION(App_Update)
 			// DEBUG_PrintLine("Writing \"%.*s\"", AppInput->textInputLength, AppInput->textInput);
 			
 			PlatformInfo->WriteComPortPntr(&appData->comPort, &AppInput->textInput[0], AppInput->textInputLength);
+			
+			appData->txShiftRegister |= 0x80;
 		}
 		
 		if (AppInput->buttons[Button_Enter].transCount > 0 && AppInput->buttons[Button_Enter].isDown)
@@ -1541,6 +1547,42 @@ AppUpdate_DEFINITION(App_Update)
 		
 		rs->BindTexture(&ui->buttonTextures[bIndex]);
 		rs->DrawTexturedRec(buttonRec, iconColor);
+	}
+	
+	if (appData->rxTxShiftCountdown == 0)
+	{
+		appData->rxTxShiftCountdown = 4;
+		
+		appData->rxShiftRegister = (u8)(appData->rxShiftRegister >> 1);
+		appData->txShiftRegister = (u8)(appData->txShiftRegister >> 1);
+	}
+	else
+	{
+		appData->rxTxShiftCountdown--;
+	}
+	
+	//Draw TX RX software LEDs
+	{
+		rs->DrawRectangle(ui->rxLedRec, Color_UiGray4);
+		rs->DrawRectangle(ui->txLedRec, Color_UiGray4);
+		for (u32 shift = 0; shift < sizeof(u8)*8; shift++)
+		{
+			
+			if (IsFlagSet(appData->rxShiftRegister, (1<<shift)))
+			{
+				rec deflatedRec = RectangleInflate(ui->rxLedRec, (r32)(8-shift) * 1);
+				rs->DrawButton(deflatedRec, {Color_TransparentBlack}, Color_Highlight3, 1);
+			}
+			
+			if (IsFlagSet(appData->txShiftRegister, (1<<shift)))
+			{
+				rec deflatedRec = RectangleInflate(ui->txLedRec, (r32)(8-shift) * 1);
+				rs->DrawButton(deflatedRec, {Color_TransparentBlack}, Color_Highlight4, 1);
+			}
+		}
+		
+		// rs->DrawButton(ui->rxLedRec, {Color_TransparentBlack}, rxLedColor, 1);
+		// rs->DrawButton(ui->txLedRec, {Color_TransparentBlack}, txLedColor, 1);
 	}
 	
 	MenuHandlerDrawMenus(PlatformInfo, AppInput, &appData->renderState, &appData->menuHandler);

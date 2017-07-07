@@ -37,6 +37,8 @@ struct UiElements_t
 	rec viewRec;
 	rec scrollBarRec;
 	rec buttonRecs[NumMainMenuButtons];
+	rec rxLedRec;
+	rec txLedRec;
 	
 	char contextStringBuffer[256];
 	Texture_t buttonBaseTexture;

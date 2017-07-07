@@ -46,6 +46,16 @@ void RecalculateUiElements(v2 mousePos, UiElements_t* ui)
 			buttonSize, buttonSize
 		);
 	}
+	ui->rxLedRec = NewRectangle(
+		ui->mainMenuRec.x + ui->mainMenuRec.width - RX_TX_LED_SIZE - 16,
+		ui->mainMenuRec.y + 16,
+		RX_TX_LED_SIZE, RX_TX_LED_SIZE
+	);
+	ui->txLedRec = NewRectangle(
+		ui->rxLedRec.x - RX_TX_LED_SIZE - 24,
+		ui->rxLedRec.y,
+		RX_TX_LED_SIZE, RX_TX_LED_SIZE
+	);
 	ui->statusBarRec = NewRectangle(
 		0, 
 		ui->screenSize.y - appData->testFont.lineHeight, 

@@ -35,7 +35,7 @@ inline v2 MeasureString(const Font_t* font, const char* string, u32 numChars)
 			currentPos.x += font->chars[spaceIndex].advanceX * TAB_WIDTH;
 		}
 		else if (string[cIndex] == '\r' || 
-			string[cIndex] == 0x01 || string[cIndex] == 0x02 || string[cIndex] == 0x03 || string[cIndex] == 0x04)
+			string[cIndex] == 0x01 || string[cIndex] == 0x02 || string[cIndex] == 0x03 || string[cIndex] == 0x04 || string[cIndex] == 0x05)
 		{
 			//Don't do anything
 		}

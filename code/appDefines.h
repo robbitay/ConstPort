@@ -30,6 +30,7 @@ Date:   06\08\2017
 #define COM_MENU_INNER_PADDING         10
 #define CONNECT_BUTTON_WIDTH           80
 #define CONNECT_BUTTON_HEIGHT          25
+#define RX_TX_LED_SIZE                 8
 
 #define Color_Background               NewColor(33, 33, 33, 255)
 #define Color_Foreground               {0xFFF8F8F2}
@@ -38,10 +39,11 @@ Date:   06\08\2017
 #define Color_UiGray3                  {0xFF303030}
 #define Color_UiGray4                  {0xFF101010}
 #define Color_UiLightGray1             NewColor(180, 180, 180, 255)
-#define Color_Highlight1               NewColor(174, 129, 255, 255) //Purple
+#define Color_Highlight1               NewColor(117, 113, 94, 255)  //Comment Color
 #define Color_Highlight2               NewColor(166, 226, 46, 255)  //Green Color
 #define Color_Highlight3               NewColor(249, 38, 101, 255)  //Red/Magenta
-#define Color_Highlight4               NewColor(102, 217, 239, 255) //Light Blue
+#define Color_Highlight4               NewColor(174, 129, 255, 255) //Purple
+#define Color_Highlight5               NewColor(102, 217, 239, 255) //Light Blue
 
 #define Color_WindowTitleBar           Color_UiGray3
 #define Color_WindowBackground         Color_UiGray1
