@@ -1166,8 +1166,13 @@ AppUpdate_DEFINITION(App_Update)
 					newPixelLocation = 0;
 				}
 				
-				ui->scrollOffset = (newPixelLocation / (ui->scrollBarGutterRec.height - ui->scrollBarRec.height)) * ui->maxScrollOffset;
-				ui->scrollOffsetGoto = ui->scrollOffset;
+				ui->scrollOffset.y = (newPixelLocation / (ui->scrollBarGutterRec.height - ui->scrollBarRec.height)) * ui->maxScrollOffset.y;
+				ui->scrollOffsetGoto.y = ui->scrollOffset.y;
+				
+				if (ui->scrollOffsetGoto.y < ui->maxScrollOffset.y - appData->testFont.lineHeight)
+				{
+					ui->followingEndOfFile = false;
+				}
 			}
 		}
 		else if (IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], ui->viewRec))
