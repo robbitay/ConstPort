@@ -19,7 +19,7 @@ Date:   06\08\2017
 #define LINE_SPACING                   2  //px
 #define CONTEXT_MENU_PADDING           5  //px
 #define MARK_SIZE                      1  //px
-#define THICK_MARK_SIZE                3  //px
+#define THICK_MARK_SIZE                4  //px
 #define MOUSE_CLICK_TOLERANCE          10 //Distance
 #define MIN_SECONDS_STATUS_BAR         1  //seconds
 #define MAIN_MENU_BUTTON_PADDING       10  //px

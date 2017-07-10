@@ -467,6 +467,7 @@
 			"IMAGE_ICON",
 			"INVALID_HANDLE_VALUE",
 			"LINE_SPACING",
+			"LineFlag_HasElapsedBanner",
 			"LineFlag_MarkBelow",
 			"LineFlag_ThickMark",
 			"MAIN_MENU_BUTTON_PADDING",

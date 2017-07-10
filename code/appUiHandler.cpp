@@ -22,12 +22,12 @@ void InitializeUiElements(UiElements_t* ui)
 	ui->buttonTextures[Button_Help] =            LoadTexture("Resources/Sprites/buttonIcon2.png");
 }
 
-void RecalculateUiElements(v2 mousePos, UiElements_t* ui, bool resetFollowingEndOfFile)
+void RecalculateUiElements(const AppInput_t* AppInput, UiElements_t* ui, bool resetFollowingEndOfFile)
 {
 	AppData_t* appData = GL_AppData;
 	
 	//Static sizing helpers
-	ui->mousePos = mousePos;
+	ui->mousePos = AppInput->mousePos;
 	ui->screenSize = NewVec2((r32)Gl_PlatformInfo->screenSize.x, (r32)Gl_PlatformInfo->screenSize.y);
 	ui->lineHeight = appData->testFont.lineHeight + LINE_SPACING;
 	
@@ -88,7 +88,7 @@ void RecalculateUiElements(v2 mousePos, UiElements_t* ui, bool resetFollowingEnd
 	);
 	
 	//Dynamic helpers
-	ui->fileSize = MeasureLines(&appData->lineList, &appData->testFont);
+	ui->fileSize = MeasureLines(AppInput, &appData->lineList, &appData->testFont);
 	ui->fileSize.x += 10;
 	// DEBUG_PrintLine("FileSize = (%f, %f)", ui->fileSize.x, ui->fileSize.y);
 	ui->maxScrollOffset = NewVec2(
@@ -121,6 +121,11 @@ void RecalculateUiElements(v2 mousePos, UiElements_t* ui, bool resetFollowingEnd
 	if (ui->scrollBarRec.height > ui->scrollBarGutterRec.height)
 		ui->scrollBarRec.height = ui->scrollBarGutterRec.height;
 	ui->scrollBarRec.y = ui->scrollBarGutterRec.y + (ui->scrollBarGutterRec.height - ui->scrollBarRec.height) * ui->scrollPercent.y;
+	
+	//NOTE: Since MeasureLines also captures the position of the hoverLocation and scrollOffset of the first line that
+	//		needs to be rendered it is dependant on the scrollOffset to be in it's proper position for these calculations
+	//		Therefore we have to run it once more to update those locations correctly after min and max offset have been accounted for
+	MeasureLines(AppInput, &appData->lineList, &appData->testFont);
 	
 	// DEBUG_PrintLine("scrollOffset = (%f, %f)", ui->scrollOffset.x, ui->scrollOffset.y);
 	// DEBUG_PrintLine("MaxScrollOffset = (%f, %f)", ui->maxScrollOffset.x, ui->maxScrollOffset.y);
