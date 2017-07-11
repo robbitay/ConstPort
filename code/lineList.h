@@ -9,11 +9,11 @@ Date:   06\09\2017
 
 enum
 {
-	LineFlag_MarkBelow = 0x01,
-	LineFlag_ThickMark = 0x02,
-	// LineFlag_Something = 0x04,
-	// LineFlag_Something = 0x08,
-	// LineFlag_Something = 0x10,
+	LineFlag_MarkBelow        = 0x01,
+	LineFlag_ThickMark        = 0x02,
+	LineFlag_HasElapsedBanner = 0x04,
+	// LineFlag_Something        = 0x08,
+	// LineFlag_Something        = 0x10,
 	
 };
 
@@ -24,7 +24,8 @@ struct Line_t
 	u32 numChars;
 	char* chars;
 	
-	Color_t color;
+	r32 animProgress;
+	r32 lineHeight;
 	u64 timestamp;
 	//Use the LineFlag enumeration
 	flags8 flags;

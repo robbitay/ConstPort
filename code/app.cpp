@@ -43,35 +43,8 @@ AppData_t* GL_AppData = nullptr;
 #include "appLoadingFunctions.cpp"
 #include "appRenderState.cpp"
 #include "appMenuHandler.cpp"
+#include "appRenderLine.cpp"
 #include "appUiHandler.cpp"
-
-inline void DrawLine(AppData_t* appData, const Line_t* line, v2 startPos)
-{
-	//TODO: Add cool formatting stuff?
-	
-	Color_t color = Color_Foreground;
-	if (line->numChars > 0)
-	{
-		if (line->chars[0] == 0x01)
-		{
-			color = Color_Highlight1;
-		}
-		else if (line->chars[0] == 0x02)
-		{
-			color = Color_Highlight2;
-		}
-		else if (line->chars[0] == 0x03)
-		{
-			color = Color_Highlight3;
-		}
-		else if (line->chars[0] == 0x04)
-		{
-			color = Color_Highlight4;
-		}
-	}
-	
-	appData->renderState.DrawString(line->chars, startPos, color, 1.0f);
-}
 
 void ClearConsole()
 {
@@ -83,7 +56,7 @@ void ClearConsole()
 	
 	appData->selectionStart = NewTextLocation(0, 0);
 	appData->selectionEnd = NewTextLocation(0, 0);
-	appData->hoverLocation = NewTextLocation(0, 0);
+	appData->uiElements.hoverLocation = NewTextLocation(0, 0);
 }
 
 void RefreshComPortList()
@@ -133,13 +106,18 @@ void ComMenuUpdate(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 {
 	AppData_t* appData = GL_AppData;
 	
+	if (ButtonPressed(Button_Escape))
+	{
+		menuPntr->show = !menuPntr->show;
+		if (menuPntr->show)
+		{
+			RefreshComPortList();
+			appData->comMenuOptions = appData->comPort;
+		}
+	}
+	
 	if (menuPntr->show)
 	{
-		if (ButtonPressed(Button_Escape))
-		{
-			menuPntr->show = false;
-		}
-		
 		u32 numTabs = appData->numComPortsAvailable + (appData->comPort.isOpen ? 1 : 0);
 		v2 tabSize = NewVec2(menuPntr->usableRec.width / numTabs, COM_MENU_TAB_HEIGHT);
 		rec baudRateRec = NewRectangle(
@@ -802,7 +780,7 @@ AppUpdate_DEFINITION(App_Update)
 			"Const Port [Disconnected]");
 	}
 	
-	RecalculateUiElements(AppInput->mousePos, ui);
+	RecalculateUiElements(AppInput, ui, true);
 	
 	Menu_t* comMenu = GetMenuByName(&appData->menuHandler, "COM Menu");
 	Menu_t* contextMenu = GetMenuByName(&appData->menuHandler, "Context Menu");
@@ -814,16 +792,13 @@ AppUpdate_DEFINITION(App_Update)
 	Color_t hoverLocColor = ColorLerp(Color_Foreground, Color_Background, (Sin32((r32)PlatformInfo->programTime*8.0f) + 1.0f) / 2.0f);
 	// Color_t selectionColor = ColorFromHSV(180, 1.0f, (r32)(Sin32((r32)PlatformInfo->programTime*5) + 1.0f) / 2.0f);
 	
-	appData->hoverLocation = PointToTextLocation(&appData->lineList, &appData->testFont, 
-		ui->mousePos - NewVec2(LINE_SPACING + ui->gutterRec.width, ui->viewRec.y - ui->scrollOffset));
-	
 	//Context Menu Showing/Filling
 	contextMenu->show = false;
 	if (ui->mouseInMenu == false &&
 		AppInput->buttons[Button_Control].isDown &&// && mousePos.x <= ui->gutterRec.width)
 		(IsInsideRectangle(ui->mousePos, ui->viewRec) || IsInsideRectangle(ui->mousePos, ui->gutterRec)))
 	{
-		Line_t* linePntr = GetLineAt(&appData->lineList, appData->hoverLocation.lineNum);
+		Line_t* linePntr = GetLineAt(&appData->lineList, ui->hoverLocation.lineNum);
 		
 		if (linePntr != nullptr && linePntr->timestamp != 0)
 		{
@@ -900,20 +875,15 @@ AppUpdate_DEFINITION(App_Update)
 						//TODO: Do we want to process the finished line in some way?
 						
 						lastLine = AddLineToList(&appData->lineList, "");
-						lastLine->color = Color_Foreground;
-						if (ui->followingEndOfFile)
-						{
-							ui->scrollOffsetGoto += 19;//appData->testFont.lineHeight;
-						}
 					}
 					else
 					{
 						LineAppend(&appData->lineList, lastLine, newChar);
+						
 					}
 				}
 				
-				// LineAppend(&appData->lineList, lastLine, ']');
-				// LineAppend(&appData->lineList, lastLine, ']');
+				appData->rxShiftRegister |= 0x80;
 			}
 			else if (readResult < 0)
 			{
@@ -926,6 +896,8 @@ AppUpdate_DEFINITION(App_Update)
 			// DEBUG_PrintLine("Writing \"%.*s\"", AppInput->textInputLength, AppInput->textInput);
 			
 			PlatformInfo->WriteComPortPntr(&appData->comPort, &AppInput->textInput[0], AppInput->textInputLength);
+			
+			appData->txShiftRegister |= 0x80;
 		}
 		
 		if (AppInput->buttons[Button_Enter].transCount > 0 && AppInput->buttons[Button_Enter].isDown)
@@ -934,6 +906,7 @@ AppUpdate_DEFINITION(App_Update)
 			
 			char newChar = '\n';
 			PlatformInfo->WriteComPortPntr(&appData->comPort, &newChar, 1);
+			appData->txShiftRegister |= 0x80;
 		}
 	}
 	
@@ -1031,35 +1004,50 @@ AppUpdate_DEFINITION(App_Update)
 		}
 	}
 	
-	RecalculateUiElements(AppInput->mousePos, ui);
+	RecalculateUiElements(AppInput, ui, false);
 	
+	if (AppInput->buttons[Button_Right].isDown)
+	{
+		ui->scrollOffsetGoto.x += AppInput->buttons[Button_Shift].isDown ? 16 : 5;
+	}
+	if (AppInput->buttons[Button_Left].isDown)
+	{
+		ui->scrollOffsetGoto.x -= AppInput->buttons[Button_Shift].isDown ? 16 : 5;
+	}
 	if (AppInput->buttons[Button_Down].isDown)
 	{
-		ui->scrollOffsetGoto += AppInput->buttons[Button_Shift].isDown ? 16 : 5;
+		ui->scrollOffsetGoto.y += AppInput->buttons[Button_Shift].isDown ? 16 : 5;
 	}
 	if (AppInput->buttons[Button_Up].isDown)
 	{
-		ui->scrollOffsetGoto -= AppInput->buttons[Button_Shift].isDown ? 16 : 5;
+		ui->scrollOffsetGoto.y -= AppInput->buttons[Button_Shift].isDown ? 16 : 5;
+		ui->followingEndOfFile = false;
 	}
 	if (AppInput->scrollDelta.y != 0)
 	{
-		ui->scrollOffsetGoto -= AppInput->scrollDelta.y * SCROLL_MULTIPLIER;
+		ui->scrollOffsetGoto.y -= AppInput->scrollDelta.y * SCROLL_MULTIPLIER;
+		if (AppInput->scrollDelta.y > 0)
+		{
+			ui->followingEndOfFile = false;
+		}
 	}
 	if (AppInput->buttons[Button_End].isDown && AppInput->buttons[Button_End].transCount > 0)
 	{
-		ui->scrollOffsetGoto = ui->maxScrollOffset;
+		ui->followingEndOfFile = true;
 	}
 	if (AppInput->buttons[Button_Home].isDown && AppInput->buttons[Button_Home].transCount > 0)
 	{
-		ui->scrollOffsetGoto = 0;
+		ui->scrollOffsetGoto.y = 0;
+		ui->followingEndOfFile = false;
 	}
 	if (AppInput->buttons[Button_PageUp].isDown && AppInput->buttons[Button_PageUp].transCount > 0)
 	{
-		ui->scrollOffsetGoto -= ui->viewRec.height;
+		ui->scrollOffsetGoto.y -= ui->viewRec.height;
+		ui->followingEndOfFile = false;
 	}
 	if (AppInput->buttons[Button_PageDown].isDown && AppInput->buttons[Button_PageDown].transCount > 0)
 	{
-		ui->scrollOffsetGoto += ui->viewRec.height;
+		ui->scrollOffsetGoto.y += ui->viewRec.height;
 	}
 	
 	//Main Menu Buttons
@@ -1098,6 +1086,16 @@ AppUpdate_DEFINITION(App_Update)
 		}
 	}
 	
+	//Clear Button Press
+	if (IsInsideRectangle(AppInput->mousePos, ui->clearButtonRec))
+	{
+		if (ButtonReleased(MouseButton_Left) && 
+			IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], ui->clearButtonRec))
+		{
+			ClearConsole();
+		}
+	}
+	
 	//Scrollbar Interaction and Text Selection
 	if (AppInput->buttons[MouseButton_Left].isDown && !ui->mouseInMenu)
 	{
@@ -1117,13 +1115,14 @@ AppUpdate_DEFINITION(App_Update)
 					ui->startedOnScrollbar = false;
 					if (ui->mouseScrollbarOffset > 0)
 					{
-						ui->scrollOffset += ui->viewRec.height;
+						ui->scrollOffset.y += ui->viewRec.height;
 					}
 					else
 					{
-						ui->scrollOffset -= ui->viewRec.height;
+						ui->scrollOffset.y -= ui->viewRec.height;
+						ui->followingEndOfFile = false;
 					}
-					ui->scrollOffsetGoto = ui->scrollOffset;
+					ui->scrollOffsetGoto.y = ui->scrollOffset.y;
 				}
 			}
 			else if (ui->startedOnScrollbar) //holding the button
@@ -1138,31 +1137,35 @@ AppUpdate_DEFINITION(App_Update)
 					newPixelLocation = 0;
 				}
 				
-				ui->scrollOffset = (newPixelLocation / (ui->scrollBarGutterRec.height - ui->scrollBarRec.height)) * ui->maxScrollOffset;
-				ui->scrollOffsetGoto = ui->scrollOffset;
+				ui->scrollOffset.y = (newPixelLocation / (ui->scrollBarGutterRec.height - ui->scrollBarRec.height)) * ui->maxScrollOffset.y;
+				ui->scrollOffsetGoto.y = ui->scrollOffset.y;
+				
+				if (ui->scrollOffsetGoto.y < ui->maxScrollOffset.y - appData->testFont.lineHeight)
+				{
+					ui->followingEndOfFile = false;
+				}
 			}
 		}
 		else if (IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], ui->viewRec))
 		{
 			if (AppInput->buttons[MouseButton_Left].transCount > 0)//Pressed the button down
 			{
-				appData->selectionStart = appData->hoverLocation;
-				appData->selectionEnd = appData->hoverLocation;
+				appData->selectionStart = ui->hoverLocation;
+				appData->selectionEnd = ui->hoverLocation;
 			}
 			else //if (IsInsideRectangle(ui->mousePos, ui->viewRec)) //Mouse Button Holding
 			{
-				appData->selectionEnd = appData->hoverLocation;
+				appData->selectionEnd = ui->hoverLocation;
 			}
 		}
 	}
 	
 	//Mark lines using the mouse
 	ui->markIndex = -1;
-	if (//AppInput->mouseMaxDist[MouseButton_Left] < MOUSE_CLICK_TOLERANCE &&
-		ui->mouseInMenu == false &&
+	if (ui->mouseInMenu == false &&
 		IsInsideRectangle(ui->mousePos, ui->gutterRec) && IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], ui->gutterRec))
 	{
-		ui->markIndex = (u32)((r32)(ui->mousePos.y - ui->viewRec.y + ui->scrollOffset) / ui->lineHeight - 0.5f);
+		ui->markIndex = (u32)((r32)(ui->mousePos.y - ui->viewRec.y + ui->scrollOffset.y) / ui->lineHeight - 0.5f);
 		if (ButtonReleased(MouseButton_Left) && 
 			ui->markIndex >= 0 && ui->markIndex < appData->lineList.numLines)
 		{
@@ -1221,10 +1224,13 @@ AppUpdate_DEFINITION(App_Update)
 	MenuHandlerUpdate(PlatformInfo, AppInput, &appData->menuHandler);
 	
 	UpdateUiElements(AppInput, ui);
-	RecalculateUiElements(AppInput->mousePos, ui);
-	appData->hoverLocation = PointToTextLocation(&appData->lineList, &appData->testFont, 
-		ui->mousePos - NewVec2(LINE_SPACING + ui->gutterRec.width, ui->viewRec.y - ui->scrollOffset));
+	RecalculateUiElements(AppInput, ui, false);
+	if (ui->followingEndOfFile)
+	{
+		ui->scrollOffsetGoto.y = ui->maxScrollOffset.y;
+	}
 	
+	//Cursor Type
 	if (IsInsideRectangle(ui->mousePos, ui->viewRec) && !ui->mouseInMenu)
 	{
 		AppOutput->cursorType = Cursor_Text;
@@ -1257,63 +1263,52 @@ AppUpdate_DEFINITION(App_Update)
 	rs->SetViewMatrix(viewMatrix);
 	rs->SetProjectionMatrix(projMatrix);
 	
-	rs->DrawGradient(ui->gutterRec, Color_UiGray1, Color_UiGray3, Direction2D_Right);
 	// rs->DrawGradient(NewRectangle(0, 0, 300, 300), color1, color2, Direction2D_Right);
 	
 	//+--------------------------------------+
 	//|            Render Lines              |
 	//+--------------------------------------+
 	{
-		i32 firstLine = max(0, (i32)((r32)ui->scrollOffset / ui->lineHeight));
-		i32 lastLine = min(appData->lineList.numLines, (i32)((r32)(ui->scrollOffset + ui->viewRec.height) / ui->lineHeight));
+		i32 firstLine = max(0, ui->firstRenderLine);
 		
-		rs->SetViewMatrix(Matrix4Translate(NewVec3(0, ui->viewRec.y - ui->scrollOffset, 0)));
+		rs->SetViewMatrix(Matrix4Translate(NewVec3(ui->viewRec.x - ui->scrollOffset.x, ui->viewRec.y - ui->scrollOffset.y, 0)));
 		{//Items drawn relative to view
 			
-			v2 currentPos = NewVec2(ui->gutterRec.width + LINE_SPACING, firstLine * ui->lineHeight + appData->testFont.maxExtendUp);
-			for (i32 lineIndex = firstLine; lineIndex < appData->lineList.numLines && lineIndex <= lastLine; lineIndex++)
+			v2 currentPos = NewVec2(LINE_SPACING, -ui->firstRenderLineOffset + appData->testFont.maxExtendUp);
+			for (i32 lineIndex = firstLine; lineIndex < appData->lineList.numLines; lineIndex++)
 			{
 				Line_t* linePntr = GetLineAt(&appData->lineList, lineIndex);
-				v2 lineSize = MeasureString(&appData->testFont, linePntr->chars);
-				rec backRec = NewRectangle(currentPos.x, currentPos.y - appData->testFont.maxExtendUp, ui->viewRec.width, appData->testFont.lineHeight);
-				// backRec = RectangleInflate(backRec, 1);
-				if (lineIndex == appData->hoverLocation.lineNum && IsInsideRectangle(ui->mousePos, ui->viewRec) && !ui->mouseInMenu)
+				
+				r32 lineHeight = RenderLine(AppInput, linePntr, currentPos, true);
+				if (lineIndex == ui->hoverLocation.lineNum && IsInsideRectangle(ui->mousePos, ui->viewRec) && !ui->mouseInMenu)
 				{
+					rec backRec = NewRectangle(
+						currentPos.x, 
+						currentPos.y - appData->testFont.maxExtendUp, 
+						ui->viewRec.width, lineHeight
+					);
 					rs->DrawRectangle(backRec, Color_UiGray3);
 				}
 				
-				rs->PrintString(NewVec2(0, currentPos.y), {Color_White}, 1.0f, "%u", lineIndex+1);
+				RenderLine(AppInput, linePntr, currentPos, false);
 				
-				DrawLine(appData, linePntr, currentPos);
-				
-				if (lineIndex == appData->hoverLocation.lineNum && IsInsideRectangle(ui->mousePos, ui->viewRec) && !ui->mouseInMenu)
+				if (lineIndex == ui->hoverLocation.lineNum && IsInsideRectangle(ui->mousePos, ui->viewRec) && !ui->mouseInMenu)
 				{
-					v2 skipSize = MeasureString(&appData->testFont, linePntr->chars, appData->hoverLocation.charIndex);
-					rec cursorRec = backRec;
-					cursorRec.x += skipSize.x;
-					cursorRec.width = 1;
+					v2 skipSize = MeasureString(&appData->testFont, linePntr->chars, ui->hoverLocation.charIndex);
+					rec cursorRec = NewRectangle(
+						currentPos.x + skipSize.x, 
+						currentPos.y - appData->testFont.maxExtendUp, 
+						1, lineHeight
+					);
 					rs->DrawRectangle(cursorRec, hoverLocColor);
 				}
 				
-				if (IsFlagSet(linePntr->flags, LineFlag_MarkBelow) ||
-					(ButtonDown(MouseButton_Left) && ui->markIndex != -1 && ui->markIndex == lineIndex))
+				currentPos.y += lineHeight + LINE_SPACING;
+				if (currentPos.y - appData->testFont.maxExtendUp >= ui->scrollOffset.y + ui->viewRec.height)
 				{
-					rec markRec = NewRectangle(
-						ui->gutterRec.x, 
-						currentPos.y + appData->testFont.maxExtendDown, 
-						ui->gutterRec.width + ui->viewRec.width,
-						MARK_SIZE
-					);
-					if (IsFlagSet(linePntr->flags, LineFlag_ThickMark) ||
-						(ui->markIndex == lineIndex && ButtonDown(Button_Shift)))
-					{
-						markRec.y -= 1;
-						markRec.height = THICK_MARK_SIZE;
-					}
-					rs->DrawRectangle(markRec, (ui->markIndex == lineIndex) ? Color_Highlight2 : Color_MarkColor);
+					//We've reached the bottom of the view
+					break;
 				}
-				
-				currentPos.y += ui->lineHeight;
 			}
 			
 		}
@@ -1332,49 +1327,59 @@ AppUpdate_DEFINITION(App_Update)
 		appData->selectionStart.charIndex != appData->selectionEnd.charIndex)
 	{
 		TextLocation_t minLocation = TextLocationMin(appData->selectionStart, appData->selectionEnd);
-		TextLocation_t maxLocation = TextLocationMax(appData->selectionStart, appData->selectionEnd); 
-		r32 lineHeight = appData->testFont.lineHeight + LINE_SPACING;
-		i32 firstLine = max(0, max(minLocation.lineNum, (i32)((r32)ui->scrollOffset / lineHeight)));
-		i32 lastLine = min(appData->lineList.numLines, min(maxLocation.lineNum, (i32)((r32)(ui->scrollOffset + ui->viewRec.height) / lineHeight)));
+		TextLocation_t maxLocation = TextLocationMax(appData->selectionStart, appData->selectionEnd);
+		i32 firstLine = max(0, ui->firstRenderLine);
 		
-		rs->SetViewMatrix(Matrix4Translate(NewVec3(0, ui->viewRec.y - ui->scrollOffset, 0)));
+		rs->SetViewMatrix(Matrix4Translate(NewVec3(ui->viewRec.x - ui->scrollOffset.x, ui->viewRec.y - ui->scrollOffset.y, 0)));
 		{//Items drawn relative to view
 			
-			v2 currentPos = NewVec2(ui->gutterRec.width + LINE_SPACING, firstLine * lineHeight + appData->testFont.maxExtendUp);
-			for (i32 lineIndex = firstLine; lineIndex < appData->lineList.numLines && lineIndex <= lastLine; lineIndex++)
+			v2 currentPos = NewVec2(0, -ui->firstRenderLineOffset + appData->testFont.maxExtendUp);
+			for (i32 lineIndex = firstLine;
+				lineIndex < appData->lineList.numLines && lineIndex <= maxLocation.lineNum;
+				lineIndex++)
 			{
 				Line_t* linePntr = GetLineAt(&appData->lineList, lineIndex);
-				v2 skipSize = Vec2_Zero;
-				v2 selectionSize = Vec2_Zero;
-				if (lineIndex == minLocation.lineNum &&
-					lineIndex == maxLocation.lineNum)
+				r32 lineHeight = RenderLine(AppInput, linePntr, currentPos, true);
+				
+				if (lineIndex >= minLocation.lineNum && lineIndex <= maxLocation.lineNum)
 				{
-					skipSize = MeasureString(&appData->testFont, linePntr->chars, minLocation.charIndex);
-					selectionSize = MeasureString(&appData->testFont, &linePntr->chars[minLocation.charIndex], maxLocation.charIndex - minLocation.charIndex);
-				}
-				else if (lineIndex == minLocation.lineNum)
-				{
-					skipSize = MeasureString(&appData->testFont, linePntr->chars, minLocation.charIndex);
-					selectionSize = MeasureString(&appData->testFont, &linePntr->chars[minLocation.charIndex]);
-					// selectionSize.x += MeasureString(&appData->testFont, " ", 1).x;
-				}
-				else if (lineIndex == maxLocation.lineNum)
-				{
-					selectionSize = MeasureString(&appData->testFont, linePntr->chars, maxLocation.charIndex);
-				}
-				else
-				{
-					Assert(lineIndex > minLocation.lineNum && lineIndex < maxLocation.lineNum);
+					v2 skipSize = Vec2_Zero;
+					v2 selectionSize = Vec2_Zero;
 					
-					selectionSize = MeasureString(&appData->testFont, linePntr->chars);
-					// selectionSize.x += MeasureString(&appData->testFont, " ", 1).x;
+					if (lineIndex == minLocation.lineNum &&
+						lineIndex == maxLocation.lineNum)
+					{
+						skipSize = MeasureString(&appData->testFont, linePntr->chars, minLocation.charIndex);
+						selectionSize = MeasureString(&appData->testFont, &linePntr->chars[minLocation.charIndex], maxLocation.charIndex - minLocation.charIndex);
+					}
+					else if (lineIndex == minLocation.lineNum)
+					{
+						skipSize = MeasureString(&appData->testFont, linePntr->chars, minLocation.charIndex);
+						selectionSize = MeasureString(&appData->testFont, &linePntr->chars[minLocation.charIndex]);
+						// selectionSize.x += MeasureString(&appData->testFont, " ", 1).x;
+					}
+					else if (lineIndex == maxLocation.lineNum)
+					{
+						selectionSize = MeasureString(&appData->testFont, linePntr->chars, maxLocation.charIndex);
+					}
+					else
+					{
+						selectionSize = MeasureString(&appData->testFont, linePntr->chars);
+						// selectionSize.x += MeasureString(&appData->testFont, " ", 1).x;
+					}
+					
+					rec backRec = NewRectangle(LINE_SPACING + currentPos.x + skipSize.x, currentPos.y - appData->testFont.maxExtendUp, selectionSize.x, lineHeight);
+					backRec = RectangleInflate(backRec, LINE_SPACING);
+					rs->DrawRectangle(backRec, color1);//selectionColor);
+					
+					if (currentPos.y - appData->testFont.maxExtendUp >= ui->scrollOffset.y + ui->viewRec.height)
+					{
+						//We've reached the bottom of the view
+						break;
+					}
 				}
 				
-				rec backRec = NewRectangle(currentPos.x + skipSize.x, currentPos.y - appData->testFont.maxExtendUp, selectionSize.x, appData->testFont.lineHeight);
-				backRec = RectangleInflate(backRec, LINE_SPACING);
-				rs->DrawRectangle(backRec, color1);//selectionColor);
-				
-				currentPos.y += lineHeight;
+				currentPos.y += lineHeight + LINE_SPACING;
 			}
 			
 		}
@@ -1395,121 +1400,163 @@ AppUpdate_DEFINITION(App_Update)
 	
 	rs->BindShader(&appData->simpleShader);
 	rs->UpdateShader();
-	//+--------------------------------------+
-	//|         Render UI Elements           |
-	//+--------------------------------------+
-	rs->DrawGradient(ui->statusBarRec, Color_UiGray1, Color_UiGray3, Direction2D_Right);
-	// rs->DrawGradient(NewRectangle(10, 10, 300, 300), color1, color2, Direction2D_Right);
-	// rs->PrintString( 
-	// 	NewVec2(0, ui->screenSize.y-appData->testFont.maxExtendDown), Color_Foreground, 1.0f, 
-	// 	"Heap: %u/%u used", appData->memArena.used, appData->memArena.size);
-	rs->PrintString( 
-		NewVec2(0, ui->screenSize.y-appData->testFont.maxExtendDown), Color_Foreground, 1.0f, 
-		"Line %d Char %d", appData->hoverLocation.lineNum+1, appData->hoverLocation.charIndex);
-	// rs->PrintString( 
-	// 	NewVec2(0, ui->screenSize.y-appData->testFont.maxExtendDown), Color_Foreground, 1.0f, 
-	// 	"%s %u:%02u%s (%s %s, %u) [%u]",
-	// 	GetDayOfWeekStr(GetDayOfWeek(PlatformInfo->localTime)), 
-	// 	Convert24HourTo12Hour(PlatformInfo->localTime.hour), PlatformInfo->localTime.minute,
-	// 	IsPostMeridian(PlatformInfo->localTime.hour) ? "pm" : "am",
-	// 	GetMonthStr((Month_t)PlatformInfo->localTime.month), GetDayOfMonthString(PlatformInfo->localTime.day), PlatformInfo->localTime.year,
-	// 	GetTimestamp(PlatformInfo->localTime));
-	// rs->PrintString( 
-	// 	NewVec2(0, ui->screenSize.y-appData->testFont.maxExtendDown), Color_Foreground, 1.0f, 
-	// 	"First: %d Last: %d", firstLine, lastLine);
-	// PrintString(appData, appData->testFont, 
-	// 	NewVec2(0, ui->screenSize.y-appData->testFont.maxExtendDown), Color_Foreground, 1.0f, 
-	// 	"%u Lines Offset: %f (%fpx long)", appData->lineList.numLines, ui->scrollOffset, ui->fileHeight);
 	
-	Line_t* lastLine = GetLastLine(&appData->lineList);
-	// DEBUG_PrintLine("Last Item: %p", lastLine->header.lastItem);
-	if (lastLine->timestamp == 0 && appData->lineList.numLines > 1)
+	//+--------------------------------------+
+	//|        Render Line Numbers           |
+	//+--------------------------------------+
+	rs->DrawGradient(ui->gutterRec, Color_UiGray1, Color_UiGray3, Direction2D_Right);
 	{
-		lastLine = GetLineAt(&appData->lineList, appData->lineList.numLines-1 - 1);
+		i32 firstLine = max(0, ui->firstRenderLine);
+		
+		rs->SetViewMatrix(Matrix4Translate(NewVec3(ui->gutterRec.x, ui->gutterRec.y - ui->scrollOffset.y, 0)));
+		{//Items drawn relative to view
+			
+			v2 currentPos = NewVec2(0, -ui->firstRenderLineOffset + appData->testFont.maxExtendUp);
+			for (i32 lineIndex = firstLine; lineIndex < appData->lineList.numLines; lineIndex++)
+			{
+				Line_t* linePntr = GetLineAt(&appData->lineList, lineIndex);
+				
+				r32 lineHeight = RenderLine(AppInput, linePntr, currentPos, true);
+				RenderLineNumber(AppInput, linePntr, currentPos, lineIndex, lineHeight);
+				
+				currentPos.y += lineHeight + LINE_SPACING;
+				if (currentPos.y - appData->testFont.maxExtendUp >= ui->scrollOffset.y + ui->viewRec.height)
+				{
+					//We've reached the bottom of the view
+					break;
+				}
+			}
+			
+		}
+		rs->SetViewMatrix(Matrix4_Identity);
 	}
 	
-	if (appData->selectionStart.lineNum != appData->selectionEnd.lineNum ||
-		appData->selectionStart.charIndex != appData->selectionEnd.charIndex)
+	//+--------------------------------------+
+	//|           Render Scrollbar           |
+	//+--------------------------------------+
 	{
+		rs->DrawGradient(NewRectangle(ui->scrollBarGutterRec.x - 8, ui->scrollBarGutterRec.y, 8, ui->scrollBarGutterRec.height), 
+			{Color_TransparentBlack}, {Color_HalfTransparentBlack}, Direction2D_Right);
+		rs->DrawGradient(ui->scrollBarGutterRec, Color_Background, Color_UiGray3, Direction2D_Right);
+
+		rec centerScrollBarRec = ui->scrollBarRec;
+		centerScrollBarRec.y += ui->scrollBarRec.width;
+		centerScrollBarRec.height -= 2 * ui->scrollBarRec.width;
+		rec startCapRec = NewRectangle(ui->scrollBarRec.x, ui->scrollBarRec.y, ui->scrollBarRec.width, ui->scrollBarRec.width);
+		rec endCapRec = NewRectangle(ui->scrollBarRec.x, ui->scrollBarRec.y + ui->scrollBarRec.height - ui->scrollBarRec.width, ui->scrollBarRec.width, ui->scrollBarRec.width);
+		endCapRec.y += endCapRec.height;
+		endCapRec.height = -endCapRec.height;
+		rs->DrawRectangle(RectangleInflate(centerScrollBarRec, 1), Color_UiGray4);
+		rs->BindAlphaTexture(&appData->scrollBarEndcapTexture);
+		rs->DrawRectangle(RectangleInflate(startCapRec, 1), Color_UiGray4);
+		rs->DrawRectangle(RectangleInflate(endCapRec, 1), Color_UiGray4);
+
+		rs->DrawGradient(startCapRec, Color_UiGray1, Color_UiGray3, Direction2D_Right);
+		rs->DrawGradient(endCapRec, Color_UiGray1, Color_UiGray3, Direction2D_Right);
+		rs->DisableAlphaTexture();
+		rs->DrawGradient(centerScrollBarRec, Color_UiGray1, Color_UiGray3, Direction2D_Right);
+	}
+	
+	//+--------------------------------------+
+	//|          Render Status Bar           |
+	//+--------------------------------------+
+	{
+		rs->DrawGradient(ui->statusBarRec, Color_UiGray1, Color_UiGray3, Direction2D_Right);
+		// rs->DrawGradient(NewRectangle(10, 10, 300, 300), color1, color2, Direction2D_Right);
+		// rs->PrintString( 
+		// 	NewVec2(0, ui->screenSize.y-appData->testFont.maxExtendDown), Color_Foreground, 1.0f, 
+		// 	"Heap: %u/%u used", appData->memArena.used, appData->memArena.size);
+		// rs->PrintString( 
+		// 	NewVec2(0, ui->screenSize.y-appData->testFont.maxExtendDown), Color_Foreground, 1.0f, 
+		// 	"Line %d Char %d", ui->hoverLocation.lineNum+1, ui->hoverLocation.charIndex);
 		rs->PrintString( 
-			NewVec2(170, ui->screenSize.y-appData->testFont.maxExtendDown), Color_Foreground, 1.0f, 
-			"Selection: %u chars", GetSelection());
-	}
-	//Print elapsed time since last receive
-	else if (lastLine != nullptr && lastLine->timestamp != 0)
-	{
-		RealTime_t lineTime = RealTimeAt(lastLine->timestamp);
-		i64 secondsDifference = SubtractTimes(PlatformInfo->localTime, lineTime, TimeUnit_Seconds);
-		i64 absDifference = Abs64i(secondsDifference);
-		if (absDifference >= MIN_SECONDS_STATUS_BAR)
+			NewVec2(0, ui->screenSize.y-appData->testFont.maxExtendDown), Color_Foreground, 1.0f, 
+			"Offset: %f", ui->firstRenderLineOffset);
+		// rs->PrintString( 
+		// 	NewVec2(0, ui->screenSize.y-appData->testFont.maxExtendDown), Color_Foreground, 1.0f, 
+		// 	"%s %u:%02u%s (%s %s, %u) [%u]",
+		// 	GetDayOfWeekStr(GetDayOfWeek(PlatformInfo->localTime)), 
+		// 	Convert24HourTo12Hour(PlatformInfo->localTime.hour), PlatformInfo->localTime.minute,
+		// 	IsPostMeridian(PlatformInfo->localTime.hour) ? "pm" : "am",
+		// 	GetMonthStr((Month_t)PlatformInfo->localTime.month), GetDayOfMonthString(PlatformInfo->localTime.day), PlatformInfo->localTime.year,
+		// 	GetTimestamp(PlatformInfo->localTime));
+		// rs->PrintString( 
+		// 	NewVec2(0, ui->screenSize.y-appData->testFont.maxExtendDown), Color_Foreground, 1.0f, 
+		// 	"First: %d Last: %d", firstLine, lastLine);
+		// PrintString(appData, appData->testFont, 
+		// 	NewVec2(0, ui->screenSize.y-appData->testFont.maxExtendDown), Color_Foreground, 1.0f, 
+		// 	"%u Lines Offset: %f (%fpx long)", appData->lineList.numLines, ui->scrollOffset, ui->fileHeight);
+		
+		Line_t* lastLine = GetLastLine(&appData->lineList);
+		// DEBUG_PrintLine("Last Item: %p", lastLine->header.lastItem);
+		if (lastLine->timestamp == 0 && appData->lineList.numLines > 1)
 		{
-			u32 numDays = (u32)(absDifference/(60*60*24));
-			u32 numHours = (u32)(absDifference/(60*60)) - (numDays*24);
-			u32 numMinutes = (u32)(absDifference/60) - (numDays*60*24) - (numHours*60);
-			u32 numSeconds = (u32)(absDifference) - (numDays*60*60*24) - (numHours*60*60) - (numMinutes*60);
-			// DEBUG_PrintLine("Diff %d", secondsDifference);
-			if (numDays > 0)
+			lastLine = GetLineAt(&appData->lineList, appData->lineList.numLines-1 - 1);
+		}
+		
+		if (appData->selectionStart.lineNum != appData->selectionEnd.lineNum ||
+			appData->selectionStart.charIndex != appData->selectionEnd.charIndex)
+		{
+			rs->PrintString( 
+				NewVec2(170, ui->screenSize.y-appData->testFont.maxExtendDown), Color_Foreground, 1.0f, 
+				"Selection: %u chars", GetSelection());
+		}
+		//Print elapsed time since last receive
+		else if (lastLine != nullptr && lastLine->timestamp != 0)
+		{
+			RealTime_t lineTime = RealTimeAt(lastLine->timestamp);
+			i64 secondsDifference = SubtractTimes(PlatformInfo->localTime, lineTime, TimeUnit_Seconds);
+			i64 absDifference = Abs64i(secondsDifference);
+			if (absDifference >= MIN_SECONDS_STATUS_BAR)
 			{
-				rs->PrintString( 
-					NewVec2(170, ui->screenSize.y-appData->testFont.maxExtendDown), Color_Foreground, 1.0f, 
-					"%ud %uh %um %us %s", numDays, numHours, numMinutes, numSeconds,
-					secondsDifference >= 0 ? "Ago" : "In the future?");
+				u32 numDays = (u32)(absDifference/(60*60*24));
+				u32 numHours = (u32)(absDifference/(60*60)) - (numDays*24);
+				u32 numMinutes = (u32)(absDifference/60) - (numDays*60*24) - (numHours*60);
+				u32 numSeconds = (u32)(absDifference) - (numDays*60*60*24) - (numHours*60*60) - (numMinutes*60);
+				// DEBUG_PrintLine("Diff %d", secondsDifference);
+				if (numDays > 0)
+				{
+					rs->PrintString( 
+						NewVec2(170, ui->screenSize.y-appData->testFont.maxExtendDown), Color_Foreground, 1.0f, 
+						"%ud %uh %um %us %s", numDays, numHours, numMinutes, numSeconds,
+						secondsDifference >= 0 ? "Ago" : "In the future?");
+				}
+				else if (numHours > 0)
+				{
+					rs->PrintString( 
+						NewVec2(170, ui->screenSize.y-appData->testFont.maxExtendDown), Color_Foreground, 1.0f, 
+						"%uh %um %us %s", numHours, numMinutes, numSeconds,
+						secondsDifference >= 0 ? "Ago" : "In the future?");
+				}
+				else if (numMinutes > 0)
+				{
+					rs->PrintString( 
+						NewVec2(170, ui->screenSize.y-appData->testFont.maxExtendDown), Color_Foreground, 1.0f, 
+						"%um %us %s", numMinutes, numSeconds,
+						secondsDifference >= 0 ? "Ago" : "In the future?");
+				}
+				else
+				{
+					rs->PrintString( 
+						NewVec2(170, ui->screenSize.y-appData->testFont.maxExtendDown), Color_Foreground, 1.0f, 
+						"%us %s", numSeconds,
+						secondsDifference >= 0 ? "Ago" : "In the future?");
+				}
 			}
-			else if (numHours > 0)
-			{
-				rs->PrintString( 
-					NewVec2(170, ui->screenSize.y-appData->testFont.maxExtendDown), Color_Foreground, 1.0f, 
-					"%uh %um %us %s", numHours, numMinutes, numSeconds,
-					secondsDifference >= 0 ? "Ago" : "In the future?");
-			}
-			else if (numMinutes > 0)
-			{
-				rs->PrintString( 
-					NewVec2(170, ui->screenSize.y-appData->testFont.maxExtendDown), Color_Foreground, 1.0f, 
-					"%um %us %s", numMinutes, numSeconds,
-					secondsDifference >= 0 ? "Ago" : "In the future?");
-			}
-			else
-			{
-				rs->PrintString( 
-					NewVec2(170, ui->screenSize.y-appData->testFont.maxExtendDown), Color_Foreground, 1.0f, 
-					"%us %s", numSeconds,
-					secondsDifference >= 0 ? "Ago" : "In the future?");
-			}
+		}
+		
+		if (appData->comPort.isOpen)
+		{
+			v2 comNameSize = MeasureString(&appData->testFont, GetComPortName(appData->comPort.index));
+			rs->DrawString(GetComPortName(appData->comPort.index),
+				NewVec2(ui->screenSize.x - comNameSize.x - 10, ui->screenSize.y-appData->testFont.maxExtendDown), 
+				Color_Foreground, 1.0f);
 		}
 	}
 	
-	if (appData->comPort.isOpen)
-	{
-		v2 comNameSize = MeasureString(&appData->testFont, GetComPortName(appData->comPort.index));
-		rs->DrawString(GetComPortName(appData->comPort.index),
-			NewVec2(ui->screenSize.x - comNameSize.x - 10, ui->screenSize.y-appData->testFont.maxExtendDown), 
-			Color_Foreground, 1.0f);
-	}
-	
-	//Draw Scrollbar
-	rs->DrawGradient(NewRectangle(ui->scrollBarGutterRec.x - 8, ui->scrollBarGutterRec.y, 8, ui->scrollBarGutterRec.height), 
-		{Color_TransparentBlack}, {Color_HalfTransparentBlack}, Direction2D_Right);
-	rs->DrawGradient(ui->scrollBarGutterRec, Color_Background, Color_UiGray3, Direction2D_Right);
-	
-	rec centerScrollBarRec = ui->scrollBarRec;
-	centerScrollBarRec.y += ui->scrollBarRec.width;
-	centerScrollBarRec.height -= 2 * ui->scrollBarRec.width;
-	rec startCapRec = NewRectangle(ui->scrollBarRec.x, ui->scrollBarRec.y, ui->scrollBarRec.width, ui->scrollBarRec.width);
-	rec endCapRec = NewRectangle(ui->scrollBarRec.x, ui->scrollBarRec.y + ui->scrollBarRec.height - ui->scrollBarRec.width, ui->scrollBarRec.width, ui->scrollBarRec.width);
-	endCapRec.y += endCapRec.height;
-	endCapRec.height = -endCapRec.height;
-	rs->DrawRectangle(RectangleInflate(centerScrollBarRec, 1), Color_UiGray4);
-	rs->BindAlphaTexture(&appData->scrollBarEndcapTexture);
-	rs->DrawRectangle(RectangleInflate(startCapRec, 1), Color_UiGray4);
-	rs->DrawRectangle(RectangleInflate(endCapRec, 1), Color_UiGray4);
-	
-	rs->DrawGradient(startCapRec, Color_UiGray1, Color_UiGray3, Direction2D_Right);
-	rs->DrawGradient(endCapRec, Color_UiGray1, Color_UiGray3, Direction2D_Right);
-	rs->DisableAlphaTexture();
-	rs->DrawGradient(centerScrollBarRec, Color_UiGray1, Color_UiGray3, Direction2D_Right);
-	
-	//Draw Main Menu
+	//+--------------------------------------+
+	//|           Render Main Menu           |
+	//+--------------------------------------+
 	rs->DrawGradient(ui->mainMenuRec, Color_UiGray1, Color_UiGray3, Direction2D_Down);
 	rs->DrawRectangle(NewRectangle(0, ui->mainMenuRec.height-1, ui->mainMenuRec.width, 1), Color_UiGray4);
 	
@@ -1541,6 +1588,87 @@ AppUpdate_DEFINITION(App_Update)
 		
 		rs->BindTexture(&ui->buttonTextures[bIndex]);
 		rs->DrawTexturedRec(buttonRec, iconColor);
+	}
+	
+	if (appData->rxTxShiftCountdown == 0)
+	{
+		appData->rxTxShiftCountdown = 4;
+		
+		appData->rxShiftRegister = (u8)(appData->rxShiftRegister >> 1);
+		appData->txShiftRegister = (u8)(appData->txShiftRegister >> 1);
+	}
+	else
+	{
+		appData->rxTxShiftCountdown--;
+	}
+	
+	//+--------------------------------------+
+	//|           Rx and Tx LEDs             |
+	//+--------------------------------------+
+	{
+		Color_t centerColor = Color_UiGray4;
+		if ((appData->rxShiftRegister&0x80) > 0 ||
+			(appData->rxShiftRegister&0x40) > 0)
+		{
+			centerColor = Color_Highlight3;
+		}
+		rs->DrawRectangle(ui->rxLedRec, centerColor);
+		centerColor = Color_UiGray4;
+		if ((appData->txShiftRegister&0x80) > 0 ||
+			(appData->txShiftRegister&0x40) > 0)
+		{
+			centerColor = Color_Highlight4;
+		}
+		rs->DrawRectangle(ui->txLedRec, centerColor);
+		for (u32 shift = 0; shift < sizeof(u8)*8; shift++)
+		{
+			
+			if (IsFlagSet(appData->rxShiftRegister, (1<<shift)))
+			{
+				rec deflatedRec = RectangleInflate(ui->rxLedRec, (r32)(8-shift) * 1);
+				rs->DrawButton(deflatedRec, {Color_TransparentBlack}, Color_Highlight3, 1);
+			}
+			
+			if (IsFlagSet(appData->txShiftRegister, (1<<shift)))
+			{
+				rec deflatedRec = RectangleInflate(ui->txLedRec, (r32)(8-shift) * 1);
+				rs->DrawButton(deflatedRec, {Color_TransparentBlack}, Color_Highlight4, 1);
+			}
+		}
+		
+		// rs->DrawButton(ui->rxLedRec, {Color_TransparentBlack}, rxLedColor, 1);
+		// rs->DrawButton(ui->txLedRec, {Color_TransparentBlack}, txLedColor, 1);
+	}
+	
+	//+--------------------------------------+
+	//|            Clear Button              |
+	//+--------------------------------------+
+	{
+		const char* clearStr = "Clear";
+		v2 textSize = MeasureString(&appData->testFont, clearStr);
+		v2 textPos = NewVec2(
+			ui->clearButtonRec.x + ui->clearButtonRec.width/2 - textSize.x/2,
+			ui->clearButtonRec.y + ui->clearButtonRec.height/2 + appData->testFont.lineHeight/2 - appData->testFont.maxExtendDown
+		);
+		Color_t buttonColor = {Color_White};
+		Color_t textColor = Color_Background;
+		Color_t borderColor = Color_UiGray4;
+		
+		if (IsInsideRectangle(AppInput->mousePos, ui->clearButtonRec))
+		{
+			if (ButtonDown(MouseButton_Left) && IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], ui->clearButtonRec))
+			{
+				buttonColor = Color_Highlight3;
+				textColor = Color_Foreground;
+			}
+			else
+			{
+				buttonColor = Color_UiLightGray1;
+			}
+		}
+		
+		rs->DrawButton(ui->clearButtonRec, buttonColor, borderColor);
+		rs->DrawString(clearStr, textPos, textColor);
 	}
 	
 	MenuHandlerDrawMenus(PlatformInfo, AppInput, &appData->renderState, &appData->menuHandler);

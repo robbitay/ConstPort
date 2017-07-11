@@ -22,12 +22,12 @@ void InitializeUiElements(UiElements_t* ui)
 	ui->buttonTextures[Button_Help] =            LoadTexture("Resources/Sprites/buttonIcon2.png");
 }
 
-void RecalculateUiElements(v2 mousePos, UiElements_t* ui)
+void RecalculateUiElements(const AppInput_t* AppInput, UiElements_t* ui, bool resetFollowingEndOfFile)
 {
 	AppData_t* appData = GL_AppData;
 	
 	//Static sizing helpers
-	ui->mousePos = mousePos;
+	ui->mousePos = AppInput->mousePos;
 	ui->screenSize = NewVec2((r32)Gl_PlatformInfo->screenSize.x, (r32)Gl_PlatformInfo->screenSize.y);
 	ui->lineHeight = appData->testFont.lineHeight + LINE_SPACING;
 	
@@ -46,6 +46,21 @@ void RecalculateUiElements(v2 mousePos, UiElements_t* ui)
 			buttonSize, buttonSize
 		);
 	}
+	ui->rxLedRec = NewRectangle(
+		ui->mainMenuRec.x + ui->mainMenuRec.width - RX_TX_LED_SIZE - 16,
+		ui->mainMenuRec.y + 10,
+		RX_TX_LED_SIZE, RX_TX_LED_SIZE
+	);
+	ui->txLedRec = NewRectangle(
+		ui->rxLedRec.x - RX_TX_LED_SIZE - 16 - 4,
+		ui->rxLedRec.y,
+		RX_TX_LED_SIZE, RX_TX_LED_SIZE
+	);
+	ui->clearButtonRec = NewRectangle(
+		ui->mainMenuRec.x + ui->mainMenuRec.width - CLEAR_BUTTON_WIDTH - MAIN_MENU_BUTTON_PADDING,
+		ui->rxLedRec.y + ui->rxLedRec.height + 8 ,
+		CLEAR_BUTTON_WIDTH, CLEAR_BUTTON_HEIGHT
+	);
 	ui->statusBarRec = NewRectangle(
 		0, 
 		ui->screenSize.y - appData->testFont.lineHeight, 
@@ -73,39 +88,70 @@ void RecalculateUiElements(v2 mousePos, UiElements_t* ui)
 	);
 	
 	//Dynamic helpers
-	ui->fileHeight = (appData->lineList.numLines * ui->lineHeight);
-	ui->maxScrollOffset = ui->fileHeight - ui->viewRec.height;
-	if (ui->scrollOffsetGoto > ui->maxScrollOffset) ui->scrollOffsetGoto = ui->maxScrollOffset;
-	if (ui->scrollOffsetGoto < 0) ui->scrollOffsetGoto = 0;
-	if (ui->scrollOffset > ui->maxScrollOffset) ui->scrollOffset = ui->maxScrollOffset;
-	if (ui->scrollOffset < 0) ui->scrollOffset = 0;
-	ui->scrollPercent = ui->scrollOffsetGoto / ui->maxScrollOffset;
-	ui->followingEndOfFile = (ui->scrollOffsetGoto + ui->viewRec.height) >= (ui->fileHeight - ui->lineHeight);
+	ui->fileSize = MeasureLines(AppInput, &appData->lineList, &appData->testFont);
+	ui->fileSize.x += 10;
+	// DEBUG_PrintLine("FileSize = (%f, %f)", ui->fileSize.x, ui->fileSize.y);
+	ui->maxScrollOffset = NewVec2(
+		ui->fileSize.x - ui->viewRec.width,
+		ui->fileSize.y - ui->viewRec.height
+	);
+	if (ui->scrollOffsetGoto.x > ui->maxScrollOffset.x) ui->scrollOffsetGoto.x = ui->maxScrollOffset.x;
+	if (ui->scrollOffsetGoto.y > ui->maxScrollOffset.y) ui->scrollOffsetGoto.y = ui->maxScrollOffset.y;
+	if (ui->scrollOffsetGoto.x < 0) ui->scrollOffsetGoto.x = 0;
+	if (ui->scrollOffsetGoto.y < 0) ui->scrollOffsetGoto.y = 0;
+	if (ui->scrollOffset.x > ui->maxScrollOffset.x) ui->scrollOffset.x = ui->maxScrollOffset.x;
+	if (ui->scrollOffset.y > ui->maxScrollOffset.y) ui->scrollOffset.y = ui->maxScrollOffset.y;
+	if (ui->scrollOffset.x < 0) ui->scrollOffset.x = 0;
+	if (ui->scrollOffset.y < 0) ui->scrollOffset.y = 0;
+	ui->scrollPercent.x = ui->scrollOffsetGoto.x / ui->maxScrollOffset.x;
+	ui->scrollPercent.y = ui->scrollOffsetGoto.y / ui->maxScrollOffset.y;
+	if (resetFollowingEndOfFile)
+	{
+		ui->followingEndOfFile = (ui->scrollOffsetGoto.y + ui->viewRec.height) >= (ui->fileSize.y - ui->lineHeight);
+	}
 	
 	//Scroll Bar
 	ui->scrollBarRec = NewRectangle(
 		ui->scrollBarGutterRec.x + SCROLLBAR_PADDING, 0,
 		SCROLLBAR_WIDTH,
-		ui->scrollBarGutterRec.height * (ui->viewRec.height / ui->fileHeight)
+		ui->scrollBarGutterRec.height * (ui->viewRec.height / ui->fileSize.y)
 	);
 	if (ui->scrollBarRec.height < MIN_SCROLLBAR_HEIGHT)
 		ui->scrollBarRec.height = MIN_SCROLLBAR_HEIGHT;
 	if (ui->scrollBarRec.height > ui->scrollBarGutterRec.height)
 		ui->scrollBarRec.height = ui->scrollBarGutterRec.height;
-	ui->scrollBarRec.y = ui->scrollBarGutterRec.y + (ui->scrollBarGutterRec.height - ui->scrollBarRec.height) * ui->scrollPercent;
+	ui->scrollBarRec.y = ui->scrollBarGutterRec.y + (ui->scrollBarGutterRec.height - ui->scrollBarRec.height) * ui->scrollPercent.y;
+	
+	//NOTE: Since MeasureLines also captures the position of the hoverLocation and scrollOffset of the first line that
+	//		needs to be rendered it is dependant on the scrollOffset to be in it's proper position for these calculations
+	//		Therefore we have to run it once more to update those locations correctly after min and max offset have been accounted for
+	MeasureLines(AppInput, &appData->lineList, &appData->testFont);
+	
+	// DEBUG_PrintLine("scrollOffset = (%f, %f)", ui->scrollOffset.x, ui->scrollOffset.y);
+	// DEBUG_PrintLine("MaxScrollOffset = (%f, %f)", ui->maxScrollOffset.x, ui->maxScrollOffset.y);
 }
 
 void UpdateUiElements(const AppInput_t* AppInput, UiElements_t* ui)
 {
 	AppData_t* appData = GL_AppData;
 	
-	r32 gotoOffset = (ui->scrollOffsetGoto - ui->scrollOffset);
-	if (Abs32(gotoOffset) < 5)
+	v2 gotoOffset = (ui->scrollOffsetGoto - ui->scrollOffset);
+	
+	if (Abs32(gotoOffset.x) < 5)
 	{
-		ui->scrollOffset = ui->scrollOffsetGoto;
+		ui->scrollOffset.x = ui->scrollOffsetGoto.x;
 	}
 	else
 	{
-		ui->scrollOffset += gotoOffset / SCROLL_SPEED_DIVIDER;
+		ui->scrollOffset.x += gotoOffset.x / SCROLL_SPEED_DIVIDER;
+	}
+	
+	if (Abs32(gotoOffset.y) < 5)
+	{
+		ui->scrollOffset.y = ui->scrollOffsetGoto.y;
+	}
+	else
+	{
+		ui->scrollOffset.y += gotoOffset.y / SCROLL_SPEED_DIVIDER;
 	}
 }

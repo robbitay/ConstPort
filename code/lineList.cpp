@@ -20,7 +20,6 @@ Line_t* AddLineToList(LineList_t* lineList, const char* string, u32 stringLength
 	
 	newLine->numChars = stringLength;
 	newLine->chars = newStringBuffer;
-	newLine->color = Color_Foreground;
 	newLine->timestamp = 0;
 	newLine->flags = 0;
 	
@@ -68,6 +67,8 @@ inline void LineAppend(LineList_t* lineList, Line_t* line, char newCharacter)
 	}
 	line->numChars++;
 	line->chars[line->numChars] = '\0';
+	
+	
 }
 
 void CreateLineList(LineList_t* lineList, MemoryArena_t* arenaPntr, const char* contents)
@@ -169,57 +170,4 @@ inline TextLocation_t TextLocationMax(TextLocation_t location1, TextLocation_t l
 	{
 		return location2;
 	}
-}
-
-TextLocation_t PointToTextLocation(LineList_t* lineList, const Font_t* font, v2 position)
-{
-	TextLocation_t result = NewTextLocation(0, 0);
-	
-	if (position.y < 0 || lineList->list.numItems == 0)
-	{
-		return result;
-	}
-	
-	result.lineNum = (i32)(position.y / (font->lineHeight+LINE_SPACING));
-	
-	if (result.lineNum >= lineList->list.numItems)
-	{
-		result.lineNum = lineList->list.numItems - 1;
-	}
-	if (position.x < 0)
-	{
-		return result;
-	}
-	
-	// DEBUG_PrintLine("(%f, %f)", position.x, position.y);
-	
-	Line_t* linePntr = GetLineAt(lineList, result.lineNum);
-	
-	if (linePntr->chars[0] == '\0')
-	{
-		return result;
-	}
-	
-	v2 lastStringSize = Vec2_Zero;
-	for (u32 cIndex = 1; linePntr->chars[cIndex] != '\0'; cIndex++)
-	{
-		v2 stringSize = MeasureString(font, linePntr->chars, cIndex+1);
-		if (stringSize.x > position.x || linePntr->chars[cIndex+1] == '\0')
-		{
-			if (cIndex > 0 && Abs32(position.x - lastStringSize.x) < Abs32(position.x - stringSize.x))
-			{
-				result.charIndex = cIndex;
-			}
-			else
-			{
-				result.charIndex = cIndex+1;
-			}
-			
-			break;
-		}
-		
-		lastStringSize = stringSize;
-	}
-	
-	return result;
 }

@@ -35,7 +35,7 @@ inline v2 MeasureString(const Font_t* font, const char* string, u32 numChars)
 			currentPos.x += font->chars[spaceIndex].advanceX * TAB_WIDTH;
 		}
 		else if (string[cIndex] == '\r' || 
-			string[cIndex] == 0x01 || string[cIndex] == 0x02 || string[cIndex] == 0x03 || string[cIndex] == 0x04)
+			string[cIndex] == 0x01 || string[cIndex] == 0x02 || string[cIndex] == 0x03 || string[cIndex] == 0x04 || string[cIndex] == 0x05)
 		{
 			//Don't do anything
 		}
@@ -53,4 +53,32 @@ inline v2 MeasureString(const Font_t* font, const char* string, u32 numChars)
 inline v2 MeasureString(const Font_t* font, const char* nullTermString)
 {
 	return MeasureString(font, nullTermString, (u32)strlen(nullTermString));
+}
+
+inline i32 GetStringIndexForLocation(const Font_t* font, const char* nullTermString, v2 relativePos)
+{
+	i32 result = 0;
+	
+	v2 lastStringSize = Vec2_Zero;
+	for (i32 cIndex = 0; nullTermString[cIndex] != '\0'; cIndex++)
+	{
+		v2 stringSize = MeasureString(font, nullTermString, cIndex+1);
+		if (stringSize.x > relativePos.x || nullTermString[cIndex+1] == '\0')
+		{
+			if (Abs32(relativePos.x - lastStringSize.x) < Abs32(relativePos.x - stringSize.x))
+			{
+				result = cIndex;
+			}
+			else
+			{
+				result = cIndex+1;
+			}
+			
+			break;
+		}
+		
+		lastStringSize = stringSize;
+	}
+	
+	return result;
 }

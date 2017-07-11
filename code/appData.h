@@ -43,6 +43,10 @@ struct AppData_t
 	TextLocation_t hoverLocation;
 	TextLocation_t selectionStart;
 	TextLocation_t selectionEnd;
+	
+	u32 rxTxShiftCountdown;
+	u8 rxShiftRegister;
+	u8 txShiftRegister;
 };
 
 #endif // _APP_DATA_H

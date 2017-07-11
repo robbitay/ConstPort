@@ -20,11 +20,14 @@ struct UiElements_t
 	r32 mouseScrollbarOffset;
 	
 	r32 lineHeight;
-	r32 fileHeight;
-	r32 scrollOffset;
-	r32 scrollOffsetGoto;
-	r32 maxScrollOffset;
-	r32 scrollPercent;
+	i32 firstRenderLine;
+	r32 firstRenderLineOffset;
+	TextLocation_t hoverLocation;
+	v2  fileSize;
+	v2  scrollOffset;
+	v2  scrollOffsetGoto;
+	v2  maxScrollOffset;
+	v2  scrollPercent;
 	
 	bool followingEndOfFile;
 	bool startedOnScrollbar;
@@ -37,6 +40,9 @@ struct UiElements_t
 	rec viewRec;
 	rec scrollBarRec;
 	rec buttonRecs[NumMainMenuButtons];
+	rec rxLedRec;
+	rec txLedRec;
+	rec clearButtonRec;
 	
 	char contextStringBuffer[256];
 	Texture_t buttonBaseTexture;
