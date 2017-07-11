@@ -105,10 +105,12 @@ int WINAPI WinMain(HINSTANCE hInstance,
 	
 	glfwSetErrorCallback(GlfwErrorCallback);
 	
+	Win32_Write("Initializing glfw...");
 	if (!glfwInit())
 	{
 		HandleError("GLFW Initialization Failed!");
 	}
+	Win32_WriteLine("Done!");
 	
 	//+--------------------------------------+
 	//|        GLFW Window Creation          |
@@ -131,6 +133,7 @@ int WINAPI WinMain(HINSTANCE hInstance,
 	glfwWindowHint(GLFW_STENCIL_BITS, 8);
 	glfwWindowHint(GLFW_SAMPLES, 4);
 	
+	Win32_Write("Creating GLFW window...");
 	window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_TITLE, NULL, NULL);
 	
 	if (window == nullptr)
@@ -138,6 +141,12 @@ int WINAPI WinMain(HINSTANCE hInstance,
 		glfwTerminate();
 		HandleError("GLFW window creation failed!");
 	}
+	glfwPollEvents();
+	glfwMakeContextCurrent(window);
+	glClearColor(20/255.f, 20/255.f, 20/255.f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glfwSwapBuffers(window);
+	Win32_WriteLine("Done!");
 	
 	//+--------------------------------------+
 	//|             Window Icon              |
