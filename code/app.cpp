@@ -1274,7 +1274,7 @@ AppUpdate_DEFINITION(App_Update)
 		rs->SetViewMatrix(Matrix4Translate(NewVec3(ui->viewRec.x - ui->scrollOffset.x, ui->viewRec.y - ui->scrollOffset.y, 0)));
 		{//Items drawn relative to view
 			
-			v2 currentPos = NewVec2(LINE_SPACING, -ui->firstRenderLineOffset + appData->testFont.maxExtendUp);
+			v2 currentPos = NewVec2(LINE_SPACING, ui->scrollOffset.y - ui->firstRenderLineOffset + appData->testFont.maxExtendUp);
 			for (i32 lineIndex = firstLine; lineIndex < appData->lineList.numLines; lineIndex++)
 			{
 				Line_t* linePntr = GetLineAt(&appData->lineList, lineIndex);
@@ -1333,7 +1333,7 @@ AppUpdate_DEFINITION(App_Update)
 		rs->SetViewMatrix(Matrix4Translate(NewVec3(ui->viewRec.x - ui->scrollOffset.x, ui->viewRec.y - ui->scrollOffset.y, 0)));
 		{//Items drawn relative to view
 			
-			v2 currentPos = NewVec2(0, -ui->firstRenderLineOffset + appData->testFont.maxExtendUp);
+			v2 currentPos = NewVec2(0, ui->scrollOffset.y - ui->firstRenderLineOffset + appData->testFont.maxExtendUp);
 			for (i32 lineIndex = firstLine;
 				lineIndex < appData->lineList.numLines && lineIndex <= maxLocation.lineNum;
 				lineIndex++)
@@ -1411,7 +1411,7 @@ AppUpdate_DEFINITION(App_Update)
 		rs->SetViewMatrix(Matrix4Translate(NewVec3(ui->gutterRec.x, ui->gutterRec.y - ui->scrollOffset.y, 0)));
 		{//Items drawn relative to view
 			
-			v2 currentPos = NewVec2(0, -ui->firstRenderLineOffset + appData->testFont.maxExtendUp);
+			v2 currentPos = NewVec2(0, ui->scrollOffset.y - ui->firstRenderLineOffset + appData->testFont.maxExtendUp);
 			for (i32 lineIndex = firstLine; lineIndex < appData->lineList.numLines; lineIndex++)
 			{
 				Line_t* linePntr = GetLineAt(&appData->lineList, lineIndex);
