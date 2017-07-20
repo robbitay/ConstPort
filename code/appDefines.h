@@ -22,17 +22,21 @@ Date:   06\08\2017
 #define THICK_MARK_SIZE                4  //px
 #define MOUSE_CLICK_TOLERANCE          10 //Distance
 #define MIN_SECONDS_STATUS_BAR         1  //seconds
-#define MAIN_MENU_BUTTON_PADDING       10  //px
+#define MAIN_MENU_BUTTON_PADDING       10 //px
 #define MAIN_MENU_HEIGHT               (40+MAIN_MENU_BUTTON_PADDING*2) //px
-#define COM_MENU_TAB_PADDING           5
-#define COM_MENU_TAB_HEIGHT            35
-#define COM_MENU_OUTER_PADDING         5
-#define COM_MENU_INNER_PADDING         10
-#define CONNECT_BUTTON_WIDTH           80
-#define CONNECT_BUTTON_HEIGHT          25
-#define RX_TX_LED_SIZE                 8
-#define CLEAR_BUTTON_WIDTH             60
-#define CLEAR_BUTTON_HEIGHT            20
+#define COM_MENU_TAB_PADDING           5  //px
+#define COM_MENU_TAB_HEIGHT            35 //px
+#define COM_MENU_OUTER_PADDING         5  //px
+#define COM_MENU_INNER_PADDING         10 //px
+#define CONNECT_BUTTON_WIDTH           80 //px
+#define CONNECT_BUTTON_HEIGHT          25 //px
+#define RX_TX_LED_SIZE                 8  //px
+#define CLEAR_BUTTON_WIDTH             60 //px
+#define CLEAR_BUTTON_HEIGHT            20 //px
+#define MIN_BANNER_TIMESPAN            2  //seconds
+#define MIN_BANNER_HEIGHT              2  //px
+#define MAX_BANNER_HEIGHT              30 //px
+#define BANNER_EXPAND_SPEED            0.003f //percentage
 
 #define Color_Background               NewColor(33, 33, 33, 255)
 #define Color_Foreground               {0xFFF8F8F2}
@@ -51,5 +55,7 @@ Date:   06\08\2017
 #define Color_WindowBackground         Color_UiGray1
 #define Color_WindowBorder             Color_UiLightGray1
 #define Color_MarkColor                NewColor(255, 255, 255, 128)
+#define Color_BannerColor              Color_UiGray1
+#define Color_BannerColor2             Color_UiGray3
 
 #endif // _APP_DEFINES_H

@@ -16,6 +16,7 @@ Description:
 #include "stb_truetype.h"
 #include "memoryArena.h"
 #include "linkedList.h"
+#include "easing.h"
 
 const PlatformInfo_t* Gl_PlatformInfo = nullptr;
 const AppMemory_t*    Gl_AppMemory = nullptr;
@@ -34,6 +35,38 @@ const AppMemory_t*    Gl_AppMemory = nullptr;
 #include "appData.h"
 
 AppData_t* GL_AppData = nullptr;
+
+u32 GetElapsedString(u64 timespan, char* outputBuffer, u32 outputBufferSize)
+{
+	u32 result = 0;
+	
+	u32 numDays = (u32)(timespan/(60*60*24));
+	u32 numHours = (u32)(timespan/(60*60)) - (numDays*24);
+	u32 numMinutes = (u32)(timespan/60) - (numDays*60*24) - (numHours*60);
+	u32 numSeconds = (u32)(timespan) - (numDays*60*60*24) - (numHours*60*60) - (numMinutes*60);
+	if (numDays > 0)
+	{
+		result = snprintf(outputBuffer, outputBufferSize-1,
+			"%ud %uh %um %us", numDays, numHours, numMinutes, numSeconds);
+	}
+	else if (numHours > 0)
+	{
+		result = snprintf(outputBuffer, outputBufferSize-1,
+			"%uh %um %us", numHours, numMinutes, numSeconds);
+	}
+	else if (numMinutes > 0)
+	{
+		result = snprintf(outputBuffer, outputBufferSize-1,
+			"%um %us", numMinutes, numSeconds);
+	}
+	else
+	{
+		result = snprintf(outputBuffer, outputBufferSize-1,
+			"%us", numSeconds);
+	}
+	
+	return result;
+}
 
 //+================================================================+
 //|                       Source Files                             |
@@ -817,35 +850,8 @@ AppUpdate_DEFINITION(App_Update)
 			{
 				i64 secondsDifference = SubtractTimes(PlatformInfo->localTime, lineTime, TimeUnit_Seconds);
 				i64 absDifference = Abs64i(secondsDifference);
-				u32 numDays = (u32)(absDifference/(60*60*24));
-				u32 numHours = (u32)(absDifference/(60*60)) - (numDays*24);
-				u32 numMinutes = (u32)(absDifference/60) - (numDays*60*24) - (numHours*60);
-				u32 numSeconds = (u32)(absDifference) - (numDays*60*60*24) - (numHours*60*60) - (numMinutes*60);
-				// DEBUG_PrintLine("Diff %d", secondsDifference);
-				if (numDays > 0)
-				{
-					snprintf(ui->contextStringBuffer, sizeof(ui->contextStringBuffer)-1,
-						"%ud %uh %um %us %s", numDays, numHours, numMinutes, numSeconds,
-						secondsDifference >= 0 ? "Ago" : "In the future?");
-				}
-				else if (numHours > 0)
-				{
-					snprintf(ui->contextStringBuffer, sizeof(ui->contextStringBuffer)-1,
-						"%uh %um %us %s", numHours, numMinutes, numSeconds,
-						secondsDifference >= 0 ? "Ago" : "In the future?");
-				}
-				else if (numMinutes > 0)
-				{
-					snprintf(ui->contextStringBuffer, sizeof(ui->contextStringBuffer)-1,
-						"%um %us %s", numMinutes, numSeconds,
-						secondsDifference >= 0 ? "Ago" : "In the future?");
-				}
-				else
-				{
-					snprintf(ui->contextStringBuffer, sizeof(ui->contextStringBuffer)-1,
-						"%us %s", numSeconds,
-						secondsDifference >= 0 ? "Ago" : "In the future?");
-				}
+				u32 numCharacters = GetElapsedString((u64)absDifference, &ui->contextStringBuffer[0], ArrayCount(ui->contextStringBuffer));
+				strncpy(&ui->contextStringBuffer[numCharacters], " Ago", sizeof(ui->contextStringBuffer) - numCharacters - 1);
 			}
 			
 			contextMenu->show = true;
@@ -1025,11 +1031,23 @@ AppUpdate_DEFINITION(App_Update)
 	}
 	if (AppInput->scrollDelta.y != 0)
 	{
-		ui->scrollOffsetGoto.y -= AppInput->scrollDelta.y * SCROLL_MULTIPLIER;
-		if (AppInput->scrollDelta.y > 0)
+		if (AppInput->buttons[Button_Shift].isDown)
 		{
-			ui->followingEndOfFile = false;
+			ui->scrollOffsetGoto.x -= AppInput->scrollDelta.y * SCROLL_MULTIPLIER;
 		}
+		else
+		{
+			ui->scrollOffsetGoto.y -= AppInput->scrollDelta.y * SCROLL_MULTIPLIER;
+			
+			if (AppInput->scrollDelta.y > 0)
+			{
+				ui->followingEndOfFile = false;
+			}
+		}
+	}
+	if (AppInput->scrollDelta.x != 0)
+	{
+		ui->scrollOffsetGoto.x -= AppInput->scrollDelta.x * SCROLL_MULTIPLIER;
 	}
 	if (AppInput->buttons[Button_End].isDown && AppInput->buttons[Button_End].transCount > 0)
 	{
@@ -1161,11 +1179,9 @@ AppUpdate_DEFINITION(App_Update)
 	}
 	
 	//Mark lines using the mouse
-	ui->markIndex = -1;
 	if (ui->mouseInMenu == false &&
 		IsInsideRectangle(ui->mousePos, ui->gutterRec) && IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], ui->gutterRec))
 	{
-		ui->markIndex = (u32)((r32)(ui->mousePos.y - ui->viewRec.y + ui->scrollOffset.y) / ui->lineHeight - 0.5f);
 		if (ButtonReleased(MouseButton_Left) && 
 			ui->markIndex >= 0 && ui->markIndex < appData->lineList.numLines)
 		{
@@ -1339,7 +1355,6 @@ AppUpdate_DEFINITION(App_Update)
 				lineIndex++)
 			{
 				Line_t* linePntr = GetLineAt(&appData->lineList, lineIndex);
-				r32 lineHeight = RenderLine(AppInput, linePntr, currentPos, true);
 				
 				if (lineIndex >= minLocation.lineNum && lineIndex <= maxLocation.lineNum)
 				{
@@ -1368,8 +1383,8 @@ AppUpdate_DEFINITION(App_Update)
 						// selectionSize.x += MeasureString(&appData->testFont, " ", 1).x;
 					}
 					
-					rec backRec = NewRectangle(LINE_SPACING + currentPos.x + skipSize.x, currentPos.y - appData->testFont.maxExtendUp, selectionSize.x, lineHeight);
-					backRec = RectangleInflate(backRec, LINE_SPACING);
+					rec backRec = NewRectangle(LINE_SPACING + currentPos.x + skipSize.x, currentPos.y - appData->testFont.maxExtendUp, selectionSize.x, appData->testFont.lineHeight);//linePntr->lineHeight);
+					backRec = RectangleInflate(backRec, LINE_SPACING/2);
 					rs->DrawRectangle(backRec, color1);//selectionColor);
 					
 					if (currentPos.y - appData->testFont.maxExtendUp >= ui->scrollOffset.y + ui->viewRec.height)
@@ -1379,7 +1394,7 @@ AppUpdate_DEFINITION(App_Update)
 					}
 				}
 				
-				currentPos.y += lineHeight + LINE_SPACING;
+				currentPos.y += linePntr->lineHeight + LINE_SPACING;
 			}
 			
 		}
@@ -1402,7 +1417,7 @@ AppUpdate_DEFINITION(App_Update)
 	rs->UpdateShader();
 	
 	//+--------------------------------------+
-	//|        Render Line Numbers           |
+	//|    Render Line Gutter Elements       |
 	//+--------------------------------------+
 	rs->DrawGradient(ui->gutterRec, Color_UiGray1, Color_UiGray3, Direction2D_Right);
 	{
@@ -1416,10 +1431,9 @@ AppUpdate_DEFINITION(App_Update)
 			{
 				Line_t* linePntr = GetLineAt(&appData->lineList, lineIndex);
 				
-				r32 lineHeight = RenderLine(AppInput, linePntr, currentPos, true);
-				RenderLineNumber(AppInput, linePntr, currentPos, lineIndex, lineHeight);
+				RenderLineGutter(AppInput, linePntr, currentPos, lineIndex, linePntr->lineHeight);
 				
-				currentPos.y += lineHeight + LINE_SPACING;
+				currentPos.y += linePntr->lineHeight + LINE_SPACING;
 				if (currentPos.y - appData->testFont.maxExtendUp >= ui->scrollOffset.y + ui->viewRec.height)
 				{
 					//We've reached the bottom of the view
@@ -1466,12 +1480,12 @@ AppUpdate_DEFINITION(App_Update)
 		// rs->PrintString( 
 		// 	NewVec2(0, ui->screenSize.y-appData->testFont.maxExtendDown), Color_Foreground, 1.0f, 
 		// 	"Heap: %u/%u used", appData->memArena.used, appData->memArena.size);
-		// rs->PrintString( 
-		// 	NewVec2(0, ui->screenSize.y-appData->testFont.maxExtendDown), Color_Foreground, 1.0f, 
-		// 	"Line %d Char %d", ui->hoverLocation.lineNum+1, ui->hoverLocation.charIndex);
 		rs->PrintString( 
 			NewVec2(0, ui->screenSize.y-appData->testFont.maxExtendDown), Color_Foreground, 1.0f, 
-			"Offset: %f", ui->firstRenderLineOffset);
+			"Line %d Char %d", ui->hoverLocation.lineNum+1, ui->hoverLocation.charIndex);
+		// rs->PrintString( 
+		// 	NewVec2(0, ui->screenSize.y-appData->testFont.maxExtendDown), Color_Foreground, 1.0f, 
+		// 	"Offset: %f", ui->firstRenderLineOffset);
 		// rs->PrintString( 
 		// 	NewVec2(0, ui->screenSize.y-appData->testFont.maxExtendDown), Color_Foreground, 1.0f, 
 		// 	"%s %u:%02u%s (%s %s, %u) [%u]",

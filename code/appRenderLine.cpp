@@ -9,9 +9,11 @@ Description:
 */
 
 //Returns the height of the line
-r32 RenderLine(const AppInput_t* AppInput, const Line_t* linePntr, v2 position, bool sizeOnly = false)
+r32 RenderLine(const AppInput_t* AppInput, Line_t* linePntr, v2 position, bool sizeOnly = false)
 {
 	AppData_t* appData = GL_AppData;
+	const PlatformInfo_t* PlatformInfo = Gl_PlatformInfo;
+	UiElements_t* ui = &appData->uiElements;
 	r32 result = 0;
 	
 	Color_t color = Color_Foreground;
@@ -45,24 +47,119 @@ r32 RenderLine(const AppInput_t* AppInput, const Line_t* linePntr, v2 position, 
 	}
 	result += appData->testFont.lineHeight;
 	
+	Line_t* nextLine = (Line_t*)linePntr->header.nextItem;
+	if (nextLine != nullptr)
+	{
+		u64 nextLineTimestamp = nextLine->timestamp;
+		if (nextLineTimestamp == 0)
+			nextLineTimestamp = GetTimestamp(PlatformInfo->localTime);
+		
+		if (nextLineTimestamp > linePntr->timestamp)
+		{
+			u64 difference = nextLineTimestamp - linePntr->timestamp;
+			if (difference > MIN_BANNER_TIMESPAN)
+			{
+				if (linePntr->animProgress < 1.0f)
+				{
+					 //TODO: Make this time based and finer tuned
+					linePntr->animProgress += BANNER_EXPAND_SPEED;
+					if (linePntr->animProgress >= 1.0f)
+						linePntr->animProgress = 1.0f;
+				}
+				
+				if (linePntr->animProgress < 0.5f)
+				{
+					r32 halfAnimProgress = linePntr->animProgress / 0.5f;
+					r32 bannerWidth = ui->viewRec.width * EaseCubicOut(halfAnimProgress);
+					//No line extension during this stage
+				}
+				else
+				{
+					r32 halfAnimProgress = (linePntr->animProgress-0.5f) / 0.5f;
+					r32 bannerHeight = max(MIN_BANNER_HEIGHT, MAX_BANNER_HEIGHT * EaseCubicOut(halfAnimProgress));
+					result += bannerHeight;
+				}
+			}
+		}
+	}
+	
 	if (IsFlagSet(linePntr->flags, LineFlag_MarkBelow) && IsFlagSet(linePntr->flags, LineFlag_ThickMark))
 	{
 		result += 5;
 	}
 	
+	linePntr->lineHeight = result;
 	return result;
 }
 
-void RenderLineNumber(const AppInput_t* AppInput, const Line_t* linePntr, v2 position, i32 lineIndex, r32 lineHeight)
+void RenderLineGutter(const AppInput_t* AppInput, const Line_t* linePntr, v2 position, i32 lineIndex, r32 lineHeight)
 {
 	AppData_t* appData = GL_AppData;
+	const PlatformInfo_t* PlatformInfo = Gl_PlatformInfo;
 	UiElements_t* ui = &appData->uiElements;
 	RenderState_t* rs = &appData->renderState;
 	
 	rs->PrintString(NewVec2(position.x, position.y), {Color_White}, 1.0f, "%u", lineIndex+1);
-				
+	
+	Line_t* nextLine = (Line_t*)linePntr->header.nextItem;
+	if (nextLine != nullptr)
+	{
+		u64 nextLineTimestamp = nextLine->timestamp;
+		if (nextLineTimestamp == 0)
+			nextLineTimestamp = GetTimestamp(PlatformInfo->localTime);
+		
+		if (nextLineTimestamp > linePntr->timestamp)
+		{
+			u64 difference = nextLineTimestamp - linePntr->timestamp;
+			if (linePntr->animProgress > 0)
+			{
+				if (linePntr->animProgress < 0.5f)
+				{
+					r32 halfAnimProgress = linePntr->animProgress / 0.5f;
+					r32 bannerWidth = ui->viewRec.width * EaseCubicOut(halfAnimProgress);
+					rec bannerRec = NewRectangle(
+						ui->viewRec.x + ui->viewRec.width/2 - bannerWidth/2,
+						position.y + appData->testFont.maxExtendDown,
+						bannerWidth,
+						2
+					);
+					rs->DrawRectangle(bannerRec, Color_BannerColor);
+				}
+				else
+				{
+					r32 halfAnimProgress = (linePntr->animProgress-0.5f) / 0.5f;
+					r32 bannerHeight = max(MIN_BANNER_HEIGHT, MAX_BANNER_HEIGHT * EaseCubicOut(halfAnimProgress));
+					rec bannerRec = NewRectangle(
+						ui->viewRec.x,
+						position.y + appData->testFont.maxExtendDown + LINE_SPACING/2, 
+						ui->viewRec.width,
+						bannerHeight
+					);
+					rs->DrawGradient(bannerRec, Color_BannerColor, Color_BannerColor2, Direction2D_Down);
+					
+					if (linePntr->animProgress > 0.8f)
+					{
+						char timespanStrBuffer[32] = {};
+						u32 timespanStrLength = GetElapsedString(difference, timespanStrBuffer, ArrayCount(timespanStrBuffer));
+						strncpy(&timespanStrBuffer[timespanStrLength], " Passed", ArrayCount(timespanStrBuffer)-1 - timespanStrLength);
+						v2 stringSize = MeasureString(&appData->testFont, timespanStrBuffer);
+						v2 stringDrawPos = NewVec2(
+							bannerRec.x + bannerRec.width/2 - stringSize.x/2,
+							bannerRec.y + bannerRec.height/2 - stringSize.y/2 + appData->testFont.maxExtendUp
+						);
+						r32 stringOpacity = (linePntr->animProgress-0.8f) / 0.2f;
+						Color_t stringColor = Color_Foreground;
+						stringColor.a = (u8)(stringOpacity*255);
+						
+						rs->DrawString(timespanStrBuffer, stringDrawPos, stringColor);
+					}
+				}
+			}
+		}
+	}
+	
 	if (IsFlagSet(linePntr->flags, LineFlag_MarkBelow) ||
-		(ButtonDown(MouseButton_Left) && ui->markIndex != -1 && ui->markIndex == lineIndex))
+		(ButtonDown(MouseButton_Left) && IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], ui->gutterRec) && ui->markIndex != -1 && ui->markIndex == lineIndex))
 	{
 		rec markRec = NewRectangle(
 			ui->gutterRec.x, 
@@ -94,6 +191,7 @@ v2 MeasureLines(const AppInput_t* AppInput, LineList_t* lineList, const Font_t* 
 	ui->hoverLocation.lineNum = -1;
 	ui->firstRenderLine = 0;
 	ui->firstRenderLineOffset = 0;
+	ui->markIndex = -1;
 	
 	while (linePntr != nullptr)
 	{
@@ -123,8 +221,13 @@ v2 MeasureLines(const AppInput_t* AppInput, LineList_t* lineList, const Font_t* 
 		if (beforeHeight <= relMousePos.y && result.y > relMousePos.y)
 		{
 			ui->hoverLocation.lineNum = lineIndex;
-			v2 lineRelMousePos = relMousePos - NewVec2(0, beforeHeight);
-			ui->hoverLocation.charIndex = GetStringIndexForLocation(&appData->testFont, linePntr->chars, lineRelMousePos);
+			ui->hoverMouseLineOffset = relMousePos - NewVec2(0, beforeHeight);
+			ui->hoverLocation.charIndex = GetStringIndexForLocation(&appData->testFont, linePntr->chars, ui->hoverMouseLineOffset);
+			ui->markIndex = lineIndex;
+			if (ui->markIndex > 0 && ui->hoverMouseLineOffset.y < (lineHeight+LINE_SPACING) / 2.0f)
+			{
+				ui->markIndex--;
+			}
 		}
 		
 		linePntr = (Line_t*)linePntr->header.nextItem;

@@ -137,7 +137,7 @@ void UpdateUiElements(const AppInput_t* AppInput, UiElements_t* ui)
 	
 	v2 gotoOffset = (ui->scrollOffsetGoto - ui->scrollOffset);
 	
-	if (Abs32(gotoOffset.x) < 5)
+	if (Abs32(gotoOffset.x) < 1)
 	{
 		ui->scrollOffset.x = ui->scrollOffsetGoto.x;
 	}
@@ -146,7 +146,7 @@ void UpdateUiElements(const AppInput_t* AppInput, UiElements_t* ui)
 		ui->scrollOffset.x += gotoOffset.x / SCROLL_SPEED_DIVIDER;
 	}
 	
-	if (Abs32(gotoOffset.y) < 5)
+	if (Abs32(gotoOffset.y) < 1)
 	{
 		ui->scrollOffset.y = ui->scrollOffsetGoto.y;
 	}

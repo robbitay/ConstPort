@@ -20,6 +20,8 @@ Line_t* AddLineToList(LineList_t* lineList, const char* string, u32 stringLength
 	
 	newLine->numChars = stringLength;
 	newLine->chars = newStringBuffer;
+	newLine->animProgress = 0.0f;
+	newLine->lineHeight = 0;
 	newLine->timestamp = 0;
 	newLine->flags = 0;
 	

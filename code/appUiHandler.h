@@ -23,6 +23,7 @@ struct UiElements_t
 	i32 firstRenderLine;
 	r32 firstRenderLineOffset;
 	TextLocation_t hoverLocation;
+	v2  hoverMouseLineOffset;
 	v2  fileSize;
 	v2  scrollOffset;
 	v2  scrollOffsetGoto;
