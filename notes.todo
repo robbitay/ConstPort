@@ -19,15 +19,18 @@
 	[X] Add software LEDs to indicate RX and TX
 	[X] Clear buffer button
 	[X] Horizontal Scrolling
-	[!] Move line rendering parts into seperate file
-	[!] Make a function that measures the whole buffer with ability to support word wrap and spacers
-	[!] Add elapsed time spacers between lines
+	[X] Move line rendering parts into seperate file
+	[X] Make a function that measures the whole buffer with ability to support word wrap and spacers
+	[X] Add elapsed time spacers between lines
 	[ ] Status bar messages from anywhere in the program
 	[ ] Copy to file (static name)
 	[ ] Paste from clipboard
 	[ ] Add checking for COM port errors and whether or not we are still connected
 	[ ] Ability to set Flow Control mode
 	[ ] Horizontal Scrollbar (only shows up if needed)
+	[ ] Goto End Button below scrollbar
+	[ ] COM Ports above 12
+	[ ] Naming of com ports
 	[ ] 
 
 # Application Wish List

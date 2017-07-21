@@ -18,6 +18,18 @@ typedef enum
 	ComPort_10,
 	ComPort_11,
 	ComPort_12,
+	ComPort_13,
+	ComPort_14,
+	ComPort_15,
+	ComPort_16,
+	ComPort_17,
+	ComPort_18,
+	ComPort_19,
+	ComPort_20,
+	ComPort_21,
+	ComPort_22,
+	ComPort_23,
+	ComPort_24,
 	
 	NumComPorts,
 } ComPortIndex_t;
@@ -140,6 +152,18 @@ const char* GetComPortName(ComPortIndex_t comIndex)
 		case ComPort_10: return "COM10";
 		case ComPort_11: return "COM11";
 		case ComPort_12: return "COM12";
+		case ComPort_13: return "COM13";
+		case ComPort_14: return "COM14";
+		case ComPort_15: return "COM15";
+		case ComPort_16: return "COM16";
+		case ComPort_17: return "COM17";
+		case ComPort_18: return "COM18";
+		case ComPort_19: return "COM19";
+		case ComPort_20: return "COM20";
+		case ComPort_21: return "COM21";
+		case ComPort_22: return "COM22";
+		case ComPort_23: return "COM23";
+		case ComPort_24: return "COM24";
 		
 		default:         return "Unkwn";
 	};

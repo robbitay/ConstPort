@@ -178,7 +178,7 @@ void ComMenuUpdate(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 		
 		//Update the menu size
 		{
-			v2 comNameSize = MeasureString(&appData->testFont, GetComPortName(ComPort_12));
+			v2 comNameSize = MeasureString(&appData->testFont, GetComPortName(ComPort_24));
 			r32 tabMinimumWidth = comNameSize.x + COM_MENU_TAB_PADDING*2;
 			v2 menuSize = NewVec2(
 				stopBitsRec.x + stopBitsRec.width + COM_MENU_OUTER_PADDING - menuPntr->drawRec.x, 
@@ -878,6 +878,10 @@ AppUpdate_DEFINITION(App_Update)
 					if (newChar == '\n')
 					{
 						Line_t* finishedLine = lastLine;
+						if (finishedLine->timestamp == 0)
+						{
+							finishedLine->timestamp = GetTimestamp(PlatformInfo->localTime);
+						}
 						//TODO: Do we want to process the finished line in some way?
 						
 						lastLine = AddLineToList(&appData->lineList, "");
