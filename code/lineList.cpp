@@ -15,6 +15,13 @@ Line_t* AddLineToList(LineList_t* lineList, const char* string, u32 stringLength
 	Line_t* newLine = LinkedPushStruct(&lineList->list, lineList->arenaPntr, Line_t);
 	char* newStringBuffer = PushArray(lineList->arenaPntr, char, stringLength+1);
 	
+	// DEBUG_PrintLine("New Line Added at %08X. Last: %08X  Next: %08X", newLine, newLine->header.lastItem, newLine->header.nextItem);
+	// Line_t* lastLine = (Line_t*)newLine->header.lastItem;
+	// if (lastLine != nullptr)
+	// {
+	// 	DEBUG_PrintLine("Last line at %08X. Last: %08X  Next: %08X", lastLine, lastLine->header.lastItem, lastLine->header.nextItem);
+	// }
+	
 	memcpy(newStringBuffer, string, stringLength);
 	newStringBuffer[stringLength] = '\0';
 	

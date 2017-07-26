@@ -85,7 +85,7 @@ r32 RenderLine(const AppInput_t* AppInput, Line_t* linePntr, v2 position, bool s
 	
 	if (IsFlagSet(linePntr->flags, LineFlag_MarkBelow) && IsFlagSet(linePntr->flags, LineFlag_ThickMark))
 	{
-		result += 5;
+		result += 7;
 	}
 	
 	linePntr->lineHeight = result;
@@ -102,6 +102,7 @@ void RenderLineGutter(const AppInput_t* AppInput, const Line_t* linePntr, v2 pos
 	rs->PrintString(NewVec2(position.x, position.y), {Color_White}, 1.0f, "%u", lineIndex+1);
 	
 	Line_t* nextLine = (Line_t*)linePntr->header.nextItem;
+	r32 bannerHeight = 0;
 	if (nextLine != nullptr)
 	{
 		u64 nextLineTimestamp = nextLine->timestamp;
@@ -123,12 +124,13 @@ void RenderLineGutter(const AppInput_t* AppInput, const Line_t* linePntr, v2 pos
 						bannerWidth,
 						2
 					);
+					bannerHeight = bannerRec.height;
 					rs->DrawRectangle(bannerRec, Color_BannerColor);
 				}
 				else
 				{
 					r32 halfAnimProgress = (linePntr->animProgress-0.5f) / 0.5f;
-					r32 bannerHeight = max(MIN_BANNER_HEIGHT, MAX_BANNER_HEIGHT * EaseCubicOut(halfAnimProgress));
+					bannerHeight = max(MIN_BANNER_HEIGHT, MAX_BANNER_HEIGHT * EaseCubicOut(halfAnimProgress));
 					rec bannerRec = NewRectangle(
 						ui->viewRec.x,
 						position.y + appData->testFont.maxExtendDown + LINE_SPACING/2, 
@@ -161,19 +163,84 @@ void RenderLineGutter(const AppInput_t* AppInput, const Line_t* linePntr, v2 pos
 	if (IsFlagSet(linePntr->flags, LineFlag_MarkBelow) ||
 		(ButtonDown(MouseButton_Left) && IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], ui->gutterRec) && ui->markIndex != -1 && ui->markIndex == lineIndex))
 	{
+		if (bannerHeight > 0) bannerHeight += 2;
 		rec markRec = NewRectangle(
 			ui->gutterRec.x, 
-			position.y + appData->testFont.maxExtendDown, 
+			position.y + appData->testFont.maxExtendDown + bannerHeight, 
 			ui->gutterRec.width + ui->viewRec.width,
 			MARK_SIZE
 		);
-		if (IsFlagSet(linePntr->flags, LineFlag_ThickMark) ||
+		if ((IsFlagSet(linePntr->flags, LineFlag_MarkBelow) && IsFlagSet(linePntr->flags, LineFlag_ThickMark)) ||
 			(ui->markIndex == lineIndex && ButtonDown(Button_Shift)))
 		{
 			markRec.y += 1;
 			markRec.height = THICK_MARK_SIZE;
 		}
-		rs->DrawRectangle(markRec, (ui->markIndex == lineIndex) ? Color_Highlight2 : Color_MarkColor);
+		
+		bool drawButtonAbove = false;
+		bool drawButtonBelow = false;
+		#if 0
+		//TODO: Only do this check if this line is within the view bounds
+		if (IsInsideRectangle(AppInput->mousePos, ui->viewRec) &&
+			ui->hoverLocation.lineNum >= 0)
+		{
+			if (ui->hoverLocation.lineNum <= lineIndex)
+			{
+				drawButtonAbove = true;
+				
+				const Line_t* tempLinePntr = linePntr;
+				for (i32 lIndex = lineIndex; lIndex >= ui->hoverLocation.lineNum && tempLinePntr != nullptr; lIndex--)
+				{
+					if (lIndex != lineIndex && IsFlagSet(tempLinePntr->flags, LineFlag_MarkBelow))
+					{
+						//NOTE: Another mark is above us before the hovering position.
+						drawButtonAbove = false;
+						break;
+					}
+					tempLinePntr = (const Line_t*)tempLinePntr->header.lastItem;
+				}
+			}
+			else
+			{
+				drawButtonBelow = true;
+				
+				const Line_t* tempLinePntr = linePntr;
+				for (i32 lIndex = lineIndex; lIndex < ui->hoverLocation.lineNum && tempLinePntr != nullptr; lIndex++)
+				{
+					if (lIndex != lineIndex && IsFlagSet(tempLinePntr->flags, LineFlag_MarkBelow))
+					{
+						//NOTE: Another mark is above us before the hovering position.
+						drawButtonBelow = false;
+						break;
+					}
+					tempLinePntr = (const Line_t*)tempLinePntr->header.nextItem;
+				}
+			}
+		}
+		#endif
+		
+		Color_t markColor1 = Color_MarkColor1;
+		Color_t markColor2 = Color_MarkColor2;
+		if (ui->markIndex == lineIndex &&
+			IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], ui->gutterRec) &&
+			IsInsideRectangle(AppInput->mousePos, ui->gutterRec))
+		{
+			markColor1 = Color_Highlight2;
+			markColor2 = Color_Highlight2;
+		}
+		
+		if (drawButtonAbove)
+		{
+			markColor1 = {Color_Red};
+			markColor2 = {Color_Blue};
+		}
+		if (drawButtonBelow)
+		{
+			markColor1 = {Color_Orange};
+			markColor2 = {Color_Yellow};
+		}
+		
+		rs->DrawGradient(markRec, markColor1, markColor2, Direction2D_Right);
 	}
 }
 

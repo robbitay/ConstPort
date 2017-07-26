@@ -234,6 +234,9 @@ struct RealTime_t
 
 u64 GetTimestamp(const RealTime_t& realTime)
 {
+	if (realTime.year < 1970)
+		return 0;
+	
 	u64 result = 0;
 	u64 temp = realTime.year - 1970;
 	

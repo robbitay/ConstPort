@@ -17,7 +17,7 @@ GetComPortList_DEFINITION(Win32_GetComPortList)
 		ComPortIndex_t comIndex = (ComPortIndex_t)cIndex;
 		bool* boolPntr = &arrayOut[cIndex]; 
 		
-		// Win32_PrintLine("Trying to open %s...", GetComPortName(comIndex));
+		Win32_PrintLine("Trying to open %s...", GetComPortName(comIndex));
 		
 		HANDLE comHandle = CreateFileA(GetComPortName(comIndex), 
 			GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);

@@ -47,6 +47,10 @@ struct AppData_t
 	u32 rxTxShiftCountdown;
 	u8 rxShiftRegister;
 	u8 txShiftRegister;
+	
+	RealTime_t statusMessageTime;
+	StatusMessage_t statusMessageType;
+	char statusMessage[STATUS_MESSAGE_BUFFER_SIZE];
 };
 
 #endif // _APP_DATA_H

@@ -7,6 +7,7 @@ Description:
 	** the rest of the source code files.
 */
 
+#include <stdarg.h>
 #include "platformInterface.h"
 #include "app_version.h"
 #include "Colors.h"
@@ -67,6 +68,28 @@ u32 GetElapsedString(u64 timespan, char* outputBuffer, u32 outputBufferSize)
 	
 	return result;
 }
+
+void StatusMessage(const char* functionName, StatusMessage_t messageType, const char* formatString, ...)
+{
+	AppData_t* appData = GL_AppData;
+	const PlatformInfo_t* PlatformInfo = Gl_PlatformInfo;
+	
+	ClearArray(appData->statusMessage);
+	va_list args;
+	va_start(args, formatString);
+	size_t length = vsnprintf(appData->statusMessage, ArrayCount(appData->statusMessage), formatString, args);
+	appData->statusMessage[ArrayCount(appData->statusMessage)-1] = '\0';
+	va_end(args);
+	appData->statusMessageType = messageType;
+	appData->statusMessageTime = PlatformInfo->localTime;
+	
+	DEBUG_PrintLine("[%s]: %s", functionName, appData->statusMessage);
+}
+
+#define StatusDebug(formatString, ...)   StatusMessage(__func__, StatusMessage_Debug,   formatString, ##__VA_ARGS__)
+#define StatusInfo(formatString, ...)    StatusMessage(__func__, StatusMessage_Info,    formatString, ##__VA_ARGS__)
+#define StatusSuccess(formatString, ...) StatusMessage(__func__, StatusMessage_Success, formatString, ##__VA_ARGS__)
+#define StatusError(formatString, ...)   StatusMessage(__func__, StatusMessage_Error,   formatString, ##__VA_ARGS__)
 
 //+================================================================+
 //|                       Source Files                             |
@@ -977,12 +1000,16 @@ AppUpdate_DEFINITION(App_Update)
 			appData->selectionStart = NewTextLocation(0, 0);
 			Line_t* lastLinePntr = GetLastLine(&appData->lineList);
 			appData->selectionEnd = NewTextLocation(appData->lineList.numLines-1, lastLinePntr->numChars);
+			
+			StatusInfo("Selected Everything");
 		}
 		else
 		{
 			//Deselect all
 			appData->selectionStart = NewTextLocation(0, 0);
 			appData->selectionEnd = NewTextLocation(0, 0);
+			
+			StatusError("Unselected Everything");
 		}
 	}
 	
@@ -1504,6 +1531,16 @@ AppUpdate_DEFINITION(App_Update)
 		// PrintString(appData, appData->testFont, 
 		// 	NewVec2(0, ui->screenSize.y-appData->testFont.maxExtendDown), Color_Foreground, 1.0f, 
 		// 	"%u Lines Offset: %f (%fpx long)", appData->lineList.numLines, ui->scrollOffset, ui->fileHeight);
+		// Line_t* linePntr = GetLineAt(&appData->lineList, ui->hoverLocation.lineNum);
+		// if (linePntr != nullptr)
+		// {
+		// 	Line_t* lineBefore = (Line_t*)linePntr->header.lastItem;
+		// 	Line_t* lineAfter = (Line_t*)linePntr->header.nextItem;
+			
+		// 	rs->PrintString( 
+		// 		NewVec2(0, ui->screenSize.y-appData->testFont.maxExtendDown), Color_Foreground, 1.0f, 
+		// 		"%08X <- #%u %08X -> %08X", lineBefore, ui->hoverLocation.lineNum, linePntr, lineAfter);
+		// }
 		
 		Line_t* lastLine = GetLastLine(&appData->lineList);
 		// DEBUG_PrintLine("Last Item: %p", lastLine->header.lastItem);
@@ -1512,6 +1549,7 @@ AppUpdate_DEFINITION(App_Update)
 			lastLine = GetLineAt(&appData->lineList, appData->lineList.numLines-1 - 1);
 		}
 		
+		#if 0
 		if (appData->selectionStart.lineNum != appData->selectionEnd.lineNum ||
 			appData->selectionStart.charIndex != appData->selectionEnd.charIndex)
 		{
@@ -1560,6 +1598,36 @@ AppUpdate_DEFINITION(App_Update)
 						"%us %s", numSeconds,
 						secondsDifference >= 0 ? "Ago" : "In the future?");
 				}
+			}
+		}
+		#endif
+		
+		//Print the status message
+		if (GetTimestamp(appData->statusMessageTime) != 0)
+		{
+			i64 secondsDifference = SubtractTimes(PlatformInfo->localTime, appData->statusMessageTime, TimeUnit_Seconds);
+			if (secondsDifference >= 0 && secondsDifference < STATUS_MESSAGE_TIMEOUT)
+			{
+				Color_t messageColor = Color_Foreground;
+				
+				if (appData->statusMessageType == StatusMessage_Debug)
+				{
+					messageColor = Color_Highlight1;
+				}
+				else if (appData->statusMessageType == StatusMessage_Info)
+				{
+					messageColor = Color_Foreground;
+				}
+				else if (appData->statusMessageType == StatusMessage_Success)
+				{
+					messageColor = Color_Highlight2;
+				}
+				else if (appData->statusMessageType == StatusMessage_Error)
+				{
+					messageColor = Color_Highlight3;
+				}
+				
+				rs->DrawString(appData->statusMessage, NewVec2(170, ui->screenSize.y-appData->testFont.maxExtendDown), messageColor, 1.0f);
 			}
 		}
 		

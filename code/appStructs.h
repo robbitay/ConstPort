@@ -107,4 +107,12 @@ struct FrameBuffer_t
 	const Texture_t* renderTexture;
 };
 
+typedef enum
+{
+	StatusMessage_Debug,
+	StatusMessage_Info,
+	StatusMessage_Success,
+	StatusMessage_Error,
+} StatusMessage_t;
+
 #endif // _APP_STRUCTS_H
