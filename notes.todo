@@ -24,18 +24,24 @@
 	[X] Add elapsed time spacers between lines
 	[X] COM Ports above 12
 	[X] Copy to file (static name)
-	[!] Goto End Button below scrollbar
-	[!] Enter closes COM menu
-	[!] Ctrl+# closes COM menu
+	[X] Enter closes COM menu
+	[X] Ctrl+# closes COM menu
+	[X] Goto End Button below scrollbar
+	[X] Fix line index calculation with banners
 	[!] Add checking for COM port errors and whether or not we are still connected
+	[!] Fix a bug with the gradient shader not scaling correctly?
 	[ ] Status bar messages from anywhere in the program
 	[ ] Paste from clipboard
 	[ ] Ability to set Flow Control mode
 	[ ] Horizontal Scrollbar (only shows up if needed)
-	[ ] Naming of com ports
+	[ ] Naming of COM ports
 	[ ] Load JSON file for settings
 	[ ] Selection of spaces between markers
 	[ ] Option to enable timestamps and line color characters when saving to file
+	[ ] Fade out the status message during the last second. (Requires more accurate timing information)
+	[ ] Implement the backspace button
+	[ ] Circular RX and TX LEDs
+	[ ] Add a way to close the COM port
 	[ ] 
 
 # Application Wish List

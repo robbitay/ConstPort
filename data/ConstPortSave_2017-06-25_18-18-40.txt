@@ -1,3 +1,0 @@
-Help ME!
-Input: "Help ME!"
-Unknown command!

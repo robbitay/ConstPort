@@ -55,9 +55,16 @@ inline v2 MeasureString(const Font_t* font, const char* nullTermString)
 	return MeasureString(font, nullTermString, (u32)strlen(nullTermString));
 }
 
+//TODO: Handle this more correctly with line wrapping
 inline i32 GetStringIndexForLocation(const Font_t* font, const char* nullTermString, v2 relativePos)
 {
 	i32 result = 0;
+	
+	if (relativePos.y > MeasureString(font, nullTermString).y)
+	{
+		result = (i32)strlen(nullTermString);
+		return result;
+	}
 	
 	v2 lastStringSize = Vec2_Zero;
 	for (i32 cIndex = 0; nullTermString[cIndex] != '\0'; cIndex++)

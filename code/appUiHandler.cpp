@@ -78,6 +78,12 @@ void RecalculateUiElements(const AppInput_t* AppInput, UiElements_t* ui, bool re
 		SCROLLBAR_WIDTH + SCROLLBAR_PADDING*2, 
 		ui->screenSize.y - ui->statusBarRec.height - (ui->mainMenuRec.y + ui->mainMenuRec.height)
 	);
+	ui->gotoEndButtonRec = NewRectangle(
+		ui->scrollBarGutterRec.x,
+		ui->scrollBarGutterRec.y + ui->scrollBarGutterRec.height,
+		ui->scrollBarGutterRec.width,
+		ui->screenSize.y - ui->scrollBarGutterRec.y + ui->scrollBarGutterRec.height
+	);
 	ui->gutterRec = NewRectangle(
 		0, 
 		ui->mainMenuRec.y + ui->mainMenuRec.height, 

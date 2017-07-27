@@ -123,7 +123,7 @@ void RefreshComPortList()
 	appData->numComPortsAvailable = PlatformInfo->GetComPortListPntr(
 		&appData->availableComPorts[0], ArrayCount(appData->availableComPorts));
 	
-	DEBUG_PrintLine("Found %u com ports.", appData->numComPortsAvailable);
+	StatusDebug("Found %u COM ports", appData->numComPortsAvailable);
 	for (u32 cIndex = 0; cIndex < ArrayCount(appData->availableComPorts); cIndex++)
 	{
 		if (appData->availableComPorts[cIndex] == true)
@@ -141,7 +141,7 @@ void OpenComPort(ComPortIndex_t comPortIndex, ComSettings_t settings)
 	if (appData->comPort.isOpen)
 	{
 		PlatformInfo->CloseComPortPntr(&appData->comPort);
-		DEBUG_PrintLine("Closed %s", GetComPortName(appData->comPort.index));
+		StatusError("Closed %s", GetComPortName(appData->comPort.index));
 	}
 	
 	ClearConsole();
@@ -150,11 +150,11 @@ void OpenComPort(ComPortIndex_t comPortIndex, ComSettings_t settings)
 	
 	if (appData->comPort.isOpen)
 	{
-		DEBUG_PrintLine("%s port opened successfully", GetComPortName(comPortIndex));
+		StatusSuccess("%s Opened Successfully", GetComPortName(comPortIndex));
 	}
 	else
 	{
-		DEBUG_PrintLine("Couldn't open %s port.", GetComPortName(comPortIndex));
+		StatusError("Couldn't open %s port.", GetComPortName(comPortIndex));
 	}
 }
 
@@ -296,15 +296,13 @@ void ComMenuUpdate(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 		}
 		
 		//Check for connect button press
+		bool connectButtonPressed = (IsInsideRectangle(AppInput->mousePos, connectButtonRec) &&
+			ButtonReleased(MouseButton_Left) && IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], connectButtonRec));
 		if (appData->comMenuOptions.isOpen &&
-			IsInsideRectangle(AppInput->mousePos, connectButtonRec))
+			(connectButtonPressed || ButtonReleased(Button_Enter)))
 		{
-			if (ButtonReleased(MouseButton_Left) && 
-				IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], connectButtonRec))
-			{
-				OpenComPort(appData->comMenuOptions.index, appData->comMenuOptions.settings);
-				menuPntr->show = false;
-			}
+			OpenComPort(appData->comMenuOptions.index, appData->comMenuOptions.settings);
+			menuPntr->show = false;
 		}
 	}
 }
@@ -495,7 +493,7 @@ void ComMenuRender(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 				}
 				else if (IsInsideRectangle(AppInput->mousePos, tabRec))
 				{
-					if (AppInput->buttons[MouseButton_Left].isDown && 
+					if (ButtonDown(MouseButton_Left) && 
 						IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], tabRec))
 					{
 						buttonColor = Color_Highlight3;
@@ -537,7 +535,7 @@ void ComMenuRender(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 			}
 			else if (IsInsideRectangle(AppInput->mousePos, connectButtonRec))
 			{
-				if (AppInput->buttons[MouseButton_Left].isDown && 
+				if (ButtonDown(MouseButton_Left) && 
 					IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], connectButtonRec))
 				{
 					buttonColor = Color_Highlight3;
@@ -788,7 +786,7 @@ AppReloaded_DEFINITION(App_Reloaded)
 	AppData_t* appData = (AppData_t*)AppMemory->permanantPntr;
 	GL_AppData = appData;
 	
-	DEBUG_WriteLine("App Reloaded");
+	StatusDebug("App Reloaded");
 	
 	//Make sure our callbacks still match the location of the functions in the new DLL
 	Menu_t* menuPntr = GetMenuByName(&appData->menuHandler, "COM Menu");
@@ -845,13 +843,15 @@ AppUpdate_DEFINITION(App_Update)
 	Color_t color1 = ColorFromHSV((i32)(PlatformInfo->programTime*180) % 360, 1.0f, 1.0f);
 	Color_t color2 = ColorFromHSV((i32)(PlatformInfo->programTime*180 + 125) % 360, 1.0f, 1.0f);
 	Color_t selectionColor = ColorLerp({Color_White}, {Color_Gray}, (Sin32((r32)PlatformInfo->programTime*6.0f) + 1.0f) / 2.0f);
-	Color_t hoverLocColor = ColorLerp(Color_Foreground, Color_Background, (Sin32((r32)PlatformInfo->programTime*8.0f) + 1.0f) / 2.0f);
+	Color_t hoverLocColor  = ColorLerp(Color_Foreground, Color_Background, (Sin32((r32)PlatformInfo->programTime*8.0f) + 1.0f) / 2.0f);
 	// Color_t selectionColor = ColorFromHSV(180, 1.0f, (r32)(Sin32((r32)PlatformInfo->programTime*5) + 1.0f) / 2.0f);
 	
-	//Context Menu Showing/Filling
+	//+================================+
+	//|  Context Menu Showing/Filling  |
+	//+================================+
 	contextMenu->show = false;
 	if (ui->mouseInMenu == false &&
-		AppInput->buttons[Button_Control].isDown &&// && mousePos.x <= ui->gutterRec.width)
+		ButtonDown(Button_Control) &&// && mousePos.x <= ui->gutterRec.width)
 		(IsInsideRectangle(ui->mousePos, ui->viewRec) || IsInsideRectangle(ui->mousePos, ui->gutterRec)))
 	{
 		Line_t* linePntr = GetLineAt(&appData->lineList, ui->hoverLocation.lineNum);
@@ -860,7 +860,7 @@ AppUpdate_DEFINITION(App_Update)
 		{
 			RealTime_t lineTime = RealTimeAt(linePntr->timestamp);
 			
-			if (AppInput->buttons[Button_Shift].isDown)
+			if (ButtonDown(Button_Shift))
 			{
 				snprintf(ui->contextStringBuffer, sizeof(ui->contextStringBuffer)-1,
 					"%s %u:%02u:%02u%s (%s %s, %u)",
@@ -881,7 +881,9 @@ AppUpdate_DEFINITION(App_Update)
 		}
 	}
 	
-	//Read and write COM port
+	//+==================================+
+	//|     Read and write COM port      |
+	//+==================================+
 	if (appData->comPort.isOpen)
 	{
 		i32 readResult = 1;
@@ -933,7 +935,7 @@ AppUpdate_DEFINITION(App_Update)
 			appData->txShiftRegister |= 0x80;
 		}
 		
-		if (AppInput->buttons[Button_Enter].transCount > 0 && AppInput->buttons[Button_Enter].isDown)
+		if (!comMenu->show && ButtonPressed(Button_Enter))
 		{
 			DEBUG_WriteLine("Writing New Line");
 			
@@ -943,16 +945,21 @@ AppUpdate_DEFINITION(App_Update)
 		}
 	}
 	
-	//Recenter COM menu
+	//+==================================+
+	//|        Recenter COM menu         |
+	//+==================================+
 	if (PlatformInfo->windowResized)
 	{
 		comMenu->drawRec.topLeft = NewVec2(
 			PlatformInfo->screenSize.x / 2 - comMenu->drawRec.width/2,
 			PlatformInfo->screenSize.y / 2 - comMenu->drawRec.height/2);
 	}
-	// Show COM Menu with Ctrl+O
-	if (AppInput->buttons[Button_O].transCount > 0 && AppInput->buttons[Button_O].isDown &&
-		AppInput->buttons[Button_Control].isDown)
+	
+	//+================================+
+	//|         Show COM Menu          |
+	//+================================+
+	if (ButtonPressed(Button_O) &&
+		ButtonDown(Button_Control))
 	{
 		Assert(comMenu != nullptr);
 		
@@ -969,11 +976,13 @@ AppUpdate_DEFINITION(App_Update)
 		}
 	}
 	
-	// Clear Console and Copy to Clipboard with Ctrl(+Shift)+C
-	if (AppInput->buttons[Button_C].transCount > 0 && AppInput->buttons[Button_C].isDown &&
-		AppInput->buttons[Button_Control].isDown)
+	//+======================================+
+	//| Clear Console and Copy to Clipboard  |
+	//+======================================+
+	if (ButtonPressed(Button_C) &&
+		ButtonDown(Button_Control))
 	{
-		if (AppInput->buttons[Button_Shift].isDown)
+		if (ButtonDown(Button_Shift))
 		{
 			ClearConsole();
 		}
@@ -989,9 +998,10 @@ AppUpdate_DEFINITION(App_Update)
 		}
 	}
 	
-	//Select/Deselect all with Ctrl+A
-	if (AppInput->buttons[Button_A].transCount > 0 && AppInput->buttons[Button_A].isDown &&
-		AppInput->buttons[Button_Control].isDown)
+	//+==================================+
+	//|       Select/Deselect all        |
+	//+==================================+
+	if (ButtonPressed(Button_A) && ButtonDown(Button_Control))
 	{
 		if (appData->selectionStart.lineNum == appData->selectionEnd.lineNum &&
 			appData->selectionStart.charIndex == appData->selectionEnd.charIndex)
@@ -1013,26 +1023,33 @@ AppUpdate_DEFINITION(App_Update)
 		}
 	}
 	
-	// Quick keys for opening COM ports with Ctrl+(1-9)
-	if (AppInput->buttons[Button_Control].isDown)
+	//+==================================+
+	//| Quick keys for opening COM ports |
+	//+==================================+
+	if (ButtonDown(Button_Control))
 	{
 		ComPortIndex_t cIndex = NumComPorts;
 		
-		if (AppInput->buttons[Button_1].transCount > 0 && AppInput->buttons[Button_1].isDown) cIndex = ComPort_1;
-		if (AppInput->buttons[Button_2].transCount > 0 && AppInput->buttons[Button_2].isDown) cIndex = ComPort_2;
-		if (AppInput->buttons[Button_3].transCount > 0 && AppInput->buttons[Button_3].isDown) cIndex = ComPort_3;
-		if (AppInput->buttons[Button_4].transCount > 0 && AppInput->buttons[Button_4].isDown) cIndex = ComPort_4;
-		if (AppInput->buttons[Button_5].transCount > 0 && AppInput->buttons[Button_5].isDown) cIndex = ComPort_5;
-		if (AppInput->buttons[Button_6].transCount > 0 && AppInput->buttons[Button_6].isDown) cIndex = ComPort_6;
-		if (AppInput->buttons[Button_7].transCount > 0 && AppInput->buttons[Button_7].isDown) cIndex = ComPort_7;
-		if (AppInput->buttons[Button_8].transCount > 0 && AppInput->buttons[Button_8].isDown) cIndex = ComPort_8;
-		if (AppInput->buttons[Button_9].transCount > 0 && AppInput->buttons[Button_9].isDown) cIndex = ComPort_9;
+		if (ButtonReleased(Button_1)) cIndex = ComPort_1;
+		if (ButtonReleased(Button_2)) cIndex = ComPort_2;
+		if (ButtonReleased(Button_3)) cIndex = ComPort_3;
+		if (ButtonReleased(Button_4)) cIndex = ComPort_4;
+		if (ButtonReleased(Button_5)) cIndex = ComPort_5;
+		if (ButtonReleased(Button_6)) cIndex = ComPort_6;
+		if (ButtonReleased(Button_7)) cIndex = ComPort_7;
+		if (ButtonReleased(Button_8)) cIndex = ComPort_8;
+		if (ButtonReleased(Button_9)) cIndex = ComPort_9;
 		
 		if (cIndex != NumComPorts)
 		{
+			if (comMenu->show)
+				comMenu->show = false;
+			
+			RefreshComPortList();
+			
 			if (appData->availableComPorts[cIndex] == false)
 			{
-				DEBUG_PrintLine("%s not Available!", GetComPortName(cIndex));
+				StatusError("%s not Available!", GetComPortName(cIndex));
 			}
 			else
 			{
@@ -1043,26 +1060,26 @@ AppUpdate_DEFINITION(App_Update)
 	
 	RecalculateUiElements(AppInput, ui, false);
 	
-	if (AppInput->buttons[Button_Right].isDown)
+	if (ButtonDown(Button_Right))
 	{
-		ui->scrollOffsetGoto.x += AppInput->buttons[Button_Shift].isDown ? 16 : 5;
+		ui->scrollOffsetGoto.x += ButtonDown(Button_Shift) ? 16 : 5;
 	}
-	if (AppInput->buttons[Button_Left].isDown)
+	if (ButtonDown(Button_Left))
 	{
-		ui->scrollOffsetGoto.x -= AppInput->buttons[Button_Shift].isDown ? 16 : 5;
+		ui->scrollOffsetGoto.x -= ButtonDown(Button_Shift) ? 16 : 5;
 	}
-	if (AppInput->buttons[Button_Down].isDown)
+	if (ButtonDown(Button_Down))
 	{
-		ui->scrollOffsetGoto.y += AppInput->buttons[Button_Shift].isDown ? 16 : 5;
+		ui->scrollOffsetGoto.y += ButtonDown(Button_Shift) ? 16 : 5;
 	}
-	if (AppInput->buttons[Button_Up].isDown)
+	if (ButtonDown(Button_Up))
 	{
-		ui->scrollOffsetGoto.y -= AppInput->buttons[Button_Shift].isDown ? 16 : 5;
+		ui->scrollOffsetGoto.y -= ButtonDown(Button_Shift) ? 16 : 5;
 		ui->followingEndOfFile = false;
 	}
 	if (AppInput->scrollDelta.y != 0)
 	{
-		if (AppInput->buttons[Button_Shift].isDown)
+		if (ButtonDown(Button_Shift))
 		{
 			ui->scrollOffsetGoto.x -= AppInput->scrollDelta.y * SCROLL_MULTIPLIER;
 		}
@@ -1080,26 +1097,33 @@ AppUpdate_DEFINITION(App_Update)
 	{
 		ui->scrollOffsetGoto.x -= AppInput->scrollDelta.x * SCROLL_MULTIPLIER;
 	}
-	if (AppInput->buttons[Button_End].isDown && AppInput->buttons[Button_End].transCount > 0)
+	
+	bool gotoEndButtonPressed = (IsInsideRectangle(AppInput->mousePos, ui->gotoEndButtonRec) &&
+		ButtonReleased(MouseButton_Left) && 
+		IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], ui->gotoEndButtonRec));
+	if (gotoEndButtonPressed ||
+		ButtonPressed(Button_End))
 	{
 		ui->followingEndOfFile = true;
 	}
-	if (AppInput->buttons[Button_Home].isDown && AppInput->buttons[Button_Home].transCount > 0)
+	if (ButtonPressed(Button_Home))
 	{
 		ui->scrollOffsetGoto.y = 0;
 		ui->followingEndOfFile = false;
 	}
-	if (AppInput->buttons[Button_PageUp].isDown && AppInput->buttons[Button_PageUp].transCount > 0)
+	if (ButtonPressed(Button_PageUp))
 	{
 		ui->scrollOffsetGoto.y -= ui->viewRec.height;
 		ui->followingEndOfFile = false;
 	}
-	if (AppInput->buttons[Button_PageDown].isDown && AppInput->buttons[Button_PageDown].transCount > 0)
+	if (ButtonPressed(Button_PageDown))
 	{
 		ui->scrollOffsetGoto.y += ui->viewRec.height;
 	}
 	
-	//Main Menu Buttons
+	//+==================================+
+	//|        Main Menu Buttons         |
+	//+==================================+
 	if (ui->mouseInMenu == false &&
 		ButtonReleased(MouseButton_Left) && IsInsideRectangle(ui->mousePos, ui->mainMenuRec) &&
 		IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], ui->mainMenuRec))
@@ -1128,14 +1152,16 @@ AppUpdate_DEFINITION(App_Update)
 					
 					default:
 					{
-						DEBUG_WriteLine("Button does nothing.");
+						StatusError("Button does nothing.");
 					};
 				};
 			}
 		}
 	}
 	
-	//Clear Button Press
+	//+================================+
+	//|       Clear Button Press       |
+	//+================================+
 	if (IsInsideRectangle(AppInput->mousePos, ui->clearButtonRec))
 	{
 		if (ButtonReleased(MouseButton_Left) && 
@@ -1145,7 +1171,9 @@ AppUpdate_DEFINITION(App_Update)
 		}
 	}
 	
-	//Save To File Button Press
+	//+==================================+
+	//|    Save To File Button Press     |
+	//+==================================+
 	bool saveButtonPressed = (IsInsideRectangle(AppInput->mousePos, ui->saveButtonRec) &&
 		ButtonReleased(MouseButton_Left) && 
 		IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], ui->saveButtonRec));
@@ -1167,11 +1195,15 @@ AppUpdate_DEFINITION(App_Update)
 		PlatformInfo->WriteEntireFilePntr(fileNameBuffer, fileBuffer, selectionSize-1);
 		DEBUG_WriteLine("Done!");
 		
+		StatusSuccess("Saved to %s", fileNameBuffer);
+		
 		free(fileBuffer);
 	}
 	
-	//Scrollbar Interaction and Text Selection
-	if (AppInput->buttons[MouseButton_Left].isDown && !ui->mouseInMenu)
+	//+==========================================+
+	//| Scrollbar Interaction and Text Selection |
+	//+==========================================+
+	if (ButtonDown(MouseButton_Left) && !ui->mouseInMenu)
 	{
 		//Handle scrollbar interaction with mouse
 		if (IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], ui->scrollBarGutterRec) &&
@@ -1189,14 +1221,13 @@ AppUpdate_DEFINITION(App_Update)
 					ui->startedOnScrollbar = false;
 					if (ui->mouseScrollbarOffset > 0)
 					{
-						ui->scrollOffset.y += ui->viewRec.height;
+						ui->scrollOffsetGoto.y += ui->viewRec.height;
 					}
 					else
 					{
-						ui->scrollOffset.y -= ui->viewRec.height;
+						ui->scrollOffsetGoto.y -= ui->viewRec.height;
 						ui->followingEndOfFile = false;
 					}
-					ui->scrollOffsetGoto.y = ui->scrollOffset.y;
 				}
 			}
 			else if (ui->startedOnScrollbar) //holding the button
@@ -1234,7 +1265,9 @@ AppUpdate_DEFINITION(App_Update)
 		}
 	}
 	
-	//Mark lines using the mouse
+	//+================================+
+	//|   Mark lines using the mouse   |
+	//+================================+
 	if (ui->mouseInMenu == false &&
 		IsInsideRectangle(ui->mousePos, ui->gutterRec) && IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], ui->gutterRec))
 	{
@@ -1292,7 +1325,9 @@ AppUpdate_DEFINITION(App_Update)
 		}
 	}
 	
-	// Update Menus
+	//+================================+
+	//|          Update Menus          |
+	//+================================+
 	MenuHandlerUpdate(PlatformInfo, AppInput, &appData->menuHandler);
 	
 	UpdateUiElements(AppInput, ui);
@@ -1302,7 +1337,9 @@ AppUpdate_DEFINITION(App_Update)
 		ui->scrollOffsetGoto.y = ui->maxScrollOffset.y;
 	}
 	
-	//Cursor Type
+	//+==================================+
+	//|           Cursor Type            |
+	//+==================================+
 	if (IsInsideRectangle(ui->mousePos, ui->viewRec) && !ui->mouseInMenu)
 	{
 		AppOutput->cursorType = Cursor_Text;
@@ -1352,10 +1389,11 @@ AppUpdate_DEFINITION(App_Update)
 				Line_t* linePntr = GetLineAt(&appData->lineList, lineIndex);
 				
 				r32 lineHeight = RenderLine(AppInput, linePntr, currentPos, true);
+				//Draw line highlight
 				if (lineIndex == ui->hoverLocation.lineNum && IsInsideRectangle(ui->mousePos, ui->viewRec) && !ui->mouseInMenu)
 				{
 					rec backRec = NewRectangle(
-						currentPos.x, 
+						currentPos.x + ui->scrollOffset.x, 
 						currentPos.y - appData->testFont.maxExtendUp, 
 						ui->viewRec.width, lineHeight
 					);
@@ -1441,7 +1479,7 @@ AppUpdate_DEFINITION(App_Update)
 					
 					rec backRec = NewRectangle(LINE_SPACING + currentPos.x + skipSize.x, currentPos.y - appData->testFont.maxExtendUp, selectionSize.x, appData->testFont.lineHeight);//linePntr->lineHeight);
 					backRec = RectangleInflate(backRec, LINE_SPACING/2);
-					rs->DrawRectangle(backRec, color1);//selectionColor);
+					rs->DrawRectangle(backRec, selectionColor);
 					
 					if (currentPos.y - appData->testFont.maxExtendUp >= ui->scrollOffset.y + ui->viewRec.height)
 					{
@@ -1536,9 +1574,9 @@ AppUpdate_DEFINITION(App_Update)
 		// rs->PrintString( 
 		// 	NewVec2(0, ui->screenSize.y-appData->testFont.maxExtendDown), Color_Foreground, 1.0f, 
 		// 	"Heap: %u/%u used", appData->memArena.used, appData->memArena.size);
-		rs->PrintString( 
-			NewVec2(0, ui->screenSize.y-appData->testFont.maxExtendDown), Color_Foreground, 1.0f, 
-			"Line %d Char %d", ui->hoverLocation.lineNum+1, ui->hoverLocation.charIndex);
+		// rs->PrintString( 
+		// 	NewVec2(0, ui->screenSize.y-appData->testFont.maxExtendDown), Color_Foreground, 1.0f, 
+		// 	"Line %d Char %d", ui->hoverLocation.lineNum+1, ui->hoverLocation.charIndex);
 		// rs->PrintString( 
 		// 	NewVec2(0, ui->screenSize.y-appData->testFont.maxExtendDown), Color_Foreground, 1.0f, 
 		// 	"Offset: %f", ui->firstRenderLineOffset);
@@ -1637,7 +1675,7 @@ AppUpdate_DEFINITION(App_Update)
 				
 				if (appData->statusMessageType == StatusMessage_Debug)
 				{
-					messageColor = Color_Highlight1;
+					messageColor = Color_UiLightGray1;
 				}
 				else if (appData->statusMessageType == StatusMessage_Info)
 				{
@@ -1652,15 +1690,37 @@ AppUpdate_DEFINITION(App_Update)
 					messageColor = Color_Highlight3;
 				}
 				
-				rs->DrawString(appData->statusMessage, NewVec2(170, ui->screenSize.y-appData->testFont.maxExtendDown), messageColor, 1.0f);
+				rs->DrawString(appData->statusMessage, NewVec2(5, ui->screenSize.y-appData->testFont.maxExtendDown), messageColor, 1.0f);
 			}
+		}
+		
+		//Draw Goto End Button
+		{
+			Color_t buttonColor = Color_UiGray1;
+			Color_t outlineColor = Color_Background;
+			
+			if (IsInsideRectangle(AppInput->mousePos, ui->gotoEndButtonRec))
+			{
+				if (ButtonDown(MouseButton_Left) &&
+					IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], ui->gotoEndButtonRec))
+				{
+					buttonColor = Color_Highlight3;
+					outlineColor = Color_Foreground;
+				}
+				else
+				{
+					buttonColor = Color_UiLightGray1;
+				}
+			}
+			
+			rs->DrawButton(ui->gotoEndButtonRec, buttonColor, outlineColor);
 		}
 		
 		if (appData->comPort.isOpen)
 		{
 			v2 comNameSize = MeasureString(&appData->testFont, GetComPortName(appData->comPort.index));
 			rs->DrawString(GetComPortName(appData->comPort.index),
-				NewVec2(ui->screenSize.x - comNameSize.x - 10, ui->screenSize.y-appData->testFont.maxExtendDown), 
+				NewVec2(ui->gotoEndButtonRec.x - comNameSize.x - 5, ui->screenSize.y-appData->testFont.maxExtendDown), 
 				Color_Foreground, 1.0f);
 		}
 	}
