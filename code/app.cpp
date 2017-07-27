@@ -1145,6 +1145,31 @@ AppUpdate_DEFINITION(App_Update)
 		}
 	}
 	
+	//Save To File Button Press
+	bool saveButtonPressed = (IsInsideRectangle(AppInput->mousePos, ui->saveButtonRec) &&
+		ButtonReleased(MouseButton_Left) && 
+		IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], ui->saveButtonRec));
+	if (saveButtonPressed ||
+		(ButtonDown(Button_Control) && ButtonPressed(Button_S)))
+	{
+		char fileNameBuffer[256] = {};
+		u32 fileNameLength = snprintf(&fileNameBuffer[0], sizeof(fileNameBuffer),
+			"ConstPortSave_%02u-%02u-%u_%u-%02u-%02u.txt",
+			PlatformInfo->localTime.year, PlatformInfo->localTime.month, PlatformInfo->localTime.day,
+			PlatformInfo->localTime.hour, PlatformInfo->localTime.minute, PlatformInfo->localTime.second);
+		
+		u32 selectionSize = GetSelection(nullptr);
+		char* fileBuffer = (char*)malloc(selectionSize);
+		GetSelection(fileBuffer);
+		
+		//NOTE: GetSelection adds a \0 on the end so need to remove it
+		DEBUG_PrintLine("Saving %u bytes to %s", selectionSize-1, fileNameBuffer);
+		PlatformInfo->WriteEntireFilePntr(fileNameBuffer, fileBuffer, selectionSize-1);
+		DEBUG_WriteLine("Done!");
+		
+		free(fileBuffer);
+	}
+	
 	//Scrollbar Interaction and Text Selection
 	if (AppInput->buttons[MouseButton_Left].isDown && !ui->mouseInMenu)
 	{
@@ -1754,6 +1779,39 @@ AppUpdate_DEFINITION(App_Update)
 		}
 		
 		rs->DrawButton(ui->clearButtonRec, buttonColor, borderColor);
+		rs->DrawString(clearStr, textPos, textColor);
+	}
+	
+	//+--------------------------------------+
+	//|        Save To File Button           |
+	//+--------------------------------------+
+	if (appData->selectionStart.lineNum != appData->selectionEnd.lineNum ||
+		appData->selectionStart.charIndex != appData->selectionEnd.charIndex)
+	{
+		const char* clearStr = "Save To File";
+		v2 textSize = MeasureString(&appData->testFont, clearStr);
+		v2 textPos = NewVec2(
+			ui->saveButtonRec.x + ui->saveButtonRec.width/2 - textSize.x/2,
+			ui->saveButtonRec.y + ui->saveButtonRec.height/2 + appData->testFont.lineHeight/2 - appData->testFont.maxExtendDown
+		);
+		Color_t buttonColor = {Color_White};
+		Color_t textColor = Color_Background;
+		Color_t borderColor = Color_UiGray4;
+		
+		if (IsInsideRectangle(AppInput->mousePos, ui->saveButtonRec))
+		{
+			if (ButtonDown(MouseButton_Left) && IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], ui->saveButtonRec))
+			{
+				buttonColor = Color_Highlight3;
+				textColor = Color_Foreground;
+			}
+			else
+			{
+				buttonColor = Color_UiLightGray1;
+			}
+		}
+		
+		rs->DrawButton(ui->saveButtonRec, buttonColor, borderColor);
 		rs->DrawString(clearStr, textPos, textColor);
 	}
 	

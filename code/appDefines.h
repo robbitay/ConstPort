@@ -33,6 +33,8 @@ Date:   06\08\2017
 #define RX_TX_LED_SIZE             8  //px
 #define CLEAR_BUTTON_WIDTH         60 //px
 #define CLEAR_BUTTON_HEIGHT        20 //px
+#define SAVE_BUTTON_WIDTH          120 //px
+#define SAVE_BUTTON_HEIGHT         20 //px
 #define MIN_BANNER_TIMESPAN        2  //seconds
 #define MIN_BANNER_HEIGHT          2  //px
 #define MAX_BANNER_HEIGHT          30 //px

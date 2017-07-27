@@ -69,11 +69,19 @@ WriteEntireFile_DEFINITION(Win32_WriteEntireFile)
 {
 	bool32 result = false;
 	
-	HANDLE fileHandle = CreateFileA(filename, GENERIC_WRITE, 0, 0, CREATE_ALWAYS, 0, 0);
+	HANDLE fileHandle = CreateFileA(
+		filename,              //Name of the file
+		GENERIC_WRITE,         //Open for writing
+		0,                     //Do not share
+		NULL,                  //Default security
+		CREATE_ALWAYS,         //Always overwrite
+		FILE_ATTRIBUTE_NORMAL, //Default file attributes
+		0                      //No Template File
+	);
 	if(fileHandle != INVALID_HANDLE_VALUE)
 	{
 		DWORD bytesWritten;
-		if(WriteFile(fileHandle, memory, memorySize, &bytesWritten, 0))
+		if (WriteFile(fileHandle, memory, memorySize, &bytesWritten, 0))
 		{
 			// NOTE: File read successfully
 			result = (bytesWritten == memorySize);

@@ -22,15 +22,20 @@
 	[X] Move line rendering parts into seperate file
 	[X] Make a function that measures the whole buffer with ability to support word wrap and spacers
 	[X] Add elapsed time spacers between lines
+	[X] COM Ports above 12
+	[X] Copy to file (static name)
+	[!] Goto End Button below scrollbar
+	[!] Enter closes COM menu
+	[!] Ctrl+# closes COM menu
+	[!] Add checking for COM port errors and whether or not we are still connected
 	[ ] Status bar messages from anywhere in the program
-	[ ] Copy to file (static name)
 	[ ] Paste from clipboard
-	[ ] Add checking for COM port errors and whether or not we are still connected
 	[ ] Ability to set Flow Control mode
 	[ ] Horizontal Scrollbar (only shows up if needed)
-	[ ] Goto End Button below scrollbar
-	[ ] COM Ports above 12
 	[ ] Naming of com ports
+	[ ] Load JSON file for settings
+	[ ] Selection of spaces between markers
+	[ ] Option to enable timestamps and line color characters when saving to file
 	[ ] 
 
 # Application Wish List
@@ -51,6 +56,7 @@
 	[ ] Try to auto-connect to last opened COM port on startup
 	[ ] Automatically add marks to lines when a certain amount of time has passed between characters receives
 	[ ] Fix scrollbar so that it doesn't keep sliding when we have grabbed it
+	[ ] Better way tp detect open COM ports
 	[ ] 
 
 # Platform Layer TODO List

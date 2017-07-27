@@ -58,8 +58,13 @@ void RecalculateUiElements(const AppInput_t* AppInput, UiElements_t* ui, bool re
 	);
 	ui->clearButtonRec = NewRectangle(
 		ui->mainMenuRec.x + ui->mainMenuRec.width - CLEAR_BUTTON_WIDTH - MAIN_MENU_BUTTON_PADDING,
-		ui->rxLedRec.y + ui->rxLedRec.height + 8 ,
+		ui->rxLedRec.y + ui->rxLedRec.height + 8,
 		CLEAR_BUTTON_WIDTH, CLEAR_BUTTON_HEIGHT
+	);
+	ui->saveButtonRec = NewRectangle(
+		ui->clearButtonRec.x - SAVE_BUTTON_WIDTH - MAIN_MENU_BUTTON_PADDING,
+		ui->clearButtonRec.y,
+		SAVE_BUTTON_WIDTH, SAVE_BUTTON_HEIGHT
 	);
 	ui->statusBarRec = NewRectangle(
 		0, 

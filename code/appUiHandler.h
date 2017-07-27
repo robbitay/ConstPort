@@ -44,6 +44,7 @@ struct UiElements_t
 	rec rxLedRec;
 	rec txLedRec;
 	rec clearButtonRec;
+	rec saveButtonRec;
 	
 	char contextStringBuffer[256];
 	Texture_t buttonBaseTexture;
