@@ -25,7 +25,7 @@ void InitializeRenderState(const PlatformInfo_t* PlatformInfo, RenderState_t* re
 	};
 	renderState->squareBuffer = CreateVertexBuffer(squareVertices, ArrayCount(squareVertices));
 	
-	renderState->gradientTexture = LoadTexture("Resources/Textures/gradient.png");
+	renderState->gradientTexture = LoadTexture("Resources/Textures/gradient.png", false, false);
 	renderState->circleTexture = LoadTexture("Resources/Sprites/circle.png", false, false);
 	
 	Color_t textureData = {Color_White};
@@ -268,6 +268,7 @@ void RenderState_t::DrawGradient(rec rectangle, Color_t color1, Color_t color2, 
 	this->SetColor(color1);
 	this->SetSecondaryColor(color2);
 	this->SetGradientEnabled(true);
+	
 	m4 worldMatrix = Matrix4_Identity;
 	switch (direction)
 	{
@@ -303,6 +304,7 @@ void RenderState_t::DrawGradient(rec rectangle, Color_t color1, Color_t color2, 
 		} break;
 	};
 	this->SetWorldMatrix(worldMatrix);
+	
 	this->BindBuffer(&this->squareBuffer);
 	glDrawArrays(GL_TRIANGLES, 0, this->squareBuffer.numVertices);
 	

@@ -21,6 +21,7 @@ void main()
 	{
 		float gray = dot(sampleColor.rgb, vec3(0.299, 0.587, 0.114));
 		frag_colour = mix(DiffuseColor.rgba, SecondaryColor.rgba, gray);
+		// frag_colour = vec4(fTexCoord.x, fTexCoord.y, 0.0, 1.0);
 	}
 	else
 	{

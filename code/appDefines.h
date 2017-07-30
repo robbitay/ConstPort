@@ -58,8 +58,8 @@ Date:   06\08\2017
 #define Color_WindowTitleBar           Color_UiGray3
 #define Color_WindowBackground         Color_UiGray1
 #define Color_WindowBorder             Color_UiLightGray1
-#define Color_MarkColor1               Color_UiLightGray1
-#define Color_MarkColor2               Color_Background
+#define Color_MarkColor1               NewColor(255, 255, 255, 128)
+#define Color_MarkColor2               {Color_TransparentWhite}
 #define Color_BannerColor              Color_UiGray1
 #define Color_BannerColor2             Color_UiGray3
 

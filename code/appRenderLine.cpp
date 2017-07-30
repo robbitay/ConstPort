@@ -222,7 +222,7 @@ void RenderLineGutter(const AppInput_t* AppInput, const Line_t* linePntr, v2 pos
 		Color_t markColor1 = Color_MarkColor1;
 		Color_t markColor2 = Color_MarkColor2;
 		if (ui->markIndex == lineIndex &&
-			IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], ui->gutterRec) &&
+			// IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], ui->gutterRec) &&
 			IsInsideRectangle(AppInput->mousePos, ui->gutterRec))
 		{
 			markColor1 = Color_Highlight2;

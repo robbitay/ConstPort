@@ -911,6 +911,14 @@ AppUpdate_DEFINITION(App_Update)
 						
 						lastLine = AddLineToList(&appData->lineList, "");
 					}
+					else if (newChar == '\b')
+					{
+						if (lastLine->numChars > 0)
+						{
+							lastLine->numChars--;
+							lastLine->chars[lastLine->numChars] = '\0';
+						}
+					}
 					else
 					{
 						LineAppend(&appData->lineList, lastLine, newChar);
@@ -940,6 +948,15 @@ AppUpdate_DEFINITION(App_Update)
 			DEBUG_WriteLine("Writing New Line");
 			
 			char newChar = '\n';
+			PlatformInfo->WriteComPortPntr(&appData->comPort, &newChar, 1);
+			appData->txShiftRegister |= 0x80;
+		}
+		
+		if (!comMenu->show && ButtonPressed(Button_Backspace))
+		{
+			DEBUG_WriteLine("Writing Backspace");
+			
+			char newChar = '\b';
 			PlatformInfo->WriteComPortPntr(&appData->comPort, &newChar, 1);
 			appData->txShiftRegister |= 0x80;
 		}
@@ -1408,7 +1425,7 @@ AppUpdate_DEFINITION(App_Update)
 					rec cursorRec = NewRectangle(
 						currentPos.x + skipSize.x, 
 						currentPos.y - appData->testFont.maxExtendUp, 
-						1, lineHeight
+						1, appData->testFont.lineHeight
 					);
 					rs->DrawRectangle(cursorRec, hoverLocColor);
 				}

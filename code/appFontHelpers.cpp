@@ -60,7 +60,7 @@ inline i32 GetStringIndexForLocation(const Font_t* font, const char* nullTermStr
 {
 	i32 result = 0;
 	
-	if (relativePos.y > MeasureString(font, nullTermString).y)
+	if (relativePos.y > MeasureString(font, nullTermString).y + LINE_SPACING)
 	{
 		result = (i32)strlen(nullTermString);
 		return result;
