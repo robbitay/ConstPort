@@ -21,23 +21,23 @@ r32 RenderLine(const AppInput_t* AppInput, Line_t* linePntr, v2 position, bool s
 	{
 		if (linePntr->chars[0] == 0x01)
 		{
-			color = Color_Highlight1;
+			color = GC->colors.highlight1;
 		}
 		else if (linePntr->chars[0] == 0x02)
 		{
-			color = Color_Highlight2;
+			color = GC->colors.highlight2;
 		}
 		else if (linePntr->chars[0] == 0x03)
 		{
-			color = Color_Highlight3;
+			color = GC->colors.highlight3;
 		}
 		else if (linePntr->chars[0] == 0x04)
 		{
-			color = Color_Highlight4;
+			color = GC->colors.highlight4;
 		}
 		else if (linePntr->chars[0] == 0x05)
 		{
-			color = Color_Highlight5;
+			color = GC->colors.highlight5;
 		}
 	}
 	
@@ -225,8 +225,8 @@ void RenderLineGutter(const AppInput_t* AppInput, const Line_t* linePntr, v2 pos
 			// IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], ui->gutterRec) &&
 			IsInsideRectangle(AppInput->mousePos, ui->gutterRec))
 		{
-			markColor1 = Color_Highlight2;
-			markColor2 = Color_Highlight2;
+			markColor1 = GC->colors.highlight2;
+			markColor2 = GC->colors.highlight2;
 		}
 		
 		if (drawButtonAbove)

@@ -18,9 +18,12 @@ Description:
 #include "memoryArena.h"
 #include "linkedList.h"
 #include "easing.h"
+#define JSMN_PARENT_LINKS
+#include "jsmn.h"
+#include "jsmn.c"
 
 const PlatformInfo_t* Gl_PlatformInfo = nullptr;
-const AppMemory_t*    Gl_AppMemory = nullptr;
+const AppMemory_t*    Gl_AppMemory    = nullptr;
 
 #include "appHelpers.cpp"
 
@@ -36,7 +39,8 @@ const AppMemory_t*    Gl_AppMemory = nullptr;
 #include "appConfiguration.h"
 #include "appData.h"
 
-AppData_t* GL_AppData = nullptr;
+AppData_t*      GL_AppData = nullptr;
+GlobalConfig_t* GC         = nullptr;
 
 u32 GetElapsedString(u64 timespan, char* outputBuffer, u32 outputBufferSize)
 {
@@ -354,14 +358,14 @@ void ComMenuRender(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 			Color_t textColor = Color_Background;
 			if ((BaudRate_t)baudIndex == appData->comMenuOptions.settings.baudRate)
 			{
-				renderState->DrawRectangle(currentRec, Color_Highlight4);
+				renderState->DrawRectangle(currentRec, GC->colors.highlight4);
 			}
 			else if (IsInsideRectangle(AppInput->mousePos, currentRec))
 			{
 				Color_t backColor = Color_UiLightGray1;
 				if (ButtonDown(MouseButton_Left) && IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], currentRec))
 				{
-					backColor = Color_Highlight3;
+					backColor = GC->colors.highlight3;
 					textColor = Color_Foreground;
 				}
 				
@@ -387,14 +391,14 @@ void ComMenuRender(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 			Color_t textColor = Color_Background;
 			if ((u8)(bitIndex+1) == appData->comMenuOptions.settings.numBits)
 			{
-				renderState->DrawRectangle(currentRec, Color_Highlight4);
+				renderState->DrawRectangle(currentRec, GC->colors.highlight4);
 			}
 			else if (IsInsideRectangle(AppInput->mousePos, currentRec))
 			{
 				Color_t backColor = Color_UiLightGray1;
 				if (ButtonDown(MouseButton_Left) && IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], currentRec))
 				{
-					backColor = Color_Highlight3;
+					backColor = GC->colors.highlight3;
 					textColor = Color_Foreground;
 				}
 				
@@ -419,14 +423,14 @@ void ComMenuRender(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 			Color_t textColor = Color_Background;
 			if ((Parity_t)(parityIndex) == appData->comMenuOptions.settings.parity)
 			{
-				renderState->DrawRectangle(currentRec, Color_Highlight4);
+				renderState->DrawRectangle(currentRec, GC->colors.highlight4);
 			}
 			else if (IsInsideRectangle(AppInput->mousePos, currentRec))
 			{
 				Color_t backColor = Color_UiLightGray1;
 				if (ButtonDown(MouseButton_Left) && IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], currentRec))
 				{
-					backColor = Color_Highlight3;
+					backColor = GC->colors.highlight3;
 					textColor = Color_Foreground;
 				}
 				
@@ -452,14 +456,14 @@ void ComMenuRender(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 			
 			if ((StopBits_t)stopBitIndex == appData->comMenuOptions.settings.stopBits)
 			{
-				renderState->DrawRectangle(currentRec, Color_Highlight4);
+				renderState->DrawRectangle(currentRec, GC->colors.highlight4);
 			}
 			else if (IsInsideRectangle(AppInput->mousePos, currentRec))
 			{
 				Color_t backColor = Color_UiLightGray1;
 				if (ButtonDown(MouseButton_Left) && IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], currentRec))
 				{
-					backColor = Color_Highlight3;
+					backColor = GC->colors.highlight3;
 					textColor = Color_Foreground;
 				}
 				
@@ -490,7 +494,7 @@ void ComMenuRender(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 				
 				if (appData->comMenuOptions.isOpen == true && (ComPortIndex_t)comIndex == appData->comMenuOptions.index)
 				{
-					buttonColor = Color_Highlight4;
+					buttonColor = GC->colors.highlight4;
 					borderColor = Color_Foreground;
 				}
 				else if (IsInsideRectangle(AppInput->mousePos, tabRec))
@@ -498,7 +502,7 @@ void ComMenuRender(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 					if (ButtonDown(MouseButton_Left) && 
 						IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], tabRec))
 					{
-						buttonColor = Color_Highlight3;
+						buttonColor = GC->colors.highlight3;
 						borderColor = Color_Foreground;
 						textColor = Color_Foreground;
 					}
@@ -540,7 +544,7 @@ void ComMenuRender(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 				if (ButtonDown(MouseButton_Left) && 
 					IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], connectButtonRec))
 				{
-					buttonColor = Color_Highlight3;
+					buttonColor = GC->colors.highlight3;
 					borderColor = Color_Foreground;
 					textColor = Color_Foreground;
 				}
@@ -551,7 +555,7 @@ void ComMenuRender(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 			}
 			else if (settingsHaveChanged)
 			{
-				buttonColor = Color_Highlight2;
+				buttonColor = GC->colors.highlight2;
 				borderColor = Color_Foreground;
 			}
 			
@@ -726,11 +730,13 @@ AppInitialize_DEFINITION(App_Initialize)
 	AppData_t* appData = (AppData_t*)AppMemory->permanantPntr;
 	ClearPointer(appData);
 	GL_AppData = appData;
+	GC = &appData->globalConfig;
 	
 	void* arenaBase = (void*)(appData+1);
 	u32 arenaSize = AppMemory->permanantSize - sizeof(AppData_t);
 	InitializeMemoryArenaHeap(&appData->memArena, arenaBase, arenaSize);
 	
+	LoadGlobalConfiguration(PlatformInfo, &appData->globalConfig);
 	InitializeUiElements(&appData->uiElements);
 	InitializeRenderState(PlatformInfo, &appData->renderState);
 	InitializeMenuHandler(&appData->menuHandler, &appData->memArena);
@@ -787,6 +793,7 @@ AppReloaded_DEFINITION(App_Reloaded)
 	Gl_AppMemory = AppMemory;
 	AppData_t* appData = (AppData_t*)AppMemory->permanantPntr;
 	GL_AppData = appData;
+	GC = &appData->globalConfig;
 	
 	StatusDebug("App Reloaded");
 	
@@ -821,6 +828,7 @@ AppUpdate_DEFINITION(App_Update)
 	Gl_AppMemory = AppMemory;
 	AppData_t* appData = (AppData_t*)AppMemory->permanantPntr;
 	GL_AppData = appData;
+	GC = &appData->globalConfig;
 	UiElements_t* ui = &appData->uiElements;
 	RenderState_t* rs = &appData->renderState;
 	
@@ -1015,6 +1023,15 @@ AppUpdate_DEFINITION(App_Update)
 			
 			free(selectionTempBuffer);
 		}
+	}
+	
+	//+==================================+
+	//|   Reload Global Configuration    |
+	//+==================================+
+	if (ButtonPressed(Button_R) &&
+		ButtonDown(Button_Control))
+	{
+		LoadGlobalConfiguration(PlatformInfo, &appData->globalConfig);
 	}
 	
 	//+==================================+
@@ -1375,7 +1392,7 @@ AppUpdate_DEFINITION(App_Update)
 	glEnable(GL_BLEND);
 	rs->SetViewport(NewRectangle(0, 0, (r32)PlatformInfo->screenSize.x, (r32)PlatformInfo->screenSize.y));
 	
-	glClearColor((Color_Background.r/255.f), (Color_Background.g/255.f), (Color_Background.b/255.f), 1.0f);
+	glClearColor((GC->colors.background.r/255.f), (GC->colors.background.g/255.f), (GC->colors.background.b/255.f), 1.0f);
 	// glClearColor((200/255.f), (200/255.f), (200/255.f), 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	
@@ -1702,11 +1719,11 @@ AppUpdate_DEFINITION(App_Update)
 				}
 				else if (appData->statusMessageType == StatusMessage_Success)
 				{
-					messageColor = Color_Highlight2;
+					messageColor = GC->colors.highlight2;
 				}
 				else if (appData->statusMessageType == StatusMessage_Error)
 				{
-					messageColor = Color_Highlight3;
+					messageColor = GC->colors.highlight3;
 				}
 				
 				rs->DrawString(appData->statusMessage, NewVec2(5, ui->screenSize.y-appData->testFont.maxExtendDown), messageColor, 1.0f);
@@ -1723,7 +1740,7 @@ AppUpdate_DEFINITION(App_Update)
 				if (ButtonDown(MouseButton_Left) &&
 					IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], ui->gotoEndButtonRec))
 				{
-					buttonColor = Color_Highlight3;
+					buttonColor = GC->colors.highlight3;
 					outlineColor = Color_Foreground;
 				}
 				else
@@ -1800,14 +1817,14 @@ AppUpdate_DEFINITION(App_Update)
 		if ((appData->rxShiftRegister&0x80) > 0 ||
 			(appData->rxShiftRegister&0x40) > 0)
 		{
-			centerColor = Color_Highlight3;
+			centerColor = GC->colors.highlight3;
 		}
 		rs->DrawRectangle(ui->rxLedRec, centerColor);
 		centerColor = Color_UiGray4;
 		if ((appData->txShiftRegister&0x80) > 0 ||
 			(appData->txShiftRegister&0x40) > 0)
 		{
-			centerColor = Color_Highlight4;
+			centerColor = GC->colors.highlight4;
 		}
 		rs->DrawRectangle(ui->txLedRec, centerColor);
 		for (u32 shift = 0; shift < sizeof(u8)*8; shift++)
@@ -1816,13 +1833,13 @@ AppUpdate_DEFINITION(App_Update)
 			if (IsFlagSet(appData->rxShiftRegister, (1<<shift)))
 			{
 				rec deflatedRec = RectangleInflate(ui->rxLedRec, (r32)(8-shift) * 1);
-				rs->DrawButton(deflatedRec, {Color_TransparentBlack}, Color_Highlight3, 1);
+				rs->DrawButton(deflatedRec, {Color_TransparentBlack}, GC->colors.highlight3, 1);
 			}
 			
 			if (IsFlagSet(appData->txShiftRegister, (1<<shift)))
 			{
 				rec deflatedRec = RectangleInflate(ui->txLedRec, (r32)(8-shift) * 1);
-				rs->DrawButton(deflatedRec, {Color_TransparentBlack}, Color_Highlight4, 1);
+				rs->DrawButton(deflatedRec, {Color_TransparentBlack}, GC->colors.highlight4, 1);
 			}
 		}
 		
@@ -1848,7 +1865,7 @@ AppUpdate_DEFINITION(App_Update)
 		{
 			if (ButtonDown(MouseButton_Left) && IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], ui->clearButtonRec))
 			{
-				buttonColor = Color_Highlight3;
+				buttonColor = GC->colors.highlight3;
 				textColor = Color_Foreground;
 			}
 			else
@@ -1881,7 +1898,7 @@ AppUpdate_DEFINITION(App_Update)
 		{
 			if (ButtonDown(MouseButton_Left) && IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], ui->saveButtonRec))
 			{
-				buttonColor = Color_Highlight3;
+				buttonColor = GC->colors.highlight3;
 				textColor = Color_Foreground;
 			}
 			else
@@ -1920,6 +1937,7 @@ AppGetSoundSamples_DEFINITION(App_GetSoundSamples)
 	Gl_AppMemory = AppMemory;
 	AppData_t* appData = (AppData_t*)AppMemory->permanantPntr;
 	GL_AppData = appData;
+	GC = &appData->globalConfig;
 	
 	
 }
@@ -1933,6 +1951,7 @@ AppClosing_DEFINITION(App_Closing)
 	Gl_AppMemory = AppMemory;
 	AppData_t* appData = (AppData_t*)AppMemory->permanantPntr;
 	GL_AppData = appData;
+	GC = &appData->globalConfig;
 	
 	DEBUG_WriteLine("Application closing!");
 	

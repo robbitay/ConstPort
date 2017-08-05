@@ -41,6 +41,8 @@ Date:   06\08\2017
 #define BANNER_EXPAND_SPEED        0.003f //percentage
 #define STATUS_MESSAGE_BUFFER_SIZE 128//bytes
 #define STATUS_MESSAGE_TIMEOUT     3  //seconds
+#define MAX_JSON_TOKENS            1024
+#define GLOBAL_CONFIG_FILEPATH     "Resources/Configuration/GlobalConfig.json"
 
 #define Color_Background               NewColor(33, 33, 33, 255)
 #define Color_Foreground               {0xFFF8F8F2}
