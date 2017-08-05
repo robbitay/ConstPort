@@ -12,6 +12,7 @@ struct AppData_t
 	MemoryArena_t memArena;
 	RenderState_t renderState;
 	MenuHandler_t menuHandler;
+	GlobalConfig_t globalConfig;
 	
 	Shader_t simpleShader;
 	Shader_t outlineShader;

@@ -28,8 +28,8 @@
 	[X] Ctrl+# closes COM menu
 	[X] Goto End Button below scrollbar
 	[X] Fix line index calculation with banners
+	[X] Fix a bug with the gradient shader not scaling correctly?
 	[!] Add checking for COM port errors and whether or not we are still connected
-	[!] Fix a bug with the gradient shader not scaling correctly?
 	[ ] Status bar messages from anywhere in the program
 	[ ] Paste from clipboard
 	[ ] Ability to set Flow Control mode

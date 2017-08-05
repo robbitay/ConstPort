@@ -33,6 +33,7 @@ const AppMemory_t*    Gl_AppMemory = nullptr;
 #include "appRenderState.h"
 #include "appMenuHandler.h"
 #include "appUiHandler.h"
+#include "appConfiguration.h"
 #include "appData.h"
 
 AppData_t* GL_AppData = nullptr;
@@ -94,6 +95,7 @@ void StatusMessage(const char* functionName, StatusMessage_t messageType, const 
 //+================================================================+
 //|                       Source Files                             |
 //+================================================================+
+#include "appConfiguration.cpp"
 #include "appFontHelpers.cpp"
 #include "lineList.cpp"
 #include "appLoadingFunctions.cpp"

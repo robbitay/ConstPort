@@ -24,7 +24,7 @@ if "%DebugBuild%"=="1" (
 	set DebugDependantLibraries=glew32.lib
 )
 
-set CompilerFlags=%DebugDependantFlags% /FC /Zi /EHsc /nologo /GS- /Gm- -GR- /EHa- /Fm /Od /Oi /WX /W4 /wd4201 /wd4100 /wd4189 /wd4996 /wd4127 /wd4505 /wd4101 /wd4702 /wd4458
+set CompilerFlags=%DebugDependantFlags% /FC /Zi /EHsc /nologo /GS- /Gm- -GR- /EHa- /Fm /Od /Oi /WX /W4 /wd4201 /wd4100 /wd4189 /wd4996 /wd4127 /wd4505 /wd4101 /wd4702 /wd4458 /wd4324
 set LinkerFlags=-incremental:no
 set IncludeDirectories=/I"W:\lib\mylib" /I"W:\lib\glew-2.0.0\include" /I"W:\lib\glfw-3.2.1\include" /I"W:\lib\stb"
 set LibraryDirectories=%DebugDependantPaths%
