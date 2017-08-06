@@ -280,13 +280,12 @@ bool TryGetColorFromJsonArray(const char* fileData, jsmntok_t* jsonTokens, i32 n
 	return true;
 }
 
-#define GetColorConfig(parentObjectIndex, tokenName, colorPntr, defaultValue) do                          \
+#define GetColorConfig(parentObjectIndex, tokenName, colorPntr) do                                        \
 {                                                                                                         \
 	i32 tokenIndex = FindChildTokenByName(fileData, jsonTokens, numTokens, parentObjectIndex, tokenName); \
 	if (tokenIndex == -1)                                                                                 \
 	{                                                                                                     \
 		DEBUG_PrintLine("Couldn't find \"%s\" token in Colors object", tokenName);                        \
-		*colorPntr = defaultValue;                                                                        \
 	}                                                                                                     \
 	else                                                                                                  \
 	{                                                                                                     \
@@ -294,28 +293,35 @@ bool TryGetColorFromJsonArray(const char* fileData, jsmntok_t* jsonTokens, i32 n
 		i32 valueTokenIndex = GetChildToken(jsonTokens, numTokens, tokenIndex);                           \
 		jsmntok_t* valueTokenPntr = &jsonTokens[valueTokenIndex];                                         \
 		char* valueStringPntr = &fileData[valueTokenPntr->start];                                         \
+		Color_t parsedValue;                                                                              \
 		if (valueTokenPntr->type == JSMN_ARRAY)                                                           \
 		{                                                                                                 \
-			if (!TryGetColorFromJsonArray(fileData, jsonTokens, numTokens, valueTokenIndex, colorPntr))   \
+			if (TryGetColorFromJsonArray(fileData, jsonTokens, numTokens, valueTokenIndex, &parsedValue)) \
+			{                                                                                             \
+				*(colorPntr) = parsedValue;                                                               \
+			}                                                                                             \
+			else                                                                                          \
 			{                                                                                             \
 				DEBUG_PrintLine("Couldn't parse array as color for \"%s\": \"%.*s\"",                     \
 					tokenName, TokenLength(valueTokenPntr), valueStringPntr);                             \
-				*colorPntr = defaultValue;                                                                \
 			}                                                                                             \
 		}                                                                                                 \
 		else                                                                                              \
 		{                                                                                                 \
-			if (!TryParseColor(valueStringPntr, TokenLength(valueTokenPntr), colorPntr))                  \
+			if (TryParseColor(valueStringPntr, TokenLength(valueTokenPntr), &parsedValue))                \
+			{                                                                                             \
+				*(colorPntr) = parsedValue;                                                               \
+			}                                                                                             \
+			else                                                                                          \
 			{                                                                                             \
 				DEBUG_PrintLine("Couldn't parse value as color for \"%s\": \"%.*s\"",                     \
 					tokenName, TokenLength(valueTokenPntr), valueStringPntr);                             \
-				*colorPntr = defaultValue;                                                                \
 			}                                                                                             \
 		}                                                                                                 \
 	}                                                                                                     \
 } while (0)
 
-#define GetInt32Config(parentObjectIndex, tokenName, valuePntr) do                                      \
+#define GetInt32Config(parentObjectIndex, tokenName, valuePntr) do                                        \
 {                                                                                                         \
 	i32 tokenIndex = FindChildTokenByName(fileData, jsonTokens, numTokens, parentObjectIndex, tokenName); \
 	if (tokenIndex == -1)                                                                                 \
@@ -330,7 +336,7 @@ bool TryGetColorFromJsonArray(const char* fileData, jsmntok_t* jsonTokens, i32 n
 		i32 parsedValue;                                                                                  \
 		if (TryGetTokenAsNumber(fileData, valueTokenPntr, &parsedValue))                                  \
 		{                                                                                                 \
-			*valuePntr = parsedValue;                                                                     \
+			*(valuePntr) = parsedValue;                                                                   \
 		}                                                                                                 \
 		else                                                                                              \
 		{                                                                                                 \
@@ -355,7 +361,7 @@ bool TryGetColorFromJsonArray(const char* fileData, jsmntok_t* jsonTokens, i32 n
 		bool parsedValue;                                                                                 \
 		if (TryGetTokenAsBoolean(fileData, valueTokenPntr, &parsedValue))                                 \
 		{                                                                                                 \
-			*valuePntr = parsedValue;                                                                     \
+			*(valuePntr) = parsedValue;                                                                   \
 		}                                                                                                 \
 		else                                                                                              \
 		{                                                                                                 \
@@ -372,12 +378,33 @@ void LoadGlobalConfiguration(const PlatformInfo_t* PlatformInfo, GlobalConfig_t*
 	//+================================+
 	//|       Set Default Values       |
 	//+================================+
-	globalConfig->colors.background = Color_Background;
-	globalConfig->colors.highlight1 = Color_Highlight1;
-	globalConfig->colors.highlight2 = Color_Highlight2;
-	globalConfig->colors.highlight3 = Color_Highlight3;
-	globalConfig->colors.highlight4 = Color_Highlight4;
-	globalConfig->colors.highlight5 = Color_Highlight5;
+	globalConfig->fontSize = 16;
+	
+	globalConfig->elapsedBannerEnabled = true;
+	globalConfig->elapsedBannerTime    = 15;
+	globalConfig->elapsedBannerHeight  = 25;
+	
+	globalConfig->statusMessageTime = 3;
+	
+	globalConfig->colors.background       = NewColor(33, 33, 33, 255);
+	globalConfig->colors.foreground       = {0xFFF8F8F2};
+	globalConfig->colors.uiGray1          = {0xFF494949};
+	globalConfig->colors.uiGray2          = {0xFF404040};
+	globalConfig->colors.uiGray3          = {0xFF303030};
+	globalConfig->colors.uiGray4          = {0xFF101010};
+	globalConfig->colors.uiLightGray1     = NewColor(180, 180, 180, 255);
+	globalConfig->colors.windowTitleBar   = globalConfig->colors.uiGray3;
+	globalConfig->colors.windowBackground = globalConfig->colors.uiGray1;
+	globalConfig->colors.windowBorder     = globalConfig->colors.uiLightGray1;
+	globalConfig->colors.markColor1       = NewColor(255, 255, 255, 128);
+	globalConfig->colors.markColor2       = NewColor(255, 255, 255, 0);
+	globalConfig->colors.bannerColor1     = globalConfig->colors.uiGray1;
+	globalConfig->colors.bannerColor2     = globalConfig->colors.uiGray3;
+	globalConfig->colors.highlight1       = NewColor(117, 113, 94, 255);  //Comment Color
+	globalConfig->colors.highlight2       = NewColor(166, 226, 46, 255);  //Green Color
+	globalConfig->colors.highlight3       = NewColor(249, 38, 101, 255);  //Red/Magenta
+	globalConfig->colors.highlight4       = NewColor(174, 129, 255, 255); //Purple
+	globalConfig->colors.highlight5       = NewColor(102, 217, 239, 255); //Light Blue
 
 	//+==================================+
 	//|       Parse the JSON File        |
@@ -413,9 +440,15 @@ void LoadGlobalConfiguration(const PlatformInfo_t* PlatformInfo, GlobalConfig_t*
 	//|         Integer Options          |
 	//+==================================+
 	{
-		GetInt32Config(0, "ElapsedBannerTime", &globalConfig->elapsedBannerTime);
+		GetInt32Config(0, "FontSize", &globalConfig->fontSize);
 		
-		DEBUG_PrintLine("elapsedBannerTime = %d", globalConfig->elapsedBannerTime);
+		GetInt32Config(0, "ElapsedBannerTime", &globalConfig->elapsedBannerTime);
+		GetInt32Config(0, "ElapsedBannerHeight", &globalConfig->elapsedBannerHeight);
+		
+		GetInt32Config(0, "MarkHeight", &globalConfig->markHeight);
+		GetInt32Config(0, "ThickMarkHeight", &globalConfig->thickMarkHeight);
+		
+		GetInt32Config(0, "StatusMessageTime", &globalConfig->statusMessageTime);
 	}
 	
 	//+==================================+
@@ -423,8 +456,6 @@ void LoadGlobalConfiguration(const PlatformInfo_t* PlatformInfo, GlobalConfig_t*
 	//+==================================+
 	{
 		GetBoolConfig(0, "ElapsedBannerEnabled", &globalConfig->elapsedBannerEnabled);
-		
-		DEBUG_PrintLine("Elapsed Banner %s", globalConfig->elapsedBannerEnabled ? "Enabled" : "Disabled");
 	}
 
 	//+==================================+
@@ -438,13 +469,26 @@ void LoadGlobalConfiguration(const PlatformInfo_t* PlatformInfo, GlobalConfig_t*
 	else
 	{
 		i32 colorsObjectIndex = GetChildToken(jsonTokens, numTokens, colorsTokenIndex);
-
-		GetColorConfig(colorsObjectIndex, "Background", &globalConfig->colors.background, Color_Background);
-		GetColorConfig(colorsObjectIndex, "Highlight1", &globalConfig->colors.highlight1, Color_Highlight1);
-		GetColorConfig(colorsObjectIndex, "Highlight2", &globalConfig->colors.highlight2, Color_Highlight2);
-		GetColorConfig(colorsObjectIndex, "Highlight3", &globalConfig->colors.highlight3, Color_Highlight3);
-		GetColorConfig(colorsObjectIndex, "Highlight4", &globalConfig->colors.highlight4, Color_Highlight4);
-		GetColorConfig(colorsObjectIndex, "Highlight5", &globalConfig->colors.highlight5, Color_Highlight5);
+		
+		GetColorConfig(colorsObjectIndex, "Background",       &globalConfig->colors.background);
+		GetColorConfig(colorsObjectIndex, "Foreground",       &globalConfig->colors.foreground);
+		GetColorConfig(colorsObjectIndex, "UiGray1",          &globalConfig->colors.uiGray1);
+		GetColorConfig(colorsObjectIndex, "UiGray2",          &globalConfig->colors.uiGray2);
+		GetColorConfig(colorsObjectIndex, "UiGray3",          &globalConfig->colors.uiGray3);
+		GetColorConfig(colorsObjectIndex, "UiGray4",          &globalConfig->colors.uiGray4);
+		GetColorConfig(colorsObjectIndex, "UiLightGray1",     &globalConfig->colors.uiLightGray1);
+		GetColorConfig(colorsObjectIndex, "WindowTitleBar",   &globalConfig->colors.windowTitleBar);
+		GetColorConfig(colorsObjectIndex, "WindowBackground", &globalConfig->colors.windowBackground);
+		GetColorConfig(colorsObjectIndex, "WindowBorder",     &globalConfig->colors.windowBorder);
+		GetColorConfig(colorsObjectIndex, "MarkColor1",       &globalConfig->colors.markColor1);
+		GetColorConfig(colorsObjectIndex, "MarkColor2",       &globalConfig->colors.markColor2);
+		GetColorConfig(colorsObjectIndex, "BannerColor1",     &globalConfig->colors.bannerColor1);
+		GetColorConfig(colorsObjectIndex, "BannerColor2",     &globalConfig->colors.bannerColor2);
+		GetColorConfig(colorsObjectIndex, "Highlight1",       &globalConfig->colors.highlight1);
+		GetColorConfig(colorsObjectIndex, "Highlight2",       &globalConfig->colors.highlight2);
+		GetColorConfig(colorsObjectIndex, "Highlight3",       &globalConfig->colors.highlight3);
+		GetColorConfig(colorsObjectIndex, "Highlight4",       &globalConfig->colors.highlight4);
+		GetColorConfig(colorsObjectIndex, "Highlight5",       &globalConfig->colors.highlight5);
 	}
 
 	PlatformInfo->FreeFileMemoryPntr(&globalConfigFile);

@@ -16,7 +16,7 @@ r32 RenderLine(const AppInput_t* AppInput, Line_t* linePntr, v2 position, bool s
 	UiElements_t* ui = &appData->uiElements;
 	r32 result = 0;
 	
-	Color_t color = Color_Foreground;
+	Color_t color = GC->colors.foreground;
 	if (linePntr->numChars > 0)
 	{
 		if (linePntr->chars[0] == 0x01)
@@ -78,7 +78,7 @@ r32 RenderLine(const AppInput_t* AppInput, Line_t* linePntr, v2 position, bool s
 					else
 					{
 						r32 halfAnimProgress = (linePntr->animProgress-0.5f) / 0.5f;
-						r32 bannerHeight = max(MIN_BANNER_HEIGHT, MAX_BANNER_HEIGHT * EaseCubicOut(halfAnimProgress));
+						r32 bannerHeight = max(MIN_BANNER_HEIGHT, GC->elapsedBannerHeight * EaseCubicOut(halfAnimProgress));
 						result += bannerHeight;
 					}
 				}
@@ -92,7 +92,7 @@ r32 RenderLine(const AppInput_t* AppInput, Line_t* linePntr, v2 position, bool s
 	
 	if (IsFlagSet(linePntr->flags, LineFlag_MarkBelow) && IsFlagSet(linePntr->flags, LineFlag_ThickMark))
 	{
-		result += 7;
+		result += GC->thickMarkHeight;
 	}
 	
 	linePntr->lineHeight = result;
@@ -134,19 +134,19 @@ void RenderLineGutter(const AppInput_t* AppInput, const Line_t* linePntr, v2 pos
 							2
 						);
 						bannerHeight = bannerRec.height;
-						rs->DrawRectangle(bannerRec, Color_BannerColor);
+						rs->DrawRectangle(bannerRec, GC->colors.bannerColor1);
 					}
 					else
 					{
 						r32 halfAnimProgress = (linePntr->animProgress-0.5f) / 0.5f;
-						bannerHeight = max(MIN_BANNER_HEIGHT, MAX_BANNER_HEIGHT * EaseCubicOut(halfAnimProgress));
+						bannerHeight = max(MIN_BANNER_HEIGHT, GC->elapsedBannerHeight * EaseCubicOut(halfAnimProgress));
 						rec bannerRec = NewRectangle(
 							ui->viewRec.x,
 							position.y + appData->testFont.maxExtendDown + LINE_SPACING/2, 
 							ui->viewRec.width,
 							bannerHeight
 						);
-						rs->DrawGradient(bannerRec, Color_BannerColor, Color_BannerColor2, Direction2D_Down);
+						rs->DrawGradient(bannerRec, GC->colors.bannerColor1, GC->colors.bannerColor2, Direction2D_Down);
 						
 						if (linePntr->animProgress > 0.8f)
 						{
@@ -159,7 +159,7 @@ void RenderLineGutter(const AppInput_t* AppInput, const Line_t* linePntr, v2 pos
 								bannerRec.y + bannerRec.height/2 - stringSize.y/2 + appData->testFont.maxExtendUp
 							);
 							r32 stringOpacity = (linePntr->animProgress-0.8f) / 0.2f;
-							Color_t stringColor = Color_Foreground;
+							Color_t stringColor = GC->colors.foreground;
 							stringColor.a = (u8)(stringOpacity*255);
 							
 							rs->DrawString(timespanStrBuffer, stringDrawPos, stringColor);
@@ -178,13 +178,13 @@ void RenderLineGutter(const AppInput_t* AppInput, const Line_t* linePntr, v2 pos
 			ui->gutterRec.x, 
 			position.y + appData->testFont.maxExtendDown + bannerHeight, 
 			ui->gutterRec.width + ui->viewRec.width,
-			MARK_SIZE
+			(r32)GC->markHeight
 		);
 		if ((IsFlagSet(linePntr->flags, LineFlag_MarkBelow) && IsFlagSet(linePntr->flags, LineFlag_ThickMark)) ||
 			(ui->markIndex == lineIndex && ButtonDown(Button_Shift)))
 		{
 			markRec.y += 1;
-			markRec.height = THICK_MARK_SIZE;
+			markRec.height = (r32)GC->thickMarkHeight;
 		}
 		
 		bool drawButtonAbove = false;
@@ -229,8 +229,8 @@ void RenderLineGutter(const AppInput_t* AppInput, const Line_t* linePntr, v2 pos
 		}
 		#endif
 		
-		Color_t markColor1 = Color_MarkColor1;
-		Color_t markColor2 = Color_MarkColor2;
+		Color_t markColor1 = GC->colors.markColor1;
+		Color_t markColor2 = GC->colors.markColor2;
 		if (ui->markIndex == lineIndex &&
 			// IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], ui->gutterRec) &&
 			IsInsideRectangle(AppInput->mousePos, ui->gutterRec))

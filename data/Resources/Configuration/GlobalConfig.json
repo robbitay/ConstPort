@@ -1,20 +1,36 @@
 {
+	"FontSize": 32,
+	
 	"ElapsedBannerEnabled": true,
-	"ElapsedBannerTime": 5,
+	"ElapsedBannerTime": 1,
+	"ElapsedBannerHeight": 25,
+	 
+	"MarkHeight": 1,
+	"ThickMarkHeight": 5,
+	
+	"StatusMessageTime": 3,
 	 
 	//Various Colors Used in UI drawing
 	"Colors":
 	{
-		"Background": "212121FF",
-		"Foreground": "F8F8F2FF",
-		"UiGray1":    "494949FF",
-		"UiGray2":    "404040FF",
-		"UiGray3":    "303030FF",
-		"UiGray4":    "101010FF",
-		"Highlight1": [117, 113,  94, 255], //Comment Color
-		"Highlight2": [166, 226,  46, 255], //Green Color
-		"Highlight3": [249,  38, 101, 255], //Red/Magenta
-		"Highlight4": [174, 129, 255, 255], //Purple
-		"Highlight5": [102, 217, 239, 255], //Light Blue
+		"Background":       "212121FF",
+		"Foreground":       "F8F8F2FF",
+		"UiGray1":          "494949FF",
+		"UiGray2":          "404040FF",
+		"UiGray3":          "303030FF",
+		"UiGray4":          "101010FF",
+		"UiLightGray1":     "B4B4B4FF",
+		"BannerColor1":     "494949FF", //UiGray1
+		"BannerColor2":     "303030FF", //UiGray3
+		"WindowTitleBar":   "303030FF", //UiGray3
+		"WindowBackground": "494949FF", //UiGray1
+		"WindowBorder":     "B4B4B4FF", //UiLightGray1
+		"MarkColor1":       [255, 255, 255, 128],
+		"MarkColor2":       [255, 255, 255,   0],
+		"Highlight1":       [117, 113,  94, 255], //Comment Color
+		"Highlight2":       [166, 226,  46, 255], //Green Color
+		"Highlight3":       [249,  38, 101, 255], //Red/Magenta
+		"Highlight4":       [174, 129, 255, 255], //Purple
+		"Highlight5":       [102, 217, 239, 255], //Light Blue
 	},
 }

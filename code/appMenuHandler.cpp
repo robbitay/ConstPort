@@ -49,9 +49,9 @@ Menu_t* AddMenu(MenuHandler_t* menuHandlerPntr, const char* name, rec drawRec,
 	newMenu->allowMovement = true;
 	newMenu->allowResize = false;
 	newMenu->titleBarSize = MENU_DEFAULT_TITLEBAR_SIZE;
-	newMenu->backgroundColor = Color_WindowBackground;
-	newMenu->borderColor = Color_WindowBorder;
-	newMenu->titleBarColor = Color_WindowTitleBar;
+	newMenu->backgroundColor = GC->colors.windowBackground;
+	newMenu->borderColor     = GC->colors.windowBorder;
+	newMenu->titleBarColor   = GC->colors.windowTitleBar;
 	
 	newMenu->specialPntr = specialPntr;
 	newMenu->updateFunctionPntr = updateFunctionPntr;
@@ -190,11 +190,11 @@ void MenuHandlerDrawMenus(const PlatformInfo_t* PlatformInfo, const AppInput_t* 
 		{
 			UpdateMenuRecs(menuPntr);
 			
-			menuPntr->titleBarColor = Color_UiGray3;
-			menuPntr->backgroundColor = Color_UiGray1;
-			menuPntr->borderColor = Color_UiLightGray1;
+			menuPntr->titleBarColor = GC->colors.uiGray3;
+			menuPntr->backgroundColor = GC->colors.uiGray1;
+			menuPntr->borderColor = GC->colors.uiLightGray1;
 			
-			renderState->DrawGradient(menuPntr->drawRec, menuPntr->backgroundColor, Color_UiGray2, Direction2D_Down);
+			renderState->DrawGradient(menuPntr->drawRec, menuPntr->backgroundColor, GC->colors.uiGray2, Direction2D_Down);
 			
 			renderState->DrawRectangle(menuPntr->titleBarRec, menuPntr->titleBarColor);
 			
@@ -223,7 +223,7 @@ void MenuHandlerDrawMenus(const PlatformInfo_t* PlatformInfo, const AppInput_t* 
 				menuPntr->drawRec.y + menuPntr->titleBarRec.height - MENU_BORDER_WIDTH,
 				menuPntr->drawRec.width,
 				MENU_BORDER_WIDTH),
-				Color_UiGray4);
+				GC->colors.uiGray4);
 			
 			renderState->DrawRectangle(NewRectangle(
 				menuPntr->drawRec.x,
