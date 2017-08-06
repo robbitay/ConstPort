@@ -18,9 +18,6 @@ Description:
 #include "memoryArena.h"
 #include "linkedList.h"
 #include "easing.h"
-#define JSMN_PARENT_LINKS
-#include "jsmn.h"
-#include "jsmn.c"
 
 const PlatformInfo_t* Gl_PlatformInfo = nullptr;
 const AppMemory_t*    Gl_AppMemory    = nullptr;
@@ -1376,7 +1373,7 @@ AppUpdate_DEFINITION(App_Update)
 	//+==================================+
 	//|           Cursor Type            |
 	//+==================================+
-	if (IsInsideRectangle(ui->mousePos, ui->viewRec) && !ui->mouseInMenu)
+	if (IsInsideRectangle(ui->mousePos, ui->viewRec) && !ui->mouseInMenu && GC->showTextCursor)
 	{
 		AppOutput->cursorType = Cursor_Text;
 	}

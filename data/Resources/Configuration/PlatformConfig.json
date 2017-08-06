@@ -1,0 +1,12 @@
+{
+	"WindowWidth": 500,
+	"WindowHeight": 900,
+	"MinWindowWidth": 320,
+	"MinWindowHeight": 180,
+	"ForceAspectRatio": false,
+	"AspectRatio": [16, 9],
+	"AllowResizeWindow": true,
+	"AntiAliasingSamples": 4,
+	"TopmostWindow": true,
+	"ShowConsoleWindow": true, //Doesn't work atm
+}

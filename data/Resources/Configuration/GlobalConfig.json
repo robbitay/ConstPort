@@ -6,16 +6,22 @@
 	"ElapsedBannerEnabled": true,
 	"ElapsedBannerTime":    1,  //secs
 	"ElapsedBannerHeight":  25, //px
-	"MarkHeight":           1,  //px
-	"ThickMarkHeight":      5,  //px
-	"StatusMessageTime":    3,  //secs
+	
+	"MarkHeight":      1, //px
+	"ThickMarkHeight": 5, //px
+	
+	"StatusMessageTime": 3, //secs
+	
 	"MouseClickTolerance":  10, //px
 	"MenuBorderThickness":  1,  //px
 	"ScrollbarWidth":       12, //px
 	"ScrollbarPadding":     3,  //px
 	"MinScrollbarHeight":   32, //px
-	"ScrollMultiplier":     40,
-	"ViewSpeedDivider":     4,
+	
+	"ScrollMultiplier": 40,
+	"ViewSpeedDivider": 4,
+	
+	"ShowTextCursor": false,
 	 
 	//Various Colors Used in UI drawing
 	"Colors":
@@ -39,5 +45,22 @@
 		"Highlight3":       [249,  38, 101, 255], //Red/Magenta
 		"Highlight4":       [174, 129, 255, 255], //Purple
 		"Highlight5":       [102, 217, 239, 255], //Light Blue
+	},
+	
+	//TODO: Implement these
+	"PortNames":
+	{
+		// "COM1":  "Name",
+		// "COM2":  "Name",
+		// "COM3":  "Name",
+		// "COM4":  "Name",
+		// "COM5":  "Name",
+		// "COM6":  "Name",
+		// "COM7":  "Name",
+		// "COM8":  "Name",
+		"COM9":  "Test PIC32",
+		// "COM10": "Name",
+		// "COM11": "Name",
+		// "COM12": "Name",
 	},
 }

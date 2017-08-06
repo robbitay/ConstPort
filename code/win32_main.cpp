@@ -31,16 +31,6 @@ Description:
 #define WINDOW_TITLE              "Const Port"
 #define APPLICATION_DLL_NAME      "ConstPort.dll"
 #define APPLICATION_DLL_TEMP_NAME "ConstPort_TEMP.dll"
-#define WINDOW_WIDTH              500
-#define WINDOW_HEIGHT             400
-#define WINDOW_MIN_WIDTH          350
-#define WINDOW_MIN_HEIGHT         400
-#define WINDOW_MAX_WIDTH          GLFW_DONT_CARE
-#define WINDOW_MAX_HEIGHT         GLFW_DONT_CARE
-#define ENFORCE_ASPECT_RATIO      false
-#define WINDOW_ASPECT_RATIO       16,9
-#define ALLOW_RESIZE_WINDOW       true
-#define TOPMOST_WINDOW            DEBUG
 #define OPEN_CONSOLE_WINDOW       DEBUG
 
 //NOTE: This must match resource.h in build directory!
@@ -68,6 +58,7 @@ static Version_t PlatformVersion = {
 //+================================================================+
 #include "win32_debug.cpp"
 #include "win32_helpers.cpp"
+#include "win32_configuration.cpp"
 #include "win32_appLoading.cpp"
 #include "win32_keymap.cpp"
 #include "win32_callbacks.cpp"
@@ -100,10 +91,14 @@ int WINAPI WinMain(HINSTANCE hInstance,
 	AppInput_t* lastInput = &inputRingBuffer[1];
 	CursorType_t currentCursor;
 	GLFWcursor* glfwCursors[NumCursorTypes];
+	PlatformConfig_t platformConfig = {};
 	
-	Win32_WriteLine("Application Starting...");
+	Win32_WriteLine("Platform Starting...");
 	
 	glfwSetErrorCallback(GlfwErrorCallback);
+	
+	Win32_WriteLine("Loading Platform Configuration File...");
+	LoadGlobalConfiguration(&platformConfig);
 	
 	Win32_Write("Initializing glfw...");
 	if (!glfwInit())
@@ -120,8 +115,8 @@ int WINAPI WinMain(HINSTANCE hInstance,
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); //Makes MacOSX happy?
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_ANY_PROFILE);//GLFW_OPENGL_CORE_PROFILE
-	glfwWindowHint(GLFW_RESIZABLE, ALLOW_RESIZE_WINDOW);
-	glfwWindowHint(GLFW_FLOATING, TOPMOST_WINDOW);
+	glfwWindowHint(GLFW_RESIZABLE, platformConfig.allowResizeWindow);
+	glfwWindowHint(GLFW_FLOATING, platformConfig.topmostWindow);
 	glfwWindowHint(GLFW_DECORATED, GL_TRUE);
 	glfwWindowHint(GLFW_FOCUSED, GL_TRUE);
 	glfwWindowHint(GLFW_DOUBLEBUFFER, GL_TRUE);
@@ -131,10 +126,10 @@ int WINAPI WinMain(HINSTANCE hInstance,
 	glfwWindowHint(GLFW_ALPHA_BITS, 8);
 	glfwWindowHint(GLFW_DEPTH_BITS, 8);
 	glfwWindowHint(GLFW_STENCIL_BITS, 8);
-	glfwWindowHint(GLFW_SAMPLES, 4);
+	glfwWindowHint(GLFW_SAMPLES, platformConfig.antiAliasingSamples);
 	
 	Win32_Write("Creating GLFW window...");
-	window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_TITLE, NULL, NULL);
+	window = glfwCreateWindow(platformConfig.windowWidth, platformConfig.windowHeight, WINDOW_TITLE, NULL, NULL);
 	
 	if (window == nullptr)
 	{
@@ -215,11 +210,12 @@ int WINAPI WinMain(HINSTANCE hInstance,
 	Win32_PrintLine("Monitor Refresh Rate: %dHz", glfwModePntr->refreshRate);
 	
 	glfwSetWindowSizeLimits(window, 
-		WINDOW_MIN_WIDTH, WINDOW_MIN_HEIGHT,
-		WINDOW_MAX_WIDTH, WINDOW_MAX_HEIGHT);
-	#if ENFORCE_ASPECT_RATIO
-	glfwSetWindowAspectRatio(window, WINDOW_ASPECT_RATIO);
-	#endif
+		platformConfig.minWindowWidth, platformConfig.minWindowHeight,
+		GLFW_DONT_CARE, GLFW_DONT_CARE);
+	if (platformConfig.forceAspectRatio)
+	{
+		glfwSetWindowAspectRatio(window, platformConfig.aspectRatio.x, platformConfig.aspectRatio.y);
+	}
 	glfwGetFramebufferSize(window, &screenWidth, &screenHeight);
 	glViewport(0, 0, screenWidth, screenHeight);
 	Win32_PrintLine("Screen Size: %dx%d", screenWidth, screenHeight);

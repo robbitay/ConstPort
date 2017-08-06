@@ -26,6 +26,7 @@ struct GlobalConfig_t
 	i32  minScrollbarHeight;
 	i32  scrollMultiplier;
 	i32  viewSpeedDivider;
+	bool showTextCursor;
 	
 	struct
 	{
