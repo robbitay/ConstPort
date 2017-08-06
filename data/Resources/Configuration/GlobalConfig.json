@@ -1,4 +1,7 @@
 {
+	"ElapsedBannerEnabled": true,
+	"ElapsedBannerTime": 5,
+	 
 	//Various Colors Used in UI drawing
 	"Colors":
 	{
@@ -8,9 +11,9 @@
 		"UiGray2":    "404040FF",
 		"UiGray3":    "303030FF",
 		"UiGray4":    "101010FF",
-		"Highlight1": [117, 113, 94, 255],  //Comment Color
-		"Highlight2": [166, 226, 46, 255],  //Green Color
-		"Highlight3": [249, 38, 101, 255],  //Red/Magenta
+		"Highlight1": [117, 113,  94, 255], //Comment Color
+		"Highlight2": [166, 226,  46, 255], //Green Color
+		"Highlight3": [249,  38, 101, 255], //Red/Magenta
 		"Highlight4": [174, 129, 255, 255], //Purple
 		"Highlight5": [102, 217, 239, 255], //Light Blue
 	},

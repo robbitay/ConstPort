@@ -18,6 +18,9 @@ struct GlobalConfig_t
 		Color_t highlight4;
 		Color_t highlight5;
 	} colors;
+	
+	bool elapsedBannerEnabled;
+	i32 elapsedBannerTime;
 };
 
 #endif // _APP_CONFIGURATION_H

@@ -2,7 +2,7 @@
 File:   appConfiguration.cpp
 Author: Taylor Robbins
 Date:   08\02\2017
-Description: 
+Description:
 	** Handles loading and saving configuration TOML files
 	** for various aspects of the application
 
@@ -15,6 +15,7 @@ Description:
 #define TokenLength(tokenPntr) ((tokenPntr)->end - (tokenPntr)->start)
 #define TokenIsNamed(fileData, tokenPntr, compareString) (strncmp(compareString, &fileData[tokenPntr->start], TokenLength(tokenPntr)) == 0)
 #define TryGetTokenAsNumber(fileData, tokenPntr, valueOut) TryParseInt32(&(fileData)[(tokenPntr)->start], TokenLength(tokenPntr), valueOut)
+#define TryGetTokenAsBoolean(fileData, tokenPntr, valueOut) TryParseBool(&(fileData)[(tokenPntr)->start], TokenLength(tokenPntr), valueOut)
 
 i32 FindChildTokenByName(const char* fileData, jsmntok_t* jsonTokens, i32 numTokens, i32 parentIndex, const char* name)
 {
@@ -30,14 +31,14 @@ i32 FindChildTokenByName(const char* fileData, jsmntok_t* jsonTokens, i32 numTok
 			}
 		}
 	}
-	
+
 	return -1;
 }
 
 i32 FindChildTokenByIndex(jsmntok_t* jsonTokens, i32 numTokens, i32 parentIndex, i32 childIndex)
 {
 	i32 numItemsFound = 0;
-	
+
 	for (i32 tIndex = 0; tIndex < numTokens; tIndex++)
 	{
 		jsmntok_t* token = &jsonTokens[tIndex];
@@ -47,11 +48,11 @@ i32 FindChildTokenByIndex(jsmntok_t* jsonTokens, i32 numTokens, i32 parentIndex,
 			{
 				return tIndex;
 			}
-			
+
 			numItemsFound++;
 		}
 	}
-	
+
 	return -1;
 }
 
@@ -65,7 +66,7 @@ i32 GetChildToken(jsmntok_t* jsonTokens, i32 numTokens, i32 parentIndex)
 			return tIndex;
 		}
 	}
-	
+
 	return -1;
 }
 
@@ -80,7 +81,7 @@ void SanatizeFileComments(char* fileData, u32 fileSize)
 {
 	bool insideString = false;
 	bool insideComment = false;
-	
+
 	for (u32 cIndex = 0; cIndex < fileSize; cIndex++)
 	{
 		char c = fileData[cIndex];
@@ -88,7 +89,7 @@ void SanatizeFileComments(char* fileData, u32 fileSize)
 		if (cIndex > 0) lastChar = fileData[cIndex-1];
 		char nextChar = '\0';
 		if (cIndex < fileSize-1) nextChar = fileData[cIndex+1];
-		
+
 		if (c == '\n' || c == '\r')
 		{
 			insideString = false;
@@ -152,14 +153,14 @@ bool IsHexString(const char* charPntr, i32 numChars)
 			return false;
 		}
 	}
-	
+
 	return true;
 }
 
 u8 HexCharValue(char c)
 {
 	u8 result = 0x00;
-	
+
 	if (c >= '0' && c <= '9')
 	{
 		result = c - '0';
@@ -172,7 +173,7 @@ u8 HexCharValue(char c)
 	{
 		result = (c - 'a') + 10;
 	}
-	
+
 	return result;
 }
 
@@ -193,7 +194,7 @@ bool TryParseColor(const char* charPntr, i32 numChars, Color_t* colorOut)
 		{
 			colorOut->alpha = ByteFromHexChars(&charPntr[6]);
 		}
-		
+
 		return true;
 	}
 	else
@@ -208,38 +209,38 @@ bool TryParseColor(const char* charPntr, i32 numChars, Color_t* colorOut)
 			}
 		}
 	}
-	
+
 	return false;
 }
 
 bool TryGetColorFromJsonArray(const char* fileData, jsmntok_t* jsonTokens, i32 numTokens, i32 arrayTokenIndex, Color_t* colorOut)
 {
 	jsmntok_t* arrayTokenPntr = &jsonTokens[arrayTokenIndex];
-	
+
 	if (arrayTokenPntr->size != 3 && arrayTokenPntr->size != 4)
 	{
 		DEBUG_PrintLine("Expected 3-4 items in color array. Found %d", arrayTokenPntr->size);
 		return false;
 	}
-	
+
 	//Find all the child items
 	i32 childTokenIndex[4] = {};
 	childTokenIndex[0] = FindChildTokenByIndex(jsonTokens, numTokens, arrayTokenIndex, 0);
 	childTokenIndex[1] = FindChildTokenByIndex(jsonTokens, numTokens, arrayTokenIndex, 1);
 	childTokenIndex[2] = FindChildTokenByIndex(jsonTokens, numTokens, arrayTokenIndex, 2);
 	childTokenIndex[3] = FindChildTokenByIndex(jsonTokens, numTokens, arrayTokenIndex, 3);
-	
+
 	if (childTokenIndex[0] == -1 || childTokenIndex[1] == -1 || childTokenIndex[2] == -1 ||
 		(arrayTokenPntr->size == 4 && childTokenIndex[3] == -1))
 	{
 		DEBUG_WriteLine("Couldn't find all child items in color array.");
 		return false;
 	}
-	
+
 	//Make sure we can parse them as numbers
 	//and that they are in range of a uint8
 	i32 values[4] = {};
-	
+
 	if (!TryGetTokenAsNumber(fileData, &jsonTokens[childTokenIndex[0]], &values[0]) ||
 			values[0] < 0 || values[0] > 255)
 	{
@@ -265,7 +266,7 @@ bool TryGetColorFromJsonArray(const char* fileData, jsmntok_t* jsonTokens, i32 n
 		DEBUG_WriteLine("Couldn't parse fourth item in array as uint8");
 		return false;
 	}
-	
+
 	//We've parsed all the nubmer correctly. Cast them to uint8
 	colorOut->red   = (u8)values[0];
 	colorOut->green = (u8)values[1];
@@ -275,7 +276,7 @@ bool TryGetColorFromJsonArray(const char* fileData, jsmntok_t* jsonTokens, i32 n
 	{
 		colorOut->alpha = (u8)values[3];
 	}
-	
+
 	return true;
 }
 
@@ -314,10 +315,60 @@ bool TryGetColorFromJsonArray(const char* fileData, jsmntok_t* jsonTokens, i32 n
 	}                                                                                                     \
 } while (0)
 
+#define GetInt32Config(parentObjectIndex, tokenName, valuePntr) do                                      \
+{                                                                                                         \
+	i32 tokenIndex = FindChildTokenByName(fileData, jsonTokens, numTokens, parentObjectIndex, tokenName); \
+	if (tokenIndex == -1)                                                                                 \
+	{                                                                                                     \
+		DEBUG_PrintLine("Couldn't find \"%s\" token in GlobalConfig.json", tokenName);                    \
+	}                                                                                                     \
+	else                                                                                                  \
+	{                                                                                                     \
+		jsmntok_t* tokenPntr = &jsonTokens[tokenIndex];                                                   \
+		i32 valueTokenIndex = GetChildToken(jsonTokens, numTokens, tokenIndex);                           \
+		jsmntok_t* valueTokenPntr = &jsonTokens[valueTokenIndex];                                         \
+		i32 parsedValue;                                                                                  \
+		if (TryGetTokenAsNumber(fileData, valueTokenPntr, &parsedValue))                                  \
+		{                                                                                                 \
+			*valuePntr = parsedValue;                                                                     \
+		}                                                                                                 \
+		else                                                                                              \
+		{                                                                                                 \
+			DEBUG_PrintLine("Couldn't parse value as integer for \"%s\": \"%.*s\"",                       \
+				tokenName, TokenLength(valueTokenPntr), &fileData[valueTokenPntr->start]);                \
+		}                                                                                                 \
+	}                                                                                                     \
+} while(0)
+
+#define GetBoolConfig(parentObjectIndex, tokenName, valuePntr) do                                         \
+{                                                                                                         \
+	i32 tokenIndex = FindChildTokenByName(fileData, jsonTokens, numTokens, parentObjectIndex, tokenName); \
+	if (tokenIndex == -1)                                                                                 \
+	{                                                                                                     \
+		DEBUG_PrintLine("Couldn't find \"%s\" token in GlobalConfig.json", tokenName);                    \
+	}                                                                                                     \
+	else                                                                                                  \
+	{                                                                                                     \
+		jsmntok_t* tokenPntr = &jsonTokens[tokenIndex];                                                   \
+		i32 valueTokenIndex = GetChildToken(jsonTokens, numTokens, tokenIndex);                           \
+		jsmntok_t* valueTokenPntr = &jsonTokens[valueTokenIndex];                                         \
+		bool parsedValue;                                                                                 \
+		if (TryGetTokenAsBoolean(fileData, valueTokenPntr, &parsedValue))                                 \
+		{                                                                                                 \
+			*valuePntr = parsedValue;                                                                     \
+		}                                                                                                 \
+		else                                                                                              \
+		{                                                                                                 \
+			DEBUG_PrintLine("Couldn't parse value as boolean for \"%s\": \"%.*s\"",                       \
+				tokenName, TokenLength(valueTokenPntr), &fileData[valueTokenPntr->start]);                \
+		}                                                                                                 \
+	}                                                                                                     \
+} while(0)
+
 void LoadGlobalConfiguration(const PlatformInfo_t* PlatformInfo, GlobalConfig_t* globalConfig)
 {
 	ClearPointer(globalConfig);
-	
+
 	//+================================+
 	//|       Set Default Values       |
 	//+================================+
@@ -327,21 +378,21 @@ void LoadGlobalConfiguration(const PlatformInfo_t* PlatformInfo, GlobalConfig_t*
 	globalConfig->colors.highlight3 = Color_Highlight3;
 	globalConfig->colors.highlight4 = Color_Highlight4;
 	globalConfig->colors.highlight5 = Color_Highlight5;
-	
+
 	//+==================================+
 	//|       Parse the JSON File        |
 	//+==================================+
 	FileInfo_t globalConfigFile = PlatformInfo->ReadEntireFilePntr(GLOBAL_CONFIG_FILEPATH);
 	char* fileData = (char*)globalConfigFile.content;
 	SanatizeFileComments(fileData, globalConfigFile.size);
-	
+
 	jsmn_parser jsonParser;
 	jsmntok_t jsonTokens[MAX_JSON_TOKENS];
 	jsmn_init(&jsonParser);
 	i32 numTokens = jsmn_parse(&jsonParser,
 		fileData, globalConfigFile.size,
 		jsonTokens, ArrayCount(jsonTokens));
-	
+
 	if (numTokens < 0)
 	{
 		StatusError("JSON Parsing Error %d in GlobalConfig.json", numTokens);
@@ -357,9 +408,27 @@ void LoadGlobalConfiguration(const PlatformInfo_t* PlatformInfo, GlobalConfig_t*
 		StatusError("Top Item Was Not Object in GlobalConfig.json");
 		return;
 	}
+
+	//+==================================+
+	//|         Integer Options          |
+	//+==================================+
+	{
+		GetInt32Config(0, "ElapsedBannerTime", &globalConfig->elapsedBannerTime);
+		
+		DEBUG_PrintLine("elapsedBannerTime = %d", globalConfig->elapsedBannerTime);
+	}
 	
 	//+==================================+
-	//|            UI Colors             |
+	//|         Boolean Options          |
+	//+==================================+
+	{
+		GetBoolConfig(0, "ElapsedBannerEnabled", &globalConfig->elapsedBannerEnabled);
+		
+		DEBUG_PrintLine("Elapsed Banner %s", globalConfig->elapsedBannerEnabled ? "Enabled" : "Disabled");
+	}
+
+	//+==================================+
+	//|          Color Options           |
 	//+==================================+
 	i32 colorsTokenIndex = FindChildTokenByName(fileData, jsonTokens, numTokens, 0, "Colors");
 	if (colorsTokenIndex == -1)
@@ -369,7 +438,7 @@ void LoadGlobalConfiguration(const PlatformInfo_t* PlatformInfo, GlobalConfig_t*
 	else
 	{
 		i32 colorsObjectIndex = GetChildToken(jsonTokens, numTokens, colorsTokenIndex);
-		
+
 		GetColorConfig(colorsObjectIndex, "Background", &globalConfig->colors.background, Color_Background);
 		GetColorConfig(colorsObjectIndex, "Highlight1", &globalConfig->colors.highlight1, Color_Highlight1);
 		GetColorConfig(colorsObjectIndex, "Highlight2", &globalConfig->colors.highlight2, Color_Highlight2);
@@ -377,8 +446,8 @@ void LoadGlobalConfiguration(const PlatformInfo_t* PlatformInfo, GlobalConfig_t*
 		GetColorConfig(colorsObjectIndex, "Highlight4", &globalConfig->colors.highlight4, Color_Highlight4);
 		GetColorConfig(colorsObjectIndex, "Highlight5", &globalConfig->colors.highlight5, Color_Highlight5);
 	}
-	
+
 	PlatformInfo->FreeFileMemoryPntr(&globalConfigFile);
-	
+
 	StatusSuccess("Global Configuration Loaded Successfully!");
 }
