@@ -38,6 +38,8 @@ struct GlobalConfig_t
 	{
 		Color_t background;
 		Color_t foreground;
+		Color_t selection1;
+		Color_t selection2;
 		Color_t uiGray1;
 		Color_t uiGray2;
 		Color_t uiGray3;

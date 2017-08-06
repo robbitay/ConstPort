@@ -70,6 +70,8 @@ void LoadGlobalConfiguration(const PlatformInfo_t* PlatformInfo, GlobalConfig_t*
 	
 	globalConfig->colors.background       = NewColor(33, 33, 33, 255);
 	globalConfig->colors.foreground       = {0xFFF8F8F2};
+	globalConfig->colors.selection1       = {Color_White};
+	globalConfig->colors.selection2       = {Color_White};
 	globalConfig->colors.uiGray1          = {0xFF494949};
 	globalConfig->colors.uiGray2          = {0xFF404040};
 	globalConfig->colors.uiGray3          = {0xFF303030};
@@ -193,6 +195,8 @@ void LoadGlobalConfiguration(const PlatformInfo_t* PlatformInfo, GlobalConfig_t*
 		
 		GetConfig(colorsObjectIndex, Color, "Background",       &globalConfig->colors.background);
 		GetConfig(colorsObjectIndex, Color, "Foreground",       &globalConfig->colors.foreground);
+		GetConfig(colorsObjectIndex, Color, "Selection1",       &globalConfig->colors.selection1);
+		GetConfig(colorsObjectIndex, Color, "Selection2",       &globalConfig->colors.selection2);
 		GetConfig(colorsObjectIndex, Color, "UiGray1",          &globalConfig->colors.uiGray1);
 		GetConfig(colorsObjectIndex, Color, "UiGray2",          &globalConfig->colors.uiGray2);
 		GetConfig(colorsObjectIndex, Color, "UiGray3",          &globalConfig->colors.uiGray3);

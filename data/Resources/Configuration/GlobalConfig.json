@@ -35,6 +35,8 @@
 	{
 		"Background":       "212121",
 		"Foreground":       "F8F8F2",
+		"Selection1":       "White",
+		"Selection2":       "Gray",
 		"UiGray1":          "494949",
 		"UiGray2":          "404040",
 		"UiGray3":          "303030",
