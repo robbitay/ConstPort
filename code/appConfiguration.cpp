@@ -378,13 +378,21 @@ void LoadGlobalConfiguration(const PlatformInfo_t* PlatformInfo, GlobalConfig_t*
 	//+================================+
 	//|       Set Default Values       |
 	//+================================+
-	globalConfig->fontSize = 16;
+	globalConfig->fontSize    = 16;
+	globalConfig->lineSpacing = 2;
+	globalConfig->tabWidth    = 4;
 	
 	globalConfig->elapsedBannerEnabled = true;
 	globalConfig->elapsedBannerTime    = 15;
 	globalConfig->elapsedBannerHeight  = 25;
-	
-	globalConfig->statusMessageTime = 3;
+	globalConfig->statusMessageTime    = 3;
+	globalConfig->mouseClickTolerance  = 10;
+	globalConfig->menuBorderThickness  = 1;
+	globalConfig->scrollbarWidth       = 12;
+	globalConfig->scrollbarPadding     = 3;
+	globalConfig->minScrollbarHeight   = 32;
+	globalConfig->scrollMultiplier     = 40;
+	globalConfig->viewSpeedDivider     = 4;
 	
 	globalConfig->colors.background       = NewColor(33, 33, 33, 255);
 	globalConfig->colors.foreground       = {0xFFF8F8F2};
@@ -440,15 +448,22 @@ void LoadGlobalConfiguration(const PlatformInfo_t* PlatformInfo, GlobalConfig_t*
 	//|         Integer Options          |
 	//+==================================+
 	{
-		GetInt32Config(0, "FontSize", &globalConfig->fontSize);
+		GetInt32Config(0, "FontSize",    &globalConfig->fontSize);
+		GetInt32Config(0, "LineSpacing", &globalConfig->lineSpacing);
+		GetInt32Config(0, "TabWidth",    &globalConfig->tabWidth);
 		
-		GetInt32Config(0, "ElapsedBannerTime", &globalConfig->elapsedBannerTime);
+		GetInt32Config(0, "ElapsedBannerTime",   &globalConfig->elapsedBannerTime);
 		GetInt32Config(0, "ElapsedBannerHeight", &globalConfig->elapsedBannerHeight);
-		
-		GetInt32Config(0, "MarkHeight", &globalConfig->markHeight);
-		GetInt32Config(0, "ThickMarkHeight", &globalConfig->thickMarkHeight);
-		
-		GetInt32Config(0, "StatusMessageTime", &globalConfig->statusMessageTime);
+		GetInt32Config(0, "MarkHeight",          &globalConfig->markHeight);
+		GetInt32Config(0, "ThickMarkHeight",     &globalConfig->thickMarkHeight);
+		GetInt32Config(0, "StatusMessageTime",   &globalConfig->statusMessageTime);
+		GetInt32Config(0, "MouseClickTolerance", &globalConfig->mouseClickTolerance);
+		GetInt32Config(0, "MenuBorderThickness", &globalConfig->menuBorderThickness);
+		GetInt32Config(0, "ScrollbarWidth",      &globalConfig->scrollbarWidth);
+		GetInt32Config(0, "ScrollbarPadding",    &globalConfig->scrollbarPadding);
+		GetInt32Config(0, "MinScrollbarHeight",  &globalConfig->minScrollbarHeight);
+		GetInt32Config(0, "ScrollMultiplier",    &globalConfig->scrollMultiplier);
+		GetInt32Config(0, "ViewSpeedDivider",    &globalConfig->viewSpeedDivider);
 	}
 	
 	//+==================================+

@@ -142,7 +142,7 @@ void RenderLineGutter(const AppInput_t* AppInput, const Line_t* linePntr, v2 pos
 						bannerHeight = max(MIN_BANNER_HEIGHT, GC->elapsedBannerHeight * EaseCubicOut(halfAnimProgress));
 						rec bannerRec = NewRectangle(
 							ui->viewRec.x,
-							position.y + appData->testFont.maxExtendDown + LINE_SPACING/2, 
+							position.y + appData->testFont.maxExtendDown + GC->lineSpacing/2, 
 							ui->viewRec.width,
 							bannerHeight
 						);
@@ -264,7 +264,7 @@ v2 MeasureLines(const AppInput_t* AppInput, LineList_t* lineList, const Font_t* 
 	u32 numCharsMax = 0;
 	i32 lineIndex = 0;
 	i32 firstLineIndex = 0;
-	v2 relMousePos = ui->scrollOffset + ui->mousePos - ui->viewRec.topLeft - NewVec2(LINE_SPACING, 0);
+	v2 relMousePos = ui->scrollOffset + ui->mousePos - ui->viewRec.topLeft - NewVec2((r32)GC->lineSpacing, 0);
 	ui->hoverLocation.lineNum = -1;
 	ui->firstRenderLine = 0;
 	ui->firstRenderLineOffset = 0;
@@ -286,7 +286,7 @@ v2 MeasureLines(const AppInput_t* AppInput, LineList_t* lineList, const Font_t* 
 		r32 lineHeight = RenderLine(AppInput, linePntr, Vec2_Zero, true);
 		
 		result.y += lineHeight;
-		result.y += LINE_SPACING;
+		result.y += GC->lineSpacing;
 		
 		//Check if we've passed the top of the view
 		if (beforeHeight <= ui->scrollOffset.y && result.y > ui->scrollOffset.y)
@@ -301,7 +301,7 @@ v2 MeasureLines(const AppInput_t* AppInput, LineList_t* lineList, const Font_t* 
 			ui->hoverMouseLineOffset = relMousePos - NewVec2(0, beforeHeight);
 			ui->hoverLocation.charIndex = GetStringIndexForLocation(&appData->testFont, linePntr->chars, ui->hoverMouseLineOffset);
 			ui->markIndex = lineIndex;
-			if (ui->markIndex > 0 && ui->hoverMouseLineOffset.y < (lineHeight+LINE_SPACING) / 2.0f)
+			if (ui->markIndex > 0 && ui->hoverMouseLineOffset.y < (lineHeight+GC->lineSpacing) / 2.0f)
 			{
 				ui->markIndex--;
 			}

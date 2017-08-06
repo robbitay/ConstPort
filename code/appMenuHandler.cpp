@@ -30,8 +30,8 @@ void UpdateMenuRecs(Menu_t* menu)
 	menu->usableRec = NewRectangle(
 		menu->drawRec.x, 
 		menu->drawRec.y + menu->titleBarSize,
-		menu->drawRec.width - MENU_BORDER_WIDTH*2,
-		menu->drawRec.height - menu->titleBarSize - MENU_BORDER_WIDTH
+		menu->drawRec.width - GC->menuBorderThickness*2,
+		menu->drawRec.height - menu->titleBarSize - GC->menuBorderThickness
 	);
 }
 
@@ -220,33 +220,33 @@ void MenuHandlerDrawMenus(const PlatformInfo_t* PlatformInfo, const AppInput_t* 
 			
 			renderState->DrawRectangle(NewRectangle(
 				menuPntr->drawRec.x,
-				menuPntr->drawRec.y + menuPntr->titleBarRec.height - MENU_BORDER_WIDTH,
+				menuPntr->drawRec.y + menuPntr->titleBarRec.height - GC->menuBorderThickness,
 				menuPntr->drawRec.width,
-				MENU_BORDER_WIDTH),
+				(r32)GC->menuBorderThickness),
 				GC->colors.uiGray4);
 			
 			renderState->DrawRectangle(NewRectangle(
 				menuPntr->drawRec.x,
 				menuPntr->drawRec.y,
 				menuPntr->drawRec.width,
-				MENU_BORDER_WIDTH),
+				(r32)GC->menuBorderThickness),
 				menuPntr->borderColor);
 			renderState->DrawRectangle(NewRectangle(
 				menuPntr->drawRec.x,
 				menuPntr->drawRec.y,
-				MENU_BORDER_WIDTH,
+				(r32)GC->menuBorderThickness,
 				menuPntr->drawRec.height),
 				menuPntr->borderColor);
 			renderState->DrawRectangle(NewRectangle(
 				menuPntr->drawRec.x,
-				menuPntr->drawRec.y + menuPntr->drawRec.height - MENU_BORDER_WIDTH,
+				menuPntr->drawRec.y + menuPntr->drawRec.height - GC->menuBorderThickness,
 				menuPntr->drawRec.width,
-				MENU_BORDER_WIDTH),
+				(r32)GC->menuBorderThickness),
 				menuPntr->borderColor);
 			renderState->DrawRectangle(NewRectangle(
-				menuPntr->drawRec.x + menuPntr->drawRec.width - MENU_BORDER_WIDTH,
+				menuPntr->drawRec.x + menuPntr->drawRec.width - GC->menuBorderThickness,
 				menuPntr->drawRec.y,
-				MENU_BORDER_WIDTH,
+				(r32)GC->menuBorderThickness,
 				menuPntr->drawRec.height),
 				menuPntr->borderColor);
 			

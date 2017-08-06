@@ -29,7 +29,7 @@ void RecalculateUiElements(const AppInput_t* AppInput, UiElements_t* ui, bool re
 	//Static sizing helpers
 	ui->mousePos = AppInput->mousePos;
 	ui->screenSize = NewVec2((r32)Gl_PlatformInfo->screenSize.x, (r32)Gl_PlatformInfo->screenSize.y);
-	ui->lineHeight = appData->testFont.lineHeight + LINE_SPACING;
+	ui->lineHeight = appData->testFont.lineHeight + GC->lineSpacing;
 	
 	//Static Rectangles
 	ui->mainMenuRec = NewRectangle(
@@ -73,9 +73,9 @@ void RecalculateUiElements(const AppInput_t* AppInput, UiElements_t* ui, bool re
 		appData->testFont.lineHeight
 	);
 	ui->scrollBarGutterRec = NewRectangle(
-		ui->screenSize.x - SCROLLBAR_WIDTH - SCROLLBAR_PADDING*2, 
+		ui->screenSize.x - (r32)GC->scrollbarWidth - (r32)GC->scrollbarPadding*2, 
 		ui->mainMenuRec.y + ui->mainMenuRec.height, 
-		SCROLLBAR_WIDTH + SCROLLBAR_PADDING*2, 
+		(r32)GC->scrollbarWidth + (r32)GC->scrollbarPadding*2, 
 		ui->screenSize.y - ui->statusBarRec.height - (ui->mainMenuRec.y + ui->mainMenuRec.height)
 	);
 	ui->gotoEndButtonRec = NewRectangle(
@@ -123,12 +123,12 @@ void RecalculateUiElements(const AppInput_t* AppInput, UiElements_t* ui, bool re
 	
 	//Scroll Bar
 	ui->scrollBarRec = NewRectangle(
-		ui->scrollBarGutterRec.x + SCROLLBAR_PADDING, 0,
-		SCROLLBAR_WIDTH,
+		ui->scrollBarGutterRec.x + (r32)GC->scrollbarPadding, 0,
+		(r32)GC->scrollbarWidth,
 		ui->scrollBarGutterRec.height * (ui->viewRec.height / ui->fileSize.y)
 	);
-	if (ui->scrollBarRec.height < MIN_SCROLLBAR_HEIGHT)
-		ui->scrollBarRec.height = MIN_SCROLLBAR_HEIGHT;
+	if (ui->scrollBarRec.height < (r32)GC->minScrollbarHeight)
+		ui->scrollBarRec.height = (r32)GC->minScrollbarHeight;
 	if (ui->scrollBarRec.height > ui->scrollBarGutterRec.height)
 		ui->scrollBarRec.height = ui->scrollBarGutterRec.height;
 	ui->scrollBarRec.y = ui->scrollBarGutterRec.y + (ui->scrollBarGutterRec.height - ui->scrollBarRec.height) * ui->scrollPercent.y;
@@ -154,7 +154,7 @@ void UpdateUiElements(const AppInput_t* AppInput, UiElements_t* ui)
 	}
 	else
 	{
-		ui->scrollOffset.x += gotoOffset.x / SCROLL_SPEED_DIVIDER;
+		ui->scrollOffset.x += gotoOffset.x / (r32)GC->viewSpeedDivider;
 	}
 	
 	if (Abs32(gotoOffset.y) < 1)
@@ -163,6 +163,6 @@ void UpdateUiElements(const AppInput_t* AppInput, UiElements_t* ui)
 	}
 	else
 	{
-		ui->scrollOffset.y += gotoOffset.y / SCROLL_SPEED_DIVIDER;
+		ui->scrollOffset.y += gotoOffset.y / (r32)GC->viewSpeedDivider;
 	}
 }

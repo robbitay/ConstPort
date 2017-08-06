@@ -10,15 +10,22 @@ Date:   08\02\2017
 struct GlobalConfig_t
 {
 	i32 fontSize;
+	i32 lineSpacing;
+	i32  tabWidth;
 	
 	bool elapsedBannerEnabled;
 	i32  elapsedBannerTime;
 	i32  elapsedBannerHeight;
-	
 	i32  markHeight;
 	i32  thickMarkHeight;
-	
-	i32 statusMessageTime;
+	i32  statusMessageTime;
+	i32  mouseClickTolerance;
+	i32  menuBorderThickness;
+	i32  scrollbarWidth;
+	i32  scrollbarPadding;
+	i32  minScrollbarHeight;
+	i32  scrollMultiplier;
+	i32  viewSpeedDivider;
 	
 	struct
 	{

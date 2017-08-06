@@ -1,14 +1,21 @@
 {
-	"FontSize": 32,
+	"FontSize":    16,
+	"LineSpacing": 2,  //px
+	"TabWidth":    4,  //spaces
 	
 	"ElapsedBannerEnabled": true,
-	"ElapsedBannerTime": 1,
-	"ElapsedBannerHeight": 25,
-	 
-	"MarkHeight": 1,
-	"ThickMarkHeight": 5,
-	
-	"StatusMessageTime": 3,
+	"ElapsedBannerTime":    1,  //secs
+	"ElapsedBannerHeight":  25, //px
+	"MarkHeight":           1,  //px
+	"ThickMarkHeight":      5,  //px
+	"StatusMessageTime":    3,  //secs
+	"MouseClickTolerance":  10, //px
+	"MenuBorderThickness":  1,  //px
+	"ScrollbarWidth":       12, //px
+	"ScrollbarPadding":     3,  //px
+	"MinScrollbarHeight":   32, //px
+	"ScrollMultiplier":     40,
+	"ViewSpeedDivider":     4,
 	 
 	//Various Colors Used in UI drawing
 	"Colors":

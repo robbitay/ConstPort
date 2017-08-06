@@ -1117,11 +1117,11 @@ AppUpdate_DEFINITION(App_Update)
 	{
 		if (ButtonDown(Button_Shift))
 		{
-			ui->scrollOffsetGoto.x -= AppInput->scrollDelta.y * SCROLL_MULTIPLIER;
+			ui->scrollOffsetGoto.x -= AppInput->scrollDelta.y * (r32)GC->scrollMultiplier;
 		}
 		else
 		{
-			ui->scrollOffsetGoto.y -= AppInput->scrollDelta.y * SCROLL_MULTIPLIER;
+			ui->scrollOffsetGoto.y -= AppInput->scrollDelta.y * (r32)GC->scrollMultiplier;
 			
 			if (AppInput->scrollDelta.y > 0)
 			{
@@ -1131,7 +1131,7 @@ AppUpdate_DEFINITION(App_Update)
 	}
 	if (AppInput->scrollDelta.x != 0)
 	{
-		ui->scrollOffsetGoto.x -= AppInput->scrollDelta.x * SCROLL_MULTIPLIER;
+		ui->scrollOffsetGoto.x -= AppInput->scrollDelta.x * (r32)GC->scrollMultiplier;
 	}
 	
 	bool gotoEndButtonPressed = (IsInsideRectangle(AppInput->mousePos, ui->gotoEndButtonRec) &&
@@ -1419,7 +1419,7 @@ AppUpdate_DEFINITION(App_Update)
 		rs->SetViewMatrix(Matrix4Translate(NewVec3(ui->viewRec.x - ui->scrollOffset.x, ui->viewRec.y - ui->scrollOffset.y, 0)));
 		{//Items drawn relative to view
 			
-			v2 currentPos = NewVec2(LINE_SPACING, ui->scrollOffset.y - ui->firstRenderLineOffset + appData->testFont.maxExtendUp);
+			v2 currentPos = NewVec2((r32)GC->lineSpacing, ui->scrollOffset.y - ui->firstRenderLineOffset + appData->testFont.maxExtendUp);
 			for (i32 lineIndex = firstLine; lineIndex < appData->lineList.numLines; lineIndex++)
 			{
 				Line_t* linePntr = GetLineAt(&appData->lineList, lineIndex);
@@ -1449,7 +1449,7 @@ AppUpdate_DEFINITION(App_Update)
 					rs->DrawRectangle(cursorRec, hoverLocColor);
 				}
 				
-				currentPos.y += lineHeight + LINE_SPACING;
+				currentPos.y += lineHeight + GC->lineSpacing;
 				if (currentPos.y - appData->testFont.maxExtendUp >= ui->scrollOffset.y + ui->viewRec.height)
 				{
 					//We've reached the bottom of the view
@@ -1513,8 +1513,8 @@ AppUpdate_DEFINITION(App_Update)
 						// selectionSize.x += MeasureString(&appData->testFont, " ", 1).x;
 					}
 					
-					rec backRec = NewRectangle(LINE_SPACING + currentPos.x + skipSize.x, currentPos.y - appData->testFont.maxExtendUp, selectionSize.x, appData->testFont.lineHeight);//linePntr->lineHeight);
-					backRec = RectangleInflate(backRec, LINE_SPACING/2);
+					rec backRec = NewRectangle(GC->lineSpacing + currentPos.x + skipSize.x, currentPos.y - appData->testFont.maxExtendUp, selectionSize.x, appData->testFont.lineHeight);//linePntr->lineHeight);
+					backRec = RectangleInflate(backRec, (r32)GC->lineSpacing/2);
 					rs->DrawRectangle(backRec, selectionColor);
 					
 					if (currentPos.y - appData->testFont.maxExtendUp >= ui->scrollOffset.y + ui->viewRec.height)
@@ -1524,7 +1524,7 @@ AppUpdate_DEFINITION(App_Update)
 					}
 				}
 				
-				currentPos.y += linePntr->lineHeight + LINE_SPACING;
+				currentPos.y += linePntr->lineHeight + GC->lineSpacing;
 			}
 			
 		}
@@ -1563,7 +1563,7 @@ AppUpdate_DEFINITION(App_Update)
 				
 				RenderLineGutter(AppInput, linePntr, currentPos, lineIndex, linePntr->lineHeight);
 				
-				currentPos.y += linePntr->lineHeight + LINE_SPACING;
+				currentPos.y += linePntr->lineHeight + GC->lineSpacing;
 				if (currentPos.y - appData->testFont.maxExtendUp >= ui->scrollOffset.y + ui->viewRec.height)
 				{
 					//We've reached the bottom of the view

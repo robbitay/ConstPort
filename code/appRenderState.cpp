@@ -347,7 +347,7 @@ void RenderState_t::DrawString(const char* string, u32 numCharacters, v2 positio
 		if (string[cIndex] == '\t')
 		{
 			u32 spaceIndex = GetFontCharIndex(this->boundFont, ' ');
-			currentPos.x += this->boundFont->chars[spaceIndex].advanceX * TAB_WIDTH * scale;
+			currentPos.x += this->boundFont->chars[spaceIndex].advanceX * GC->tabWidth * scale;
 		}
 		else if (string[cIndex] == '\r' ||
 			string[cIndex] == 0x01 || string[cIndex] == 0x02 || string[cIndex] == 0x03 || string[cIndex] == 0x04 || string[cIndex] == 0x05)
