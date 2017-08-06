@@ -87,10 +87,14 @@ void RecalculateUiElements(const AppInput_t* AppInput, UiElements_t* ui, bool re
 	ui->gutterRec = NewRectangle(
 		0, 
 		ui->mainMenuRec.y + ui->mainMenuRec.height, 
-		NumDecimalDigits(appData->lineList.numLines) * MeasureString(&appData->testFont, " ", 1).x + 2,
+		(r32)GC->minGutterWidth,
 		ui->screenSize.y - ui->statusBarRec.height - (ui->mainMenuRec.y + ui->mainMenuRec.height)
 	);
-	if (ui->gutterRec.width < MIN_GUTTER_WIDTH) ui->gutterRec.width = MIN_GUTTER_WIDTH;
+	if (GC->showLineNumbers)
+	{
+		ui->gutterRec.width = NumDecimalDigits(appData->lineList.numLines) * MeasureString(&appData->testFont, " ", 1).x + 2;
+		if (ui->gutterRec.width < (r32)GC->minGutterWidth) ui->gutterRec.width = (r32)GC->minGutterWidth;
+	}
 	ui->viewRec = NewRectangle(
 		ui->gutterRec.width, 
 		ui->mainMenuRec.y + ui->mainMenuRec.height,

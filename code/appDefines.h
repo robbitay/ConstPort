@@ -7,7 +7,7 @@ Date:   06\08\2017
 #ifndef _APP_DEFINES_H
 #define _APP_DEFINES_H
 
-#define MIN_GUTTER_WIDTH           40 //px
+// #define MIN_GUTTER_WIDTH           40 //px
 #define MENU_DEFAULT_TITLEBAR_SIZE 22 //px
 #define CONTEXT_MENU_PADDING       5  //px
 #define MAIN_MENU_BUTTON_PADDING   10 //px

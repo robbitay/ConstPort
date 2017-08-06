@@ -21,6 +21,9 @@ struct PlatformConfig_t
 	i32 antiAliasingSamples;
 	bool topmostWindow;
 	bool showConsoleWindow;
+	
+	i32 permanantMemorySize;
+	i32 transientMemorySize;
 };
 
 #define GetConfig(parentIndex, Type, tokenName, valuePntr) do                                     \
@@ -70,6 +73,8 @@ void LoadGlobalConfiguration(PlatformConfig_t* platformConfig)
 	platformConfig->antiAliasingSamples = 4;
 	platformConfig->topmostWindow       = false;
 	platformConfig->showConsoleWindow   = false;
+	platformConfig->permanantMemorySize = 64;
+	platformConfig->transientMemorySize = 1024;
 
 	//+==================================+
 	//|       Parse the JSON File        |
@@ -122,6 +127,9 @@ void LoadGlobalConfiguration(PlatformConfig_t* platformConfig)
 		GetConfig(0, Int32, "AntiAliasingSamples", &platformConfig->antiAliasingSamples);
 		GetConfig(0, Bool,  "TopmostWindow",       &platformConfig->topmostWindow);
 		GetConfig(0, Bool,  "ShowConsoleWindow",   &platformConfig->showConsoleWindow);
+		
+		GetConfig(0, Int32, "PermanantMemorySize", &platformConfig->permanantMemorySize);
+		GetConfig(0, Int32, "TransientMemorySize", &platformConfig->transientMemorySize);
 	}
 
 	Win32_FreeFileMemory(&configFile);

@@ -17,27 +17,37 @@
 	"ScrollbarWidth":       12, //px
 	"ScrollbarPadding":     3,  //px
 	"MinScrollbarHeight":   32, //px
+	"MinGutterWidth":       30, //px
 	
 	"ScrollMultiplier": 40,
 	"ViewSpeedDivider": 4,
 	
-	"ShowTextCursor": false,
-	 
+	"ShowTextCursor": true,
+	"ShowComNameInStatusBar": true,
+	"ShowLineNumbers": true,
+	"ShowHoverCursor": false,
+	"HighlightHoverLine": true,
+	
+	"RxTxLedDelay": 4, //frames
+	
 	//Various Colors Used in UI drawing
 	"Colors":
 	{
-		"Background":       "212121FF",
-		"Foreground":       "F8F8F2FF",
-		"UiGray1":          "494949FF",
-		"UiGray2":          "404040FF",
-		"UiGray3":          "303030FF",
-		"UiGray4":          "101010FF",
-		"UiLightGray1":     "B4B4B4FF",
-		"BannerColor1":     "494949FF", //UiGray1
-		"BannerColor2":     "303030FF", //UiGray3
-		"WindowTitleBar":   "303030FF", //UiGray3
-		"WindowBackground": "494949FF", //UiGray1
-		"WindowBorder":     "B4B4B4FF", //UiLightGray1
+		"Background":       "212121",
+		"Foreground":       "F8F8F2",
+		"UiGray1":          "494949",
+		"UiGray2":          "404040",
+		"UiGray3":          "303030",
+		"UiGray4":          "101010",
+		"UiLightGray1":     "B4B4B4",
+		"ReceiveLed":       [249,  38, 101, 255], //Red/Magenta
+		"TransmitLed":      [174, 129, 255, 255], //Purple
+		"HoverLine":        "303030", //UiGray3
+		"BannerColor1":     "494949", //UiGray1
+		"BannerColor2":     "303030", //UiGray3
+		"WindowTitleBar":   "303030", //UiGray3
+		"WindowBackground": "494949", //UiGray1
+		"WindowBorder":     "B4B4B4", //UiLightGray1
 		"MarkColor1":       [255, 255, 255, 128],
 		"MarkColor2":       [255, 255, 255,   0],
 		"Highlight1":       [117, 113,  94, 255], //Comment Color
@@ -45,6 +55,26 @@
 		"Highlight3":       [249,  38, 101, 255], //Red/Magenta
 		"Highlight4":       [174, 129, 255, 255], //Purple
 		"Highlight5":       [102, 217, 239, 255], //Light Blue
+		
+		"Button":               "White",
+		"ButtonText":           "Black",
+		"ButtonBorder":         "Black",
+		
+		"ButtonHover":          "B4B4B4", //UiLightGray1
+		"ButtonHoverText":      "Black",
+		"ButtonHoverBorder":    "Black",
+		
+		"ButtonPress":          [249,  38, 101, 255], //Red/Magenta
+		"ButtonPressText":      "White",
+		"ButtonPressBorder":    "White",
+		
+		"ButtonSelected":       [174, 129, 255, 255], //Purple
+		"ButtonSelectedText":   "Black",
+		"ButtonSelectedBorder": "White",
+		
+		"ButtonReady":          [166, 226,  46, 255], //Green Color
+		"ButtonReadyText":      "Black",
+		"ButtonReadyBorder":    "White",
 	},
 	
 	//TODO: Implement these

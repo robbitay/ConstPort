@@ -106,7 +106,10 @@ void RenderLineGutter(const AppInput_t* AppInput, const Line_t* linePntr, v2 pos
 	UiElements_t* ui = &appData->uiElements;
 	RenderState_t* rs = &appData->renderState;
 	
-	rs->PrintString(NewVec2(position.x, position.y), {Color_White}, 1.0f, "%u", lineIndex+1);
+	if (GC->showLineNumbers)
+	{
+		rs->PrintString(NewVec2(position.x, position.y), {Color_White}, 1.0f, "%u", lineIndex+1);
+	}
 	
 	r32 bannerHeight = 0;
 	if (GC->elapsedBannerEnabled)

@@ -130,7 +130,7 @@ ConfigError_t TryParseColor(const char* charPntr, i32 numChars, Color_t* colorOu
 //|                     JSON Helper Functions                      |
 //+================================================================+
 #define TokenLength(tokenPntr) ((tokenPntr)->end - (tokenPntr)->start)
-#define TokenIsNamed(jsonData, tokenPntr, compareString) (strncmp(compareString, &(jsonData)->data[tokenPntr->start], TokenLength(tokenPntr)) == 0)
+#define TokenIsNamed(jsonData, tokenPntr, compareString) (TokenLength(tokenPntr) == strlen(compareString) && strncmp(compareString, &(jsonData)->data[tokenPntr->start], TokenLength(tokenPntr)) == 0)
 #define TryGetTokenAsNumber(jsonData, tokenPntr, valueOut) TryParseInt32(&(jsonData)->data[(tokenPntr)->start], TokenLength(tokenPntr), valueOut)
 #define TryGetTokenAsBoolean(jsonData, tokenPntr, valueOut) TryParseBool(&(jsonData)->data[(tokenPntr)->start], TokenLength(tokenPntr), valueOut)
 

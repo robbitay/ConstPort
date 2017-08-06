@@ -531,7 +531,6 @@
 			"MENU_DEFAULT_TITLEBAR_COLOR",
 			"MENU_DEFAULT_TITLEBAR_SIZE",
 			"MIN_BANNER_HEIGHT",
-			"MIN_GUTTER_WIDTH",
 			"Matrix4_Identity",
 			"MemoryArenaType_Heap",
 			"MemoryArenaType_Linear",

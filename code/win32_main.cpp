@@ -259,8 +259,8 @@ int WINAPI WinMain(HINSTANCE hInstance,
 	//+--------------------------------------+
 	//|         Application Memory           |
 	//+--------------------------------------+
-	appMemory.permanantSize = Megabytes(64);
-	appMemory.transientSize = Gigabytes(1);
+	appMemory.permanantSize = Megabytes(platformConfig.permanantMemorySize);
+	appMemory.transientSize = Megabytes(platformConfig.transientMemorySize);
 	appMemory.permanantPntr = (void*)VirtualAlloc(0, appMemory.permanantSize,
 		MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE);
 	appMemory.transientPntr = (void*)VirtualAlloc(0, appMemory.transientSize,

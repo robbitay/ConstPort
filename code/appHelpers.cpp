@@ -40,6 +40,45 @@ Description:
 	}                                                                   \
 } while (0)
 
+//NOTE: Must have access to AppInput
 #define ButtonPressed(button) ((AppInput->buttons[button].isDown && AppInput->buttons[button].transCount > 0) || AppInput->buttons[button].transCount >= 2)
 #define ButtonReleased(button) ((!AppInput->buttons[button].isDown && AppInput->buttons[button].transCount > 0) || AppInput->buttons[button].transCount >= 2)
 #define ButtonDown(button) (AppInput->buttons[button].isDown)
+
+//NOTE: Must have access to AppInput
+//This code shows up for most buttons so I pulled it out into a macro to make it look nice
+#define ButtonColorChoice(buttonColor, textColor, borderColor, rectangle, isSelected, isReady) do \
+{                                                                                                 \
+	if (ButtonDown(MouseButton_Left) &&                                                           \
+		IsInsideRectangle(AppInput->mousePos, rectangle) &&                                       \
+		IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], rectangle))                  \
+	{                                                                                             \
+		buttonColor = GC->colors.buttonPress;                                                     \
+		textColor   = GC->colors.buttonPressText;                                                 \
+		borderColor = GC->colors.buttonPressBorder;                                               \
+	}                                                                                             \
+	else if (isSelected)                                                                          \
+	{                                                                                             \
+		buttonColor = GC->colors.buttonSelected;                                                  \
+		textColor   = GC->colors.buttonSelectedText;                                              \
+		borderColor = GC->colors.buttonSelectedBorder;                                            \
+	}                                                                                             \
+	else if (IsInsideRectangle(AppInput->mousePos, rectangle))                                    \
+	{                                                                                             \
+		buttonColor = GC->colors.buttonHover;                                                     \
+		textColor   = GC->colors.buttonHoverText;                                                 \
+		borderColor = GC->colors.buttonHoverBorder;                                               \
+	}                                                                                             \
+	else if (isReady)                                                                             \
+	{                                                                                             \
+		buttonColor = GC->colors.buttonReady;                                                     \
+		textColor   = GC->colors.buttonReadyText;                                                 \
+		borderColor = GC->colors.buttonReadyBorder;                                               \
+	}                                                                                             \
+	else                                                                                          \
+	{                                                                                             \
+		buttonColor = GC->colors.button;                                                          \
+		textColor   = GC->colors.buttonText;                                                      \
+		borderColor = GC->colors.buttonBorder;                                                    \
+	}                                                                                             \
+} while(0)

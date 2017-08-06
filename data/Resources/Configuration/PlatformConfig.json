@@ -9,4 +9,7 @@
 	"AntiAliasingSamples": 4,
 	"TopmostWindow": true,
 	"ShowConsoleWindow": true, //Doesn't work atm
+	
+	"PermanantMemorySize": 64, //MB
+	"TransientMemorySize": 32, //MB
 }
