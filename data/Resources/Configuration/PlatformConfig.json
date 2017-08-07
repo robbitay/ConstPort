@@ -1,15 +1,15 @@
 {
-	"WindowWidth": 500,
-	"WindowHeight": 900,
+	"WindowWidth": 400,
+	"WindowHeight": 400,
 	"MinWindowWidth": 320,
 	"MinWindowHeight": 180,
 	"ForceAspectRatio": false,
 	"AspectRatio": [16, 9],
 	"AllowResizeWindow": true,
 	"AntiAliasingSamples": 4,
-	"TopmostWindow": true,
+	"TopmostWindow": false,
 	"ShowConsoleWindow": true, //Doesn't work atm
 	
-	"PermanantMemorySize": 64, //MB
-	"TransientMemorySize": 32, //MB
+	"PermanantMemorySize": 16, //MB
+	"TransientMemorySize": 8, //MB
 }

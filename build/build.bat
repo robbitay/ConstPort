@@ -15,11 +15,11 @@ set ProjectName=ConstPort
 set BuildFolder=build\
 
 if "%DebugBuild%"=="1" (
-	set DebugDependantFlags=/MDd -DDEBUG=1
+	set DebugDependantFlags=/MTd -DDEBUG=1
 	set DebugDependantPaths=/LIBPATH:"W:\lib\glew-2.0.0\lib\Debug\x64" /LIBPATH:"W:\lib\glfw-3.2.1\build\src\Debug"
 	set DebugDependantLibraries=glew32d.lib
 ) else (
-	set DebugDependantFlags=/MD -DDEBUG=0
+	set DebugDependantFlags=/MT -DDEBUG=0
 	set DebugDependantPaths=/LIBPATH:"W:\lib\glew-2.0.0\lib\Release\x64" /LIBPATH:"W:\lib\glfw-3.2.1\build\src\Release"
 	set DebugDependantLibraries=glew32.lib
 )

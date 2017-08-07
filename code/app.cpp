@@ -1247,7 +1247,7 @@ AppUpdate_DEFINITION(App_Update)
 			}
 		}
 	}
-
+	
 	if (ButtonDown(Button_Control) && ButtonPressed(Button_M))
 	{
 		i32 lastIndex = appData->lineList.numLines - 1;
@@ -1256,7 +1256,7 @@ AppUpdate_DEFINITION(App_Update)
 		{
 			linePntr = GetLineAt(&appData->lineList, lastIndex - 1);
 		}
-
+		
 		//Set mark
 		if (!IsFlagSet(linePntr->flags, LineFlag_MarkBelow) ||
 				(ButtonDown(Button_Shift) && !IsFlagSet(linePntr->flags, LineFlag_ThickMark)))
@@ -1276,19 +1276,19 @@ AppUpdate_DEFINITION(App_Update)
 			FlagUnset(linePntr->flags, LineFlag_MarkBelow);
 		}
 	}
-
+	
 	//+================================+
 	//|          Update Menus          |
 	//+================================+
 	MenuHandlerUpdate(PlatformInfo, AppInput, &appData->menuHandler);
-
+	
 	UpdateUiElements(AppInput, ui);
 	RecalculateUiElements(AppInput, ui, false);
 	if (ui->followingEndOfFile)
 	{
 		ui->scrollOffsetGoto.y = ui->maxScrollOffset.y;
 	}
-
+	
 	//+==================================+
 	//|           Cursor Type            |
 	//+==================================+
@@ -1300,46 +1300,46 @@ AppUpdate_DEFINITION(App_Update)
 	{
 		AppOutput->cursorType = Cursor_Default;
 	}
-
+	
 	//+--------------------------------------+
 	//|           Rendering Setup            |
 	//+--------------------------------------+
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_BLEND);
 	rs->SetViewport(NewRectangle(0, 0, (r32)PlatformInfo->screenSize.x, (r32)PlatformInfo->screenSize.y));
-
+	
 	glClearColor((GC->colors.background.r/255.f), (GC->colors.background.g/255.f), (GC->colors.background.b/255.f), 1.0f);
 	// glClearColor((200/255.f), (200/255.f), (200/255.f), 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+	
 	rs->BindFrameBuffer(nullptr);
 	rs->BindShader(&appData->simpleShader);
 	rs->BindFont(&appData->testFont);
 	rs->SetGradientEnabled(false);
-
+	
 	Matrix4_t worldMatrix, viewMatrix, projMatrix;
 	viewMatrix = Matrix4_Identity;
 	projMatrix = Matrix4Scale(NewVec3(2.0f/PlatformInfo->screenSize.x, -2.0f/PlatformInfo->screenSize.y, 1.0f));
 	projMatrix = Mat4Mult(projMatrix, Matrix4Translate(NewVec3(-PlatformInfo->screenSize.x/2.0f, -PlatformInfo->screenSize.y/2.0f, 0.0f)));
 	rs->SetViewMatrix(viewMatrix);
 	rs->SetProjectionMatrix(projMatrix);
-
+	
 	// rs->DrawGradient(NewRectangle(0, 0, 300, 300), color1, color2, Direction2D_Right);
-
+	
 	//+--------------------------------------+
 	//|            Render Lines              |
 	//+--------------------------------------+
 	{
 		i32 firstLine = max(0, ui->firstRenderLine);
-
+		
 		rs->SetViewMatrix(Matrix4Translate(NewVec3(ui->viewRec.x - ui->scrollOffset.x, ui->viewRec.y - ui->scrollOffset.y, 0)));
 		{//Items drawn relative to view
-
+			
 			v2 currentPos = NewVec2((r32)GC->lineSpacing, ui->scrollOffset.y - ui->firstRenderLineOffset + appData->testFont.maxExtendUp);
 			for (i32 lineIndex = firstLine; lineIndex < appData->lineList.numLines; lineIndex++)
 			{
 				Line_t* linePntr = GetLineAt(&appData->lineList, lineIndex);
-
+				
 				r32 lineHeight = RenderLine(AppInput, linePntr, currentPos, true);
 				//Draw line highlight
 				if (GC->highlightHoverLine &&
@@ -1354,9 +1354,9 @@ AppUpdate_DEFINITION(App_Update)
 					);
 					rs->DrawRectangle(backRec, GC->colors.hoverLine);
 				}
-
+				
 				RenderLine(AppInput, linePntr, currentPos, false);
-
+				
 				if (GC->showHoverCursor &&
 					lineIndex == ui->hoverLocation.lineNum &&
 					IsInsideRectangle(ui->mousePos, ui->viewRec) &&
@@ -1370,7 +1370,7 @@ AppUpdate_DEFINITION(App_Update)
 					);
 					rs->DrawRectangle(cursorRec, hoverLocColor);
 				}
-
+				
 				currentPos.y += lineHeight + GC->lineSpacing;
 				if (currentPos.y - appData->testFont.maxExtendUp >= ui->scrollOffset.y + ui->viewRec.height)
 				{
@@ -1378,15 +1378,15 @@ AppUpdate_DEFINITION(App_Update)
 					break;
 				}
 			}
-
+			
 		}
 		rs->SetViewMatrix(Matrix4_Identity);
 	}
-
+	
 	rs->BindFrameBuffer(&appData->frameBuffer);
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+	
 	// DrawThings(AppInput);
 	//+--------------------------------------+
 	//|          Render Selection            |
@@ -1397,22 +1397,22 @@ AppUpdate_DEFINITION(App_Update)
 		TextLocation_t minLocation = TextLocationMin(appData->selectionStart, appData->selectionEnd);
 		TextLocation_t maxLocation = TextLocationMax(appData->selectionStart, appData->selectionEnd);
 		i32 firstLine = max(0, ui->firstRenderLine);
-
+		
 		rs->SetViewMatrix(Matrix4Translate(NewVec3(ui->viewRec.x - ui->scrollOffset.x, ui->viewRec.y - ui->scrollOffset.y, 0)));
 		{//Items drawn relative to view
-
+			
 			v2 currentPos = NewVec2(0, ui->scrollOffset.y - ui->firstRenderLineOffset + appData->testFont.maxExtendUp);
 			for (i32 lineIndex = firstLine;
 				lineIndex < appData->lineList.numLines && lineIndex <= maxLocation.lineNum;
 				lineIndex++)
 			{
 				Line_t* linePntr = GetLineAt(&appData->lineList, lineIndex);
-
+				
 				if (lineIndex >= minLocation.lineNum && lineIndex <= maxLocation.lineNum)
 				{
 					v2 skipSize = Vec2_Zero;
 					v2 selectionSize = Vec2_Zero;
-
+					
 					if (lineIndex == minLocation.lineNum &&
 						lineIndex == maxLocation.lineNum)
 					{
@@ -1434,57 +1434,56 @@ AppUpdate_DEFINITION(App_Update)
 						selectionSize = MeasureString(&appData->testFont, linePntr->chars);
 						// selectionSize.x += MeasureString(&appData->testFont, " ", 1).x;
 					}
-
+					
 					rec backRec = NewRectangle(GC->lineSpacing + currentPos.x + skipSize.x, currentPos.y - appData->testFont.maxExtendUp, selectionSize.x, appData->testFont.lineHeight);//linePntr->lineHeight);
 					backRec = RectangleInflate(backRec, (r32)GC->lineSpacing/2);
 					rs->DrawRectangle(backRec, selectionColor);
-
+					
 					if (currentPos.y - appData->testFont.maxExtendUp >= ui->scrollOffset.y + ui->viewRec.height)
 					{
 						//We've reached the bottom of the view
 						break;
 					}
 				}
-
+				
 				currentPos.y += linePntr->lineHeight + GC->lineSpacing;
 			}
-
+			
 		}
 		rs->SetViewMatrix(Matrix4_Identity);
 	}
-
+	
 	//+--------------------------------------+
 	//|           Post Processing            |
 	//+--------------------------------------+
 	rs->BindFrameBuffer(nullptr);
 	rs->BindShader(&appData->outlineShader);
 	rs->UpdateShader();
-
-	rs->SetSecondaryColor(NewColor(0, 0, 0, 20));
+	
+	rs->SetSecondaryColor(NewColor(0, 0, 0, 20)); //TODO: Add this as a configuration option
 	rs->BindTexture(&appData->frameTexture);
 	rs->DrawTexturedRec(NewRectangle(0, ui->screenSize.y, (r32)appData->frameTexture.width, (r32)-appData->frameTexture.height), {Color_White});
-
-
+	
 	rs->BindShader(&appData->simpleShader);
 	rs->UpdateShader();
-
+	
 	//+--------------------------------------+
 	//|    Render Line Gutter Elements       |
 	//+--------------------------------------+
 	rs->DrawGradient(ui->gutterRec, GC->colors.uiGray1, GC->colors.uiGray3, Direction2D_Right);
 	{
 		i32 firstLine = max(0, ui->firstRenderLine);
-
+		
 		rs->SetViewMatrix(Matrix4Translate(NewVec3(ui->gutterRec.x, ui->gutterRec.y - ui->scrollOffset.y, 0)));
 		{//Items drawn relative to view
-
+			
 			v2 currentPos = NewVec2(0, ui->scrollOffset.y - ui->firstRenderLineOffset + appData->testFont.maxExtendUp);
 			for (i32 lineIndex = firstLine; lineIndex < appData->lineList.numLines; lineIndex++)
 			{
 				Line_t* linePntr = GetLineAt(&appData->lineList, lineIndex);
-
+				
 				RenderLineGutter(AppInput, linePntr, currentPos, lineIndex, linePntr->lineHeight);
-
+				
 				currentPos.y += linePntr->lineHeight + GC->lineSpacing;
 				if (currentPos.y - appData->testFont.maxExtendUp >= ui->scrollOffset.y + ui->viewRec.height)
 				{
@@ -1492,11 +1491,11 @@ AppUpdate_DEFINITION(App_Update)
 					break;
 				}
 			}
-
+			
 		}
 		rs->SetViewMatrix(Matrix4_Identity);
 	}
-
+	
 	//+--------------------------------------+
 	//|           Render Scrollbar           |
 	//+--------------------------------------+
@@ -1504,7 +1503,7 @@ AppUpdate_DEFINITION(App_Update)
 		rs->DrawGradient(NewRectangle(ui->scrollBarGutterRec.x - 8, ui->scrollBarGutterRec.y, 8, ui->scrollBarGutterRec.height),
 			{Color_TransparentBlack}, {Color_HalfTransparentBlack}, Direction2D_Right);
 		rs->DrawGradient(ui->scrollBarGutterRec, GC->colors.background, GC->colors.uiGray3, Direction2D_Right);
-
+		
 		rec centerScrollBarRec = ui->scrollBarRec;
 		centerScrollBarRec.y += ui->scrollBarRec.width;
 		centerScrollBarRec.height -= 2 * ui->scrollBarRec.width;
@@ -1516,13 +1515,13 @@ AppUpdate_DEFINITION(App_Update)
 		rs->BindAlphaTexture(&appData->scrollBarEndcapTexture);
 		rs->DrawRectangle(RectangleInflate(startCapRec, 1), GC->colors.uiGray4);
 		rs->DrawRectangle(RectangleInflate(endCapRec, 1), GC->colors.uiGray4);
-
+		
 		rs->DrawGradient(startCapRec, GC->colors.uiGray1, GC->colors.uiGray3, Direction2D_Right);
 		rs->DrawGradient(endCapRec, GC->colors.uiGray1, GC->colors.uiGray3, Direction2D_Right);
 		rs->DisableAlphaTexture();
 		rs->DrawGradient(centerScrollBarRec, GC->colors.uiGray1, GC->colors.uiGray3, Direction2D_Right);
 	}
-
+	
 	//+--------------------------------------+
 	//|          Render Status Bar           |
 	//+--------------------------------------+
@@ -1557,19 +1556,19 @@ AppUpdate_DEFINITION(App_Update)
 		// {
 		// 	Line_t* lineBefore = (Line_t*)linePntr->header.lastItem;
 		// 	Line_t* lineAfter = (Line_t*)linePntr->header.nextItem;
-
+		
 		// 	rs->PrintString(
 		// 		NewVec2(0, ui->screenSize.y-appData->testFont.maxExtendDown), GC->colors.foreground, 1.0f,
 		// 		"%08X <- #%u %08X -> %08X", lineBefore, ui->hoverLocation.lineNum, linePntr, lineAfter);
 		// }
-
+		
 		Line_t* lastLine = GetLastLine(&appData->lineList);
 		// DEBUG_PrintLine("Last Item: %p", lastLine->header.lastItem);
 		if (lastLine->timestamp == 0 && appData->lineList.numLines > 1)
 		{
 			lastLine = GetLineAt(&appData->lineList, appData->lineList.numLines-1 - 1);
 		}
-
+		
 		//Print the status message
 		if (GetTimestamp(appData->statusMessageTime) != 0)
 		{
@@ -1577,7 +1576,7 @@ AppUpdate_DEFINITION(App_Update)
 			if (secondsDifference >= 0 && secondsDifference < GC->statusMessageTime)
 			{
 				Color_t messageColor = GC->colors.foreground;
-
+				
 				if (appData->statusMessageType == StatusMessage_Debug)
 				{
 					messageColor = GC->colors.uiLightGray1;
@@ -1594,16 +1593,16 @@ AppUpdate_DEFINITION(App_Update)
 				{
 					messageColor = GC->colors.highlight3;
 				}
-
+				
 				rs->DrawString(appData->statusMessage, NewVec2(5, ui->screenSize.y-appData->testFont.maxExtendDown), messageColor, 1.0f);
 			}
 		}
-
+		
 		//Draw Goto End Button
 		{
 			Color_t buttonColor = GC->colors.uiGray1;
 			Color_t outlineColor = GC->colors.background;
-
+			
 			if (IsInsideRectangle(AppInput->mousePos, ui->gotoEndButtonRec))
 			{
 				if (ButtonDown(MouseButton_Left) &&
@@ -1617,10 +1616,10 @@ AppUpdate_DEFINITION(App_Update)
 					buttonColor = GC->colors.uiLightGray1;
 				}
 			}
-
+			
 			rs->DrawButton(ui->gotoEndButtonRec, buttonColor, outlineColor);
 		}
-
+		
 		if (appData->comPort.isOpen && GC->showComNameInStatusBar)
 		{
 			v2 comNameSize = MeasureString(&appData->testFont, GetComPortName(appData->comPort.index));
@@ -1629,20 +1628,20 @@ AppUpdate_DEFINITION(App_Update)
 				GC->colors.foreground, 1.0f);
 		}
 	}
-
+	
 	//+--------------------------------------+
 	//|           Render Main Menu           |
 	//+--------------------------------------+
 	rs->DrawGradient(ui->mainMenuRec, GC->colors.uiGray1, GC->colors.uiGray3, Direction2D_Down);
 	rs->DrawRectangle(NewRectangle(0, ui->mainMenuRec.height-1, ui->mainMenuRec.width, 1), GC->colors.uiGray4);
-
+	
 	for (u32 bIndex = 0; bIndex < NumMainMenuButtons; bIndex++)
 	{
 		rec buttonRec = ui->buttonRecs[bIndex];
 		Color_t baseColor = {Color_White};
 		Color_t highlightColor = {Color_Red};
 		Color_t iconColor = {Color_White};
-
+		
 		if (IsInsideRectangle(ui->mousePos, buttonRec) && !ui->mouseInMenu)
 		{
 			if (ButtonDown(MouseButton_Left) && IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], buttonRec))
@@ -1652,20 +1651,20 @@ AppUpdate_DEFINITION(App_Update)
 			}
 		}
 		highlightColor.a = 200;
-
+		
 		rs->BindTexture(&ui->buttonBaseTexture);
 		rs->DrawTexturedRec(buttonRec, baseColor);
-
+		
 		if (IsInsideRectangle(ui->mousePos, buttonRec) && !ui->mouseInMenu)
 		{
 			rs->BindTexture(&ui->buttonHighlightTexture);
 			rs->DrawTexturedRec(buttonRec, highlightColor);
 		}
-
+		
 		rs->BindTexture(&ui->buttonTextures[bIndex]);
 		rs->DrawTexturedRec(buttonRec, iconColor);
 	}
-
+	
 	//+--------------------------------------+
 	//|           Rx and Tx LEDs             |
 	//+--------------------------------------+
@@ -1673,7 +1672,7 @@ AppUpdate_DEFINITION(App_Update)
 		if (appData->rxTxShiftCountdown == 0)
 		{
 			appData->rxTxShiftCountdown = GC->rxTxLedDelay;
-
+			
 			appData->rxShiftRegister = (u8)(appData->rxShiftRegister >> 1);
 			appData->txShiftRegister = (u8)(appData->txShiftRegister >> 1);
 		}
@@ -1681,7 +1680,7 @@ AppUpdate_DEFINITION(App_Update)
 		{
 			appData->rxTxShiftCountdown--;
 		}
-
+		
 		Color_t centerColor = GC->colors.uiGray4;
 		if ((appData->rxShiftRegister&0x80) > 0 ||
 			(appData->rxShiftRegister&0x40) > 0)
@@ -1703,7 +1702,7 @@ AppUpdate_DEFINITION(App_Update)
 				rec deflatedRec = RectangleInflate(ui->rxLedRec, (r32)(8-shift) * 1);
 				rs->DrawButton(deflatedRec, {Color_TransparentBlack}, GC->colors.receiveLed, 1);
 			}
-
+			
 			if (IsFlagSet(appData->txShiftRegister, (1<<shift)))
 			{
 				rec deflatedRec = RectangleInflate(ui->txLedRec, (r32)(8-shift) * 1);
@@ -1711,7 +1710,7 @@ AppUpdate_DEFINITION(App_Update)
 			}
 		}
 	}
-
+	
 	//+--------------------------------------+
 	//|            Clear Button              |
 	//+--------------------------------------+
@@ -1725,11 +1724,11 @@ AppUpdate_DEFINITION(App_Update)
 		
 		Color_t buttonColor, textColor, borderColor;
 		ButtonColorChoice(buttonColor, textColor, borderColor, ui->clearButtonRec, false, false);
-
+		
 		rs->DrawButton(ui->clearButtonRec, buttonColor, borderColor);
 		rs->DrawString(clearStr, textPos, textColor);
 	}
-
+	
 	//+--------------------------------------+
 	//|        Save To File Button           |
 	//+--------------------------------------+
@@ -1745,19 +1744,19 @@ AppUpdate_DEFINITION(App_Update)
 		
 		Color_t buttonColor, textColor, borderColor;
 		ButtonColorChoice(buttonColor, textColor, borderColor, ui->saveButtonRec, false, false);
-
+		
 		rs->DrawButton(ui->saveButtonRec, buttonColor, borderColor);
 		rs->DrawString(clearStr, textPos, textColor);
 	}
-
+	
 	MenuHandlerDrawMenus(PlatformInfo, AppInput, &appData->renderState, &appData->menuHandler);
-
+	
 	// DrawThings();
-
+	
 	// DrawCircle(appData, AppInput->mouseStartPos[MouseButton_Left], AppInput->mouseMaxDist[MouseButton_Left], {Color_Red});
 	// DrawCircle(appData, AppInput->mouseStartPos[MouseButton_Right], AppInput->mouseMaxDist[MouseButton_Right], {Color_Blue});
 	// DrawCircle(appData, AppInput->mouseStartPos[MouseButton_Middle], AppInput->mouseMaxDist[MouseButton_Middle], {Color_Green});
-
+	
 	// rs->DrawRectangle(ui->statusBarRec, {Color_Yellow});
 	// rs->DrawRectangle(ui->scrollBarGutterRec, {Color_Red});
 	// rs->DrawRectangle(ui->scrollBarRec, {Color_Blue});
