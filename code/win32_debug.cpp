@@ -10,7 +10,7 @@ Description:
 
 #define DEBUG_PRINT_BUFFER_SIZE 2048
 
-#if true//DEBUG //DEBUG_Write and DEBUG_Print
+#if OPEN_CONSOLE_WINDOW //DEBUG_Write and DEBUG_Print
 	void Win32_Write(const char* message)
 	{
 		OutputDebugStringA(message);

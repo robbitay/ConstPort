@@ -64,6 +64,8 @@
 	[ ] Fix scrollbar so that it doesn't keep sliding when we have grabbed it
 	[ ] Better way tp detect open COM ports
 	[ ] Search functionality
+	[ ] Call a python script when line is received or regular expression is matched
+	[ ] Add output of python script to buffer
 	[ ] 
 
 # Platform Layer TODO List

@@ -24,13 +24,14 @@ GetComPortList_DEFINITION(Win32_GetComPortList)
 		
 		if (comHandle != INVALID_HANDLE_VALUE)
 		{
-			// Win32_PrintLine("%s Exists!", GetComPortName(comIndex));
+			Win32_PrintLine("%s Exists!", GetComPortName(comIndex));
 			*boolPntr = true;
 			result++;
 			CloseHandle(comHandle);
 		}
 		else
 		{
+			Win32_PrintLine("Couldn't open %s", GetComPortName(comIndex));
 			*boolPntr = false;
 		}
 	}
