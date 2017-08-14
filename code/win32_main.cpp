@@ -31,7 +31,7 @@ Description:
 #define WINDOW_TITLE              "Const Port"
 #define APPLICATION_DLL_NAME      "ConstPort.dll"
 #define APPLICATION_DLL_TEMP_NAME "ConstPort_TEMP.dll"
-#define OPEN_CONSOLE_WINDOW       false//DEBUG
+#define OPEN_CONSOLE_WINDOW       true//DEBUG
 
 //NOTE: This must match resource.h in build directory!
 #define IDI_ICON1               101

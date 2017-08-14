@@ -52,6 +52,8 @@ struct AppData_t
 	RealTime_t statusMessageTime;
 	StatusMessage_t statusMessageType;
 	char statusMessage[STATUS_MESSAGE_BUFFER_SIZE];
+	
+	RegexList_t regexList;
 };
 
 #endif // _APP_DATA_H

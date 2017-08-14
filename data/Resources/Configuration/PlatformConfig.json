@@ -7,7 +7,7 @@
 	"AspectRatio": [16, 9],
 	"AllowResizeWindow": true,
 	"AntiAliasingSamples": 4,
-	"TopmostWindow": false,
+	"TopmostWindow": true,
 	"ShowConsoleWindow": true, //Doesn't work atm
 	
 	"PermanantMemorySize": 16, //MB

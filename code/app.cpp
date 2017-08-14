@@ -33,6 +33,7 @@ const AppMemory_t*    Gl_AppMemory    = nullptr;
 #include "appRenderState.h"
 #include "appMenuHandler.h"
 #include "appUiHandler.h"
+#include "appRegularExpressions.h"
 #include "appConfiguration.h"
 #include "appData.h"
 
@@ -104,6 +105,7 @@ void StatusMessage(const char* functionName, StatusMessage_t messageType, const 
 #include "appMenuHandler.cpp"
 #include "appRenderLine.cpp"
 #include "appUiHandler.cpp"
+#include "appRegularExpressions.cpp"
 
 void ClearConsole()
 {
@@ -656,6 +658,8 @@ AppInitialize_DEFINITION(App_Initialize)
 	InitializeUiElements(&appData->uiElements);
 	InitializeRenderState(PlatformInfo, &appData->renderState);
 	InitializeMenuHandler(&appData->menuHandler, &appData->memArena);
+	InitializeRegexList(&appData->regexList, &appData->memArena);
+	LoadRegexFile(&appData->regexList, "Resources/Configuration/RegularExpressions.rgx");
 
 	v2i screenSize = PlatformInfo->screenSize;
 	Menu_t* comMenu = AddMenu(&appData->menuHandler, "COM Menu", NewRectangle((r32)screenSize.x / 2 - 50, (r32)screenSize.y / 2 - 150, 400, 300),
@@ -948,6 +952,7 @@ AppUpdate_DEFINITION(App_Update)
 		ButtonDown(Button_Control))
 	{
 		LoadGlobalConfiguration(PlatformInfo, &appData->globalConfig);
+		LoadRegexFile(&appData->regexList, "Resources/Configuration/RegularExpressions.rgx");
 	}
 
 	//+==================================+

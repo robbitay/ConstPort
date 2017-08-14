@@ -1,0 +1,16 @@
+# This file contains all the definitions for regular expressions
+# that can be referenced in configuration files by name
+
+# All lines should follow the format:
+# SomeName     regex
+# Where SomeName is the identifier used to reference the expression
+# which can be followed by any amount of whitespace.
+# Once the first non-whitespace character is found the rest of the line
+# is considered a regular expression.
+# Pound signs define a comment if the # comes before any non-whitespace character on the line
+# SomeName should be of the same format as a C identifier: [A-Za-z_][A-Za-z_0-9]*
+
+Error Line:       ^[e|E]\:
+Success Line:     ^[s|S]\:
+Important Line:   ^[p|P]\:
+Info Line:        ^[i|I]\:

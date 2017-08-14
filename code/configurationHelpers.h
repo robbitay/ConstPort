@@ -1,6 +1,12 @@
 /*
 File:   configurationHelpers.h
 Author: Taylor Robbins
+Date:   08\13\2017
+*/
+
+/*
+File:   configurationHelpers.h
+Author: Taylor Robbins
 Date:   08\06\2017
 	** This file is included by both platform and application layers
 */
@@ -33,9 +39,9 @@ typedef enum
 	ConfigError_ExpectedArray,
 } ConfigError_t;
 
-//+================================================================+
-//|                       Parsing Functions                        |
-//+================================================================+
+// +------------------------------------------------------------------+
+// |                        Parsing Functions                         |
+// +------------------------------------------------------------------+
 bool IsHexString(const char* charPntr, i32 numChars)
 {
 	for (i32 cIndex = 0; cIndex < numChars; cIndex++)
@@ -126,9 +132,9 @@ ConfigError_t TryParseColor(const char* charPntr, i32 numChars, Color_t* colorOu
 	}
 }
 
-//+================================================================+
-//|                     JSON Helper Functions                      |
-//+================================================================+
+// +------------------------------------------------------------------+
+// |                      JSON Helper Functions                       |
+// +------------------------------------------------------------------+
 #define TokenLength(tokenPntr) ((tokenPntr)->end - (tokenPntr)->start)
 #define TokenIsNamed(jsonData, tokenPntr, compareString) (TokenLength(tokenPntr) == strlen(compareString) && strncmp(compareString, &(jsonData)->data[tokenPntr->start], TokenLength(tokenPntr)) == 0)
 #define TryGetTokenAsNumber(jsonData, tokenPntr, valueOut) TryParseInt32(&(jsonData)->data[(tokenPntr)->start], TokenLength(tokenPntr), valueOut)

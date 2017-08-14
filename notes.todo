@@ -31,8 +31,10 @@
 	[X] Fix a bug with the gradient shader not scaling correctly?
 	[X] Load JSON file for settings
 	[X] Implement the backspace button
-	[!] Add checking for COM port errors and whether or not we are still connected
-	[ ] Status bar messages from anywhere in the program
+	[x] Status bar messages from anywhere in the program
+	[!] Regular Expression File
+	[!] Regular Expression line matching
+	[ ] Add checking for COM port errors and whether or not we are still connected
 	[ ] Paste from clipboard
 	[ ] Ability to set Flow Control mode
 	[ ] Horizontal Scrollbar (only shows up if needed)
@@ -42,6 +44,7 @@
 	[ ] Fade out the status message during the last second. (Requires more accurate timing information)
 	[ ] Circular RX and TX LEDs
 	[ ] Add a way to close the COM port
+	[ ] Open saved file when saving text to file
 	[ ] 
 
 # Application Wish List

@@ -662,7 +662,8 @@
 			"PlatformInfo",
 			"PlatformVersion",
 			"WindowOpen",
-			"WindowResized"
+			"WindowResized",
+			"appData"
 		],
 		"custom_types":
 		[
@@ -750,6 +751,8 @@
 			"ReadEntireFile_f",
 			"RealTime_t",
 			"Rectangle_t",
+			"RegexList_t",
+			"Regex_t",
 			"RenderState_t",
 			"Shader_t",
 			"StatusMessage_t",
