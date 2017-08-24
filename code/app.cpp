@@ -1077,7 +1077,25 @@ AppUpdate_DEFINITION(App_Update)
 	{
 		ui->scrollOffsetGoto.y += ui->viewRec.height;
 	}
-
+	
+	// +==================================+
+	// |     Test Regular Expression      |
+	// +==================================+
+	if (ButtonPressed(Button_E) && ButtonDown(Button_Control))
+	{
+		u32 selectionLength = GetSelection(nullptr);
+		if (selectionLength > 0)
+		{
+			char* selectionBuffer = (char*)malloc(selectionLength);
+			GetSelection(selectionBuffer);
+			
+			TestRegularExpression("([_A-Za-z][_A-Za-z0-9]*)\\s*([^\\n]+)",
+				selectionBuffer, selectionLength);
+			
+			free(selectionBuffer);
+		}
+	}
+	
 	//+==================================+
 	//|        Main Menu Buttons         |
 	//+==================================+

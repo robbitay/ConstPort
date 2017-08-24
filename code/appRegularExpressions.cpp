@@ -8,6 +8,18 @@ Description:
 #included from app.cpp
 */
 
+#include <boost/regex.hpp>
+
+//NOTE: I guess since exceptions are disabled in Boost.Regex
+//		it looks for a user defined throw_exception function...
+namespace boost
+{
+	void throw_exception(std::exception const & exc)
+	{
+		DEBUG_WriteLine("WARNING: Exception thrown!");
+	}
+}
+
 // +----------------------------------------------------------------+
 // |                        Public Functions                        |
 // +----------------------------------------------------------------+
@@ -186,4 +198,28 @@ void LoadRegexFile(RegexList_t* regexList, const char* filename)
 	}
 	
 	PlatformInfo->FreeFileMemoryPntr(&expressionFile);
+}
+
+bool TestRegularExpression(const char* expressionStr, const char* target, u32 targetLength)
+{
+	bool result = false;
+	boost::regex expression(expressionStr);
+	boost::cmatch matches;
+	
+	DEBUG_PrintLine("Trying to use \"%s\" to match target \"%.*s\"", expressionStr, targetLength, target);
+	
+	if (boost::regex_search(target, target + targetLength, matches, expression))
+	{
+		DEBUG_PrintLine("Found %d captured regions:", matches.size());
+		for (u32 mIndex = 0; mIndex < matches.size(); mIndex++)
+		{
+			DEBUG_PrintLine("[%u] = \"%s\"", mIndex, matches[mIndex].str().c_str());
+		}
+	}
+	else
+	{
+		DEBUG_WriteLine("Regular Expression Failed");
+	}
+	
+	return result;
 }

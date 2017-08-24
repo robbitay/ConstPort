@@ -14,20 +14,25 @@ set DebugBuild=1
 set ProjectName=ConstPort
 set BuildFolder=build\
 
+REM The boost regex library should be built using the b2 tool that comes
+REM with the Boost distribution with the following command:
+REM 	b2 regex runtime-debugging=on variant=debug runtime-link=static link=static threading=single address-model=64
+REM 	b2 regex runtime-debugging=off variant=release runtime-link=static link=static threading=single address-model=64
+
 if "%DebugBuild%"=="1" (
 	set DebugDependantFlags=/MTd -DDEBUG=1
 	set DebugDependantPaths=/LIBPATH:"W:\lib\glew-2.0.0\lib\Debug\x64" /LIBPATH:"W:\lib\glfw-3.2.1\build\src\Debug"
-	set DebugDependantLibraries=glew32d.lib
+	set DebugDependantLibraries=glew32d.lib libboost_regex-vc140-sgd-1_65.lib
 ) else (
 	set DebugDependantFlags=/MT -DDEBUG=0
 	set DebugDependantPaths=/LIBPATH:"W:\lib\glew-2.0.0\lib\Release\x64" /LIBPATH:"W:\lib\glfw-3.2.1\build\src\Release"
-	set DebugDependantLibraries=glew32.lib
+	set DebugDependantLibraries=glew32.lib libboost_regex-vc140-s-1_65.lib
 )
 
 set CompilerFlags=%DebugDependantFlags% /FC /Zi /EHsc /nologo /GS- /Gm- -GR- /EHa- /Fm /Od /Oi /WX /W4 /wd4201 /wd4100 /wd4189 /wd4996 /wd4127 /wd4505 /wd4101 /wd4702 /wd4458 /wd4324
 set LinkerFlags=-incremental:no
-set IncludeDirectories=/I"W:\lib\mylib" /I"W:\lib\glew-2.0.0\include" /I"W:\lib\glfw-3.2.1\include" /I"W:\lib\stb" /I"W:\lib\jsmn"
-set LibraryDirectories=%DebugDependantPaths%
+set IncludeDirectories=/I"W:\lib\mylib" /I"W:\lib\glew-2.0.0\include" /I"W:\lib\glfw-3.2.1\include" /I"W:\lib\stb" /I"W:\lib\jsmn" /I"W:\lib\boost_1_65_0"
+set LibraryDirectories=%DebugDependantPaths% /LIBPATH:"W:\lib\boost_1_65_0\stage\lib"
 set Libraries=gdi32.lib User32.lib Shell32.lib opengl32.lib glfw3.lib Shlwapi.lib %DebugDependantLibraries%
 set AppExports=/EXPORT:App_GetVersion /EXPORT:App_Initialize /EXPORT:App_Update /EXPORT:App_GetSoundSamples /EXPORT:App_Closing /EXPORT:App_Reloaded
 
