@@ -4,7 +4,7 @@
 	"TabWidth":    4,  //spaces
 	
 	"ElapsedBannerEnabled": true,
-	"ElapsedBannerTime":    15,  //secs
+	"ElapsedBannerTime":    15, //secs
 	"ElapsedBannerHeight":  25, //px
 	
 	"MarkHeight":      1, //px
@@ -25,18 +25,18 @@
 	"ShowTextCursor": true,
 	"ShowComNameInStatusBar": true,
 	"ShowLineNumbers": true,
-	"ShowHoverCursor": false,
+	"ShowHoverCursor": true,
 	"HighlightHoverLine": true,
 	
 	"RxTxLedDelay": 4, //frames
 	
-	"GenericCountRegexName": "Count",
-	"MarkLineRegexName": "Mark Line",
-	"Highlight1RegexName": "Debug Line",
-	"Highlight2RegexName": "Info Line",
-	"Highlight3RegexName": "Error Line",
-	"Highlight4RegexName": "Notify Line",
-	"Highlight5RegexName": "Important Line",
+	"GenericCountRegexName": "Has Hex 03",
+	"MarkLineRegexName":     "Short Line",
+	"Highlight1RegexName":   "Has Hex 01",
+	"Highlight2RegexName":   "Has Hex 02",
+	"Highlight3RegexName":   "Has Hex 03",
+	"Highlight4RegexName":   "Has Hex 04",
+	"Highlight5RegexName":   "Has Hex 05",
 	
 	//Various Colors Used in UI drawing
 	"Colors":

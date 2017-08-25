@@ -2,19 +2,23 @@
 # that can be referenced in configuration files by name
 
 # All lines should follow the format:
-# SomeName     regex
-# Where SomeName is the identifier used to reference the expression
-# which can be followed by any amount of whitespace.
+# Some Name:     regex
+# Where Some Name is the identifier used to reference the expression
+# which should be followed by a colon and then any amount of whitespace.
 # Once the first non-whitespace character is found the rest of the line
 # is considered a regular expression.
-# Pound signs define a comment if the # comes before any non-whitespace character on the line
-# SomeName should be of the same format as a C identifier: [A-Za-z_][A-Za-z_0-9]*
+# Pound character defines a single line comment
+# The identifier can contain spaces and other symbols (anything besides a semicolon)
+# Just make sure you escape special characters in the JSON when referencing the identifier
 
-Count:      ^\x{0003}
-Mark Line:  \={3,}
+# Matches anything with 3 or more = characters
+More Than 3 Equals:    \={3,}
+Has Elipse:            \.\.\.
+Short Line:            ^[^\n]{1,5}$
 
-Debug Line:       ^\x{0001}
-Info Line:        ^\x{0002}
-Error Line:       ^\x{0003}
-Notify Line:      ^\x{0004}
-Important Line:   ^\x{0005}
+# These match lines with the unused codepoints 0x01-0x05 anywhere in the line
+Has Hex 01: \x{0001}
+Has Hex 02: \x{0002}
+Has Hex 03: \x{0003}
+Has Hex 04: \x{0004}
+Has Hex 05: \x{0005}

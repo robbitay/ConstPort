@@ -32,19 +32,20 @@
 	[X] Load JSON file for settings
 	[X] Implement the backspace button
 	[x] Status bar messages from anywhere in the program
-	[!] Regular Expression File
-	[!] Regular Expression line matching
+	[X] Regular Expression File
+	[X] Regular Expression line matching
 	[ ] Add checking for COM port errors and whether or not we are still connected
 	[ ] Paste from clipboard
 	[ ] Ability to set Flow Control mode
 	[ ] Horizontal Scrollbar (only shows up if needed)
-	[ ] Naming of COM ports
+	[!] Naming of COM ports
 	[ ] Selection of spaces between markers
 	[ ] Option to enable timestamps and line color characters when saving to file
 	[ ] Fade out the status message during the last second. (Requires more accurate timing information)
 	[ ] Circular RX and TX LEDs
 	[ ] Add a way to close the COM port
 	[ ] Open saved file when saving text to file
+	[!] Seperate Readable and File names for COM port
 	[ ] 
 
 # Application Wish List
