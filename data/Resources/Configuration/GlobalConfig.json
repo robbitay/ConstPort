@@ -4,7 +4,7 @@
 	"TabWidth":    4,  //spaces
 	
 	"ElapsedBannerEnabled": true,
-	"ElapsedBannerTime":    1,  //secs
+	"ElapsedBannerTime":    15,  //secs
 	"ElapsedBannerHeight":  25, //px
 	
 	"MarkHeight":      1, //px
@@ -29,6 +29,14 @@
 	"HighlightHoverLine": true,
 	
 	"RxTxLedDelay": 4, //frames
+	
+	"GenericCountRegexName": "Count",
+	"MarkLineRegexName": "Mark Line",
+	"Highlight1RegexName": "Debug Line",
+	"Highlight2RegexName": "Info Line",
+	"Highlight3RegexName": "Error Line",
+	"Highlight4RegexName": "Notify Line",
+	"Highlight5RegexName": "Important Line",
 	
 	//Various Colors Used in UI drawing
 	"Colors":

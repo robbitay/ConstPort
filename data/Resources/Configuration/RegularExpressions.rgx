@@ -10,7 +10,11 @@
 # Pound signs define a comment if the # comes before any non-whitespace character on the line
 # SomeName should be of the same format as a C identifier: [A-Za-z_][A-Za-z_0-9]*
 
-Error Line:       ^[e|E]\:
-Success Line:     ^[s|S]\:
-Important Line:   ^[p|P]\:
-Info Line:        ^[i|I]\:
+Count:      ^\x{0003}
+Mark Line:  \={3,}
+
+Debug Line:       ^\x{0001}
+Info Line:        ^\x{0002}
+Error Line:       ^\x{0003}
+Notify Line:      ^\x{0004}
+Important Line:   ^\x{0005}

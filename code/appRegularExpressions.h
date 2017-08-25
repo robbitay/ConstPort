@@ -17,8 +17,8 @@ struct Regex_t
 
 struct RegexList_t
 {
-	LinkedList_t list;
 	MemoryArena_t* memArena;
+	LinkedList_t list;
 };
 
 #endif // _REGULAR_EXPRESSIONS_H

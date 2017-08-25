@@ -123,9 +123,13 @@ bool SplitFileLine(const char* linePntr, u32 lineLength, const char** namePntrOu
 	return true;
 }
 
-void LoadRegexFile(RegexList_t* regexList, const char* filename)
+void LoadRegexFile(RegexList_t* regexList, const char* filename, MemoryArena_t* memArena)
 {
 	const PlatformInfo_t* PlatformInfo = Gl_PlatformInfo;
+	
+	ClearPointer(regexList);
+	regexList->memArena = memArena;
+	CreateLinkedList(&regexList->list);
 	
 	FileInfo_t expressionFile = PlatformInfo->ReadEntireFilePntr(filename);
 	
@@ -149,11 +153,11 @@ void LoadRegexFile(RegexList_t* regexList, const char* filename)
 			{
 				if (lineEmpty)
 				{
-					DEBUG_PrintLine("Line %u is empty", lineNum);
+					// DEBUG_PrintLine("Line %u is empty", lineNum);
 				}
 				else if (isComment)
 				{
-					DEBUG_PrintLine("Line %u is comment", lineNum);
+					// DEBUG_PrintLine("Line %u is comment", lineNum);
 				}
 				else
 				{
@@ -163,20 +167,28 @@ void LoadRegexFile(RegexList_t* regexList, const char* filename)
 					const char* namePntr = nullptr; u32 nameLength = 0;
 					const char* expressionPntr = nullptr; u32 expressionLength = 0;
 					
-					DEBUG_PrintLine("Splitting line %u...", lineNum);
+					// DEBUG_PrintLine("Splitting line %u...", lineNum);
 					if (SplitFileLine(linePntr, lineLength,
 						&namePntr, &nameLength, &expressionPntr, &expressionLength))
 					{
-						DEBUG_PrintLine("\"%.*s\" = %.*s", nameLength, namePntr, expressionLength, expressionPntr);
+						DEBUG_PrintLine("Adding regular expression \"%.*s\": %.*s", nameLength, namePntr, expressionLength, expressionPntr);
+						
+						Regex_t* newRegex = LinkedPushStruct(&regexList->list, memArena, Regex_t);
+						
+						newRegex->name = PushArray(memArena, char, nameLength+1);
+						memcpy(newRegex->name, namePntr, nameLength);
+						newRegex->name[nameLength] = '\0';
+						
+						newRegex->expression = PushArray(memArena, char, expressionLength+1);
+						memcpy(newRegex->expression, expressionPntr, expressionLength);
+						newRegex->expression[expressionLength] = '\0';
 					}
 					else
 					{
 						StatusError("Could not parse line %u in %s", lineNum, filename);
 					}
-					
-					// DEBUG_PrintLine("Line %u: \"%.*s\"", lineNum, lineLength, linePntr);
 				}
-			
+				
 				lineEmpty = true;
 				isComment = false;
 				lineNum++;
@@ -200,26 +212,59 @@ void LoadRegexFile(RegexList_t* regexList, const char* filename)
 	PlatformInfo->FreeFileMemoryPntr(&expressionFile);
 }
 
+void DisposeRegexFile(RegexList_t* regexList)
+{
+	Regex_t* regexPntr = (Regex_t*)regexList->list.firstItem;
+	while (regexPntr != nullptr)
+	{
+		ArenaPop(regexList->memArena, regexPntr->name);
+		ArenaPop(regexList->memArena, regexPntr->expression);
+		
+		regexPntr = (Regex_t*)regexPntr->header.nextItem;
+	}
+	
+	DeleteLinkedList(&regexList->list, regexList->memArena);
+	ClearPointer(regexList);
+}
+
+const char* GetRegularExpression(RegexList_t* regexList, const char* name)
+{
+	Assert(regexList != nullptr);
+	if (name == nullptr) return nullptr;
+	
+	Regex_t* regexPntr = (Regex_t*)regexList->list.firstItem;
+	while (regexPntr != nullptr)
+	{
+		if (strcmp(regexPntr->name, name) == 0)
+		{
+			return regexPntr->expression;
+		}
+		
+		regexPntr = (Regex_t*)regexPntr->header.nextItem;
+	}
+	
+	return nullptr;
+}
+
 bool TestRegularExpression(const char* expressionStr, const char* target, u32 targetLength)
 {
-	bool result = false;
 	boost::regex expression(expressionStr);
 	boost::cmatch matches;
 	
-	DEBUG_PrintLine("Trying to use \"%s\" to match target \"%.*s\"", expressionStr, targetLength, target);
+	// DEBUG_PrintLine("Trying to use \"%s\" to match target \"%.*s\"", expressionStr, targetLength, target);
 	
 	if (boost::regex_search(target, target + targetLength, matches, expression))
 	{
-		DEBUG_PrintLine("Found %d captured regions:", matches.size());
-		for (u32 mIndex = 0; mIndex < matches.size(); mIndex++)
-		{
-			DEBUG_PrintLine("[%u] = \"%s\"", mIndex, matches[mIndex].str().c_str());
-		}
+		// DEBUG_PrintLine("Found %d captured regions:", matches.size());
+		// for (u32 mIndex = 0; mIndex < matches.size(); mIndex++)
+		// {
+		// 	DEBUG_PrintLine("[%u] = \"%s\"", mIndex, matches[mIndex].str().c_str());
+		// }
+		return true;
 	}
 	else
 	{
-		DEBUG_WriteLine("Regular Expression Failed");
+		// DEBUG_WriteLine("Regular Expression Failed");
+		return false;
 	}
-	
-	return result;
 }

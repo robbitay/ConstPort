@@ -70,7 +70,9 @@ bool LoadDllCode(const char* appDllName, const char* tempDllName, LoadedApp_t* l
 		while (!CopyFileA(appDllName, tempDllName, false))
 		{
 			copyTries++;
-			if (copyTries >= 5000)
+			//TODO: Seems this is dependant on how long the file is locked during compilation
+			//		We should revise it so it's more robust rather than hard-coded
+			if (copyTries >= 50000) 
 			{
 				Win32_WriteLine("Could not copy DLL.");
 				return false;

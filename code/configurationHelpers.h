@@ -15,6 +15,7 @@ Date:   08\06\2017
 #define _CONFIGURATION_HELPERS
 
 #include "colors.h"
+#include "memoryArena.h"
 #define JSMN_PARENT_LINKS
 #include "jsmn.h"
 #include "jsmn.c"
@@ -476,6 +477,30 @@ ConfigError_t TryGetVec2iConfig(JsonData_t* jsonData, i32 parentObjectIndex, con
 		{
 			return ConfigError_ExpectedArray;
 		}
+	}
+	else
+	{
+		return ConfigError_TokenNotFound;
+	}
+}
+
+ConfigError_t TryGetStringConfig(JsonData_t* jsonData, i32 parentObjectIndex, const char* tokenName, char** valuePntr, MemoryArena_t* memArena)
+{
+	i32 tokenIndex = FindChildTokenByName(jsonData, parentObjectIndex, tokenName);
+	if (tokenIndex != -1)
+	{
+		jsmntok_t* tokenPntr = &jsonData->tokens[tokenIndex];
+		i32 valueTokenIndex = GetChildToken(jsonData, tokenIndex);
+		jsmntok_t* valueTokenPntr = &jsonData->tokens[valueTokenIndex];
+		const char* valueStringPntr = &jsonData->data[valueTokenPntr->start];
+		u32 valueStringLength = TokenLength(valueTokenPntr);
+		
+		char* newSpace = PushArray(memArena, char, valueStringLength+1);
+		memcpy(newSpace, valueStringPntr, valueStringLength);
+		newSpace[valueStringLength] = '\0';
+		
+		*(valuePntr) = newSpace;
+		return ConfigError_None;
 	}
 	else
 	{

@@ -9,9 +9,11 @@ Date:   08\02\2017
 
 struct GlobalConfig_t
 {
+	MemoryArena_t* memArena;
+	
 	i32 fontSize;
 	i32 lineSpacing;
-	i32  tabWidth;
+	i32 tabWidth;
 	
 	bool elapsedBannerEnabled;
 	i32  elapsedBannerTime;
@@ -33,6 +35,14 @@ struct GlobalConfig_t
 	bool showHoverCursor;
 	bool highlightHoverLine;
 	i32  rxTxLedDelay;
+	
+	char* genericCountRegexName;
+	char* markLineRegexName;
+	char* highlight1RegexName;
+	char* highlight2RegexName;
+	char* highlight3RegexName;
+	char* highlight4RegexName;
+	char* highlight5RegexName;
 	
 	struct
 	{

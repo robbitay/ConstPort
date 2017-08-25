@@ -81,4 +81,5 @@
 	[ ] Close open COM ports when resetting application
 	[ ] Move recent changes and reusable functions into a starter project for later use
 	[ ] Save to file using Windows File Dialog
+	[!] Fix app loading when the compilation takes longer. We need to detect whether the file is locked for reading I guess?
 	[ ] 

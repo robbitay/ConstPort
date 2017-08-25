@@ -118,6 +118,8 @@ void ClearConsole()
 	appData->selectionStart = NewTextLocation(0, 0);
 	appData->selectionEnd = NewTextLocation(0, 0);
 	appData->uiElements.hoverLocation = NewTextLocation(0, 0);
+	
+	appData->genericCounter = 0;
 }
 
 void RefreshComPortList()
@@ -654,12 +656,12 @@ AppInitialize_DEFINITION(App_Initialize)
 	u32 arenaSize = AppMemory->permanantSize - sizeof(AppData_t);
 	InitializeMemoryArenaHeap(&appData->memArena, arenaBase, arenaSize);
 
-	LoadGlobalConfiguration(PlatformInfo, &appData->globalConfig);
+	LoadGlobalConfiguration(PlatformInfo, &appData->globalConfig, &appData->memArena);
 	InitializeUiElements(&appData->uiElements);
 	InitializeRenderState(PlatformInfo, &appData->renderState);
 	InitializeMenuHandler(&appData->menuHandler, &appData->memArena);
 	InitializeRegexList(&appData->regexList, &appData->memArena);
-	LoadRegexFile(&appData->regexList, "Resources/Configuration/RegularExpressions.rgx");
+	LoadRegexFile(&appData->regexList, "Resources/Configuration/RegularExpressions.rgx", &appData->memArena);
 
 	v2i screenSize = PlatformInfo->screenSize;
 	Menu_t* comMenu = AddMenu(&appData->menuHandler, "COM Menu", NewRectangle((r32)screenSize.x / 2 - 50, (r32)screenSize.y / 2 - 150, 400, 300),
@@ -824,9 +826,9 @@ AppUpdate_DEFINITION(App_Update)
 			if (readResult > 0)
 			{
 				// DEBUG_PrintLine("Read %d bytes \"%.*s\"", readResult, readResult, buffer);
-
+				
 				Line_t* lastLine = GetLastLine(&appData->lineList);
-
+				
 				for (i32 cIndex = 0; cIndex < readResult; cIndex++)
 				{
 					char newChar = buffer[cIndex];
@@ -837,8 +839,57 @@ AppUpdate_DEFINITION(App_Update)
 						{
 							finishedLine->timestamp = GetTimestamp(PlatformInfo->localTime);
 						}
-						//TODO: Do we want to process the finished line in some way?
-
+						
+						// +========================================+
+						// | Check Line Against Regular Expressions |
+						// +========================================+
+						const char* expression;
+						expression = GetRegularExpression(&appData->regexList, GC->genericCountRegexName);
+						if (expression != nullptr &&
+							TestRegularExpression(expression, finishedLine->chars, finishedLine->numChars))
+						{
+							DEBUG_WriteLine("Counter++");
+							appData->genericCounter++;
+						}
+						expression = GetRegularExpression(&appData->regexList, GC->markLineRegexName);
+						if (expression != nullptr &&
+							TestRegularExpression(expression, finishedLine->chars, finishedLine->numChars))
+						{
+							DEBUG_WriteLine("Auto-Mark");
+							FlagSet(finishedLine->flags, LineFlag_MarkBelow | LineFlag_ThickMark);
+						}
+						
+						expression = GetRegularExpression(&appData->regexList, GC->highlight1RegexName);
+						if (expression != nullptr && TestRegularExpression(expression, finishedLine->chars, finishedLine->numChars))
+						{
+							DEBUG_WriteLine("Highlight1");
+							finishedLine->matchColor = GC->colors.highlight1;
+						}
+						expression = GetRegularExpression(&appData->regexList, GC->highlight2RegexName);
+						if (expression != nullptr && TestRegularExpression(expression, finishedLine->chars, finishedLine->numChars))
+						{
+							DEBUG_WriteLine("Highlight2");
+							finishedLine->matchColor = GC->colors.highlight2;
+						}
+						expression = GetRegularExpression(&appData->regexList, GC->highlight3RegexName);
+						if (expression != nullptr && TestRegularExpression(expression, finishedLine->chars, finishedLine->numChars))
+						{
+							DEBUG_WriteLine("Highlight3");
+							finishedLine->matchColor = GC->colors.highlight3;
+						}
+						expression = GetRegularExpression(&appData->regexList, GC->highlight4RegexName);
+						if (expression != nullptr && TestRegularExpression(expression, finishedLine->chars, finishedLine->numChars))
+						{
+							DEBUG_WriteLine("Highlight4");
+							finishedLine->matchColor = GC->colors.highlight4;
+						}
+						expression = GetRegularExpression(&appData->regexList, GC->highlight5RegexName);
+						if (expression != nullptr && TestRegularExpression(expression, finishedLine->chars, finishedLine->numChars))
+						{
+							DEBUG_WriteLine("Highlight5");
+							finishedLine->matchColor = GC->colors.highlight5;
+						}
+						
 						lastLine = AddLineToList(&appData->lineList, "");
 					}
 					else if (newChar == '\b')
@@ -852,10 +903,9 @@ AppUpdate_DEFINITION(App_Update)
 					else
 					{
 						LineAppend(&appData->lineList, lastLine, newChar);
-
 					}
 				}
-
+				
 				appData->rxShiftRegister |= 0x80;
 			}
 			else if (readResult < 0)
@@ -863,35 +913,35 @@ AppUpdate_DEFINITION(App_Update)
 				DEBUG_PrintLine("COM port read Error!: %d", readResult);
 			}
 		}
-
+		
 		if (AppInput->textInputLength > 0)
 		{
 			// DEBUG_PrintLine("Writing \"%.*s\"", AppInput->textInputLength, AppInput->textInput);
-
+			
 			PlatformInfo->WriteComPortPntr(&appData->comPort, &AppInput->textInput[0], AppInput->textInputLength);
-
+			
 			appData->txShiftRegister |= 0x80;
 		}
-
+		
 		if (!comMenu->show && ButtonPressed(Button_Enter))
 		{
 			DEBUG_WriteLine("Writing New Line");
-
+			
 			char newChar = '\n';
 			PlatformInfo->WriteComPortPntr(&appData->comPort, &newChar, 1);
 			appData->txShiftRegister |= 0x80;
 		}
-
+		
 		if (!comMenu->show && ButtonPressed(Button_Backspace))
 		{
 			DEBUG_WriteLine("Writing Backspace");
-
+			
 			char newChar = '\b';
 			PlatformInfo->WriteComPortPntr(&appData->comPort, &newChar, 1);
 			appData->txShiftRegister |= 0x80;
 		}
 	}
-
+	
 	//+==================================+
 	//|        Recenter COM menu         |
 	//+==================================+
@@ -901,7 +951,7 @@ AppUpdate_DEFINITION(App_Update)
 			PlatformInfo->screenSize.x / 2 - comMenu->drawRec.width/2,
 			PlatformInfo->screenSize.y / 2 - comMenu->drawRec.height/2);
 	}
-
+	
 	//+================================+
 	//|         Show COM Menu          |
 	//+================================+
@@ -922,7 +972,7 @@ AppUpdate_DEFINITION(App_Update)
 			appData->comMenuOptions = appData->comPort;
 		}
 	}
-
+	
 	//+======================================+
 	//| Clear Console and Copy to Clipboard  |
 	//+======================================+
@@ -944,17 +994,19 @@ AppUpdate_DEFINITION(App_Update)
 			free(selectionTempBuffer);
 		}
 	}
-
+	
 	//+==================================+
 	//|   Reload Global Configuration    |
 	//+==================================+
 	if (ButtonPressed(Button_R) &&
 		ButtonDown(Button_Control))
 	{
-		LoadGlobalConfiguration(PlatformInfo, &appData->globalConfig);
-		LoadRegexFile(&appData->regexList, "Resources/Configuration/RegularExpressions.rgx");
+		DisposeGlobalConfig(&appData->globalConfig);
+		LoadGlobalConfiguration(PlatformInfo, &appData->globalConfig, &appData->memArena);
+		DisposeRegexFile(&appData->regexList);
+		LoadRegexFile(&appData->regexList, "Resources/Configuration/RegularExpressions.rgx", &appData->memArena);
 	}
-
+	
 	//+==================================+
 	//|       Select/Deselect all        |
 	//+==================================+
@@ -979,7 +1031,7 @@ AppUpdate_DEFINITION(App_Update)
 			StatusError("Unselected Everything");
 		}
 	}
-
+	
 	//+==================================+
 	//| Quick keys for opening COM ports |
 	//+==================================+
@@ -1086,13 +1138,20 @@ AppUpdate_DEFINITION(App_Update)
 		u32 selectionLength = GetSelection(nullptr);
 		if (selectionLength > 0)
 		{
-			char* selectionBuffer = (char*)malloc(selectionLength);
-			GetSelection(selectionBuffer);
-			
-			TestRegularExpression("([_A-Za-z][_A-Za-z0-9]*)\\s*([^\\n]+)",
-				selectionBuffer, selectionLength);
-			
-			free(selectionBuffer);
+			const char* countExpression = GetRegularExpression(&appData->regexList, GC->genericCountRegexName);
+			if (countExpression != nullptr)
+			{
+				char* selectionBuffer = (char*)malloc(selectionLength);
+				GetSelection(selectionBuffer);
+				
+				TestRegularExpression(countExpression, selectionBuffer, selectionLength);
+				
+				free(selectionBuffer);
+			}
+			else
+			{
+				DEBUG_WriteLine("Could not get Generic Count Regular Expression");
+			}
 		}
 	}
 	
@@ -1688,9 +1747,9 @@ AppUpdate_DEFINITION(App_Update)
 		rs->DrawTexturedRec(buttonRec, iconColor);
 	}
 	
-	//+--------------------------------------+
-	//|           Rx and Tx LEDs             |
-	//+--------------------------------------+
+	// +================================+
+	// |         Rx and Tx LEDs         |
+	// +================================+
 	{
 		if (appData->rxTxShiftCountdown == 0)
 		{
@@ -1734,9 +1793,9 @@ AppUpdate_DEFINITION(App_Update)
 		}
 	}
 	
-	//+--------------------------------------+
-	//|            Clear Button              |
-	//+--------------------------------------+
+	// +================================+
+	// |          Clear Button          |
+	// +================================+
 	{
 		const char* clearStr = "Clear";
 		v2 textSize = MeasureString(&appData->testFont, clearStr);
@@ -1752,9 +1811,18 @@ AppUpdate_DEFINITION(App_Update)
 		rs->DrawString(clearStr, textPos, textColor);
 	}
 	
-	//+--------------------------------------+
-	//|        Save To File Button           |
-	//+--------------------------------------+
+	// +==================================+
+	// |         Generic Counter          |
+	// +==================================+
+	if (GetRegularExpression(&appData->regexList, GC->genericCountRegexName) != nullptr)
+	{
+		rs->PrintString(NewVec2(230, appData->testFont.maxExtendUp + 10), GC->colors.foreground, 1.0f,
+						"Counter: %u", appData->genericCounter);
+	}
+	
+	// +==================================+
+	// |       Save To File Button        |
+	// +==================================+
 	if (appData->selectionStart.lineNum != appData->selectionEnd.lineNum ||
 		appData->selectionStart.charIndex != appData->selectionEnd.charIndex)
 	{

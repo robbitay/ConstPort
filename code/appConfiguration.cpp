@@ -38,10 +38,39 @@ Description:
 	};                                                                                            \
 } while(0)
 
-void LoadGlobalConfiguration(const PlatformInfo_t* PlatformInfo, GlobalConfig_t* globalConfig)
+#define GetStrConfig(parentIndex, tokenName, valuePntr, memoryArena) do                                      \
+{                                                                                                            \
+	ConfigError_t errorCode = TryGetStringConfig(&jsonData, parentIndex, tokenName, valuePntr, memoryArena); \
+	switch (errorCode)                                                                                       \
+	{                                                                                                        \
+		case ConfigError_None: DEBUG_PrintLine("Parsed \"%s\" correctly!", tokenName); break;                \
+		case ConfigError_TokenNotFound:                                                                      \
+			StatusError("Error parsing \"%s\": Token Not Found", tokenName);                                 \
+			parseSuccess = false; break;                                                                     \
+		case ConfigError_InvalidNumber:                                                                      \
+			StatusError("Error parsing \"%s\": Invalid Number", tokenName);                                  \
+			parseSuccess = false; break;                                                                     \
+		case ConfigError_InvalidBoolean:                                                                     \
+			StatusError("Error parsing \"%s\": Invalid Boolean", tokenName);                                 \
+			parseSuccess = false; break;                                                                     \
+		case ConfigError_ColorDoesntExist:                                                                   \
+			StatusError("Error parsing \"%s\": Color Doesn't Exist", tokenName);                             \
+			parseSuccess = false; break;                                                                     \
+		case ConfigError_WrongNumberOfArrayElements:                                                         \
+			StatusError("Error parsing \"%s\": Wrong Number of Array Elements", tokenName);                  \
+			parseSuccess = false; break;                                                                     \
+		case ConfigError_NumberOutOfRange:                                                                   \
+			StatusError("Error parsing \"%s\": Number Out of Range", tokenName);                             \
+			parseSuccess = false; break;                                                                     \
+	};                                                                                                       \
+} while(0)
+
+void LoadGlobalConfiguration(const PlatformInfo_t* PlatformInfo, GlobalConfig_t* globalConfig, MemoryArena_t* memArena)
 {
 	ClearPointer(globalConfig);
-
+	
+	globalConfig->memArena = memArena;
+	
 	//+================================+
 	//|       Set Default Values       |
 	//+================================+
@@ -67,6 +96,14 @@ void LoadGlobalConfiguration(const PlatformInfo_t* PlatformInfo, GlobalConfig_t*
 	globalConfig->showHoverCursor        = true;
 	globalConfig->highlightHoverLine     = true;
 	globalConfig->rxTxLedDelay           = 4;
+	
+	globalConfig->genericCountRegexName  = nullptr;
+	globalConfig->markLineRegexName      = nullptr;
+	globalConfig->highlight1RegexName    = nullptr;
+	globalConfig->highlight2RegexName    = nullptr;
+	globalConfig->highlight3RegexName    = nullptr;
+	globalConfig->highlight4RegexName    = nullptr;
+	globalConfig->highlight5RegexName    = nullptr;
 	
 	globalConfig->colors.background       = NewColor(33, 33, 33, 255);
 	globalConfig->colors.foreground       = {0xFFF8F8F2};
@@ -179,6 +216,14 @@ void LoadGlobalConfiguration(const PlatformInfo_t* PlatformInfo, GlobalConfig_t*
 		GetConfig(0, Bool, "HighlightHoverLine",     &globalConfig->highlightHoverLine);
 		
 		GetConfig(0, Int32, "RxTxLedDelay", &globalConfig->rxTxLedDelay);
+		
+		GetStrConfig(0, "GenericCountRegexName", &globalConfig->genericCountRegexName, memArena);
+		GetStrConfig(0, "MarkLineRegexName",     &globalConfig->markLineRegexName, memArena);
+		GetStrConfig(0, "Highlight1RegexName",     &globalConfig->highlight1RegexName, memArena);
+		GetStrConfig(0, "Highlight2RegexName",     &globalConfig->highlight2RegexName, memArena);
+		GetStrConfig(0, "Highlight3RegexName",     &globalConfig->highlight3RegexName, memArena);
+		GetStrConfig(0, "Highlight4RegexName",     &globalConfig->highlight4RegexName, memArena);
+		GetStrConfig(0, "Highlight5RegexName",     &globalConfig->highlight5RegexName, memArena);
 	}
 
 	//+==================================+
@@ -242,4 +287,17 @@ void LoadGlobalConfiguration(const PlatformInfo_t* PlatformInfo, GlobalConfig_t*
 	{
 		StatusSuccess("Global Configuration Loaded Successfully!");
 	}
+}
+
+void DisposeGlobalConfig(GlobalConfig_t* globalConfig)
+{
+	ArenaPop(globalConfig->memArena, globalConfig->genericCountRegexName);
+	ArenaPop(globalConfig->memArena, globalConfig->markLineRegexName);
+	ArenaPop(globalConfig->memArena, globalConfig->highlight1RegexName);
+	ArenaPop(globalConfig->memArena, globalConfig->highlight2RegexName);
+	ArenaPop(globalConfig->memArena, globalConfig->highlight3RegexName);
+	ArenaPop(globalConfig->memArena, globalConfig->highlight4RegexName);
+	ArenaPop(globalConfig->memArena, globalConfig->highlight5RegexName);
+	
+	ClearPointer(globalConfig);
 }

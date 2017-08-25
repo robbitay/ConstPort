@@ -16,8 +16,9 @@ r32 RenderLine(const AppInput_t* AppInput, Line_t* linePntr, v2 position, bool s
 	UiElements_t* ui = &appData->uiElements;
 	r32 result = 0;
 	
-	Color_t color = GC->colors.foreground;
-	if (linePntr->numChars > 0)
+	Color_t color = linePntr->matchColor;
+	#if 0
+	if (linePntr->numChars > 0 && linePntr->matchColor.value == 0x00000000)
 	{
 		if (linePntr->chars[0] == 0x01)
 		{
@@ -40,6 +41,7 @@ r32 RenderLine(const AppInput_t* AppInput, Line_t* linePntr, v2 position, bool s
 			color = GC->colors.highlight5;
 		}
 	}
+	#endif
 	
 	if (!sizeOnly)
 	{

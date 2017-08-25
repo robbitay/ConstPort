@@ -29,6 +29,7 @@ struct Line_t
 	u64 timestamp;
 	//Use the LineFlag enumeration
 	flags8 flags;
+	Color_t matchColor;
 };
 
 struct LineList_t

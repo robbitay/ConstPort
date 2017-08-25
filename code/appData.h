@@ -54,6 +54,8 @@ struct AppData_t
 	char statusMessage[STATUS_MESSAGE_BUFFER_SIZE];
 	
 	RegexList_t regexList;
+	
+	u32 genericCounter;
 };
 
 #endif // _APP_DATA_H
