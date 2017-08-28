@@ -4,6 +4,6 @@
 #define APP_VERSION_MAJOR    1
 #define APP_VERSION_MINOR    4
 
-#define APP_VERSION_BUILD    24
+#define APP_VERSION_BUILD    33
 
 #endif // _APP_VERSION_H

@@ -135,7 +135,7 @@ void RefreshComPortList()
 	{
 		if (appData->availableComPorts[cIndex] == true)
 		{
-			DEBUG_PrintLine("\"%s\"Available!", GetComPortName((ComPortIndex_t)cIndex));
+			DEBUG_PrintLine("\"%s\"Available!", GetComPortReadableName((ComPortIndex_t)cIndex));
 		}
 	}
 }
@@ -148,7 +148,7 @@ void OpenComPort(ComPortIndex_t comPortIndex, ComSettings_t settings)
 	if (appData->comPort.isOpen)
 	{
 		PlatformInfo->CloseComPortPntr(&appData->comPort);
-		StatusError("Closed %s", GetComPortName(appData->comPort.index));
+		StatusError("Closed %s", GetComPortReadableName(appData->comPort.index));
 	}
 
 	ClearConsole();
@@ -157,11 +157,11 @@ void OpenComPort(ComPortIndex_t comPortIndex, ComSettings_t settings)
 
 	if (appData->comPort.isOpen)
 	{
-		StatusSuccess("%s Opened Successfully", GetComPortName(comPortIndex));
+		StatusSuccess("%s Opened Successfully", GetComPortReadableName(comPortIndex));
 	}
 	else
 	{
-		StatusError("Couldn't open %s port.", GetComPortName(comPortIndex));
+		StatusError("Couldn't open %s port.", GetComPortReadableName(comPortIndex));
 	}
 }
 
@@ -208,7 +208,7 @@ void ComMenuUpdate(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 
 		//Update the menu size
 		{
-			v2 comNameSize = MeasureString(&appData->testFont, GetComPortName(ComPort_24));
+			v2 comNameSize = MeasureString(&appData->testFont, GetComPortReadableName(ComPort_24));
 			r32 tabMinimumWidth = comNameSize.x + COM_MENU_TAB_PADDING*2;
 			v2 menuSize = NewVec2(
 				stopBitsRec.x + stopBitsRec.width + COM_MENU_OUTER_PADDING - menuPntr->drawRec.x,
@@ -439,7 +439,7 @@ void ComMenuRender(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 			if (appData->availableComPorts[comIndex] == true ||
 				(appData->comPort.isOpen && (ComPortIndex_t)comIndex == appData->comPort.index))
 			{
-				v2 stringSize = MeasureString(&appData->testFont, GetComPortName((ComPortIndex_t)comIndex));
+				v2 stringSize = MeasureString(&appData->testFont, GetComPortReadableName((ComPortIndex_t)comIndex));
 				rec tabRec = NewRectangle(tabIndex * tabSize.x, 0, tabSize.x, tabSize.y);
 				tabRec.topLeft += menuPntr->usableRec.topLeft;
 				v2 stringPosition = tabRec.topLeft + NewVec2(tabRec.width/2 - stringSize.x/2, tabRec.height/2);
@@ -449,7 +449,7 @@ void ComMenuRender(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 					(appData->comMenuOptions.isOpen == true && (ComPortIndex_t)comIndex == appData->comMenuOptions.index), false);
 				
 				renderState->DrawButton(tabRec, buttonColor, borderColor);
-				renderState->DrawString(GetComPortName((ComPortIndex_t)comIndex), stringPosition, textColor);
+				renderState->DrawString(GetComPortReadableName((ComPortIndex_t)comIndex), stringPosition, textColor);
 				
 				tabIndex++;
 			}
@@ -758,7 +758,7 @@ AppUpdate_DEFINITION(App_Update)
 	if (appData->comPort.isOpen)
 	{
 		snprintf(AppOutput->windowTitle, sizeof(AppOutput->windowTitle)-1,
-			"[%s] Const Port", GetComPortName(appData->comPort.index));
+			"[%s] Const Port", GetComPortReadableName(appData->comPort.index));
 	}
 	else
 	{
@@ -1086,7 +1086,7 @@ AppUpdate_DEFINITION(App_Update)
 	if (ButtonPressed(Button_F) && ButtonDown(Button_Control))
 	{
 		char outputFileName[32]; ClearArray(outputFileName);
-		const char* comPortName = GetComPortName(appData->comPort.index);
+		const char* comPortName = GetComPortReadableName(appData->comPort.index);
 		strcpy(&outputFileName[0], comPortName);
 		strcpy(&outputFileName[strlen(comPortName)], "_Output.txt");
 		
@@ -1140,7 +1140,7 @@ AppUpdate_DEFINITION(App_Update)
 
 			if (appData->availableComPorts[cIndex] == false)
 			{
-				StatusError("%s not Available!", GetComPortName(cIndex));
+				StatusError("%s not Available!", GetComPortReadableName(cIndex));
 			}
 			else
 			{
@@ -1786,8 +1786,8 @@ AppUpdate_DEFINITION(App_Update)
 		
 		if (appData->comPort.isOpen && GC->showComNameInStatusBar)
 		{
-			v2 comNameSize = MeasureString(&appData->testFont, GetComPortName(appData->comPort.index));
-			rs->DrawString(GetComPortName(appData->comPort.index),
+			v2 comNameSize = MeasureString(&appData->testFont, GetComPortReadableName(appData->comPort.index));
+			rs->DrawString(GetComPortReadableName(appData->comPort.index),
 				NewVec2(ui->gotoEndButtonRec.x - comNameSize.x - 5, ui->screenSize.y-appData->testFont.maxExtendDown),
 				GC->colors.foreground, 1.0f);
 		}
