@@ -251,6 +251,9 @@ int WINAPI WinMain(HINSTANCE hInstance,
 	platformInfo.FreeFileMemoryPntr    = Win32_FreeFileMemory;
 	platformInfo.ReadEntireFilePntr    = Win32_ReadEntireFile;
 	platformInfo.WriteEntireFilePntr   = Win32_WriteEntireFile;
+	platformInfo.OpenFilePntr          = Win32_OpenFile;
+	platformInfo.AppendFilePntr        = Win32_AppendFile;
+	platformInfo.CloseFilePntr         = Win32_CloseFile;
 	platformInfo.GetComPortListPntr    = Win32_GetComPortList;
 	platformInfo.OpenComPortPntr       = Win32_OpenComPort;
 	platformInfo.CloseComPortPntr      = Win32_CloseComPort;

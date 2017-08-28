@@ -101,6 +101,76 @@ WriteEntireFile_DEFINITION(Win32_WriteEntireFile)
 	return result;
 }
 
+OpenFile_DEFINITION(Win32_OpenFile)
+{
+	Assert(openFileOut != nullptr);
+	Assert(fileName != nullptr);
+	
+	HANDLE fileHandle = CreateFileA(
+		fileName,              //Name of the file
+		GENERIC_WRITE,         //Open for reading and writing
+		FILE_SHARE_READ,       //Do not share
+		NULL,                  //Default security
+		OPEN_ALWAYS,           //Open existing or create new
+		FILE_ATTRIBUTE_NORMAL, //Default file attributes
+		NULL                   //No Template File
+	);
+	
+	if (fileHandle == INVALID_HANDLE_VALUE)
+	{
+		Win32_PrintLine("Couldn't open/create file: \"%s\"", fileName);
+		return false;
+	}
+	
+	SetFilePointer(fileHandle, 0, NULL, FILE_END);
+	
+	openFileOut->isOpen = true;
+	openFileOut->handle = fileHandle;
+	return true;
+}
+
+AppendFile_DEFINITION(Win32_AppendFile)
+{
+	Assert(filePntr != nullptr);
+	Assert(filePntr->isOpen);
+	Assert(filePntr->handle != INVALID_HANDLE_VALUE);
+	
+	if (newDataSize == 0) return true;
+	Assert(newData != nullptr);
+	
+	DWORD bytesWritten = 0;
+	if (WriteFile(filePntr->handle, newData, newDataSize, &bytesWritten, 0))
+	{
+		// NOTE: File read successfully
+		if (bytesWritten == newDataSize)
+		{
+			return true;
+		}
+		else
+		{
+			Win32_PrintLine("Not all bytes appended to file. %u/%u written", bytesWritten, newDataSize);
+			return false;
+		}
+	}
+	else
+	{
+		Win32_PrintLine("WriteFile failed. %u/%u written", bytesWritten, newDataSize);
+		return false;
+	}
+}
+
+CloseFile_DEFINITION(Win32_CloseFile)
+{
+	if (filePntr == nullptr) return;
+	if (filePntr->handle == INVALID_HANDLE_VALUE) return;
+	if (filePntr->isOpen == false) return;
+	
+	CloseHandle(filePntr->handle);
+	filePntr->handle = INVALID_HANDLE_VALUE;
+	filePntr->isOpen = false;
+}
+
+
 uint32 GetRunningDirectory(char* buffer, uint32 maxBufferSize)
 {
 	DWORD moduleFilenameLength = GetModuleFileNameA(0, buffer, maxBufferSize);

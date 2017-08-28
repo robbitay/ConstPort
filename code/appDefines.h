@@ -29,5 +29,6 @@ Date:   06\08\2017
 
 #define MAX_JSON_TOKENS            1024
 #define GLOBAL_CONFIG_FILEPATH     "Resources/Configuration/GlobalConfig.json"
+#define OUTPUT_FILE_NAME           "Output.txt"
 
 #endif // _APP_DEFINES_H

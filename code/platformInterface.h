@@ -27,6 +27,12 @@ struct FileInfo_t
 	void* content;
 };
 
+struct OpenFile_t
+{
+	bool isOpen;
+	HANDLE handle;
+};
+
 //+================================================================+
 //|                Platform Function Definitions                   |
 //+================================================================+
@@ -38,6 +44,15 @@ typedef ReadEntireFile_DEFINITION(ReadEntireFile_f);
 
 #define WriteEntireFile_DEFINITION(functionName) bool32 functionName(const char* filename, void* memory, uint32 memorySize)
 typedef WriteEntireFile_DEFINITION(WriteEntireFile_f);
+
+#define OpenFile_DEFINITION(functionName) bool32 functionName(const char* fileName, OpenFile_t* openFileOut)
+typedef OpenFile_DEFINITION(OpenFile_f);
+
+#define AppendFile_DEFINITION(functionName) bool32 functionName(OpenFile_t* filePntr, const void* newData, u32 newDataSize)
+typedef AppendFile_DEFINITION(AppendFile_f);
+
+#define CloseFile_DEFINITION(functionName) void functionName(OpenFile_t* filePntr)
+typedef CloseFile_DEFINITION(CloseFile_f);
 
 
 #define DebugWrite_DEFINITION(functionName)     void functionName(const char* string)
@@ -89,15 +104,21 @@ struct PlatformInfo_t
 	FreeFileMemory_f*    FreeFileMemoryPntr;
 	ReadEntireFile_f*    ReadEntireFilePntr;
 	WriteEntireFile_f*   WriteEntireFilePntr;
+	OpenFile_f*          OpenFilePntr;
+	AppendFile_f*        AppendFilePntr;
+	CloseFile_f*         CloseFilePntr;
+	
 	DebugWrite_f*        DebugWritePntr;
 	DebugWriteLine_f*    DebugWriteLinePntr;
 	DebugPrint_f*        DebugPrintPntr;
 	DebugPrintLine_f*    DebugPrintLinePntr;
+	
 	GetComPortList_f*    GetComPortListPntr;
 	OpenComPort_f*       OpenComPortPntr;
 	CloseComPort_f*      CloseComPortPntr;
 	ReadComPort_f*       ReadComPortPntr;
 	WriteComPort_f*      WriteComPortPntr;
+	
 	CopyToClipboard_f*   CopyToClipboardPntr;
 	CopyFromClipboard_f* CopyFromClipboardPntr;
 	

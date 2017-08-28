@@ -56,6 +56,9 @@ struct AppData_t
 	RegexList_t regexList;
 	
 	u32 genericCounter;
+	
+	bool writeToFile;
+	OpenFile_t outputFile;
 };
 
 #endif // _APP_DATA_H

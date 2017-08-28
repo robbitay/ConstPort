@@ -77,8 +77,24 @@ inline void LineAppend(LineList_t* lineList, Line_t* line, char newCharacter)
 	}
 	line->numChars++;
 	line->chars[line->numChars] = '\0';
+}
+
+inline void LineReset(LineList_t* lineList, Line_t* line)
+{
+	Assert(lineList != nullptr);
+	Assert(line != nullptr);
 	
+	ArenaPop(lineList->arenaPntr, line->chars);
+	line->numChars = 0;
+	char* newLocation = PushArray(lineList->arenaPntr, char, line->numChars+1);
+	line->chars = newLocation;
+	line->chars[line->numChars] = '\0';
 	
+	line->animProgress = 0.0f;
+	line->lineHeight = 0;
+	line->timestamp = 0;
+	line->flags = 0;
+	line->matchColor = GC->colors.foreground;
 }
 
 void CreateLineList(LineList_t* lineList, MemoryArena_t* arenaPntr, const char* contents)

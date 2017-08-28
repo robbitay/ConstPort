@@ -835,62 +835,110 @@ AppUpdate_DEFINITION(App_Update)
 					if (newChar == '\n')
 					{
 						Line_t* finishedLine = lastLine;
+						
 						if (finishedLine->timestamp == 0)
 						{
 							finishedLine->timestamp = GetTimestamp(PlatformInfo->localTime);
 						}
 						
-						// +========================================+
-						// | Check Line Against Regular Expressions |
-						// +========================================+
-						const char* expression;
-						expression = GetRegularExpression(&appData->regexList, GC->genericCountRegexName);
-						if (expression != nullptr &&
-							TestRegularExpression(expression, finishedLine->chars, finishedLine->numChars))
+						if (appData->writeToFile)
 						{
-							DEBUG_WriteLine("Counter++");
-							appData->genericCounter++;
+							//Write the line to the outputFile
+							
+							char timestampBuffer[256]; ClearArray(timestampBuffer);
+							RealTime_t lineTime = RealTimeAt(finishedLine->timestamp);
+							u32 timestampLength = snprintf(timestampBuffer, sizeof(timestampBuffer)-1,
+								"[%s %02u:%02u:%02u%s (%s %s, %04u)] ",
+								GetDayOfWeekStr(GetDayOfWeek(lineTime)),
+								Convert24HourTo12Hour(lineTime.hour), lineTime.minute, lineTime.second,
+								IsPostMeridian(lineTime.hour) ? "pm" : "am",
+								GetMonthStr((Month_t)lineTime.month), GetDayOfMonthString(lineTime.day), lineTime.year);
+							
+							PlatformInfo->AppendFilePntr(&appData->outputFile, timestampBuffer, timestampLength);
+							
+							for (u32 cIndex2 = 0; cIndex2 < finishedLine->numChars; cIndex2++)
+							{
+								if (finishedLine->chars[cIndex2] == 0x01)
+								{
+									finishedLine->chars[cIndex2] = ' ';
+								}
+								if (finishedLine->chars[cIndex2] == 0x02)
+								{
+									finishedLine->chars[cIndex2] = ' ';
+								}
+								if (finishedLine->chars[cIndex2] == 0x03)
+								{
+									finishedLine->chars[cIndex2] = ' ';
+								}
+								if (finishedLine->chars[cIndex2] == 0x04)
+								{
+									finishedLine->chars[cIndex2] = ' ';
+								}
+								if (finishedLine->chars[cIndex2] == 0x05)
+								{
+									finishedLine->chars[cIndex2] = ' ';
+								}
+							}
+							PlatformInfo->AppendFilePntr(&appData->outputFile, finishedLine->chars, finishedLine->numChars);
+							PlatformInfo->AppendFilePntr(&appData->outputFile, "\r\n", 2);
+							
+							LineReset(&appData->lineList, finishedLine);
 						}
-						expression = GetRegularExpression(&appData->regexList, GC->markLineRegexName);
-						if (expression != nullptr &&
-							TestRegularExpression(expression, finishedLine->chars, finishedLine->numChars))
+						else
 						{
-							DEBUG_WriteLine("Auto-Mark");
-							FlagSet(finishedLine->flags, LineFlag_MarkBelow | LineFlag_ThickMark);
+							//Throw the line on the end of the list
+							// +========================================+
+							// | Check Line Against Regular Expressions |
+							// +========================================+
+							const char* expression;
+							expression = GetRegularExpression(&appData->regexList, GC->genericCountRegexName);
+							if (expression != nullptr &&
+								TestRegularExpression(expression, finishedLine->chars, finishedLine->numChars))
+							{
+								DEBUG_WriteLine("Counter++");
+								appData->genericCounter++;
+							}
+							expression = GetRegularExpression(&appData->regexList, GC->markLineRegexName);
+							if (expression != nullptr &&
+								TestRegularExpression(expression, finishedLine->chars, finishedLine->numChars))
+							{
+								DEBUG_WriteLine("Auto-Mark");
+								FlagSet(finishedLine->flags, LineFlag_MarkBelow | LineFlag_ThickMark);
+							}
+							
+							expression = GetRegularExpression(&appData->regexList, GC->highlight1RegexName);
+							if (expression != nullptr && TestRegularExpression(expression, finishedLine->chars, finishedLine->numChars))
+							{
+								DEBUG_WriteLine("Highlight1");
+								finishedLine->matchColor = GC->colors.highlight1;
+							}
+							expression = GetRegularExpression(&appData->regexList, GC->highlight2RegexName);
+							if (expression != nullptr && TestRegularExpression(expression, finishedLine->chars, finishedLine->numChars))
+							{
+								DEBUG_WriteLine("Highlight2");
+								finishedLine->matchColor = GC->colors.highlight2;
+							}
+							expression = GetRegularExpression(&appData->regexList, GC->highlight3RegexName);
+							if (expression != nullptr && TestRegularExpression(expression, finishedLine->chars, finishedLine->numChars))
+							{
+								DEBUG_WriteLine("Highlight3");
+								finishedLine->matchColor = GC->colors.highlight3;
+							}
+							expression = GetRegularExpression(&appData->regexList, GC->highlight4RegexName);
+							if (expression != nullptr && TestRegularExpression(expression, finishedLine->chars, finishedLine->numChars))
+							{
+								DEBUG_WriteLine("Highlight4");
+								finishedLine->matchColor = GC->colors.highlight4;
+							}
+							expression = GetRegularExpression(&appData->regexList, GC->highlight5RegexName);
+							if (expression != nullptr && TestRegularExpression(expression, finishedLine->chars, finishedLine->numChars))
+							{
+								DEBUG_WriteLine("Highlight5");
+								finishedLine->matchColor = GC->colors.highlight5;
+							}
+							
+							lastLine = AddLineToList(&appData->lineList, "");
 						}
-						
-						expression = GetRegularExpression(&appData->regexList, GC->highlight1RegexName);
-						if (expression != nullptr && TestRegularExpression(expression, finishedLine->chars, finishedLine->numChars))
-						{
-							DEBUG_WriteLine("Highlight1");
-							finishedLine->matchColor = GC->colors.highlight1;
-						}
-						expression = GetRegularExpression(&appData->regexList, GC->highlight2RegexName);
-						if (expression != nullptr && TestRegularExpression(expression, finishedLine->chars, finishedLine->numChars))
-						{
-							DEBUG_WriteLine("Highlight2");
-							finishedLine->matchColor = GC->colors.highlight2;
-						}
-						expression = GetRegularExpression(&appData->regexList, GC->highlight3RegexName);
-						if (expression != nullptr && TestRegularExpression(expression, finishedLine->chars, finishedLine->numChars))
-						{
-							DEBUG_WriteLine("Highlight3");
-							finishedLine->matchColor = GC->colors.highlight3;
-						}
-						expression = GetRegularExpression(&appData->regexList, GC->highlight4RegexName);
-						if (expression != nullptr && TestRegularExpression(expression, finishedLine->chars, finishedLine->numChars))
-						{
-							DEBUG_WriteLine("Highlight4");
-							finishedLine->matchColor = GC->colors.highlight4;
-						}
-						expression = GetRegularExpression(&appData->regexList, GC->highlight5RegexName);
-						if (expression != nullptr && TestRegularExpression(expression, finishedLine->chars, finishedLine->numChars))
-						{
-							DEBUG_WriteLine("Highlight5");
-							finishedLine->matchColor = GC->colors.highlight5;
-						}
-						
-						lastLine = AddLineToList(&appData->lineList, "");
 					}
 					else if (newChar == '\b')
 					{
@@ -1029,6 +1077,40 @@ AppUpdate_DEFINITION(App_Update)
 			appData->selectionEnd = NewTextLocation(0, 0);
 
 			StatusError("Unselected Everything");
+		}
+	}
+	
+	// +==================================+
+	// |      Toggle Output To File       |
+	// +==================================+
+	if (ButtonPressed(Button_F) && ButtonDown(Button_Control))
+	{
+		char outputFileName[32]; ClearArray(outputFileName);
+		const char* comPortName = GetComPortName(appData->comPort.index);
+		strcpy(&outputFileName[0], comPortName);
+		strcpy(&outputFileName[strlen(comPortName)], "_Output.txt");
+		
+		DEBUG_PrintLine("Outputting to file: \"%s\"", outputFileName);
+		
+		if (appData->writeToFile)
+		{
+			PlatformInfo->CloseFilePntr(&appData->outputFile);
+			appData->writeToFile = false;
+			StatusSuccess("Stopped outputting to file");
+		}
+		else
+		{
+			if (PlatformInfo->OpenFilePntr(outputFileName, &appData->outputFile))
+			{
+				StatusSuccess("Opened file successfully");
+				appData->writeToFile = true;
+				const char* newString = "\r\n\r\n[File Opened for Writing]\r\n";
+				PlatformInfo->AppendFilePntr(&appData->outputFile, newString, (u32)strlen(newString));
+			}
+			else
+			{
+				StatusError("Error opening \"%s\" for writing", outputFileName);
+			}
 		}
 	}
 	
