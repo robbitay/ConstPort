@@ -82,3 +82,58 @@ Description:
 		borderColor = GC->colors.buttonBorder;                                                    \
 	}                                                                                             \
 } while(0)
+
+char* FormattedSizeStr(u32 numBytes)
+{
+	char* result = nullptr;
+	
+	u32 numMegabytes = numBytes / (1024*1024);
+	u32 numKilobytes = (numBytes%(1024*1024)) / 1024;
+	u32 remainder    = (numBytes%1024);
+	
+	if (numMegabytes == 0)
+	{
+		if (numKilobytes == 0)
+		{
+			result = TempPrint("%u bytes", remainder);
+		}
+		else
+		{
+			if (remainder == 0)
+			{
+				result = TempPrint("%ukB", numKilobytes);
+			}
+			else
+			{
+				result = TempPrint("%ukB and %u bytes", numKilobytes, remainder);
+			}
+		}
+	}
+	else
+	{
+		if (numKilobytes == 0)
+		{
+			if (remainder == 0)
+			{
+				result = TempPrint("%uMB", numMegabytes);
+			}
+			else
+			{
+				result = TempPrint("%uMB and %u bytes", numMegabytes, remainder);
+			}
+		}
+		else
+		{
+			if (remainder == 0)
+			{
+				result = TempPrint("%uMB %ukB", numMegabytes, numKilobytes);
+			}
+			else
+			{
+				result = TempPrint("%uMB %ukB and %u bytes", numMegabytes, numKilobytes, remainder);
+			}
+		}
+	}
+	
+	return result;
+}

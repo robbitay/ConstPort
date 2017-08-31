@@ -31,7 +31,7 @@ struct PlatformConfig_t
 	ConfigError_t errorCode = TryGet##Type##Config(&jsonData, parentIndex, tokenName, valuePntr); \
 	switch (errorCode)                                                                            \
 	{                                                                                             \
-		case ConfigError_None: Win32_PrintLine("Parsed \"%s\" correctly!", tokenName); break;     \
+		case ConfigError_None: /*Win32_PrintLine("Parsed \"%s\" correctly!", tokenName);*/ break; \
 		case ConfigError_TokenNotFound:                                                           \
 			Win32_PrintLine("Error parsing \"%s\": Token Not Found", tokenName);                  \
 			parseSuccess = false; break;                                                          \

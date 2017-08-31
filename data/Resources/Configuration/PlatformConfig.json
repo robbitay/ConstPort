@@ -11,5 +11,5 @@
 	"ShowConsoleWindow": false, //Doesn't work atm
 	
 	"PermanantMemorySize": 16, //MB
-	"TransientMemorySize": 8, //MB
+	"TransientMemorySize": 16, //MB
 }

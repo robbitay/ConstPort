@@ -171,7 +171,7 @@ void LoadRegexFile(RegexList_t* regexList, const char* filename, MemoryArena_t* 
 					if (SplitFileLine(linePntr, lineLength,
 						&namePntr, &nameLength, &expressionPntr, &expressionLength))
 					{
-						DEBUG_PrintLine("Adding regular expression \"%.*s\": %.*s", nameLength, namePntr, expressionLength, expressionPntr);
+						// DEBUG_PrintLine("Adding regular expression \"%.*s\": %.*s", nameLength, namePntr, expressionLength, expressionPntr);
 						
 						Regex_t* newRegex = LinkedPushStruct(&regexList->list, memArena, Regex_t);
 						

@@ -34,7 +34,9 @@
 	[x] Status bar messages from anywhere in the program
 	[X] Regular Expression File
 	[X] Regular Expression line matching
-	[!] Add an output to file button that will start logging to a file rather than the console
+	[X] Add an output to file button that will start logging to a file rather than the console
+	[!] Add a temporary MemoryArena type
+	[!] Add a string data stack for all input lines to get added to
 	[ ] Add checking for COM port errors and whether or not we are still connected
 	[ ] Paste from clipboard
 	[ ] Ability to set Flow Control mode

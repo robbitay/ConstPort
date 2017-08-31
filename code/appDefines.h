@@ -27,6 +27,9 @@ Date:   06\08\2017
 #define BANNER_EXPAND_SPEED        0.003f //percentage
 #define STATUS_MESSAGE_BUFFER_SIZE 128//bytes
 
+#define TRANSIENT_MAX_NUMBER_MARKS 16
+#define INPUT_ARENA_SIZE           1024*1024
+
 #define MAX_JSON_TOKENS            1024
 #define GLOBAL_CONFIG_FILEPATH     "Resources/Configuration/GlobalConfig.json"
 #define OUTPUT_FILE_NAME           "Output.txt"

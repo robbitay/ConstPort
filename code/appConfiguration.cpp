@@ -16,7 +16,7 @@ Description:
 	ConfigError_t errorCode = TryGet##Type##Config(&jsonData, parentIndex, tokenName, valuePntr); \
 	switch (errorCode)                                                                            \
 	{                                                                                             \
-		case ConfigError_None: DEBUG_PrintLine("Parsed \"%s\" correctly!", tokenName); break;     \
+		case ConfigError_None: /*DEBUG_PrintLine("Parsed \"%s\" correctly!", tokenName);*/ break; \
 		case ConfigError_TokenNotFound:                                                           \
 			StatusError("Error parsing \"%s\": Token Not Found", tokenName);                      \
 			parseSuccess = false; break;                                                          \
@@ -43,7 +43,7 @@ Description:
 	ConfigError_t errorCode = TryGetStringConfig(&jsonData, parentIndex, tokenName, valuePntr, memoryArena); \
 	switch (errorCode)                                                                                       \
 	{                                                                                                        \
-		case ConfigError_None: DEBUG_PrintLine("Parsed \"%s\" correctly!", tokenName); break;                \
+		case ConfigError_None: /*DEBUG_PrintLine("Parsed \"%s\" correctly!", tokenName);*/ break;            \
 		case ConfigError_TokenNotFound:                                                                      \
 			StatusError("Error parsing \"%s\": Token Not Found", tokenName);                                 \
 			parseSuccess = false; break;                                                                     \

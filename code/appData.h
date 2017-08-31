@@ -9,7 +9,10 @@ Date:   06\07\2017
 
 struct AppData_t
 {
-	MemoryArena_t memArena;
+	MemoryArena_t mainHeap;
+	MemoryArena_t inputArena;
+	MemoryArena_t tempArena;
+	
 	RenderState_t renderState;
 	MenuHandler_t menuHandler;
 	GlobalConfig_t globalConfig;
@@ -40,7 +43,6 @@ struct AppData_t
 	
 	UiElements_t uiElements;
 	
-	
 	TextLocation_t hoverLocation;
 	TextLocation_t selectionStart;
 	TextLocation_t selectionEnd;
@@ -59,6 +61,8 @@ struct AppData_t
 	
 	bool writeToFile;
 	OpenFile_t outputFile;
+	
+	bool showDebugMenu;
 };
 
 #endif // _APP_DATA_H

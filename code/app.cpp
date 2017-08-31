@@ -16,11 +16,13 @@ Description:
 #define STB_TRUETYPE_IMPLEMENTATION
 #include "stb_truetype.h"
 #include "memoryArena.h"
+#include "tempMemory.h"
+#include "tempMemory.cpp"
 #include "linkedList.h"
 #include "easing.h"
 
 const PlatformInfo_t* Gl_PlatformInfo = nullptr;
-const AppMemory_t*    Gl_AppMemory    = nullptr;
+const    AppMemory_t* Gl_AppMemory    = nullptr;
 
 #include "appHelpers.cpp"
 
@@ -113,7 +115,7 @@ void ClearConsole()
 
 	DEBUG_WriteLine("Clearing Console");
 	DestroyLineList(&appData->lineList);
-	CreateLineList(&appData->lineList, &appData->memArena, "");
+	CreateLineList(&appData->lineList, &appData->mainHeap, "");
 
 	appData->selectionStart = NewTextLocation(0, 0);
 	appData->selectionEnd = NewTextLocation(0, 0);
@@ -646,23 +648,43 @@ AppInitialize_DEFINITION(App_Initialize)
 	Gl_PlatformInfo = PlatformInfo;
 	Gl_AppMemory = AppMemory;
 	DEBUG_WriteLine("Initializing Game...");
-
+	
 	AppData_t* appData = (AppData_t*)AppMemory->permanantPntr;
 	ClearPointer(appData);
 	GL_AppData = appData;
 	GC = &appData->globalConfig;
-
-	void* arenaBase = (void*)(appData+1);
-	u32 arenaSize = AppMemory->permanantSize - sizeof(AppData_t);
-	InitializeMemoryArenaHeap(&appData->memArena, arenaBase, arenaSize);
-
-	LoadGlobalConfiguration(PlatformInfo, &appData->globalConfig, &appData->memArena);
+	TempArena = &appData->tempArena;
+	
+	Assert(AppMemory->permanantSize > INPUT_ARENA_SIZE);
+	
+	// +==================================+
+	// |          Memory Arenas           |
+	// +==================================+
+	u8* extraSpaceStart = ((u8*)appData) + sizeof(AppData_t);
+	
+	InitializeMemoryArenaLinear(&appData->inputArena, extraSpaceStart, INPUT_ARENA_SIZE);
+	
+	u32 mainHeapSize = AppMemory->permanantSize - sizeof(AppData_t) - INPUT_ARENA_SIZE;
+	InitializeMemoryArenaHeap(&appData->mainHeap, extraSpaceStart + INPUT_ARENA_SIZE, mainHeapSize);
+	
+	InitializeMemoryArenaTemp(&appData->tempArena, AppMemory->transientPntr, AppMemory->transientSize, TRANSIENT_MAX_NUMBER_MARKS);
+	TempPushMark();
+	
+	DEBUG_PrintLine("Input Arena: %s", FormattedSizeStr(INPUT_ARENA_SIZE));
+	DEBUG_PrintLine("Main Heap:   %s", FormattedSizeStr(mainHeapSize));
+	DEBUG_PrintLine("Temp Arena:  %s", FormattedSizeStr(AppMemory->transientSize));
+	
+	// +================================+
+	// |    External Initializations    |
+	// +================================+
+	LoadGlobalConfiguration(PlatformInfo, &appData->globalConfig, &appData->mainHeap);
 	InitializeUiElements(&appData->uiElements);
 	InitializeRenderState(PlatformInfo, &appData->renderState);
-	InitializeMenuHandler(&appData->menuHandler, &appData->memArena);
-	InitializeRegexList(&appData->regexList, &appData->memArena);
-	LoadRegexFile(&appData->regexList, "Resources/Configuration/RegularExpressions.rgx", &appData->memArena);
-
+	InitializeMenuHandler(&appData->menuHandler, &appData->mainHeap);
+	InitializeRegexList(&appData->regexList, &appData->mainHeap);
+	LoadRegexFile(&appData->regexList, "Resources/Configuration/RegularExpressions.rgx", &appData->mainHeap);
+	CreateLineList(&appData->lineList, &appData->mainHeap, "");
+	
 	v2i screenSize = PlatformInfo->screenSize;
 	Menu_t* comMenu = AddMenu(&appData->menuHandler, "COM Menu", NewRectangle((r32)screenSize.x / 2 - 50, (r32)screenSize.y / 2 - 150, 400, 300),
 		ComMenuUpdate, ComMenuRender);
@@ -671,38 +693,44 @@ AppInitialize_DEFINITION(App_Initialize)
 		ContextMenuUpdate, ContextMenuRender);
 	contextMenu->titleBarSize = 0;
 	contextMenu->show = true;
-
+	
+	// +================================+
+	// |          Load Content          |
+	// +================================+
 	appData->simpleShader = LoadShader(
 		"Resources/Shaders/simple-vertex.glsl",
 		"Resources/Shaders/simple-fragment.glsl");
 	appData->outlineShader = LoadShader(
 		"Resources/Shaders/outline-vertex.glsl",
 		"Resources/Shaders/outline-fragment.glsl");
-
+	
 	appData->testTexture = LoadTexture("Resources/Sprites/buttonIcon3.png");
 	appData->scrollBarEndcapTexture = LoadTexture("Resources/Sprites/scrollBarEndcap.png", false, false);
-
+	
 	appData->testFont = LoadFont("Resources/Fonts/consola.ttf",
 		(r32)GC->fontSize, 1024, 1024, ' ', 96);
-
+	
+	// +================================+
+	// |          Frame Buffer          |
+	// +================================+
 	appData->frameTexture = CreateTexture(nullptr, 2048, 2048);
 	appData->frameBuffer = CreateFrameBuffer(&appData->frameTexture);
 	if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 	{
 		DEBUG_WriteLine("FrameBuffer incomplete!");
 	}
-
-	FileInfo_t testFile = PlatformInfo->ReadEntireFilePntr("test.txt");
-	CreateLineList(&appData->lineList, &appData->memArena, "");//(const char*)testFile.content);
-	PlatformInfo->FreeFileMemoryPntr(&testFile);
-
+	
+	// +================================+
+	// |      Other Initialization      |
+	// +================================+
 	appData->comPort.settings.baudRate = BaudRate_115200;
 	appData->comPort.settings.parity = Parity_None;
 	appData->comPort.settings.stopBits = StopBits_1;
 	appData->comPort.settings.numBits = 8;
-
+	
 	RefreshComPortList();
-
+	
+	TempPopMark();
 	DEBUG_WriteLine("Initialization Done!");
 }
 
@@ -716,6 +744,7 @@ AppReloaded_DEFINITION(App_Reloaded)
 	AppData_t* appData = (AppData_t*)AppMemory->permanantPntr;
 	GL_AppData = appData;
 	GC = &appData->globalConfig;
+	TempArena = &appData->tempArena;
 
 	StatusDebug("App Reloaded");
 
@@ -751,9 +780,12 @@ AppUpdate_DEFINITION(App_Update)
 	AppData_t* appData = (AppData_t*)AppMemory->permanantPntr;
 	GL_AppData = appData;
 	GC = &appData->globalConfig;
+	TempArena = &appData->tempArena;
 	UiElements_t* ui = &appData->uiElements;
 	RenderState_t* rs = &appData->renderState;
-
+	
+	TempPushMark();
+	
 	ClearArray(AppOutput->windowTitle);
 	if (appData->comPort.isOpen)
 	{
@@ -1034,12 +1066,17 @@ AppUpdate_DEFINITION(App_Update)
 		else
 		{
 			u32 selectionSize = GetSelection();
-			char* selectionTempBuffer = (char*)malloc(selectionSize);
-			GetSelection(selectionTempBuffer);
-
-			PlatformInfo->CopyToClipboardPntr(selectionTempBuffer, selectionSize);
-
-			free(selectionTempBuffer);
+			if (selectionSize != 0)
+			{
+				TempPushMark();
+				
+				char* selectionTempBuffer = TempString(selectionSize+1);
+				GetSelection(selectionTempBuffer);
+				
+				PlatformInfo->CopyToClipboardPntr(selectionTempBuffer, selectionSize);
+				
+				TempPopMark();
+			}
 		}
 	}
 	
@@ -1050,9 +1087,9 @@ AppUpdate_DEFINITION(App_Update)
 		ButtonDown(Button_Control))
 	{
 		DisposeGlobalConfig(&appData->globalConfig);
-		LoadGlobalConfiguration(PlatformInfo, &appData->globalConfig, &appData->memArena);
+		LoadGlobalConfiguration(PlatformInfo, &appData->globalConfig, &appData->mainHeap);
 		DisposeRegexFile(&appData->regexList);
-		LoadRegexFile(&appData->regexList, "Resources/Configuration/RegularExpressions.rgx", &appData->memArena);
+		LoadRegexFile(&appData->regexList, "Resources/Configuration/RegularExpressions.rgx", &appData->mainHeap);
 	}
 	
 	//+==================================+
@@ -1148,7 +1185,15 @@ AppUpdate_DEFINITION(App_Update)
 			}
 		}
 	}
-
+	
+	// +================================+
+	// |      Toggle Debug Overlay      |
+	// +================================+
+	if (ButtonPressed(Button_F11))
+	{
+		appData->showDebugMenu = !appData->showDebugMenu;
+	}
+	
 	RecalculateUiElements(AppInput, ui, false);
 
 	if (ButtonDown(Button_Right))
@@ -1192,8 +1237,7 @@ AppUpdate_DEFINITION(App_Update)
 	bool gotoEndButtonPressed = (IsInsideRectangle(AppInput->mousePos, ui->gotoEndButtonRec) &&
 		ButtonReleased(MouseButton_Left) &&
 		IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], ui->gotoEndButtonRec));
-	if (gotoEndButtonPressed ||
-		ButtonPressed(Button_End))
+	if (gotoEndButtonPressed || ButtonPressed(Button_End))
 	{
 		ui->followingEndOfFile = true;
 	}
@@ -1223,12 +1267,14 @@ AppUpdate_DEFINITION(App_Update)
 			const char* countExpression = GetRegularExpression(&appData->regexList, GC->genericCountRegexName);
 			if (countExpression != nullptr)
 			{
-				char* selectionBuffer = (char*)malloc(selectionLength);
+				TempPushMark();
+				
+				char* selectionBuffer = TempString(selectionLength);
 				GetSelection(selectionBuffer);
 				
 				TestRegularExpression(countExpression, selectionBuffer, selectionLength);
 				
-				free(selectionBuffer);
+				TempPopMark();
 			}
 			else
 			{
@@ -1303,17 +1349,22 @@ AppUpdate_DEFINITION(App_Update)
 			PlatformInfo->localTime.hour, PlatformInfo->localTime.minute, PlatformInfo->localTime.second);
 
 		u32 selectionSize = GetSelection(nullptr);
-		char* fileBuffer = (char*)malloc(selectionSize);
-		GetSelection(fileBuffer);
-
-		//NOTE: GetSelection adds a \0 on the end so need to remove it
-		DEBUG_PrintLine("Saving %u bytes to %s", selectionSize-1, fileNameBuffer);
-		PlatformInfo->WriteEntireFilePntr(fileNameBuffer, fileBuffer, selectionSize-1);
-		DEBUG_WriteLine("Done!");
-
-		StatusSuccess("Saved to %s", fileNameBuffer);
-
-		free(fileBuffer);
+		if (selectionSize > 0)
+		{
+			TempPushMark();
+			
+			char* fileBuffer = TempString(selectionSize);
+			GetSelection(fileBuffer);
+			
+			//NOTE: GetSelection adds a \0 on the end so need to remove it
+			DEBUG_PrintLine("Saving %u bytes to %s", selectionSize-1, fileNameBuffer);
+			PlatformInfo->WriteEntireFilePntr(fileNameBuffer, fileBuffer, selectionSize-1);
+			DEBUG_WriteLine("Done!");
+			
+			TempPopMark();
+			
+			StatusSuccess("Saved to %s", fileNameBuffer);
+		}
 	}
 
 	//+==========================================+
@@ -1694,7 +1745,7 @@ AppUpdate_DEFINITION(App_Update)
 		// rs->DrawGradient(NewRectangle(10, 10, 300, 300), color1, color2, Direction2D_Right);
 		// rs->PrintString(
 		// 	NewVec2(0, ui->screenSize.y-appData->testFont.maxExtendDown), GC->colors.foreground, 1.0f,
-		// 	"Heap: %u/%u used", appData->memArena.used, appData->memArena.size);
+		// 	"Heap: %u/%u used", appData->mainHeap.used, appData->mainHeap.size);
 		// rs->PrintString(
 		// 	NewVec2(0, ui->screenSize.y-appData->testFont.maxExtendDown), GC->colors.foreground, 1.0f,
 		// 	"Line %d Char %d", ui->hoverLocation.lineNum+1, ui->hoverLocation.charIndex);
@@ -1924,6 +1975,36 @@ AppUpdate_DEFINITION(App_Update)
 	
 	MenuHandlerDrawMenus(PlatformInfo, AppInput, &appData->renderState, &appData->menuHandler);
 	
+	// +================================+
+	// |       Draw Debug Overlay       |
+	// +================================+
+	#if DEBUG
+	if (appData->showDebugMenu)
+	{
+		rec overlayRec = NewRectangle(10, 10, (r32)PlatformInfo->screenSize.x - 10*2, (r32)PlatformInfo->screenSize.y - 10*2);
+		
+		rs->DrawButton(overlayRec, ColorTransparent({Color_Black}, 0.5f), ColorTransparent({Color_White}, 0.5f));
+		
+		v2 textPos = NewVec2(overlayRec.x + 5, overlayRec.y + 5 + appData->testFont.maxExtendUp);
+		
+		rs->PrintString(textPos, {Color_White}, 1.0f, "Input Arena: %u/%u (%.3f%%)",
+			appData->inputArena.used, appData->inputArena.size,
+			(r32)appData->inputArena.used / (r32)appData->inputArena.size * 100.0f);
+		textPos.y += appData->testFont.lineHeight;
+		
+		rs->PrintString(textPos, {Color_White}, 1.0f, "Main Heap: %u/%u (%.3f%%)",
+			appData->mainHeap.used, appData->mainHeap.size,
+			(r32)appData->mainHeap.used / (r32)appData->mainHeap.size * 100.0f);
+		textPos.y += appData->testFont.lineHeight;
+		
+		rs->PrintString(textPos, {Color_White}, 1.0f, "Temp Arena: %u/%u (%.3f%%)",
+			ArenaGetHighWaterMark(TempArena), TempArena->size,
+			(r32)ArenaGetHighWaterMark(TempArena) / (r32)TempArena->size * 100.0f);
+		textPos.y += appData->testFont.lineHeight;
+		
+	}
+	#endif
+	
 	// DrawThings();
 	
 	// DrawCircle(appData, AppInput->mouseStartPos[MouseButton_Left], AppInput->mouseMaxDist[MouseButton_Left], {Color_Red});
@@ -1936,7 +2017,7 @@ AppUpdate_DEFINITION(App_Update)
 	// rs->DrawRectangle(NewRectangle(0, 0, ui->gutterRec.width, screenSize.y - ui->statusBarRec.height), {Color_Orange});
 	// rs->DrawRectangle(ui->statusBarRec, {Color_Yellow});
 
-
+	TempPopMark();
 }
 
 //+================================================================+
@@ -1949,6 +2030,7 @@ AppGetSoundSamples_DEFINITION(App_GetSoundSamples)
 	AppData_t* appData = (AppData_t*)AppMemory->permanantPntr;
 	GL_AppData = appData;
 	GC = &appData->globalConfig;
+	TempArena = &appData->tempArena;
 
 
 }
@@ -1963,6 +2045,7 @@ AppClosing_DEFINITION(App_Closing)
 	AppData_t* appData = (AppData_t*)AppMemory->permanantPntr;
 	GL_AppData = appData;
 	GC = &appData->globalConfig;
+	TempArena = &appData->tempArena;
 
 	DEBUG_WriteLine("Application closing!");
 

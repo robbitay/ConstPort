@@ -17,21 +17,21 @@ GetComPortList_DEFINITION(Win32_GetComPortList)
 		ComPortIndex_t comIndex = (ComPortIndex_t)cIndex;
 		bool* boolPntr = &arrayOut[cIndex]; 
 		
-		Win32_PrintLine("Trying to open %s...", GetComPortReadableName(comIndex));
+		// Win32_PrintLine("Trying to open %s...", GetComPortReadableName(comIndex));
 		
 		HANDLE comHandle = CreateFileA(GetComPortFileName(comIndex), 
 			GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
 		
 		if (comHandle != INVALID_HANDLE_VALUE)
 		{
-			Win32_PrintLine("%s Exists!", GetComPortReadableName(comIndex));
+			// Win32_PrintLine("%s Exists!", GetComPortReadableName(comIndex));
 			*boolPntr = true;
 			result++;
 			CloseHandle(comHandle);
 		}
 		else
 		{
-			Win32_PrintLine("Couldn't open %s", GetComPortReadableName(comIndex));
+			// Win32_PrintLine("Couldn't open %s", GetComPortReadableName(comIndex));
 			*boolPntr = false;
 		}
 	}
@@ -196,7 +196,7 @@ WriteComPort_DEFINITION(Win32_WriteComPort)
 	
 	if (writeResult)
 	{
-		Win32_PrintLine("Wrote %d bytes", numBytesWritten);
+		// Win32_PrintLine("Wrote %d bytes", numBytesWritten);
 		return;
 	}
 	else

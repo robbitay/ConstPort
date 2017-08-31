@@ -98,7 +98,7 @@ Shader_t LoadShader(const char* vertShaderFileName, const char* fragShaderFileNa
 		compiled ? "Successfully" : "Unsuccessfully", logLength);
 	if (logLength > 0)
 	{
-		logBuffer = (char*)malloc(logLength);
+		logBuffer = TempString(logLength);
 		glGetShaderInfoLog(result.vertId, logLength, NULL, logBuffer);
 		DEBUG_PrintLine("Log: \"%s\"", logBuffer);
 		free(logBuffer);
@@ -116,7 +116,7 @@ Shader_t LoadShader(const char* vertShaderFileName, const char* fragShaderFileNa
 		compiled ? "Successfully" : "Unsuccessfully", logLength);
 	if (logLength > 0)
 	{
-		logBuffer = (char*)malloc(logLength);
+		logBuffer = TempString(logLength);
 		glGetShaderInfoLog(result.fragId, logLength, NULL, logBuffer);
 		DEBUG_PrintLine("Log: \"%s\"", logBuffer);
 		free(logBuffer);
@@ -137,7 +137,7 @@ Shader_t LoadShader(const char* vertShaderFileName, const char* fragShaderFileNa
 		compiled ? "Successfully" : "Unsuccessfully", logLength);
 	if (logLength > 0)
 	{
-		logBuffer = (char*)malloc(logLength);
+		logBuffer = TempString(logLength);
 		glGetProgramInfoLog(result.programId, logLength, NULL, logBuffer);
 		DEBUG_PrintLine("Log: \"%s\"", logBuffer);
 		free(logBuffer);
@@ -203,8 +203,10 @@ Font_t LoadFont(const char* fileName,
 	result.firstChar = firstCharacter;
 	result.fontSize = fontSize;
 	
-	u8* grayscaleData = (u8*)malloc(sizeof(u8) * bitmapWidth * bitmapHeight);
-	stbtt_bakedchar* charInfos = (stbtt_bakedchar*)malloc(sizeof(stbtt_bakedchar) * numCharacters);
+	TempPushMark();
+	
+	u8* grayscaleData = TempArray(u8, bitmapWidth * bitmapHeight);
+	stbtt_bakedchar* charInfos = TempArray(stbtt_bakedchar, numCharacters);
 	
 	int bakeResult = stbtt_BakeFontBitmap((u8*)fontFile.content, 
 		0, fontSize,
@@ -226,7 +228,7 @@ Font_t LoadFont(const char* fileName,
 		result.chars[cIndex].advanceX = charInfos[cIndex].xadvance;
 	}
 	
-	u8* bitmapData = (u8*)malloc(sizeof(u8)*4 * bitmapWidth * bitmapHeight);
+	u8* bitmapData = TempArray(u8, 4 * bitmapWidth * bitmapHeight);
 	
 	for (i32 y = 0; y < bitmapHeight; y++)
 	{
@@ -243,9 +245,8 @@ Font_t LoadFont(const char* fileName,
 	
 	result.bitmap = CreateTexture(bitmapData, bitmapWidth, bitmapHeight);
 	
-	free(grayscaleData);
-	free(charInfos);
-	free(bitmapData);
+	TempPopMark();
+	
 	PlatformInfo->FreeFileMemoryPntr(&fontFile);
 	
 	//Create information about character sizes
