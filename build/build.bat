@@ -8,7 +8,7 @@ mkdir build > NUL 2> NUL
 rem echo Running from %cd%
 rem echo Time is %TimeString%
 
-set CompilePlatform=0
+set CompilePlatform=1
 set CompileApplication=1
 set DebugBuild=1
 set ProjectName=ConstPort
@@ -29,7 +29,7 @@ if "%DebugBuild%"=="1" (
 	set DebugDependantLibraries=glew32.lib libboost_regex-vc140-mt-s-1_65.lib
 )
 
-set CompilerFlags=%DebugDependantFlags% /FC /Zi /EHsc /nologo /GS- /Gm- -GR- /EHa- /Fm /Od /Oi /WX /W4 /wd4201 /wd4100 /wd4189 /wd4996 /wd4127 /wd4505 /wd4101 /wd4702 /wd4458 /wd4324
+set CompilerFlags=%DebugDependantFlags% -DUSE_ASSERT_FAILURE_FUNCTION=1 /FC /Zi /EHsc /nologo /GS- /Gm- -GR- /EHa- /Fm /Od /Oi /WX /W4 /wd4201 /wd4100 /wd4189 /wd4996 /wd4127 /wd4505 /wd4101 /wd4702 /wd4458 /wd4324
 set LinkerFlags=-incremental:no
 set IncludeDirectories=/I"W:\lib\mylib" /I"W:\lib\glew-2.0.0\include" /I"W:\lib\glfw-3.2.1\include" /I"W:\lib\stb" /I"W:\lib\jsmn" /I"W:\lib\boost_1_65_0"
 set LibraryDirectories=%DebugDependantPaths% /LIBPATH:"W:\lib\boost_1_65_0\stage\lib"

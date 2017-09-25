@@ -7,7 +7,9 @@ Description:
 	** the rest of the source code files.
 */
 
+
 #include <stdarg.h>
+#include "my_assert.h"
 #include "platformInterface.h"
 #include "app_version.h"
 #include "Colors.h"
@@ -45,7 +47,7 @@ GlobalConfig_t* GC         = nullptr;
 u32 GetElapsedString(u64 timespan, char* outputBuffer, u32 outputBufferSize)
 {
 	u32 result = 0;
-
+	
 	u32 numDays = (u32)(timespan/(60*60*24));
 	u32 numHours = (u32)(timespan/(60*60)) - (numDays*24);
 	u32 numMinutes = (u32)(timespan/60) - (numDays*60*24) - (numHours*60);
@@ -70,7 +72,7 @@ u32 GetElapsedString(u64 timespan, char* outputBuffer, u32 outputBufferSize)
 		result = snprintf(outputBuffer, outputBufferSize-1,
 			"%us", numSeconds);
 	}
-
+	
 	return result;
 }
 
@@ -78,7 +80,7 @@ void StatusMessage(const char* functionName, StatusMessage_t messageType, const 
 {
 	AppData_t* appData = GL_AppData;
 	const PlatformInfo_t* PlatformInfo = Gl_PlatformInfo;
-
+	
 	ClearArray(appData->statusMessage);
 	va_list args;
 	va_start(args, formatString);
@@ -87,7 +89,7 @@ void StatusMessage(const char* functionName, StatusMessage_t messageType, const 
 	va_end(args);
 	appData->statusMessageType = messageType;
 	appData->statusMessageTime = PlatformInfo->localTime;
-
+	
 	DEBUG_PrintLine("[%s]: %s", functionName, appData->statusMessage);
 }
 
@@ -112,11 +114,11 @@ void StatusMessage(const char* functionName, StatusMessage_t messageType, const 
 void ClearConsole()
 {
 	AppData_t* appData = GL_AppData;
-
+	
 	DEBUG_WriteLine("Clearing Console");
 	DestroyLineList(&appData->lineList);
 	CreateLineList(&appData->lineList, &appData->mainHeap, "");
-
+	
 	appData->selectionStart = NewTextLocation(0, 0);
 	appData->selectionEnd = NewTextLocation(0, 0);
 	appData->uiElements.hoverLocation = NewTextLocation(0, 0);
@@ -128,10 +130,10 @@ void RefreshComPortList()
 {
 	AppData_t* appData = GL_AppData;
 	const PlatformInfo_t* PlatformInfo = Gl_PlatformInfo;
-
+	
 	appData->numComPortsAvailable = PlatformInfo->GetComPortListPntr(
 		&appData->availableComPorts[0], ArrayCount(appData->availableComPorts));
-
+		
 	StatusDebug("Found %u COM ports", appData->numComPortsAvailable);
 	for (u32 cIndex = 0; cIndex < ArrayCount(appData->availableComPorts); cIndex++)
 	{
@@ -146,17 +148,17 @@ void OpenComPort(ComPortIndex_t comPortIndex, ComSettings_t settings)
 {
 	AppData_t* appData = GL_AppData;
 	const PlatformInfo_t* PlatformInfo = Gl_PlatformInfo;
-
+	
 	if (appData->comPort.isOpen)
 	{
 		PlatformInfo->CloseComPortPntr(&appData->comPort);
 		StatusError("Closed %s", GetComPortReadableName(appData->comPort.index));
 	}
-
+	
 	ClearConsole();
-
+	
 	appData->comPort = PlatformInfo->OpenComPortPntr(comPortIndex, settings);
-
+	
 	if (appData->comPort.isOpen)
 	{
 		StatusSuccess("%s Opened Successfully", GetComPortReadableName(comPortIndex));
@@ -170,7 +172,7 @@ void OpenComPort(ComPortIndex_t comPortIndex, ComSettings_t settings)
 void ComMenuUpdate(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInput, MenuHandler_t* menuHandler, Menu_t* menuPntr)
 {
 	AppData_t* appData = GL_AppData;
-
+	
 	if (ButtonPressed(Button_Escape))
 	{
 		menuPntr->show = !menuPntr->show;
@@ -180,7 +182,7 @@ void ComMenuUpdate(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 			appData->comMenuOptions = appData->comPort;
 		}
 	}
-
+	
 	if (menuPntr->show)
 	{
 		u32 numTabs = appData->numComPortsAvailable + (appData->comPort.isOpen ? 1 : 0);
@@ -205,9 +207,9 @@ void ComMenuUpdate(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 			menuPntr->usableRec.y + tabSize.y + appData->testFont.lineHeight + COM_MENU_OUTER_PADDING,
 			80, appData->testFont.lineHeight * NumStopBitTypes
 		);
-
+		
 		tabSize.x = menuPntr->usableRec.width / numTabs;
-
+		
 		//Update the menu size
 		{
 			v2 comNameSize = MeasureString(&appData->testFont, GetComPortReadableName(ComPort_24));
@@ -215,22 +217,22 @@ void ComMenuUpdate(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 			v2 menuSize = NewVec2(
 				stopBitsRec.x + stopBitsRec.width + COM_MENU_OUTER_PADDING - menuPntr->drawRec.x,
 				baudRateRec.y + baudRateRec.height + COM_MENU_OUTER_PADDING - menuPntr->drawRec.y);
-
+				
 			// if (menuSize.x / (r32)numTabs < tabMinimumWidth)
 			// {
 			// 	menuSize.x = tabMinimumWidth * numTabs;
 			// }
-
+			
 			menuPntr->drawRec.size = menuSize;
 			UpdateMenuRecs(menuPntr);
 		}
-
+		
 		rec connectButtonRec = NewRectangle(
 			menuPntr->usableRec.x + menuPntr->usableRec.width - CONNECT_BUTTON_WIDTH - COM_MENU_OUTER_PADDING,
 			menuPntr->usableRec.y + menuPntr->usableRec.height - CONNECT_BUTTON_HEIGHT - COM_MENU_OUTER_PADDING,
 			CONNECT_BUTTON_WIDTH, CONNECT_BUTTON_HEIGHT
 		);
-
+		
 		for (i32 baudIndex = 0; baudIndex < NumBaudRates; baudIndex++)
 		{
 			rec currentRec = NewRectangle(baudRateRec.x,
@@ -243,7 +245,7 @@ void ComMenuUpdate(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 				appData->comMenuOptions.settings.baudRate = (BaudRate_t)baudIndex;
 			}
 		}
-
+		
 		for (i32 bitIndex = 0; bitIndex < 8; bitIndex++)
 		{
 			rec currentRec = NewRectangle(numBitsRec.x,
@@ -256,7 +258,7 @@ void ComMenuUpdate(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 				appData->comMenuOptions.settings.numBits = (u8)(bitIndex+1);
 			}
 		}
-
+		
 		for (i32 parityIndex = 0; parityIndex < NumParityTypes; parityIndex++)
 		{
 			rec currentRec = NewRectangle(parityTypesRec.x,
@@ -269,7 +271,7 @@ void ComMenuUpdate(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 				appData->comMenuOptions.settings.parity = (Parity_t)parityIndex;
 			}
 		}
-
+		
 		for (i32 stopBitIndex = 0; stopBitIndex < NumStopBitTypes; stopBitIndex++)
 		{
 			rec currentRec = NewRectangle(stopBitsRec.x,
@@ -282,7 +284,7 @@ void ComMenuUpdate(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 				appData->comMenuOptions.settings.stopBits = (StopBits_t)stopBitIndex;
 			}
 		}
-
+		
 		//Check for tab Presses
 		u32 tabIndex = 0;
 		for (u32 comIndex = 0; comIndex < ArrayCount(appData->availableComPorts); comIndex++)
@@ -292,18 +294,18 @@ void ComMenuUpdate(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 			{
 				rec tabRec = NewRectangle(tabIndex * tabSize.x, 0, tabSize.x, tabSize.y);
 				tabRec.topLeft += menuPntr->usableRec.topLeft;
-
+				
 				if (ButtonReleased(MouseButton_Left) && AppInput->mouseMaxDist[MouseButton_Left] < 10 &&
 					IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], tabRec))
 				{
 					appData->comMenuOptions.index = (ComPortIndex_t)comIndex;
 					appData->comMenuOptions.isOpen = true;
 				}
-
+				
 				tabIndex++;
 			}
 		}
-
+		
 		//Check for connect button press
 		bool connectButtonPressed = (IsInsideRectangle(AppInput->mousePos, connectButtonRec) &&
 			ButtonReleased(MouseButton_Left) && IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], connectButtonRec));
@@ -491,9 +493,9 @@ void ContextMenuUpdate(const PlatformInfo_t* PlatformInfo, const AppInput_t* App
 {
 	AppData_t* appData = GL_AppData;
 	UiElements_t* ui = &appData->uiElements;
-
+	
 	v2 textSize = MeasureString(&appData->testFont, ui->contextStringBuffer);
-
+	
 	menu->drawRec.size = textSize;
 	menu->drawRec = RectangleInflate(menu->drawRec, CONTEXT_MENU_PADDING);
 	menu->drawRec.topLeft = ui->mousePos + NewVec2(0, -3 - menu->drawRec.height);
@@ -502,7 +504,7 @@ void ContextMenuRender(const PlatformInfo_t* PlatformInfo, const AppInput_t* App
 {
 	AppData_t* appData = GL_AppData;
 	UiElements_t* ui = &appData->uiElements;
-
+	
 	v2 textPos = menu->usableRec.topLeft + NewVec2(CONTEXT_MENU_PADDING, CONTEXT_MENU_PADDING + appData->testFont.maxExtendUp);
 	appData->renderState.DrawString(ui->contextStringBuffer, textPos, GC->colors.foreground);
 }
@@ -510,7 +512,7 @@ void ContextMenuRender(const PlatformInfo_t* PlatformInfo, const AppInput_t* App
 u32 SanatizeString(const char* charPntr, u32 numChars, char* outputBuffer = nullptr)
 {
 	u32 result = 0;
-
+	
 	char* outPntr = outputBuffer;
 	for (u32 cIndex = 0; cIndex < numChars; cIndex++)
 	{
@@ -528,8 +530,142 @@ u32 SanatizeString(const char* charPntr, u32 numChars, char* outputBuffer = null
 			}
 		}
 	}
-
+	
 	return result;
+}
+
+void DataReceived(const char* dataBuffer, i32 numBytes)
+{
+	const PlatformInfo_t* PlatformInfo = Gl_PlatformInfo;
+	AppData_t* appData = GL_AppData;
+	Line_t* lastLine = GetLastLine(&appData->lineList);
+	
+	for (i32 cIndex = 0; cIndex < numBytes; cIndex++)
+	{
+		char newChar = dataBuffer[cIndex];
+		if (newChar == '\n')
+		{
+			Line_t* finishedLine = lastLine;
+			
+			if (finishedLine->timestamp == 0)
+			{
+				finishedLine->timestamp = GetTimestamp(PlatformInfo->localTime);
+			}
+			
+			if (appData->writeToFile)
+			{
+				//Write the line to the outputFile
+				
+				char timestampBuffer[256]; ClearArray(timestampBuffer);
+				RealTime_t lineTime = RealTimeAt(finishedLine->timestamp);
+				u32 timestampLength = snprintf(timestampBuffer, sizeof(timestampBuffer)-1,
+					"[%s %02u:%02u:%02u%s (%s %s, %04u)] ",
+					GetDayOfWeekStr(GetDayOfWeek(lineTime)),
+					Convert24HourTo12Hour(lineTime.hour), lineTime.minute, lineTime.second,
+					IsPostMeridian(lineTime.hour) ? "pm" : "am",
+					GetMonthStr((Month_t)lineTime.month), GetDayOfMonthString(lineTime.day), lineTime.year);
+				
+				PlatformInfo->AppendFilePntr(&appData->outputFile, timestampBuffer, timestampLength);
+				
+				for (u32 cIndex2 = 0; cIndex2 < finishedLine->numChars; cIndex2++)
+				{
+					if (finishedLine->chars[cIndex2] == 0x01)
+					{
+						finishedLine->chars[cIndex2] = ' ';
+					}
+					if (finishedLine->chars[cIndex2] == 0x02)
+					{
+						finishedLine->chars[cIndex2] = ' ';
+					}
+					if (finishedLine->chars[cIndex2] == 0x03)
+					{
+						finishedLine->chars[cIndex2] = ' ';
+					}
+					if (finishedLine->chars[cIndex2] == 0x04)
+					{
+						finishedLine->chars[cIndex2] = ' ';
+					}
+					if (finishedLine->chars[cIndex2] == 0x05)
+					{
+						finishedLine->chars[cIndex2] = ' ';
+					}
+				}
+				PlatformInfo->AppendFilePntr(&appData->outputFile, finishedLine->chars, finishedLine->numChars);
+				PlatformInfo->AppendFilePntr(&appData->outputFile, "\r\n", 2);
+				
+				LineReset(&appData->lineList, finishedLine);
+			}
+			else
+			{
+				//Throw the line on the end of the list
+				// +========================================+
+				// | Check Line Against Regular Expressions |
+				// +========================================+
+				const char* expression;
+				expression = GetRegularExpression(&appData->regexList, GC->genericCountRegexName);
+				if (expression != nullptr &&
+					TestRegularExpression(expression, finishedLine->chars, finishedLine->numChars))
+				{
+					DEBUG_WriteLine("Counter++");
+					appData->genericCounter++;
+				}
+				expression = GetRegularExpression(&appData->regexList, GC->markLineRegexName);
+				if (expression != nullptr &&
+					TestRegularExpression(expression, finishedLine->chars, finishedLine->numChars))
+				{
+					DEBUG_WriteLine("Auto-Mark");
+					FlagSet(finishedLine->flags, LineFlag_MarkBelow | LineFlag_ThickMark);
+				}
+				
+				expression = GetRegularExpression(&appData->regexList, GC->highlight1RegexName);
+				if (expression != nullptr && TestRegularExpression(expression, finishedLine->chars, finishedLine->numChars))
+				{
+					DEBUG_WriteLine("Highlight1");
+					finishedLine->matchColor = GC->colors.highlight1;
+				}
+				expression = GetRegularExpression(&appData->regexList, GC->highlight2RegexName);
+				if (expression != nullptr && TestRegularExpression(expression, finishedLine->chars, finishedLine->numChars))
+				{
+					DEBUG_WriteLine("Highlight2");
+					finishedLine->matchColor = GC->colors.highlight2;
+				}
+				expression = GetRegularExpression(&appData->regexList, GC->highlight3RegexName);
+				if (expression != nullptr && TestRegularExpression(expression, finishedLine->chars, finishedLine->numChars))
+				{
+					DEBUG_WriteLine("Highlight3");
+					finishedLine->matchColor = GC->colors.highlight3;
+				}
+				expression = GetRegularExpression(&appData->regexList, GC->highlight4RegexName);
+				if (expression != nullptr && TestRegularExpression(expression, finishedLine->chars, finishedLine->numChars))
+				{
+					DEBUG_WriteLine("Highlight4");
+					finishedLine->matchColor = GC->colors.highlight4;
+				}
+				expression = GetRegularExpression(&appData->regexList, GC->highlight5RegexName);
+				if (expression != nullptr && TestRegularExpression(expression, finishedLine->chars, finishedLine->numChars))
+				{
+					DEBUG_WriteLine("Highlight5");
+					finishedLine->matchColor = GC->colors.highlight5;
+				}
+				
+				lastLine = AddLineToList(&appData->lineList, "");
+			}
+		}
+		else if (newChar == '\b')
+		{
+			if (lastLine->numChars > 0)
+			{
+				lastLine->numChars--;
+				lastLine->chars[lastLine->numChars] = '\0';
+			}
+		}
+		else
+		{
+			LineAppend(&appData->lineList, lastLine, newChar);
+		}
+	}
+	
+	appData->rxShiftRegister |= 0x80;
 }
 
 //NOTE: This function serves as a measuring function AS WELL AS
@@ -538,17 +674,17 @@ u32 GetSelection(char* bufferOutput = nullptr)
 {
 	const PlatformInfo_t* PlatformInfo = Gl_PlatformInfo;
 	AppData_t* appData = GL_AppData;
-
+	
 	TextLocation_t minLocation = TextLocationMin(appData->selectionStart, appData->selectionEnd);
 	TextLocation_t maxLocation = TextLocationMax(appData->selectionStart, appData->selectionEnd);
-
+	
 	if (minLocation.lineNum == maxLocation.lineNum &&
 		minLocation.charIndex == maxLocation.charIndex)
 	{
 		//No selection made
 		return 0;
 	}
-
+	
 	u8 newLineSize = (PlatformInfo->platformType == Platform_Windows) ? 2 : 1;
 	char newLine[2] = {};
 	if (PlatformInfo->platformType == Platform_Windows)
@@ -562,12 +698,12 @@ u32 GetSelection(char* bufferOutput = nullptr)
 	}
 	u32 bufferLength = 0;
 	char* outputPntr = bufferOutput;
-
+	
 	if (minLocation.lineNum == maxLocation.lineNum)
 	{
 		Line_t* linePntr = GetLineAt(&appData->lineList, minLocation.lineNum);
 		bufferLength = maxLocation.charIndex - minLocation.charIndex;
-
+		
 		if (bufferOutput != nullptr)
 		{
 			memcpy(outputPntr, &linePntr->chars[minLocation.charIndex], bufferLength);
@@ -587,7 +723,7 @@ u32 GetSelection(char* bufferOutput = nullptr)
 				outputPntr += newLineSize;
 			}
 		}
-
+		
 		//In Between Lines
 		for (i32 lineIndex = minLocation.lineNum+1; lineIndex < maxLocation.lineNum && lineIndex < appData->lineList.numLines; lineIndex++)
 		{
@@ -601,7 +737,7 @@ u32 GetSelection(char* bufferOutput = nullptr)
 				outputPntr += newLineSize;
 			}
 		}
-
+		
 		{ //Last Line
 			Line_t* maxLinePntr = GetLineAt(&appData->lineList, maxLocation.lineNum);
 			bufferLength += SanatizeString(maxLinePntr->chars, maxLocation.charIndex);
@@ -611,13 +747,13 @@ u32 GetSelection(char* bufferOutput = nullptr)
 			}
 		}
 	}
-
+	
 	bufferLength += 1; //For null terminator
 	if (bufferOutput != nullptr)
 	{
 		*outputPntr = '\0';
 	}
-
+	
 	return bufferLength;
 }
 
@@ -631,12 +767,12 @@ AppGetVersion_DEFINITION(App_GetVersion)
 		APP_VERSION_MINOR,
 		APP_VERSION_BUILD,
 	};
-
+	
 	if (resetApplication != nullptr)
 	{
 		*resetApplication = false;
 	}
-
+	
 	return version;
 }
 
@@ -745,9 +881,9 @@ AppReloaded_DEFINITION(App_Reloaded)
 	GL_AppData = appData;
 	GC = &appData->globalConfig;
 	TempArena = &appData->tempArena;
-
+	
 	StatusDebug("App Reloaded");
-
+	
 	//Make sure our callbacks still match the location of the functions in the new DLL
 	Menu_t* menuPntr = GetMenuByName(&appData->menuHandler, "COM Menu");
 	menuPntr->specialPntr = nullptr;
@@ -757,17 +893,6 @@ AppReloaded_DEFINITION(App_Reloaded)
 	menuPntr->specialPntr = nullptr;
 	menuPntr->updateFunctionPntr = ContextMenuUpdate;
 	menuPntr->renderFunctionPntr = ContextMenuRender;
-}
-
-void DrawThings(const AppInput_t* AppInput)
-{
-	AppData_t* appData = GL_AppData;
-	RenderState_t* rs = &appData->renderState;
-
-	rs->BindTexture(&appData->testTexture);
-	rs->DrawTexturedRec(NewRectangle(10, 10, 500, 500), {Color_Yellow});
-	rs->DrawTexturedRec(NewRectangle(90, 70, 500, 500), {Color_Red});
-	rs->DrawTexturedRec(NewRectangle(AppInput->mousePos.x - 250, AppInput->mousePos.y - 250, 500, 500), {Color_Blue});
 }
 
 //+================================================================+
@@ -797,9 +922,9 @@ AppUpdate_DEFINITION(App_Update)
 		snprintf(AppOutput->windowTitle, sizeof(AppOutput->windowTitle)-1,
 			"Const Port [Disconnected]");
 	}
-
+	
 	RecalculateUiElements(AppInput, ui, true);
-
+	
 	Menu_t* comMenu = GetMenuByName(&appData->menuHandler, "COM Menu");
 	Menu_t* contextMenu = GetMenuByName(&appData->menuHandler, "Context Menu");
 	Menu_t* hoverMenu = GetMenuAtPoint(&appData->menuHandler, AppInput->mousePos);
@@ -809,7 +934,7 @@ AppUpdate_DEFINITION(App_Update)
 	Color_t selectionColor = ColorLerp(GC->colors.selection1, GC->colors.selection2, (Sin32((r32)PlatformInfo->programTime*6.0f) + 1.0f) / 2.0f);
 	Color_t hoverLocColor  = ColorLerp(GC->colors.foreground, GC->colors.background, (Sin32((r32)PlatformInfo->programTime*8.0f) + 1.0f) / 2.0f);
 	// Color_t selectionColor = ColorFromHSV(180, 1.0f, (r32)(Sin32((r32)PlatformInfo->programTime*5) + 1.0f) / 2.0f);
-
+	
 	//+================================+
 	//|  Context Menu Showing/Filling  |
 	//+================================+
@@ -819,11 +944,11 @@ AppUpdate_DEFINITION(App_Update)
 		(IsInsideRectangle(ui->mousePos, ui->viewRec) || IsInsideRectangle(ui->mousePos, ui->gutterRec)))
 	{
 		Line_t* linePntr = GetLineAt(&appData->lineList, ui->hoverLocation.lineNum);
-
+		
 		if (linePntr != nullptr && linePntr->timestamp != 0)
 		{
 			RealTime_t lineTime = RealTimeAt(linePntr->timestamp);
-
+			
 			if (ButtonDown(Button_Shift))
 			{
 				snprintf(ui->contextStringBuffer, sizeof(ui->contextStringBuffer)-1,
@@ -840,11 +965,11 @@ AppUpdate_DEFINITION(App_Update)
 				u32 numCharacters = GetElapsedString((u64)absDifference, &ui->contextStringBuffer[0], ArrayCount(ui->contextStringBuffer));
 				strncpy(&ui->contextStringBuffer[numCharacters], " Ago", sizeof(ui->contextStringBuffer) - numCharacters - 1);
 			}
-
+			
 			contextMenu->show = true;
 		}
 	}
-
+	
 	//+==================================+
 	//|     Read and write COM port      |
 	//+==================================+
@@ -859,134 +984,7 @@ AppUpdate_DEFINITION(App_Update)
 			{
 				// DEBUG_PrintLine("Read %d bytes \"%.*s\"", readResult, readResult, buffer);
 				
-				Line_t* lastLine = GetLastLine(&appData->lineList);
-				
-				for (i32 cIndex = 0; cIndex < readResult; cIndex++)
-				{
-					char newChar = buffer[cIndex];
-					if (newChar == '\n')
-					{
-						Line_t* finishedLine = lastLine;
-						
-						if (finishedLine->timestamp == 0)
-						{
-							finishedLine->timestamp = GetTimestamp(PlatformInfo->localTime);
-						}
-						
-						if (appData->writeToFile)
-						{
-							//Write the line to the outputFile
-							
-							char timestampBuffer[256]; ClearArray(timestampBuffer);
-							RealTime_t lineTime = RealTimeAt(finishedLine->timestamp);
-							u32 timestampLength = snprintf(timestampBuffer, sizeof(timestampBuffer)-1,
-								"[%s %02u:%02u:%02u%s (%s %s, %04u)] ",
-								GetDayOfWeekStr(GetDayOfWeek(lineTime)),
-								Convert24HourTo12Hour(lineTime.hour), lineTime.minute, lineTime.second,
-								IsPostMeridian(lineTime.hour) ? "pm" : "am",
-								GetMonthStr((Month_t)lineTime.month), GetDayOfMonthString(lineTime.day), lineTime.year);
-							
-							PlatformInfo->AppendFilePntr(&appData->outputFile, timestampBuffer, timestampLength);
-							
-							for (u32 cIndex2 = 0; cIndex2 < finishedLine->numChars; cIndex2++)
-							{
-								if (finishedLine->chars[cIndex2] == 0x01)
-								{
-									finishedLine->chars[cIndex2] = ' ';
-								}
-								if (finishedLine->chars[cIndex2] == 0x02)
-								{
-									finishedLine->chars[cIndex2] = ' ';
-								}
-								if (finishedLine->chars[cIndex2] == 0x03)
-								{
-									finishedLine->chars[cIndex2] = ' ';
-								}
-								if (finishedLine->chars[cIndex2] == 0x04)
-								{
-									finishedLine->chars[cIndex2] = ' ';
-								}
-								if (finishedLine->chars[cIndex2] == 0x05)
-								{
-									finishedLine->chars[cIndex2] = ' ';
-								}
-							}
-							PlatformInfo->AppendFilePntr(&appData->outputFile, finishedLine->chars, finishedLine->numChars);
-							PlatformInfo->AppendFilePntr(&appData->outputFile, "\r\n", 2);
-							
-							LineReset(&appData->lineList, finishedLine);
-						}
-						else
-						{
-							//Throw the line on the end of the list
-							// +========================================+
-							// | Check Line Against Regular Expressions |
-							// +========================================+
-							const char* expression;
-							expression = GetRegularExpression(&appData->regexList, GC->genericCountRegexName);
-							if (expression != nullptr &&
-								TestRegularExpression(expression, finishedLine->chars, finishedLine->numChars))
-							{
-								DEBUG_WriteLine("Counter++");
-								appData->genericCounter++;
-							}
-							expression = GetRegularExpression(&appData->regexList, GC->markLineRegexName);
-							if (expression != nullptr &&
-								TestRegularExpression(expression, finishedLine->chars, finishedLine->numChars))
-							{
-								DEBUG_WriteLine("Auto-Mark");
-								FlagSet(finishedLine->flags, LineFlag_MarkBelow | LineFlag_ThickMark);
-							}
-							
-							expression = GetRegularExpression(&appData->regexList, GC->highlight1RegexName);
-							if (expression != nullptr && TestRegularExpression(expression, finishedLine->chars, finishedLine->numChars))
-							{
-								DEBUG_WriteLine("Highlight1");
-								finishedLine->matchColor = GC->colors.highlight1;
-							}
-							expression = GetRegularExpression(&appData->regexList, GC->highlight2RegexName);
-							if (expression != nullptr && TestRegularExpression(expression, finishedLine->chars, finishedLine->numChars))
-							{
-								DEBUG_WriteLine("Highlight2");
-								finishedLine->matchColor = GC->colors.highlight2;
-							}
-							expression = GetRegularExpression(&appData->regexList, GC->highlight3RegexName);
-							if (expression != nullptr && TestRegularExpression(expression, finishedLine->chars, finishedLine->numChars))
-							{
-								DEBUG_WriteLine("Highlight3");
-								finishedLine->matchColor = GC->colors.highlight3;
-							}
-							expression = GetRegularExpression(&appData->regexList, GC->highlight4RegexName);
-							if (expression != nullptr && TestRegularExpression(expression, finishedLine->chars, finishedLine->numChars))
-							{
-								DEBUG_WriteLine("Highlight4");
-								finishedLine->matchColor = GC->colors.highlight4;
-							}
-							expression = GetRegularExpression(&appData->regexList, GC->highlight5RegexName);
-							if (expression != nullptr && TestRegularExpression(expression, finishedLine->chars, finishedLine->numChars))
-							{
-								DEBUG_WriteLine("Highlight5");
-								finishedLine->matchColor = GC->colors.highlight5;
-							}
-							
-							lastLine = AddLineToList(&appData->lineList, "");
-						}
-					}
-					else if (newChar == '\b')
-					{
-						if (lastLine->numChars > 0)
-						{
-							lastLine->numChars--;
-							lastLine->chars[lastLine->numChars] = '\0';
-						}
-					}
-					else
-					{
-						LineAppend(&appData->lineList, lastLine, newChar);
-					}
-				}
-				
-				appData->rxShiftRegister |= 0x80;
+				DataReceived(buffer, readResult);
 			}
 			else if (readResult < 0)
 			{
@@ -1022,6 +1020,27 @@ AppUpdate_DEFINITION(App_Update)
 		}
 	}
 	
+	// +==============================+
+	// |  Read From Program Instance  |
+	// +==============================+
+	if (appData->programInstance.isOpen)
+	{
+		char readBuffer[256] = {};
+		
+		u32 numBytesRead = PlatformInfo->ReadProgramOutputPntr(&appData->programInstance, readBuffer, ArrayCount(readBuffer));
+		
+		if (numBytesRead > 0)
+		{
+			DEBUG_PrintLine("Read %u bytes from program: \"%.*s\"", numBytesRead, numBytesRead, readBuffer);
+			
+			DataReceived(readBuffer, numBytesRead);
+		}
+		// else if (ButtonDown(Button_Control))
+		// {
+		// 	DEBUG_WriteLine("Nothing");
+		// }
+	}
+	
 	//+==================================+
 	//|        Recenter COM menu         |
 	//+==================================+
@@ -1039,7 +1058,7 @@ AppUpdate_DEFINITION(App_Update)
 		ButtonDown(Button_Control))
 	{
 		Assert(comMenu != nullptr);
-
+		
 		if (comMenu->show)
 		{
 			comMenu->show = false;
@@ -1047,7 +1066,7 @@ AppUpdate_DEFINITION(App_Update)
 		else
 		{
 			comMenu->show = true;
-
+			
 			RefreshComPortList();
 			appData->comMenuOptions = appData->comPort;
 		}
@@ -1104,7 +1123,7 @@ AppUpdate_DEFINITION(App_Update)
 			appData->selectionStart = NewTextLocation(0, 0);
 			Line_t* lastLinePntr = GetLastLine(&appData->lineList);
 			appData->selectionEnd = NewTextLocation(appData->lineList.numLines-1, lastLinePntr->numChars);
-
+			
 			StatusInfo("Selected Everything");
 		}
 		else
@@ -1112,7 +1131,7 @@ AppUpdate_DEFINITION(App_Update)
 			//Deselect all
 			appData->selectionStart = NewTextLocation(0, 0);
 			appData->selectionEnd = NewTextLocation(0, 0);
-
+			
 			StatusError("Unselected Everything");
 		}
 	}
@@ -1157,7 +1176,7 @@ AppUpdate_DEFINITION(App_Update)
 	if (ButtonDown(Button_Control))
 	{
 		ComPortIndex_t cIndex = NumComPorts;
-
+		
 		if (ButtonReleased(Button_1)) cIndex = ComPort_1;
 		if (ButtonReleased(Button_2)) cIndex = ComPort_2;
 		if (ButtonReleased(Button_3)) cIndex = ComPort_3;
@@ -1167,14 +1186,14 @@ AppUpdate_DEFINITION(App_Update)
 		if (ButtonReleased(Button_7)) cIndex = ComPort_7;
 		if (ButtonReleased(Button_8)) cIndex = ComPort_8;
 		if (ButtonReleased(Button_9)) cIndex = ComPort_9;
-
+		
 		if (cIndex != NumComPorts)
 		{
 			if (comMenu->show)
 				comMenu->show = false;
-
+			
 			RefreshComPortList();
-
+			
 			if (appData->availableComPorts[cIndex] == false)
 			{
 				StatusError("%s not Available!", GetComPortReadableName(cIndex));
@@ -1195,7 +1214,7 @@ AppUpdate_DEFINITION(App_Update)
 	}
 	
 	RecalculateUiElements(AppInput, ui, false);
-
+	
 	if (ButtonDown(Button_Right))
 	{
 		ui->scrollOffsetGoto.x += ButtonDown(Button_Shift) ? 16 : 5;
@@ -1222,7 +1241,7 @@ AppUpdate_DEFINITION(App_Update)
 		else
 		{
 			ui->scrollOffsetGoto.y -= AppInput->scrollDelta.y * (r32)GC->scrollMultiplier;
-
+			
 			if (AppInput->scrollDelta.y > 0)
 			{
 				ui->followingEndOfFile = false;
@@ -1233,7 +1252,7 @@ AppUpdate_DEFINITION(App_Update)
 	{
 		ui->scrollOffsetGoto.x -= AppInput->scrollDelta.x * (r32)GC->scrollMultiplier;
 	}
-
+	
 	bool gotoEndButtonPressed = (IsInsideRectangle(AppInput->mousePos, ui->gotoEndButtonRec) &&
 		ButtonReleased(MouseButton_Left) &&
 		IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], ui->gotoEndButtonRec));
@@ -1255,6 +1274,29 @@ AppUpdate_DEFINITION(App_Update)
 	{
 		ui->scrollOffsetGoto.y += ui->viewRec.height;
 	}
+	
+	// +==================================+
+	// | Start/Stop Test Program Instance |
+	// +==================================+
+	if (ButtonPressed(Button_P) && ButtonDown(Button_Control))
+	{
+		if (appData->programInstance.isOpen)
+		{
+			DEBUG_WriteLine("Closing program instance");
+			PlatformInfo->CloseProgramInstancePntr(&appData->programInstance);
+		}
+		else
+		{
+			char commandBuffer[256] = {};
+			strcpy(commandBuffer, "python Resources/Scripts/hello.py ");
+			GetSelection(&commandBuffer[strlen(commandBuffer)]);
+			
+			DEBUG_WriteLine("Creating program instance...");
+			appData->programInstance = PlatformInfo->StartProgramInstancePntr(commandBuffer);
+		}
+	}
+	
+	
 	
 	// +==================================+
 	// |     Test Regular Expression      |
@@ -1306,12 +1348,12 @@ AppUpdate_DEFINITION(App_Update)
 						else
 						{
 							comMenu->show = true;
-
+							
 							RefreshComPortList();
 							appData->comMenuOptions = appData->comPort;
 						}
 					} break;
-
+					
 					default:
 					{
 						StatusError("Button does nothing.");
@@ -1320,7 +1362,7 @@ AppUpdate_DEFINITION(App_Update)
 			}
 		}
 	}
-
+	
 	//+================================+
 	//|       Clear Button Press       |
 	//+================================+
@@ -1332,7 +1374,7 @@ AppUpdate_DEFINITION(App_Update)
 			ClearConsole();
 		}
 	}
-
+	
 	//+==================================+
 	//|    Save To File Button Press     |
 	//+==================================+
@@ -1347,7 +1389,7 @@ AppUpdate_DEFINITION(App_Update)
 			"ConstPortSave_%02u-%02u-%u_%u-%02u-%02u.txt",
 			PlatformInfo->localTime.year, PlatformInfo->localTime.month, PlatformInfo->localTime.day,
 			PlatformInfo->localTime.hour, PlatformInfo->localTime.minute, PlatformInfo->localTime.second);
-
+		
 		u32 selectionSize = GetSelection(nullptr);
 		if (selectionSize > 0)
 		{
@@ -1366,7 +1408,7 @@ AppUpdate_DEFINITION(App_Update)
 			StatusSuccess("Saved to %s", fileNameBuffer);
 		}
 	}
-
+	
 	//+==========================================+
 	//| Scrollbar Interaction and Text Selection |
 	//+==========================================+
@@ -1408,10 +1450,10 @@ AppUpdate_DEFINITION(App_Update)
 				{
 					newPixelLocation = 0;
 				}
-
+				
 				ui->scrollOffset.y = (newPixelLocation / (ui->scrollBarGutterRec.height - ui->scrollBarRec.height)) * ui->maxScrollOffset.y;
 				ui->scrollOffsetGoto.y = ui->scrollOffset.y;
-
+				
 				if (ui->scrollOffsetGoto.y < ui->maxScrollOffset.y - appData->testFont.lineHeight)
 				{
 					ui->followingEndOfFile = false;
@@ -1431,7 +1473,7 @@ AppUpdate_DEFINITION(App_Update)
 			}
 		}
 	}
-
+	
 	//+================================+
 	//|   Mark lines using the mouse   |
 	//+================================+
@@ -1442,7 +1484,7 @@ AppUpdate_DEFINITION(App_Update)
 			ui->markIndex >= 0 && ui->markIndex < appData->lineList.numLines)
 		{
 			Line_t* linePntr = GetLineAt(&appData->lineList, ui->markIndex);
-
+			
 			if (!IsFlagSet(linePntr->flags, LineFlag_MarkBelow) ||
 				(ButtonDown(Button_Shift) && !IsFlagSet(linePntr->flags, LineFlag_ThickMark)))
 			{
@@ -1602,7 +1644,6 @@ AppUpdate_DEFINITION(App_Update)
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	
-	// DrawThings(AppInput);
 	//+--------------------------------------+
 	//|          Render Selection            |
 	//+--------------------------------------+
@@ -2005,7 +2046,7 @@ AppUpdate_DEFINITION(App_Update)
 	}
 	#endif
 	
-	// DrawThings();
+	// Assert(true == false);
 	
 	// DrawCircle(appData, AppInput->mouseStartPos[MouseButton_Left], AppInput->mouseMaxDist[MouseButton_Left], {Color_Red});
 	// DrawCircle(appData, AppInput->mouseStartPos[MouseButton_Right], AppInput->mouseMaxDist[MouseButton_Right], {Color_Blue});
@@ -2016,7 +2057,7 @@ AppUpdate_DEFINITION(App_Update)
 	// rs->DrawRectangle(ui->scrollBarRec, {Color_Blue});
 	// rs->DrawRectangle(NewRectangle(0, 0, ui->gutterRec.width, screenSize.y - ui->statusBarRec.height), {Color_Orange});
 	// rs->DrawRectangle(ui->statusBarRec, {Color_Yellow});
-
+	
 	TempPopMark();
 }
 
@@ -2031,8 +2072,6 @@ AppGetSoundSamples_DEFINITION(App_GetSoundSamples)
 	GL_AppData = appData;
 	GC = &appData->globalConfig;
 	TempArena = &appData->tempArena;
-
-
 }
 
 //+================================================================+
@@ -2046,8 +2085,24 @@ AppClosing_DEFINITION(App_Closing)
 	GL_AppData = appData;
 	GC = &appData->globalConfig;
 	TempArena = &appData->tempArena;
-
+	
 	DEBUG_WriteLine("Application closing!");
-
-
+	
+	
 }
+
+#if (DEBUG && USE_ASSERT_FAILURE_FUNCTION)
+//This function is declared in my_assert.h and needs to be implemented by us for a debug build to compile successfully
+void AssertFailure(const char* function, const char* filename, int lineNumber, const char* expressionStr)
+{
+	u32 fileNameStart = 0;
+	for (u32 cIndex = 0; filename[cIndex] != '\0'; cIndex++)
+	{
+		if (filename[cIndex] == '\\' || filename[cIndex] == '/')
+		{
+			fileNameStart = cIndex+1;
+		}
+	}
+	DEBUG_PrintLine("Assertion Failure! %s in \"%s\" line %d: (%s) is not true", function, &filename[fileNameStart], lineNumber, expressionStr);
+}
+#endif

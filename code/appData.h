@@ -63,6 +63,8 @@ struct AppData_t
 	OpenFile_t outputFile;
 	
 	bool showDebugMenu;
+	
+	ProgramInstance_t programInstance;
 };
 
 #endif // _APP_DATA_H

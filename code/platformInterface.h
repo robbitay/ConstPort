@@ -20,6 +20,7 @@ Description:
 #include "myMath.h"
 #include "win32_com.h"
 #include "timeStructs.h"
+#include "win32_program.h"
 
 struct FileInfo_t
 {
@@ -101,26 +102,31 @@ struct PlatformInfo_t
 	bool windowHasFocus;
 	bool windowIsMinimized;
 	
-	FreeFileMemory_f*    FreeFileMemoryPntr;
-	ReadEntireFile_f*    ReadEntireFilePntr;
-	WriteEntireFile_f*   WriteEntireFilePntr;
-	OpenFile_f*          OpenFilePntr;
-	AppendFile_f*        AppendFilePntr;
-	CloseFile_f*         CloseFilePntr;
+	FreeFileMemory_f*  FreeFileMemoryPntr;
+	ReadEntireFile_f*  ReadEntireFilePntr;
+	WriteEntireFile_f* WriteEntireFilePntr;
+	OpenFile_f*        OpenFilePntr;
+	AppendFile_f*      AppendFilePntr;
+	CloseFile_f*       CloseFilePntr;
 	
-	DebugWrite_f*        DebugWritePntr;
-	DebugWriteLine_f*    DebugWriteLinePntr;
-	DebugPrint_f*        DebugPrintPntr;
-	DebugPrintLine_f*    DebugPrintLinePntr;
+	DebugWrite_f*     DebugWritePntr;
+	DebugWriteLine_f* DebugWriteLinePntr;
+	DebugPrint_f*     DebugPrintPntr;
+	DebugPrintLine_f* DebugPrintLinePntr;
 	
-	GetComPortList_f*    GetComPortListPntr;
-	OpenComPort_f*       OpenComPortPntr;
-	CloseComPort_f*      CloseComPortPntr;
-	ReadComPort_f*       ReadComPortPntr;
-	WriteComPort_f*      WriteComPortPntr;
+	GetComPortList_f* GetComPortListPntr;
+	OpenComPort_f*    OpenComPortPntr;
+	CloseComPort_f*   CloseComPortPntr;
+	ReadComPort_f*    ReadComPortPntr;
+	WriteComPort_f*   WriteComPortPntr;
 	
 	CopyToClipboard_f*   CopyToClipboardPntr;
 	CopyFromClipboard_f* CopyFromClipboardPntr;
+	
+	StartProgramInstance_f* StartProgramInstancePntr;
+	GetProgramStatus_f*     GetProgramStatusPntr;
+	ReadProgramOutput_f*    ReadProgramOutputPntr;
+	CloseProgramInstance_f* CloseProgramInstancePntr;
 	
 	r64 timeDelta;
 	r64 programTime;

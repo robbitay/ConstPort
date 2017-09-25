@@ -21,6 +21,7 @@ Description:
 #include "stb_image.h"
 
 //Project Headers
+#include "my_assert.h"
 #include "platformInterface.h"
 #include "win32_version.h"
 
@@ -64,6 +65,7 @@ static Version_t PlatformVersion = {
 #include "win32_callbacks.cpp"
 #include "win32_com.cpp"
 #include "win32_clipboard.cpp"
+#include "win32_program.cpp"
 
 //+================================================================+
 //|                      Windows Entry Point                       |
@@ -241,26 +243,30 @@ int WINAPI WinMain(HINSTANCE hInstance,
 	//+--------------------------------------+
 	//|        Fill Platform Info            |
 	//+--------------------------------------+
-	platformInfo.platformType          = Platform_Windows;
-	platformInfo.screenSize            = NewVec2i(screenWidth, screenHeight);
-	platformInfo.windowHasFocus        = true;
-	platformInfo.DebugWritePntr        = Win32_Write;
-	platformInfo.DebugWriteLinePntr    = Win32_WriteLine;
-	platformInfo.DebugPrintPntr        = Win32_Print;
-	platformInfo.DebugPrintLinePntr    = Win32_PrintLine;
-	platformInfo.FreeFileMemoryPntr    = Win32_FreeFileMemory;
-	platformInfo.ReadEntireFilePntr    = Win32_ReadEntireFile;
-	platformInfo.WriteEntireFilePntr   = Win32_WriteEntireFile;
-	platformInfo.OpenFilePntr          = Win32_OpenFile;
-	platformInfo.AppendFilePntr        = Win32_AppendFile;
-	platformInfo.CloseFilePntr         = Win32_CloseFile;
-	platformInfo.GetComPortListPntr    = Win32_GetComPortList;
-	platformInfo.OpenComPortPntr       = Win32_OpenComPort;
-	platformInfo.CloseComPortPntr      = Win32_CloseComPort;
-	platformInfo.ReadComPortPntr       = Win32_ReadComPort;
-	platformInfo.WriteComPortPntr      = Win32_WriteComPort;
-	platformInfo.CopyToClipboardPntr   = Win32_CopyToClipboard;
-	platformInfo.CopyFromClipboardPntr = Win32_CopyFromClipboard;
+	platformInfo.platformType             = Platform_Windows;
+	platformInfo.screenSize               = NewVec2i(screenWidth, screenHeight);
+	platformInfo.windowHasFocus           = true;
+	platformInfo.DebugWritePntr           = Win32_Write;
+	platformInfo.DebugWriteLinePntr       = Win32_WriteLine;
+	platformInfo.DebugPrintPntr           = Win32_Print;
+	platformInfo.DebugPrintLinePntr       = Win32_PrintLine;
+	platformInfo.FreeFileMemoryPntr       = Win32_FreeFileMemory;
+	platformInfo.ReadEntireFilePntr       = Win32_ReadEntireFile;
+	platformInfo.WriteEntireFilePntr      = Win32_WriteEntireFile;
+	platformInfo.OpenFilePntr             = Win32_OpenFile;
+	platformInfo.AppendFilePntr           = Win32_AppendFile;
+	platformInfo.CloseFilePntr            = Win32_CloseFile;
+	platformInfo.GetComPortListPntr       = Win32_GetComPortList;
+	platformInfo.OpenComPortPntr          = Win32_OpenComPort;
+	platformInfo.CloseComPortPntr         = Win32_CloseComPort;
+	platformInfo.ReadComPortPntr          = Win32_ReadComPort;
+	platformInfo.WriteComPortPntr         = Win32_WriteComPort;
+	platformInfo.CopyToClipboardPntr      = Win32_CopyToClipboard;
+	platformInfo.CopyFromClipboardPntr    = Win32_CopyFromClipboard;
+	platformInfo.StartProgramInstancePntr = Win32_StartProgramInstance;
+	platformInfo.GetProgramStatusPntr     = Win32_GetProgramStatus;
+	platformInfo.ReadProgramOutputPntr    = Win32_ReadProgramOutput;
+	platformInfo.CloseProgramInstancePntr = Win32_CloseProgramInstance;
 	platformInfo.window                = window;
 	
 	//+--------------------------------------+
@@ -433,3 +439,19 @@ int WINAPI WinMain(HINSTANCE hInstance,
 	Win32_WriteLine("Program finished.");
 	return 0;
 }
+
+#if (DEBUG && USE_ASSERT_FAILURE_FUNCTION)
+//This function is declared in my_assert.h and needs to be implemented by us for a debug build to compile successfully
+void AssertFailure(const char* function, const char* filename, int lineNumber, const char* expressionStr)
+{
+	u32 fileNameStart = 0;
+	for (u32 cIndex = 0; filename[cIndex] != '\0'; cIndex++)
+	{
+		if (filename[cIndex] == '\\' || filename[cIndex] == '/')
+		{
+			fileNameStart = cIndex+1;
+		}
+	}
+	Win32_PrintLine("Assertion Failure! %s in \"%s\" line %d: (%s) is not true", function, &filename[fileNameStart], lineNumber, expressionStr);
+}
+#endif
