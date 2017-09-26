@@ -10,6 +10,8 @@ Date:   09\24\2017
 struct ProgramInstance_t
 {
 	bool isOpen;
+	HANDLE processHandle;
+	HANDLE threadHandle;
 	HANDLE stdHandleInRead;
 	HANDLE stdHandleInWrite;
 	HANDLE stdHandleOutRead;
@@ -33,6 +35,9 @@ typedef GetProgramStatus_DEFINITION(GetProgramStatus_f);
 
 #define ReadProgramOutput_DEFINITION(functionName) u32 functionName(const ProgramInstance_t* program, char* outputBuffer, u32 outputBufferSize)
 typedef ReadProgramOutput_DEFINITION(ReadProgramOutput_f);
+
+#define WriteProgramInput_DEFINITION(functionName) u32 functionName(const ProgramInstance_t* program, const char* dataPntr, u32 numBytes)
+typedef WriteProgramInput_DEFINITION(WriteProgramInput_f);
 
 #define CloseProgramInstance_DEFINITION(functionName) void functionName(ProgramInstance_t* program)
 typedef CloseProgramInstance_DEFINITION(CloseProgramInstance_f);

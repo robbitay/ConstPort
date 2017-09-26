@@ -35,20 +35,35 @@
 	[X] Regular Expression File
 	[X] Regular Expression line matching
 	[X] Add an output to file button that will start logging to a file rather than the console
-	[!] Add a temporary MemoryArena type
+	[X] Add a temporary MemoryArena type
+	[X] Seperate Readable and File names for COM port
+	[X] Open settings file from menu button
 	[!] Add a string data stack for all input lines to get added to
+	[!] Route input text to python script
+	[!] Naming of COM ports
+	[!] String manipulation functions using the TemporaryArena
+	[!] Different colored backgrounds using regular expressions
+	[!] What kind of support do we want for platform layer TemporaryArena? Should it be a seperate arena thats pushed and popped by the platform layer? Should we somehow pass a pointer back to the platform layer once the temporary arena has been created?
 	[ ] Add checking for COM port errors and whether or not we are still connected
 	[ ] Paste from clipboard
 	[ ] Ability to set Flow Control mode
 	[ ] Horizontal Scrollbar (only shows up if needed)
-	[!] Naming of COM ports
 	[ ] Selection of spaces between markers
 	[ ] Option to enable timestamps and line color characters when saving to file
 	[ ] Fade out the status message during the last second. (Requires more accurate timing information)
 	[ ] Circular RX and TX LEDs
 	[ ] Add a way to close the COM port
 	[ ] Open saved file when saving text to file
-	[!] Seperate Readable and File names for COM port
+	[ ] Custom regular expression effects, variable number of regular expressions
+	[ ] Text cursor maintains when dragging out of text area
+	[?] Cursor at end of file to indicate where typing will happen?
+	[ ] Option to enable/disable auto-loading of output file dump
+	[ ] Rewrite the way the configuration options are defined using the multiple #include technique
+	[ ] Add better support for default configuration options that are simply overwritten by the user defined ones. Can we provide an example file or something? Maybe leave everything commented out and let them uncomment things?
+	[?] Combine the configuration files into one file?
+	[ ] Add a function that writes to a single option in the configuration file so we can have program written configuration options?
+	[ ] Create the configuration files again if they are found to be missing on startup?
+	[ ] Close running program instances when the application is exiting
 	[ ] 
 
 # Application Wish List

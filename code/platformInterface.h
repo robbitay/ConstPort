@@ -55,6 +55,9 @@ typedef AppendFile_DEFINITION(AppendFile_f);
 #define CloseFile_DEFINITION(functionName) void functionName(OpenFile_t* filePntr)
 typedef CloseFile_DEFINITION(CloseFile_f);
 
+#define LaunchFile_DEFINITION(functionName) bool32 functionName(const char* filename)
+typedef LaunchFile_DEFINITION(LaunchFile_f);
+
 
 #define DebugWrite_DEFINITION(functionName)     void functionName(const char* string)
 typedef DebugWrite_DEFINITION(DebugWrite_f);
@@ -108,6 +111,7 @@ struct PlatformInfo_t
 	OpenFile_f*        OpenFilePntr;
 	AppendFile_f*      AppendFilePntr;
 	CloseFile_f*       CloseFilePntr;
+	LaunchFile_f*      LaunchFilePntr;
 	
 	DebugWrite_f*     DebugWritePntr;
 	DebugWriteLine_f* DebugWriteLinePntr;
@@ -126,6 +130,7 @@ struct PlatformInfo_t
 	StartProgramInstance_f* StartProgramInstancePntr;
 	GetProgramStatus_f*     GetProgramStatusPntr;
 	ReadProgramOutput_f*    ReadProgramOutputPntr;
+	WriteProgramInput_f*    WriteProgramInputPntr;
 	CloseProgramInstance_f* CloseProgramInstancePntr;
 	
 	r64 timeDelta;

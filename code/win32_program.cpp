@@ -47,7 +47,7 @@ StartProgramInstance_DEFINITION(Win32_StartProgramInstance)
 	startupInfo.hStdInput = result.stdHandleInRead;
 	startupInfo.dwFlags |= STARTF_USESTDHANDLES;
 	
-	bool32 success = CreateProcess(NULL,
+	bool32 createProcessResult = CreateProcess(NULL,
 		(LPSTR)commandStr, // command line
 		NULL,              // process security attributes
 		NULL,              // primary thread security attributes
@@ -58,24 +58,40 @@ StartProgramInstance_DEFINITION(Win32_StartProgramInstance)
 		&startupInfo,      // STARTUPINFO pointer
 		&procInfo);        // receives PROCESS_INFORMATION
 	
-	if (!success)
+	if (!createProcessResult)
 	{
 		Win32_WriteLine("CreateProcess call failed");
 		return result;
 	}
 	else
 	{
-		CloseHandle(procInfo.hProcess);
-		CloseHandle(procInfo.hThread);
-		
 		result.isOpen = true;
+		result.processHandle = procInfo.hProcess;
+		result.threadHandle = procInfo.hThread;
 		return result;
 	}
 }
 
 GetProgramStatus_DEFINITION(Win32_GetProgramStatus)
 {
-	return ProgramStatus_Running;
+	DWORD exitCode;
+	if (GetExitCodeProcess(program->processHandle, &exitCode))
+	{
+		switch (exitCode)
+		{
+			case STILL_ACTIVE: return ProgramStatus_Running;
+			case ERROR_SUCCESS: return ProgramStatus_Finished;
+			default:
+			{
+				Win32_PrintLine("Unknown process exit code %02X", exitCode);
+				return ProgramStatus_Error;
+			}
+		};
+	}
+	else
+	{
+		return ProgramStatus_Unknown;
+	}
 }
 
 ReadProgramOutput_DEFINITION(Win32_ReadProgramOutput)
@@ -98,6 +114,23 @@ ReadProgramOutput_DEFINITION(Win32_ReadProgramOutput)
 	}
 	
 	return 0;
+}
+
+WriteProgramInput_DEFINITION(Win32_WriteProgramInput)
+{
+	Assert(program != nullptr);
+	Assert(program->isOpen);
+	Assert(program->stdHandleInWrite != NULL);
+	
+	DWORD numBytesWritten;
+	if (WriteFile(program->stdHandleInWrite, dataPntr, numBytes, &numBytesWritten, NULL))
+	{
+		return numBytesWritten;
+	}
+	else
+	{
+		return 0;
+	}
 }
 
 CloseProgramInstance_DEFINITION(Win32_CloseProgramInstance)
@@ -123,6 +156,24 @@ CloseProgramInstance_DEFINITION(Win32_CloseProgramInstance)
 	{
 		CloseHandle(program->stdHandleInWrite);
 		program->stdHandleInWrite = NULL;
+	}
+	if (program->processHandle != NULL)
+	{
+		DWORD exitCode;
+		if (GetExitCodeProcess(program->processHandle, &exitCode) &&
+			exitCode == STILL_ACTIVE)
+		{
+			Win32_WriteLine("Force closing program instance");
+			TerminateProcess(program->processHandle, 0); //TODO: Should this 0 be a real exit code?
+		}
+		
+		CloseHandle(program->processHandle);
+		program->processHandle = NULL;
+	}
+    if (program->threadHandle != NULL)
+    {
+		CloseHandle(program->threadHandle);
+		program->threadHandle = NULL;
 	}
 	
 	program->isOpen = false;

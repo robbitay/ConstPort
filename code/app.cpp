@@ -1027,18 +1027,50 @@ AppUpdate_DEFINITION(App_Update)
 	{
 		char readBuffer[256] = {};
 		
-		u32 numBytesRead = PlatformInfo->ReadProgramOutputPntr(&appData->programInstance, readBuffer, ArrayCount(readBuffer));
-		
-		if (numBytesRead > 0)
+		u32 numBytesRead = 1;
+		while (numBytesRead > 0)
 		{
-			DEBUG_PrintLine("Read %u bytes from program: \"%.*s\"", numBytesRead, numBytesRead, readBuffer);
+			numBytesRead = PlatformInfo->ReadProgramOutputPntr(&appData->programInstance, readBuffer, ArrayCount(readBuffer));
 			
-			DataReceived(readBuffer, numBytesRead);
+			if (numBytesRead > 0)
+			{
+				DEBUG_PrintLine("Read %u bytes from program: \"%.*s\"", numBytesRead, numBytesRead, readBuffer);
+				
+				DataReceived(readBuffer, numBytesRead);
+			}
+			// else if (ButtonDown(Button_Control))
+			// {
+			// 	DEBUG_WriteLine("Nothing");
+			// }
 		}
-		// else if (ButtonDown(Button_Control))
-		// {
-		// 	DEBUG_WriteLine("Nothing");
-		// }
+		
+		ProgramStatus_t programStatus = PlatformInfo->GetProgramStatusPntr(&appData->programInstance);
+		if (programStatus != ProgramStatus_Running)
+		{
+			DEBUG_WriteLine("Program instance finished!");
+			PlatformInfo->CloseProgramInstancePntr(&appData->programInstance);
+		}
+		
+		if (programStatus == ProgramStatus_Running && AppInput->textInputLength > 0)
+		{
+			DEBUG_PrintLine("Writing to program instance \"%.*s\"", AppInput->textInputLength, AppInput->textInput);
+			
+			u32 numBytesWritten = PlatformInfo->WriteProgramInputPntr(&appData->programInstance, &AppInput->textInput[0], AppInput->textInputLength);
+			if (numBytesWritten != AppInput->textInputLength)
+			{
+				DEBUG_PrintLine("Only wrote %u/%u bytes to program instance", numBytesWritten, AppInput->textInputLength);
+			}
+		}
+		if (programStatus == ProgramStatus_Running && ButtonPressed(Button_Enter))
+		{
+			char newByte = '\n';
+			DEBUG_WriteLine("Writing new-line program instance");
+			u32 numBytesWritten = PlatformInfo->WriteProgramInputPntr(&appData->programInstance, &newByte, 1);
+			if (numBytesWritten != 1)
+			{
+				DEBUG_PrintLine("Only wrote %u/%u bytes to program instance", numBytesWritten, 1);
+			}
+		}
 	}
 	
 	//+==================================+
@@ -1288,8 +1320,9 @@ AppUpdate_DEFINITION(App_Update)
 		else
 		{
 			char commandBuffer[256] = {};
-			strcpy(commandBuffer, "python Resources/Scripts/hello.py ");
+			strcpy(commandBuffer, "python Resources/Scripts/hello.py \"");
 			GetSelection(&commandBuffer[strlen(commandBuffer)]);
+			commandBuffer[strlen(commandBuffer)] = '\"';
 			
 			DEBUG_WriteLine("Creating program instance...");
 			appData->programInstance = PlatformInfo->StartProgramInstancePntr(commandBuffer);
@@ -1354,6 +1387,29 @@ AppUpdate_DEFINITION(App_Update)
 						}
 					} break;
 					
+					case Button_Settings:
+					{
+						//TODO: Create file if it doesn't exist
+						if (ButtonDown(Button_Shift) && ButtonDown(Button_Control))
+						{
+							PlatformInfo->LaunchFilePntr("Resources\\Configuration\\PlatformConfig.json");
+							PlatformInfo->LaunchFilePntr("Resources\\Configuration\\RegularExpressions.rgx");
+							PlatformInfo->LaunchFilePntr("Resources\\Configuration\\GlobalConfig.json");
+						}
+						else if (ButtonDown(Button_Shift))
+						{
+							PlatformInfo->LaunchFilePntr("Resources\\Configuration\\PlatformConfig.json");
+						}
+						else if (ButtonDown(Button_Control))
+						{
+							PlatformInfo->LaunchFilePntr("Resources\\Configuration\\RegularExpressions.rgx");
+						}
+						else
+						{
+							PlatformInfo->LaunchFilePntr("Resources\\Configuration\\GlobalConfig.json");
+						}
+					} break;
+					
 					default:
 					{
 						StatusError("Button does nothing.");
@@ -1404,6 +1460,15 @@ AppUpdate_DEFINITION(App_Update)
 			DEBUG_WriteLine("Done!");
 			
 			TempPopMark();
+			
+			if (PlatformInfo->LaunchFilePntr(fileNameBuffer))
+			{
+				DEBUG_WriteLine("Opened output file for viewing");
+			}
+			else
+			{
+				DEBUG_WriteLine("Could not open output file");
+			}
 			
 			StatusSuccess("Saved to %s", fileNameBuffer);
 		}

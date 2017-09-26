@@ -170,6 +170,39 @@ CloseFile_DEFINITION(Win32_CloseFile)
 	filePntr->isOpen = false;
 }
 
+LaunchFile_DEFINITION(Win32_LaunchFile)
+{
+	u64 executeResult = (u64)ShellExecute(
+		NULL,   //No parent window
+		"open", //The action verb
+		filename, //The target file
+		NULL, //No parameters
+		NULL, //Use default working directory
+		SW_SHOWNORMAL //Show command is normal
+	);
+	
+	if (executeResult > 32)
+	{
+		return true;
+	}
+	else
+	{
+		switch (executeResult)
+		{
+			case ERROR_FILE_NOT_FOUND:
+			{
+				Win32_WriteLine("ShellExecute returned ERROR_FILE_NOT_FOUND");
+			} break;
+			
+			default:
+			{
+				Win32_PrintLine("ShellExecute failed with result 0x%02X", executeResult);
+			} break;
+		};
+		
+		return false;
+	}
+}
 
 uint32 GetRunningDirectory(char* buffer, uint32 maxBufferSize)
 {
