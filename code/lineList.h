@@ -30,6 +30,7 @@ struct Line_t
 	//Use the LineFlag enumeration
 	flags8 flags;
 	Color_t matchColor;
+	Color_t backgroundColor;
 };
 
 struct LineList_t

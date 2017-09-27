@@ -32,6 +32,7 @@ Line_t* AddLineToList(LineList_t* lineList, const char* string, u32 stringLength
 	newLine->timestamp = 0;
 	newLine->flags = 0;
 	newLine->matchColor = GC->colors.foreground;
+	newLine->backgroundColor = GC->colors.background;
 	
 	lineList->numLines++;
 	

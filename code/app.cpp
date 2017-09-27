@@ -650,6 +650,13 @@ void DataReceived(const char* dataBuffer, i32 numBytes)
 					finishedLine->matchColor = GC->colors.highlight5;
 				}
 				
+				expression = GetRegularExpression(&appData->regexList, GC->backgroundColorRegexName);
+				if (expression != nullptr && TestRegularExpression(expression, finishedLine->chars, finishedLine->numChars))
+				{
+					DEBUG_WriteLine("BackgroundColor");
+					finishedLine->backgroundColor = {Color_Black};//GC->colors.uiGray4;
+				}
+				
 				lastLine = AddLineToList(&appData->lineList, "");
 			}
 		}

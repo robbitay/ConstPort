@@ -37,7 +37,7 @@
 	"Highlight3RegexName":   "Has Hex 03",
 	"Highlight4RegexName":   "Has Hex 04",
 	"Highlight5RegexName":   "Has Hex 05",
-	"BackgroundColorRegexName": "BlePrefix",
+	"BackgroundColorRegexName": "Has Hex 01",
 	
 	//TODO: Implement these
 	"PortNames":

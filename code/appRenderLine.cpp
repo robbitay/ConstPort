@@ -17,34 +17,11 @@ r32 RenderLine(const AppInput_t* AppInput, Line_t* linePntr, v2 position, bool s
 	r32 result = 0;
 	
 	Color_t color = linePntr->matchColor;
-	#if 0
-	if (linePntr->numChars > 0 && linePntr->matchColor.value == 0x00000000)
-	{
-		if (linePntr->chars[0] == 0x01)
-		{
-			color = GC->colors.highlight1;
-		}
-		else if (linePntr->chars[0] == 0x02)
-		{
-			color = GC->colors.highlight2;
-		}
-		else if (linePntr->chars[0] == 0x03)
-		{
-			color = GC->colors.highlight3;
-		}
-		else if (linePntr->chars[0] == 0x04)
-		{
-			color = GC->colors.highlight4;
-		}
-		else if (linePntr->chars[0] == 0x05)
-		{
-			color = GC->colors.highlight5;
-		}
-	}
-	#endif
+	Color_t backgroundColor = linePntr->backgroundColor;
 	
 	if (!sizeOnly)
 	{
+		appData->renderState.DrawRectangle(NewRectangle(position.x, position.y - appData->testFont.maxExtendUp - GC->lineSpacing/2, ui->viewRec.width, appData->testFont.lineHeight + GC->lineSpacing), backgroundColor);
 		appData->renderState.DrawString(linePntr->chars, position, color, 1.0f);
 	}
 	result += appData->testFont.lineHeight;
