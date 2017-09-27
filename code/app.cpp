@@ -518,7 +518,7 @@ u32 SanatizeString(const char* charPntr, u32 numChars, char* outputBuffer = null
 	char* outPntr = outputBuffer;
 	for (u32 cIndex = 0; cIndex < numChars; cIndex++)
 	{
-		if (charPntr[cIndex] == 0x01 || charPntr[cIndex] == 0x02 || charPntr[cIndex] == 0x03 || charPntr[cIndex] == 0x04)
+		if (charPntr[cIndex] < ' ') 
 		{
 			//Ignore these characters
 		}

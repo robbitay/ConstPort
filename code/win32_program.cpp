@@ -46,6 +46,8 @@ StartProgramInstance_DEFINITION(Win32_StartProgramInstance)
 	startupInfo.hStdOutput = result.stdHandleOutWrite;
 	startupInfo.hStdInput = result.stdHandleInRead;
 	startupInfo.dwFlags |= STARTF_USESTDHANDLES;
+	startupInfo.dwFlags |= STARTF_USESHOWWINDOW;
+	startupInfo.wShowWindow = SW_SHOWMINNOACTIVE;
 	
 	bool32 createProcessResult = CreateProcess(NULL,
 		(LPSTR)commandStr, // command line

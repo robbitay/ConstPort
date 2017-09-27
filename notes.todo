@@ -70,7 +70,8 @@
 	[ ] Save window position and size when closing to configuration options. Pass these to windows when we create the window at startup
 	[ ] Rename LaunchFile to EditFile
 	[ ] Fix the rendering of the assigned port name in the ComPortMenu. Possibly add the actual COM# below the assigned name?
-	[ ] 
+	[ ] Fix rendering of hover line with new backgroundColor functionality
+	[ ] Fix console window opening with python 2?
 
 # Application Wish List
 	[ ] Read multiple COM ports side by side.
