@@ -2091,6 +2091,21 @@ AppUpdate_DEFINITION(App_Update)
 		rs->DrawString(clearStr, textPos, textColor);
 	}
 	
+	// +==============================+
+	// |     Python Running Label     |
+	// +==============================+
+	if (appData->programInstance.isOpen)
+	{
+		const char* runningStr = "Py";
+		v2 strSize = MeasureString(&appData->testFont, runningStr);
+		v2 textPos = NewVec2(
+			ui->clearButtonRec.x - strSize.x - 5,
+			ui->mainMenuRec.y + appData->testFont.maxExtendUp
+		);
+		
+		rs->DrawString(runningStr, textPos, GC->colors.foreground);
+	}
+	
 	// +==================================+
 	// |         Generic Counter          |
 	// +==================================+
