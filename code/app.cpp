@@ -622,39 +622,39 @@ void DataReceived(const char* dataBuffer, i32 numBytes)
 				expression = GetRegularExpression(&appData->regexList, GC->highlight1RegexName);
 				if (expression != nullptr && TestRegularExpression(expression, finishedLine->chars, finishedLine->numChars))
 				{
-					DEBUG_WriteLine("Highlight1");
+					// DEBUG_WriteLine("Highlight1");
 					finishedLine->matchColor = GC->colors.highlight1;
 				}
 				expression = GetRegularExpression(&appData->regexList, GC->highlight2RegexName);
 				if (expression != nullptr && TestRegularExpression(expression, finishedLine->chars, finishedLine->numChars))
 				{
-					DEBUG_WriteLine("Highlight2");
+					// DEBUG_WriteLine("Highlight2");
 					finishedLine->matchColor = GC->colors.highlight2;
 				}
 				expression = GetRegularExpression(&appData->regexList, GC->highlight3RegexName);
 				if (expression != nullptr && TestRegularExpression(expression, finishedLine->chars, finishedLine->numChars))
 				{
-					DEBUG_WriteLine("Highlight3");
+					// DEBUG_WriteLine("Highlight3");
 					finishedLine->matchColor = GC->colors.highlight3;
 				}
 				expression = GetRegularExpression(&appData->regexList, GC->highlight4RegexName);
 				if (expression != nullptr && TestRegularExpression(expression, finishedLine->chars, finishedLine->numChars))
 				{
-					DEBUG_WriteLine("Highlight4");
+					// DEBUG_WriteLine("Highlight4");
 					finishedLine->matchColor = GC->colors.highlight4;
 				}
 				expression = GetRegularExpression(&appData->regexList, GC->highlight5RegexName);
 				if (expression != nullptr && TestRegularExpression(expression, finishedLine->chars, finishedLine->numChars))
 				{
-					DEBUG_WriteLine("Highlight5");
+					// DEBUG_WriteLine("Highlight5");
 					finishedLine->matchColor = GC->colors.highlight5;
 				}
 				
 				expression = GetRegularExpression(&appData->regexList, GC->backgroundColorRegexName);
 				if (expression != nullptr && TestRegularExpression(expression, finishedLine->chars, finishedLine->numChars))
 				{
-					DEBUG_WriteLine("BackgroundColor");
-					finishedLine->backgroundColor = {Color_Black};//GC->colors.uiGray4;
+					// DEBUG_WriteLine("BackgroundColor");
+					finishedLine->backgroundColor = GC->colors.regexMatchBackground;
 				}
 				
 				lastLine = AddLineToList(&appData->lineList, "");
@@ -979,9 +979,9 @@ AppUpdate_DEFINITION(App_Update)
 		}
 	}
 	
-	//+==================================+
-	//|     Read and write COM port      |
-	//+==================================+
+	// +==============================+
+	// |    Read From The COM Port    |
+	// +==============================+
 	if (appData->comPort.isOpen)
 	{
 		i32 readResult = 1;
@@ -993,39 +993,28 @@ AppUpdate_DEFINITION(App_Update)
 			{
 				// DEBUG_PrintLine("Read %d bytes \"%.*s\"", readResult, readResult, buffer);
 				
-				DataReceived(buffer, readResult);
+				if (appData->programInstance.isOpen == false ||
+					GC->sendComDataToPython == false ||
+					GC->alsoShowComData == true)
+				{
+					DataReceived(buffer, readResult);
+				}
+				
+				if (appData->programInstance.isOpen && GC->sendComDataToPython)
+				{
+					DEBUG_PrintLine("Writing to program instance \"%.*s\"", readResult, buffer);
+					
+					u32 numBytesWritten = PlatformInfo->WriteProgramInputPntr(&appData->programInstance, &buffer[0], readResult);
+					if ((i32)numBytesWritten != readResult)
+					{
+						DEBUG_PrintLine("Only wrote %u/%u bytes to program instance", numBytesWritten, readResult);
+					}
+				}
 			}
 			else if (readResult < 0)
 			{
 				DEBUG_PrintLine("COM port read Error!: %d", readResult);
 			}
-		}
-		
-		if (AppInput->textInputLength > 0)
-		{
-			// DEBUG_PrintLine("Writing \"%.*s\"", AppInput->textInputLength, AppInput->textInput);
-			
-			PlatformInfo->WriteComPortPntr(&appData->comPort, &AppInput->textInput[0], AppInput->textInputLength);
-			
-			appData->txShiftRegister |= 0x80;
-		}
-		
-		if (!comMenu->show && ButtonPressed(Button_Enter))
-		{
-			DEBUG_WriteLine("Writing New Line");
-			
-			char newChar = '\n';
-			PlatformInfo->WriteComPortPntr(&appData->comPort, &newChar, 1);
-			appData->txShiftRegister |= 0x80;
-		}
-		
-		if (!comMenu->show && ButtonPressed(Button_Backspace))
-		{
-			DEBUG_WriteLine("Writing Backspace");
-			
-			char newChar = '\b';
-			PlatformInfo->WriteComPortPntr(&appData->comPort, &newChar, 1);
-			appData->txShiftRegister |= 0x80;
 		}
 	}
 	
@@ -1045,7 +1034,10 @@ AppUpdate_DEFINITION(App_Update)
 			{
 				DEBUG_PrintLine("Read %u bytes from program: \"%.*s\"", numBytesRead, numBytesRead, readBuffer);
 				
-				DataReceived(readBuffer, numBytesRead);
+				if (GC->showPythonOutput)
+				{
+					DataReceived(readBuffer, numBytesRead);
+				}
 			}
 			// else if (ButtonDown(Button_Control))
 			// {
@@ -1059,25 +1051,57 @@ AppUpdate_DEFINITION(App_Update)
 			DEBUG_WriteLine("Program instance finished!");
 			PlatformInfo->CloseProgramInstancePntr(&appData->programInstance);
 		}
+	}
+	
+	// +============================================+
+	// | Read Keyboard Input and Route Accordingly  |
+	// +============================================+
+	if (true)
+	{
+		bool writeToComPort = (appData->comPort.isOpen && (appData->programInstance.isOpen == false || GC->sendInputToPython == false || GC->alsoSendInputToCom));
+		bool writeToProgram = (appData->programInstance.isOpen && GC->sendInputToPython);
+		bool echoInput = GC->autoEchoInput;
 		
-		if (programStatus == ProgramStatus_Running && AppInput->textInputLength > 0)
+		if (AppInput->textInputLength > 0)
 		{
-			DEBUG_PrintLine("Writing to program instance \"%.*s\"", AppInput->textInputLength, AppInput->textInput);
-			
-			u32 numBytesWritten = PlatformInfo->WriteProgramInputPntr(&appData->programInstance, &AppInput->textInput[0], AppInput->textInputLength);
-			if (numBytesWritten != AppInput->textInputLength)
+			// DEBUG_PrintLine("Writing \"%.*s\"", AppInput->textInputLength, AppInput->textInput);
+			if (echoInput) { DataReceived(&AppInput->textInput[0], AppInput->textInputLength); }
+			if (writeToComPort)
 			{
-				DEBUG_PrintLine("Only wrote %u/%u bytes to program instance", numBytesWritten, AppInput->textInputLength);
+				PlatformInfo->WriteComPortPntr(&appData->comPort, &AppInput->textInput[0], AppInput->textInputLength);
+				appData->txShiftRegister |= 0x80;
 			}
+			if (writeToProgram) { PlatformInfo->WriteProgramInputPntr(&appData->programInstance, &AppInput->textInput[0], AppInput->textInputLength); }
 		}
-		if (programStatus == ProgramStatus_Running && ButtonPressed(Button_Enter))
+		
+		if (!comMenu->show && ButtonPressed(Button_Enter))
 		{
-			char newByte = '\n';
-			DEBUG_WriteLine("Writing new-line program instance");
-			u32 numBytesWritten = PlatformInfo->WriteProgramInputPntr(&appData->programInstance, &newByte, 1);
-			if (numBytesWritten != 1)
+			DEBUG_WriteLine("Writing New Line");
+			
+			char newChar = '\n';
+			if (echoInput) { DataReceived("\n", 1); }
+			if (writeToComPort)
 			{
-				DEBUG_PrintLine("Only wrote %u/%u bytes to program instance", numBytesWritten, 1);
+				PlatformInfo->WriteComPortPntr(&appData->comPort, &newChar, 1);
+				appData->txShiftRegister |= 0x80;
+			}
+			if (writeToProgram) { PlatformInfo->WriteProgramInputPntr(&appData->programInstance, &newChar, 1); }
+		}
+		
+		if (!comMenu->show && ButtonPressed(Button_Backspace))
+		{
+			DEBUG_WriteLine("Writing Backspace");
+			
+			char newChar = '\b';
+			if (echoInput) { DataReceived("\b", 1); }
+			if (writeToComPort)
+			{
+				PlatformInfo->WriteComPortPntr(&appData->comPort, &newChar, 1);
+				appData->txShiftRegister |= 0x80;
+			}
+			if (writeToProgram)
+			{
+				PlatformInfo->WriteProgramInputPntr(&appData->programInstance, &newChar, 1);
 			}
 		}
 	}
@@ -1319,22 +1343,30 @@ AppUpdate_DEFINITION(App_Update)
 	// +==================================+
 	// | Start/Stop Test Program Instance |
 	// +==================================+
-	if (ButtonPressed(Button_P) && ButtonDown(Button_Control))
+	if (ButtonPressed(Button_P) && ButtonDown(Button_Control) &&
+		GC->pythonScriptEnabled)
 	{
 		if (appData->programInstance.isOpen)
 		{
-			DEBUG_WriteLine("Closing program instance");
+			StatusInfo("Closing python instance");
 			PlatformInfo->CloseProgramInstancePntr(&appData->programInstance);
 		}
 		else
 		{
-			char commandBuffer[256] = {};
-			strcpy(commandBuffer, "python Resources/Scripts/hello.py \"");
-			GetSelection(&commandBuffer[strlen(commandBuffer)]);
-			commandBuffer[strlen(commandBuffer)] = '\"';
-			
-			DEBUG_WriteLine("Creating program instance...");
-			appData->programInstance = PlatformInfo->StartProgramInstancePntr(commandBuffer);
+			if (GC->pythonScript != nullptr)
+			{
+				char* commandStr = TempPrint("%s", GC->pythonScript);
+				StatusInfo("Running System Command: \"%s\"", commandStr);
+				appData->programInstance = PlatformInfo->StartProgramInstancePntr(commandStr);
+				if (appData->programInstance.isOpen == false)
+				{
+					StatusError("Python exec failed: \"%s\"", commandStr);
+				}
+			}
+			else
+			{
+				StatusError("No python script defined!");
+			}
 		}
 	}
 	

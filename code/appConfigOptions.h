@@ -31,6 +31,17 @@ Date:   09\26\2017
 	ConfigurationBool  ("ShowHoverCursor",         showHoverCursor,        false);
 	ConfigurationBool  ("HighlightHoverLine",      highlightHoverLine,     true);
 	ConfigurationInt32 ("RxTxLedDelay",            rxTxLedDelay,           4);
+	ConfigurationBool  ("AutoEchoInput",           autoEchoInput,          true);
+	
+	//Python Related Options
+	ConfigurationBool  ("PythonScriptEnabled", pythonScriptEnabled, false);
+	ConfigurationBool  ("AutoRunPython",       autoRunPython,       false);
+	ConfigurationBool  ("SendComDataToPython", sendComDataToPython, true);
+	ConfigurationBool  ("AlsoShowComData",     alsoShowComData,     false);
+	ConfigurationBool  ("SendInputToPython",   sendInputToPython,   false);
+	ConfigurationBool  ("AlsoSendInputToCom",  alsoSendInputToCom,  false);
+	ConfigurationBool  ("ShowPythonOutput",    showPythonOutput,    true);
+	ConfigurationString("PythonScript",        pythonScript,        nullptr);
 	
 	//Regex Names
 	ConfigurationString("GenericCountRegexName",    genericCountRegexName,    nullptr);
@@ -63,6 +74,7 @@ Date:   09\26\2017
 	ConfigurationColor("Highlight5",           highlight5,           NewColor(102, 217, 239, 255)); //Light Blue
 	ConfigurationColor("Selection1",           selection1,           {Color_White});
 	ConfigurationColor("Selection2",           selection2,           {Color_White});
+	ConfigurationColor("RegexMatchBackground", regexMatchBackground, {Color_Black});
 	ConfigurationColor("UiGray1",              uiGray1,              {0xFF494949});
 	ConfigurationColor("UiGray2",              uiGray2,              {0xFF404040});
 	ConfigurationColor("UiGray3",              uiGray3,              {0xFF303030});

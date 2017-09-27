@@ -86,6 +86,11 @@ void LoadGlobalConfiguration(const PlatformInfo_t* PlatformInfo, GlobalConfig_t*
 	
 	#define INCLUDE_COLOR_OPTIONS
 	#include "appConfigOptions.h"
+	
+	for (u8 comIndex = ComPort_1; comIndex < NumComPorts; comIndex++)
+	{
+		globalConfig->comPortNames[comIndex] = GetComPortReadableName((ComPortIndex_t)comIndex);
+	}
 
 	//+==================================+
 	//|       Parse the JSON File        |

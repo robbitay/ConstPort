@@ -40,10 +40,12 @@
 	[X] Open settings file from menu button
 	[X] Naming of COM ports
 	[X] Different colored backgrounds using regular expressions
+	[X] Route input text to python script
 	[!] Add a string data stack for all input lines to get added to
-	[!] Route input text to python script
+	[!] Add configuration options to define what python script gets run by ConstPort
 	[!] String manipulation functions using the TemporaryArena
-	[!] What kind of support do we want for platform layer TemporaryArena? Should it be a seperate arena thats pushed and popped by the platform layer? Should we somehow pass a pointer back to the platform layer once the temporary arena has been created?
+	[!] Handle escaped characters in JSON strings correctly
+	[?] What kind of support do we want for platform layer TemporaryArena? Should it be a seperate arena thats pushed and popped by the platform layer? Should we somehow pass a pointer back to the platform layer once the temporary arena has been created?
 	[ ] Add checking for COM port errors and whether or not we are still connected
 	[ ] Paste from clipboard
 	[ ] Ability to set Flow Control mode

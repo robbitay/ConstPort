@@ -1,3 +1,0 @@
-Hello Colby! :D
-Arguments: ['Resources/Scripts/hello.py', '']
-Argument1: { }

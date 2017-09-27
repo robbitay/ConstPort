@@ -21,7 +21,14 @@ r32 RenderLine(const AppInput_t* AppInput, Line_t* linePntr, v2 position, bool s
 	
 	if (!sizeOnly)
 	{
-		appData->renderState.DrawRectangle(NewRectangle(position.x, position.y - appData->testFont.maxExtendUp - GC->lineSpacing/2, ui->viewRec.width, appData->testFont.lineHeight + GC->lineSpacing), backgroundColor);
+		//TODO: Draw this non-relative to the camera?
+		rec backgroundRec = NewRectangle(
+			0,
+			position.y - appData->testFont.maxExtendUp - GC->lineSpacing/2,
+			10000,
+			appData->testFont.lineHeight + GC->lineSpacing
+		);
+		appData->renderState.DrawRectangle(backgroundRec, backgroundColor);
 		appData->renderState.DrawString(linePntr->chars, position, color, 1.0f);
 	}
 	result += appData->testFont.lineHeight;

@@ -30,14 +30,27 @@
 	
 	"RxTxLedDelay": 4, //frames
 	
-	"GenericCountRegexName": "Has Hex 03",
-	"MarkLineRegexName":     "Short Line",
+	"AutoEchoInput": false,
+	
+	//Python related options
+	"PythonScriptEnabled": true,
+	"AutoRunPython":       false,
+	"SendComDataToPython": true,
+	"AlsoShowComData":     false,
+	"SendInputToPython":   false,
+	"AlsoSendInputToCom":  false,
+	"ShowPythonOutput":    true,
+	"PythonScript":        "python Resources\\Scripts\\asciiHex.py",
+	// "PythonScript":        "ConstPort",
+	
+	"GenericCountRegexName": "Has Exclamation",
+	"MarkLineRegexName":     "",
 	"Highlight1RegexName":   "Has Hex 01",
 	"Highlight2RegexName":   "Has Hex 02",
 	"Highlight3RegexName":   "Has Hex 03",
 	"Highlight4RegexName":   "Has Hex 04",
 	"Highlight5RegexName":   "Has Hex 05",
-	"BackgroundColorRegexName": "Has Hex 01",
+	"BackgroundColorRegexName": "Has Exclamation",
 	
 	//TODO: Implement these
 	"PortNames":
@@ -59,30 +72,31 @@
 	//Various Colors Used in UI drawing
 	"Colors":
 	{
-		"Background":       "212121",
-		"Foreground":       "F8F8F2",
-		"Selection1":       "White",
-		"Selection2":       "Gray",
-		"UiGray1":          "494949",
-		"UiGray2":          "404040",
-		"UiGray3":          "303030",
-		"UiGray4":          "101010",
-		"UiLightGray1":     "B4B4B4",
-		"ReceiveLed":       [249,  38, 101, 255], //Red/Magenta
-		"TransmitLed":      [174, 129, 255, 255], //Purple
-		"HoverLine":        "303030", //UiGray3
-		"BannerColor1":     "494949", //UiGray1
-		"BannerColor2":     "303030", //UiGray3
-		"WindowTitleBar":   "303030", //UiGray3
-		"WindowBackground": "494949", //UiGray1
-		"WindowBorder":     "B4B4B4", //UiLightGray1
-		"MarkColor1":       [255, 255, 255, 128],
-		"MarkColor2":       [255, 255, 255,   0],
-		"Highlight1":       [117, 113,  94, 255], //Comment Color
-		"Highlight2":       [166, 226,  46, 255], //Green Color
-		"Highlight3":       [249,  38, 101, 255], //Red/Magenta
-		"Highlight4":       [174, 129, 255, 255], //Purple
-		"Highlight5":       [102, 217, 239, 255], //Light Blue
+		"Background":           "212121",
+		"Foreground":           "F8F8F2",
+		"Selection1":           "White",
+		"Selection2":           "Gray",
+		"RegexMatchBackground": "Black",
+		"UiGray1":              "494949",
+		"UiGray2":              "404040",
+		"UiGray3":              "303030",
+		"UiGray4":              "101010",
+		"UiLightGray1":         "B4B4B4",
+		"ReceiveLed":           [249,  38, 101, 255], //Red/Magenta
+		"TransmitLed":          [174, 129, 255, 255], //Purple
+		"HoverLine":            "303030", //UiGray3
+		"BannerColor1":         "494949", //UiGray1
+		"BannerColor2":         "303030", //UiGray3
+		"WindowTitleBar":       "303030", //UiGray3
+		"WindowBackground":     "494949", //UiGray1
+		"WindowBorder":         "B4B4B4", //UiLightGray1
+		"MarkColor1":           [255, 255, 255, 128],
+		"MarkColor2":           [255, 255, 255,   0],
+		"Highlight1":           [117, 113,  94, 255], //Comment Color
+		"Highlight2":           [166, 226,  46, 255], //Green Color
+		"Highlight3":           [249,  38, 101, 255], //Red/Magenta
+		"Highlight4":           [174, 129, 255, 255], //Purple
+		"Highlight5":           [102, 217, 239, 255], //Light Blue
 		
 		"Button":               "White",
 		"ButtonText":           "Black",
