@@ -26,6 +26,8 @@ struct GlobalConfig_t
 		#define INCLUDE_COLOR_OPTIONS
 		#include "appConfigOptions.h"
 	} colors;
+	
+	const char* comPortNames[NumComPorts];
 };
 
 #endif // _APP_CONFIGURATION_H

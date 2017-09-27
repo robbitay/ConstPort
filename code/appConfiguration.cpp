@@ -18,7 +18,7 @@ Description:
 	{                                                                                             \
 		case ConfigError_None: /*DEBUG_PrintLine("Parsed \"%s\" correctly!", tokenName);*/ break; \
 		case ConfigError_TokenNotFound:                                                           \
-			StatusError("Error parsing \"%s\": Token Not Found", tokenName);                      \
+			/*StatusError("Error parsing \"%s\": Token Not Found", tokenName);*/                  \
 			parseSuccess = false; break;                                                          \
 		case ConfigError_InvalidNumber:                                                           \
 			StatusError("Error parsing \"%s\": Invalid Number", tokenName);                       \
@@ -45,7 +45,7 @@ Description:
 	{                                                                                                        \
 		case ConfigError_None: /*DEBUG_PrintLine("Parsed \"%s\" correctly!", tokenName);*/ break;            \
 		case ConfigError_TokenNotFound:                                                                      \
-			StatusError("Error parsing \"%s\": Token Not Found", tokenName);                                 \
+			/*StatusError("Error parsing \"%s\": Token Not Found", tokenName);*/                             \
 			parseSuccess = false; break;                                                                     \
 		case ConfigError_InvalidNumber:                                                                      \
 			StatusError("Error parsing \"%s\": Invalid Number", tokenName);                                  \
@@ -152,6 +152,29 @@ void LoadGlobalConfiguration(const PlatformInfo_t* PlatformInfo, GlobalConfig_t*
 		#define INCLUDE_COLOR_OPTIONS
 		#include "appConfigOptions.h"
 	}
+	
+	// +==============================+
+	// | Parse COM Port Name Options  |
+	// +==============================+
+	i32 portNamesTokenIndex = FindChildTokenByName(&jsonData, 0, "PortNames");
+	if (portNamesTokenIndex == -1)
+	{
+		DEBUG_WriteLine("Couldn't find \"PortNames\" object in GlobalConfig.json");
+	}
+	else
+	{
+		i32 portNamesIndex = GetChildToken(&jsonData, portNamesTokenIndex);
+		
+		for (u8 comIndex = ComPort_1; comIndex < NumComPorts; comIndex++)
+		{
+			const char* comName = GetComPortReadableName((ComPortIndex_t)comIndex);
+			
+			const char* assignedName = comName;
+			GetStrConfig(portNamesIndex, comName, &assignedName, memArena);
+			
+			globalConfig->comPortNames[comIndex] = assignedName;
+		}
+	}
 
 	PlatformInfo->FreeFileMemoryPntr(&globalConfigFile);
 	
@@ -178,6 +201,15 @@ void DisposeGlobalConfig(GlobalConfig_t* globalConfig)
 	
 	#define INCLUDE_GLOBAL_OPTIONS
 	#include "appConfigOptions.h"
+	
+	for (u8 comIndex = ComPort_1; comIndex < NumComPorts; comIndex++)
+	{
+		if (globalConfig->comPortNames[comIndex] != nullptr)
+		{
+			ArenaPop(globalConfig->memArena, (char*)globalConfig->comPortNames[comIndex]);
+			globalConfig->comPortNames[comIndex] = nullptr;
+		}
+	}
 	
 	ClearPointer(globalConfig);
 }

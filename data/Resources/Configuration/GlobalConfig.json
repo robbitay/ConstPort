@@ -39,6 +39,23 @@
 	"Highlight5RegexName":   "Has Hex 05",
 	"BackgroundColorRegexName": "BlePrefix",
 	
+	//TODO: Implement these
+	"PortNames":
+	{
+		// "COM1":  "Name",
+		// "COM2":  "Name",
+		// "COM3":  "Name",
+		// "COM4":  "Name",
+		// "COM5":  "Name",
+		// "COM6":  "Name",
+		// "COM7":  "Name",
+		// "COM8":  "Name",
+		"COM9":  "PIC32MZ Starter Kit",
+		// "COM10": "Name",
+		// "COM11": "Name",
+		// "COM12": "Name",
+	},
+	
 	//Various Colors Used in UI drawing
 	"Colors":
 	{
@@ -86,22 +103,5 @@
 		"ButtonReady":          [166, 226,  46, 255], //Green Color
 		"ButtonReadyText":      "Black",
 		"ButtonReadyBorder":    "White",
-	},
-	
-	//TODO: Implement these
-	"PortNames":
-	{
-		// "COM1":  "Name",
-		// "COM2":  "Name",
-		// "COM3":  "Name",
-		// "COM4":  "Name",
-		// "COM5":  "Name",
-		// "COM6":  "Name",
-		// "COM7":  "Name",
-		// "COM8":  "Name",
-		"COM9":  "Test PIC32",
-		// "COM10": "Name",
-		// "COM11": "Name",
-		// "COM12": "Name",
 	},
 }

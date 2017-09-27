@@ -693,6 +693,8 @@
 			"bool32 LaunchFilePntr(const char* filename)",
 			"bool32 WIN32_LaunchFile(const char* filename)",
 			"char* FormattedSizeStr(u32 numBytes)",
+			"const char* GetComPortFileName(ComPortIndex_t comIndex)",
+			"const char* GetComPortReadableName(ComPortIndex_t comIndex)",
 			"const char* GetRegularExpression(RegexList_t* regexList, const char* name)",
 			"define ButtonColorChoice(buttonColor, textColor, borderColor, rectangle, isSelected, isReady)",
 			"define ButtonDown(button)",
