@@ -1,6 +1,6 @@
 {
-	"WindowWidth": 400,
-	"WindowHeight": 400,
+	"WindowWidth": 600,
+	"WindowHeight": 1000,
 	"MinWindowWidth": 400,
 	"MinWindowHeight": 180,
 	"ForceAspectRatio": false,

@@ -15,6 +15,7 @@
 More Than 3 Equals:    \={3,}
 Has Elipse:            \.\.\.
 Short Line:            ^[^\n]{1,5}$
+BlePrefix:             ^b\-
 
 # These match lines with the unused codepoints 0x01-0x05 anywhere in the line
 Has Hex 01: \x{0001}

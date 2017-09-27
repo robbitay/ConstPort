@@ -484,7 +484,7 @@ ConfigError_t TryGetVec2iConfig(JsonData_t* jsonData, i32 parentObjectIndex, con
 	}
 }
 
-ConfigError_t TryGetStringConfig(JsonData_t* jsonData, i32 parentObjectIndex, const char* tokenName, char** valuePntr, MemoryArena_t* memArena)
+ConfigError_t TryGetStringConfig(JsonData_t* jsonData, i32 parentObjectIndex, const char* tokenName, const char** valuePntr, MemoryArena_t* memArena)
 {
 	i32 tokenIndex = FindChildTokenByName(jsonData, parentObjectIndex, tokenName);
 	if (tokenIndex != -1)

@@ -64,6 +64,8 @@
 	[ ] Add a function that writes to a single option in the configuration file so we can have program written configuration options?
 	[ ] Create the configuration files again if they are found to be missing on startup?
 	[ ] Close running program instances when the application is exiting
+	[ ] Save window position and size when closing to configuration options. Pass these to windows when we create the window at startup
+	[ ] Rename LaunchFile to EditFile
 	[ ] 
 
 # Application Wish List
