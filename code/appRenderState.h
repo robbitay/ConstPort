@@ -58,9 +58,11 @@ struct RenderState_t
 	void DrawGradient(rec rectangle, Color_t color1, Color_t color2, Direction2D_t direction);
 	void DrawCircle(v2 center, r32 radius, Color_t color);
 	void DrawCharacter(u32 charIndex, v2 bottomLeft, Color_t color, r32 scale = 1.0f);
-	void DrawString(const char* string, u32 numCharacters, v2 position, Color_t color, r32 scale = 1.0f);
-	void DrawString(const char* nullTermString, v2 position, Color_t color, r32 scale = 1.0f);
+	void DrawString(const char* string, u32 numCharacters, v2 position, Color_t color, r32 scale = 1.0f, Alignment_t alignment = Alignment_Left);
+	void DrawString(const char* nullTermString, v2 position, Color_t color, r32 scale = 1.0f, Alignment_t alignment = Alignment_Left);
 	void PrintString(v2 position, Color_t color, r32 scale, const char* formatString, ...);
+	void DrawFormattedString(const char* string, u32 numCharacters, v2 position, r32 maxWidth, Color_t color, Alignment_t alignment = Alignment_Left, bool preserveWords = true);
+	void DrawFormattedString(const char* nullTermString, v2 position, r32 maxWidth, Color_t color, Alignment_t alignment = Alignment_Left, bool preserveWords = true);
 };
 
 #endif // _APP_RENDER_STATE_H

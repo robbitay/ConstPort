@@ -115,4 +115,11 @@ typedef enum
 	StatusMessage_Error,
 } StatusMessage_t;
 
+typedef enum
+{
+	Alignment_Left,
+	Alignment_Center,
+	Alignment_Right,
+} Alignment_t;
+
 #endif // _APP_STRUCTS_H

@@ -22,6 +22,7 @@ Description:
 #include "tempMemory.cpp"
 #include "linkedList.h"
 #include "easing.h"
+#include "charClasses.h"
 
 const PlatformInfo_t* Gl_PlatformInfo = nullptr;
 const    AppMemory_t* Gl_AppMemory    = nullptr;
@@ -186,46 +187,72 @@ void ComMenuUpdate(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 	if (menuPntr->show)
 	{
 		u32 numTabs = appData->numComPortsAvailable + (appData->comPort.isOpen ? 1 : 0);
-		v2 tabSize = NewVec2(menuPntr->usableRec.width / numTabs, COM_MENU_TAB_HEIGHT);
+		r32 tabWidth = menuPntr->usableRec.width / numTabs;
+		{
+			r32 tabMinimumWidth = MeasureString(&appData->testFont, "1234567890").x + COM_MENU_TAB_PADDING*2;
+			if (tabWidth < tabMinimumWidth) { tabWidth = tabMinimumWidth; }
+		}
 		rec baudRateRec = NewRectangle(
 			menuPntr->usableRec.x + COM_MENU_OUTER_PADDING,
-			menuPntr->usableRec.y + tabSize.y + appData->testFont.lineHeight + COM_MENU_OUTER_PADDING,
+			menuPntr->usableRec.y + appData->testFont.lineHeight + COM_MENU_OUTER_PADDING,
 			78, appData->testFont.lineHeight * NumBaudRates
 		);
 		rec numBitsRec = NewRectangle(
 			baudRateRec.x + baudRateRec.width + COM_MENU_INNER_PADDING,
-			menuPntr->usableRec.y + tabSize.y + appData->testFont.lineHeight + COM_MENU_OUTER_PADDING,
+			menuPntr->usableRec.y + appData->testFont.lineHeight + COM_MENU_OUTER_PADDING,
 			55, appData->testFont.lineHeight * 8
 		);
 		rec parityTypesRec = NewRectangle(
 			numBitsRec.x + numBitsRec.width + COM_MENU_INNER_PADDING,
-			menuPntr->usableRec.y + tabSize.y + appData->testFont.lineHeight + COM_MENU_OUTER_PADDING,
+			menuPntr->usableRec.y + appData->testFont.lineHeight + COM_MENU_OUTER_PADDING,
 			60, appData->testFont.lineHeight * NumParityTypes
 		);
 		rec stopBitsRec = NewRectangle(
 			parityTypesRec.x + parityTypesRec.width + COM_MENU_INNER_PADDING,
-			menuPntr->usableRec.y + tabSize.y + appData->testFont.lineHeight + COM_MENU_OUTER_PADDING,
+			menuPntr->usableRec.y + appData->testFont.lineHeight + COM_MENU_OUTER_PADDING,
 			80, appData->testFont.lineHeight * NumStopBitTypes
 		);
 		
-		tabSize.x = menuPntr->usableRec.width / numTabs;
-		
-		//Update the menu size
+		// +==============================+
+		// |   Calculate the Menu Width   |
+		// +==============================+
+		r32 menuWidth = (stopBitsRec.x + stopBitsRec.width + COM_MENU_OUTER_PADDING) - menuPntr->drawRec.x;
+		if (menuWidth < tabWidth * numTabs)
 		{
-			v2 comNameSize = MeasureString(&appData->testFont, GetComPortReadableName(ComPort_24));
-			r32 tabMinimumWidth = comNameSize.x + COM_MENU_TAB_PADDING*2;
-			v2 menuSize = NewVec2(
-				stopBitsRec.x + stopBitsRec.width + COM_MENU_OUTER_PADDING - menuPntr->drawRec.x,
-				baudRateRec.y + baudRateRec.height + COM_MENU_OUTER_PADDING - menuPntr->drawRec.y);
-				
-			// if (menuSize.x / (r32)numTabs < tabMinimumWidth)
-			// {
-			// 	menuSize.x = tabMinimumWidth * numTabs;
-			// }
-			
-			menuPntr->drawRec.size = menuSize;
-			UpdateMenuRecs(menuPntr);
+			menuWidth = tabWidth * numTabs;
 		}
+		
+		// +==============================+
+		// |   Calculate The Tab Height   |
+		// +==============================+
+		r32 tabHeight = COM_MENU_TAB_HEIGHT;
+		for (u32 comIndex = ComPort_1; comIndex < NumComPorts; comIndex++)
+		{
+			if ((appData->availableComPorts[comIndex] || appData->comPort.index == (ComPortIndex_t)comIndex) &&
+				strcmp(GC->comPortNames[comIndex], GetComPortReadableName((ComPortIndex_t)comIndex)) != 0)
+			{
+				v2 givenNameSize = MeasureFormattedString(&appData->testFont, GC->comPortNames[comIndex], tabWidth - COM_MENU_TAB_PADDING*2, true);
+				if (givenNameSize.y + COM_MENU_TAB_PADDING*2 > tabHeight)
+				{
+					tabHeight = givenNameSize.y + COM_MENU_TAB_PADDING*2;
+				}
+			}
+		}
+		baudRateRec.y    += tabHeight;
+		numBitsRec.y     += tabHeight;
+		parityTypesRec.y += tabHeight;
+		stopBitsRec.y    += tabHeight;
+		
+		// +==============================+
+		// |  Calculate the Menu Height   |
+		// +==============================+
+		r32 menuHeight = (baudRateRec.y + baudRateRec.height + COM_MENU_OUTER_PADDING) - menuPntr->drawRec.y;
+		
+		// +==============================+
+		// |     Update the menu size     |
+		// +==============================+
+		menuPntr->drawRec.size = NewVec2(menuWidth, menuHeight);
+		UpdateMenuRecs(menuPntr);
 		
 		rec connectButtonRec = NewRectangle(
 			menuPntr->usableRec.x + menuPntr->usableRec.width - CONNECT_BUTTON_WIDTH - COM_MENU_OUTER_PADDING,
@@ -292,7 +319,7 @@ void ComMenuUpdate(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 			if (appData->availableComPorts[comIndex] == true ||
 				(appData->comPort.isOpen && (ComPortIndex_t)comIndex == appData->comPort.index))
 			{
-				rec tabRec = NewRectangle(tabIndex * tabSize.x, 0, tabSize.x, tabSize.y);
+				rec tabRec = NewRectangle(tabIndex * tabWidth, 0, tabWidth, tabHeight);
 				tabRec.topLeft += menuPntr->usableRec.topLeft;
 				
 				if (ButtonReleased(MouseButton_Left) && AppInput->mouseMaxDist[MouseButton_Left] < 10 &&
@@ -324,33 +351,58 @@ void ComMenuRender(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 	if (menuPntr->show)
 	{
 		u32 numTabs = appData->numComPortsAvailable + (appData->comPort.isOpen ? 1 : 0);
-		v2 tabSize = NewVec2(menuPntr->usableRec.width / numTabs, COM_MENU_TAB_HEIGHT);
+		r32 tabWidth = menuPntr->usableRec.width / numTabs;
 		rec baudRateRec = NewRectangle(
 			menuPntr->usableRec.x + COM_MENU_OUTER_PADDING,
-			menuPntr->usableRec.y + tabSize.y + appData->testFont.lineHeight + COM_MENU_OUTER_PADDING,
+			menuPntr->usableRec.y + appData->testFont.lineHeight + COM_MENU_OUTER_PADDING,
 			78, appData->testFont.lineHeight * NumBaudRates
 		);
 		rec numBitsRec = NewRectangle(
 			baudRateRec.x + baudRateRec.width + COM_MENU_INNER_PADDING,
-			menuPntr->usableRec.y + tabSize.y + appData->testFont.lineHeight + COM_MENU_OUTER_PADDING,
+			menuPntr->usableRec.y + appData->testFont.lineHeight + COM_MENU_OUTER_PADDING,
 			55, appData->testFont.lineHeight * 8
 		);
 		rec parityTypesRec = NewRectangle(
 			numBitsRec.x + numBitsRec.width + COM_MENU_INNER_PADDING,
-			menuPntr->usableRec.y + tabSize.y + appData->testFont.lineHeight + COM_MENU_OUTER_PADDING,
+			menuPntr->usableRec.y + appData->testFont.lineHeight + COM_MENU_OUTER_PADDING,
 			60, appData->testFont.lineHeight * NumParityTypes
 		);
 		rec stopBitsRec = NewRectangle(
 			parityTypesRec.x + parityTypesRec.width + COM_MENU_INNER_PADDING,
-			menuPntr->usableRec.y + tabSize.y + appData->testFont.lineHeight + COM_MENU_OUTER_PADDING,
+			menuPntr->usableRec.y + appData->testFont.lineHeight + COM_MENU_OUTER_PADDING,
 			80, appData->testFont.lineHeight * NumStopBitTypes
 		);
+		
+		// +==============================+
+		// |   Calculate The Tab Height   |
+		// +==============================+
+		r32 tabHeight = COM_MENU_TAB_HEIGHT;
+		for (u32 comIndex = ComPort_1; comIndex < NumComPorts; comIndex++)
+		{
+			if ((appData->availableComPorts[comIndex] || appData->comPort.index == (ComPortIndex_t)comIndex) &&
+				strcmp(GC->comPortNames[comIndex], GetComPortReadableName((ComPortIndex_t)comIndex)) != 0)
+			{
+				v2 givenNameSize = MeasureFormattedString(&appData->testFont, GC->comPortNames[comIndex], tabWidth - COM_MENU_TAB_PADDING*2, true);
+				if (givenNameSize.y + COM_MENU_TAB_PADDING*2 > tabHeight)
+				{
+					tabHeight = givenNameSize.y + COM_MENU_TAB_PADDING*2;
+				}
+			}
+		}
+		baudRateRec.y    += tabHeight;
+		numBitsRec.y     += tabHeight;
+		parityTypesRec.y += tabHeight;
+		stopBitsRec.y    += tabHeight;
+		
 		rec connectButtonRec = NewRectangle(
 			menuPntr->usableRec.x + menuPntr->usableRec.width - CONNECT_BUTTON_WIDTH - COM_MENU_OUTER_PADDING,
 			menuPntr->usableRec.y + menuPntr->usableRec.height - CONNECT_BUTTON_HEIGHT - COM_MENU_OUTER_PADDING,
 			CONNECT_BUTTON_WIDTH, CONNECT_BUTTON_HEIGHT
 		);
 		
+		// +==============================+
+		// |  Draw the Baud Rate Options  |
+		// +==============================+
 		renderState->DrawString("Baud Rate", NewVec2(baudRateRec.x, baudRateRec.y - appData->testFont.maxExtendDown), GC->colors.foreground);
 		renderState->DrawRectangle(baudRateRec, GC->colors.foreground);
 		for (i32 baudIndex = 0; baudIndex < NumBaudRates; baudIndex++)
@@ -372,6 +424,9 @@ void ComMenuRender(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 			renderState->DrawString(baudString, textPos, textColor);
 		}
 		
+		// +==============================+
+		// |   Draw the # Bits Options    |
+		// +==============================+
 		renderState->DrawString("# Bits", NewVec2(numBitsRec.x, numBitsRec.y - appData->testFont.maxExtendDown), {GC->colors.foreground});
 		renderState->DrawRectangle(numBitsRec, GC->colors.foreground);
 		for (i32 bitIndex = 0; bitIndex < 8; bitIndex++)
@@ -394,6 +449,9 @@ void ComMenuRender(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 			renderState->DrawString(numBitsString, textPos, textColor);
 		}
 		
+		// +==============================+
+		// |   Draw the Parity Options    |
+		// +==============================+
 		renderState->DrawString("Parity", NewVec2(parityTypesRec.x, parityTypesRec.y - appData->testFont.maxExtendDown), {GC->colors.foreground});
 		renderState->DrawRectangle(parityTypesRec, GC->colors.foreground);
 		for (i32 parityIndex = 0; parityIndex < NumParityTypes; parityIndex++)
@@ -415,6 +473,9 @@ void ComMenuRender(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 			renderState->DrawString(parityString, textPos, textColor);
 		}
 		
+		// +==============================+
+		// |  Draw the Stop Bits Options  |
+		// +==============================+
 		renderState->DrawString("Stop Bits", NewVec2(stopBitsRec.x, stopBitsRec.y - appData->testFont.maxExtendDown), {GC->colors.foreground});
 		renderState->DrawRectangle(stopBitsRec, GC->colors.foreground);
 		for (i32 stopBitIndex = 0; stopBitIndex < NumStopBitTypes; stopBitIndex++)
@@ -445,17 +506,18 @@ void ComMenuRender(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 			if (appData->availableComPorts[comIndex] == true ||
 				(appData->comPort.isOpen && (ComPortIndex_t)comIndex == appData->comPort.index))
 			{
-				v2 stringSize = MeasureString(&appData->testFont, GC->comPortNames[comIndex]);
-				rec tabRec = NewRectangle(tabIndex * tabSize.x, 0, tabSize.x, tabSize.y);
+				v2 stringSize = MeasureFormattedString(&appData->testFont, GC->comPortNames[comIndex], tabWidth - COM_MENU_TAB_PADDING*2, true);
+				rec tabRec = NewRectangle(tabIndex * tabWidth, 0, tabWidth, tabHeight);
 				tabRec.topLeft += menuPntr->usableRec.topLeft;
-				v2 stringPosition = tabRec.topLeft + NewVec2(tabRec.width/2 - stringSize.x/2, tabRec.height/2);
+				v2 stringPosition = tabRec.topLeft + NewVec2(tabRec.width/2, COM_MENU_TAB_PADDING + appData->testFont.maxExtendUp);
 				
 				Color_t buttonColor, textColor, borderColor;
 				ButtonColorChoice(buttonColor, textColor, borderColor, tabRec,
 					(appData->comMenuOptions.isOpen == true && (ComPortIndex_t)comIndex == appData->comMenuOptions.index), false);
 				
 				renderState->DrawButton(tabRec, buttonColor, borderColor);
-				renderState->DrawString(GC->comPortNames[comIndex], stringPosition, textColor);
+				// renderState->DrawRectangle(NewRectangle(stringPosition.x - stringSize.x/2, stringPosition.y - appData->testFont.maxExtendUp, stringSize.x, stringSize.y), {Color_Red});
+				renderState->DrawFormattedString(GC->comPortNames[comIndex], stringPosition, tabWidth - COM_MENU_TAB_PADDING*2, textColor, Alignment_Center, true);
 				
 				tabIndex++;
 			}
@@ -924,7 +986,7 @@ AppUpdate_DEFINITION(App_Update)
 	if (appData->comPort.isOpen)
 	{
 		snprintf(AppOutput->windowTitle, sizeof(AppOutput->windowTitle)-1,
-			"[%s] Const Port", GC->comPortNames[appData->comPort.index]);
+			"%s - Const Port", GC->comPortNames[appData->comPort.index]);
 	}
 	else
 	{

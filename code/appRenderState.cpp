@@ -337,11 +337,19 @@ void RenderState_t::DrawCharacter(u32 charIndex, v2 bottomLeft, Color_t color, r
 	this->DrawTexturedRec(drawRectangle, color, sourceRectangle);
 }
 
-void RenderState_t::DrawString(const char* string, u32 numCharacters, v2 position, Color_t color, r32 scale)
+void RenderState_t::DrawString(const char* string, u32 numCharacters, v2 position, Color_t color, r32 scale, Alignment_t alignment)
 {
 	this->BindTexture(&this->boundFont->bitmap);
 	
+	v2 stringSize = MeasureString(this->boundFont, string, numCharacters);
+	
 	v2 currentPos = position;
+	switch (alignment)
+	{
+		case Alignment_Center: currentPos.x -= stringSize.x/2; break;
+		case Alignment_Right:  currentPos.x -= stringSize.x; break;
+	};
+	
 	for (u32 cIndex = 0; cIndex < numCharacters; cIndex++)
 	{
 		if (string[cIndex] == '\t')
@@ -362,9 +370,9 @@ void RenderState_t::DrawString(const char* string, u32 numCharacters, v2 positio
 	}
 }
 
-void RenderState_t::DrawString(const char* nullTermString, v2 position, Color_t color, r32 scale)
+void RenderState_t::DrawString(const char* nullTermString, v2 position, Color_t color, r32 scale, Alignment_t alignment)
 {
-	this->DrawString(nullTermString, (u32)strlen(nullTermString), position, color, scale);
+	this->DrawString(nullTermString, (u32)strlen(nullTermString), position, color, scale, alignment);
 }
 
 void RenderState_t::PrintString(v2 position, Color_t color, r32 scale, const char* formatString, ...)
@@ -377,5 +385,44 @@ void RenderState_t::PrintString(v2 position, Color_t color, r32 scale, const cha
 	va_end(args);
 	
 	this->DrawString(printBuffer, length, position, color, scale);
+}
+
+void RenderState_t::DrawFormattedString(const char* string, u32 numCharacters, v2 position, r32 maxWidth, Color_t color, Alignment_t alignment, bool preserveWords)
+{
+	u32 cIndex = 0;
+	v2 drawPos = position;
+	while (cIndex < numCharacters)
+	{
+		u32 numChars = FindNextFormatChunk(this->boundFont, &string[cIndex], numCharacters - cIndex, maxWidth, preserveWords);
+		if (numChars == 0) { numChars = 1; }
+		
+		while (numChars > 1 && IsCharClassWhitespace(string[cIndex + numChars-1]))
+		{
+			numChars--;
+		}
+		
+		this->DrawString(&string[cIndex], numChars, drawPos, color, 1.0f, alignment);
+		
+		if (cIndex+numChars < numCharacters && string[cIndex+numChars] == '\r')
+		{
+			numChars++;
+		}
+		if (cIndex+numChars < numCharacters && string[cIndex+numChars] == '\n')
+		{
+			numChars++;
+		}
+		while (cIndex+numChars < numCharacters && string[cIndex+numChars] == ' ')
+		{
+			numChars++;
+		}
+		drawPos.y += this->boundFont->lineHeight;
+		cIndex += numChars;
+	}
+}
+
+void RenderState_t::DrawFormattedString(const char* nullTermString, v2 position, r32 maxWidth, Color_t color, Alignment_t alignment, bool preserveWords)
+{
+	u32 numCharacters = (u32)strlen(nullTermString);
+	this->DrawFormattedString(nullTermString, numCharacters, position, maxWidth, color, alignment, preserveWords);
 }
 

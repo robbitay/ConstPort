@@ -133,6 +133,67 @@ ConfigError_t TryParseColor(const char* charPntr, i32 numChars, Color_t* colorOu
 	}
 }
 
+//Undoes escaped characters in jsonString in-place.
+//Returns the number of characters the string shrunk by
+i32 UnescapeJsonString(char* jsonString, i32 strLength)
+{
+	i32 writePos = 0;
+	for (i32 cIndex = 0; cIndex < strLength; cIndex++)
+	{
+		Assert(writePos <= cIndex);
+		
+		char writeCharacter = jsonString[cIndex];
+		if (jsonString[cIndex] == '\\' && cIndex+1 < strLength)
+		{
+			char nextChar = jsonString[cIndex+1];
+			if (nextChar == 'b')
+			{
+				writeCharacter = '\b';
+				cIndex++;
+			}
+			else if (nextChar == 'f')
+			{
+				writeCharacter = '\f';
+				cIndex++;
+			}
+			else if (nextChar == 'n')
+			{
+				writeCharacter = '\n';
+				cIndex++;
+			}
+			else if (nextChar == 'r')
+			{
+				writeCharacter = '\r';
+				cIndex++;
+			}
+			else if (nextChar == 't')
+			{
+				writeCharacter = '\t';
+				cIndex++;
+			}
+			else if (nextChar == '"')
+			{
+				writeCharacter = '\"';
+				cIndex++;
+			}
+			else if (nextChar == '\\')
+			{
+				writeCharacter = '\\';
+				cIndex++;
+			}
+			else
+			{
+				printf("Unknown JSON string escape sequence: \"\\%c\"", nextChar);
+			}
+		}
+		
+		jsonString[writePos] = writeCharacter;
+		writePos += 1;
+	}
+	
+	return strLength - writePos;
+}
+
 // +------------------------------------------------------------------+
 // |                      JSON Helper Functions                       |
 // +------------------------------------------------------------------+
@@ -497,6 +558,7 @@ ConfigError_t TryGetStringConfig(JsonData_t* jsonData, i32 parentObjectIndex, co
 		
 		char* newSpace = PushArray(memArena, char, valueStringLength+1);
 		memcpy(newSpace, valueStringPntr, valueStringLength);
+		valueStringLength -= UnescapeJsonString(newSpace, valueStringLength);
 		newSpace[valueStringLength] = '\0';
 		
 		*(valuePntr) = newSpace;

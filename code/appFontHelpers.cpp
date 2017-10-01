@@ -89,3 +89,110 @@ inline i32 GetStringIndexForLocation(const Font_t* font, const char* nullTermStr
 	
 	return result;
 }
+
+u32 FindNextFormatChunk(const Font_t* font, const char* string, u32 numCharacters, r32 maxWidth, bool preserveWords)
+{
+	r32 textWidth = 0;
+	bool doBackwardsSearch = false;
+	u32 cIndex;
+	for (cIndex = 0; cIndex < numCharacters; cIndex++)
+	{
+		if (string[cIndex] == '\r' || string[cIndex] == '\n')
+		{
+			break;
+		}
+		else
+		{
+			r32 nextCharWidth = MeasureString(font, &string[cIndex], 1).x;
+			
+			if (textWidth + nextCharWidth > maxWidth)
+			{
+				doBackwardsSearch = preserveWords;
+				break;
+			}
+			textWidth += nextCharWidth;
+		}
+	}
+	
+	if (doBackwardsSearch)
+	{
+		u32 searchStartIndex = cIndex;
+		u32 wordBoundIndex = 0;
+		bool foundSpace = false;
+		for (cIndex = searchStartIndex; cIndex > 0; cIndex--)
+		{
+			char c = string[cIndex-1];
+			if (IsCharClassWhitespace(c))
+			{
+				foundSpace = true;
+				break;
+			}
+			else if (wordBoundIndex == 0 && IsCharClassAlphaNumeric(c) == false)
+			{
+				wordBoundIndex = cIndex;
+			}
+		}
+		
+		if (foundSpace)
+		{
+			return cIndex;
+		}
+		else if (wordBoundIndex != 0)
+		{
+			return wordBoundIndex-1;
+		}
+		else
+		{
+			return searchStartIndex;
+		}
+	}
+	else
+	{
+		return cIndex;
+	}
+}
+
+v2 MeasureFormattedString(const Font_t* font, const char* string, u32 numCharacters, r32 maxWidth, bool preserveWords)
+{
+	u32 cIndex = 0;
+	
+	r32 maxChunkWidth = 0;
+	u32 numLines = 0;
+	while (cIndex < numCharacters)
+	{
+		u32 numChars = FindNextFormatChunk(font, &string[cIndex], numCharacters - cIndex, maxWidth, preserveWords);
+		if (numChars == 0) { numChars = 1; }
+		
+		while (numChars > 1 && IsCharClassWhitespace(string[cIndex + numChars-1]))
+		{
+			numChars--;
+		}
+		
+		r32 chunkWidth = MeasureString(font, &string[cIndex], numChars).x;
+		if (chunkWidth > maxChunkWidth) { maxChunkWidth = chunkWidth; }
+		
+		if (cIndex+numChars < numCharacters && string[cIndex+numChars] == '\r')
+		{
+			numChars++;
+		}
+		if (cIndex+numChars < numCharacters && string[cIndex+numChars] == '\n')
+		{
+			numChars++;
+		}
+		while (cIndex+numChars < numCharacters && string[cIndex+numChars] == ' ')
+		{
+			numChars++;
+		}
+		
+		numLines++;
+		cIndex += numChars;
+	}
+	
+	return NewVec2(maxChunkWidth, numLines * font->lineHeight);
+}
+
+v2 MeasureFormattedString(const Font_t* font, const char* nullTermString, r32 maxWidth, bool preserveWords)
+{
+	u32 numCharacters = (u32)strlen(nullTermString);
+	return MeasureFormattedString(font, nullTermString, numCharacters, maxWidth, preserveWords);
+}
