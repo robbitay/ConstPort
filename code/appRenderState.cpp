@@ -357,7 +357,7 @@ void RenderState_t::DrawString(const char* string, u32 numCharacters, v2 positio
 			u32 spaceIndex = GetFontCharIndex(this->boundFont, ' ');
 			currentPos.x += this->boundFont->chars[spaceIndex].advanceX * GC->tabWidth * scale;
 		}
-		else if (string[cIndex] == '\r' || string[cIndex] < ' ')
+		else if (IsCharClassPrintable(string[cIndex]) == false)
 		{
 			//Don't do anything
 		}

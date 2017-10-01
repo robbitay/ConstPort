@@ -34,8 +34,7 @@ inline v2 MeasureString(const Font_t* font, const char* string, u32 numChars)
 			u32 spaceIndex = GetFontCharIndex(font, ' ');
 			currentPos.x += font->chars[spaceIndex].advanceX * GC->tabWidth;
 		}
-		else if (string[cIndex] == '\r' || 
-			string[cIndex] == 0x01 || string[cIndex] == 0x02 || string[cIndex] == 0x03 || string[cIndex] == 0x04 || string[cIndex] == 0x05)
+		else if (IsCharClassPrintable(string[cIndex]) == false)
 		{
 			//Don't do anything
 		}

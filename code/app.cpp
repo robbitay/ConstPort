@@ -509,7 +509,7 @@ void ComMenuRender(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 				v2 stringSize = MeasureFormattedString(&appData->testFont, GC->comPortNames[comIndex], tabWidth - COM_MENU_TAB_PADDING*2, true);
 				rec tabRec = NewRectangle(tabIndex * tabWidth, 0, tabWidth, tabHeight);
 				tabRec.topLeft += menuPntr->usableRec.topLeft;
-				v2 stringPosition = tabRec.topLeft + NewVec2(tabRec.width/2, COM_MENU_TAB_PADDING + appData->testFont.maxExtendUp);
+				v2 stringPosition = tabRec.topLeft + NewVec2(tabRec.width/2, tabRec.height/2 - stringSize.y/2 + appData->testFont.maxExtendUp);
 				
 				Color_t buttonColor, textColor, borderColor;
 				ButtonColorChoice(buttonColor, textColor, borderColor, tabRec,
