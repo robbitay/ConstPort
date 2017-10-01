@@ -143,10 +143,10 @@ void LoadGlobalConfiguration(const PlatformInfo_t* PlatformInfo, GlobalConfig_t*
 	// +====================================+
 	// | Parse Color Configuration Options  |
 	// +====================================+
-	i32 colorsTokenIndex = FindChildTokenByName(&jsonData, 0, "Colors");
+	i32 colorsTokenIndex = FindChildTokenByName(&jsonData, 0, "colors");
 	if (colorsTokenIndex == -1)
 	{
-		DEBUG_WriteLine("Couldn't find \"Colors\" object in GlobalConfig.json");
+		DEBUG_WriteLine("Couldn't find \"colors\" object in GlobalConfig.json");
 	}
 	else
 	{
@@ -161,10 +161,10 @@ void LoadGlobalConfiguration(const PlatformInfo_t* PlatformInfo, GlobalConfig_t*
 	// +==============================+
 	// | Parse COM Port Name Options  |
 	// +==============================+
-	i32 portNamesTokenIndex = FindChildTokenByName(&jsonData, 0, "PortNames");
+	i32 portNamesTokenIndex = FindChildTokenByName(&jsonData, 0, "port_names");
 	if (portNamesTokenIndex == -1)
 	{
-		DEBUG_WriteLine("Couldn't find \"PortNames\" object in GlobalConfig.json");
+		DEBUG_WriteLine("Couldn't find \"port_names\" object in GlobalConfig.json");
 	}
 	else
 	{

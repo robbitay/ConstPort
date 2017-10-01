@@ -1417,7 +1417,7 @@ AppUpdate_DEFINITION(App_Update)
 		{
 			if (GC->pythonScript != nullptr)
 			{
-				char* commandStr = TempPrint("%s", GC->pythonScript);
+				char* commandStr = TempPrint("python %s", GC->pythonScript);
 				StatusInfo("Running System Command: \"%s\"", commandStr);
 				appData->programInstance = PlatformInfo->StartProgramInstancePntr(commandStr);
 				if (appData->programInstance.isOpen == false)

@@ -1,59 +1,68 @@
 {
-	"FontSize":    16,
-	"LineSpacing": 2,  //px
-	"TabWidth":    4,  //spaces
+	"font_size":    16,
+	"line_spacing": 2,  //px
+	"tab_width":    4,  //spaces
 	
-	"ElapsedBannerEnabled": true,
-	"ElapsedBannerTime":    15, //secs
-	"ElapsedBannerHeight":  25, //px
+	"elapsed_banner_enabled": true,
+	"elapsed_banner_time":    15, //secs
+	"elapsed_banner_height":  25, //px
 	
-	"MarkHeight":      1, //px
-	"ThickMarkHeight": 5, //px
+	"mark_height":      1, //px
+	"thick_mark_height": 5, //px
 	
-	"StatusMessageTime": 3, //secs
+	"status_message_time": 3, //secs
 	
-	"MouseClickTolerance":  10, //px
-	"MenuBorderThickness":  1,  //px
-	"ScrollbarWidth":       12, //px
-	"ScrollbarPadding":     3,  //px
-	"MinScrollbarHeight":   32, //px
-	"MinGutterWidth":       30, //px
+	"mouse_click_tolerance":  10, //px
+	"menu_border_thickness":  1,  //px
+	"scrollbar_width":       12, //px
+	"scrollbar_padding":     3,  //px
+	"min_scrollbar_height":   32, //px
+	"min_gutter_width":       30, //px
 	
-	"ScrollMultiplier": 40,
-	"ViewSpeedDivider": 4,
+	"scroll_multiplier": 40,
+	"view_speed_divider": 4,
 	
-	"ShowTextCursor": true,
-	"ShowComNameInStatusBar": true,
-	"ShowLineNumbers": true,
-	"ShowHoverCursor": true,
-	"HighlightHoverLine": true,
+	"show_text_cursor": true,
+	"show_com_name_in_status_bar": true,
+	"show_line_numbers": true,
+	"show_hover_cursor": true,
+	"highlight_hover_line": true,
 	
-	"RxTxLedDelay": 4, //frames
+	"rx_tx_led_delay": 4, //frames
 	
-	"AutoEchoInput": false,
+	"auto_echo_input": false,
 	
 	//Python related options
-	"PythonScriptEnabled": true,
-	"AutoRunPython":       false,
-	"SendComDataToPython": true,
-	"AlsoShowComData":     false,
-	"SendInputToPython":   false,
-	"AlsoSendInputToCom":  false,
-	"ShowPythonOutput":    true,
-	"PythonScript":        "python Resources\\Scripts\\asciiHex.py",
-	// "PythonScript":        "ConstPort",
+	"python_script_enabled":   true,
+	"auto_run_python":         false,
+	"send_com_data_to_python": true,
+	"also_show_com_data":      false,
+	"send_input_to_python":    false,
+	"also_send_input_to_com":  false,
+	"show_python_output":      true,
+	"python_script":           "Resources\\Scripts\\asciiHex.py",
 	
-	"GenericCountRegexName": "Has Exclamation",
-	"MarkLineRegexName":     "",
-	"Highlight1RegexName":   "Has Hex 01",
-	"Highlight2RegexName":   "Has Hex 02",
-	"Highlight3RegexName":   "Has Hex 03",
-	"Highlight4RegexName":   "Has Hex 04",
-	"Highlight5RegexName":   "Has Hex 05",
-	"BackgroundColorRegexName": "Has Exclamation",
+	"generic_count_regex_name": "Has Exclamation",
+	"mark_line_regex_name":     "",
+	"highlight1_regex_name":   "Has Hex 01",
+	"highlight2_regex_name":   "Has Hex 02",
+	"highlight3_regex_name":   "Has Hex 03",
+	"highlight4_regex_name":   "Has Hex 04",
+	"highlight5_regex_name":   "Has Hex 05",
+	"background_color_regex_name": "Has Exclamation",
 	
-	//TODO: Implement these
-	"PortNames":
+	"regex_triggers":
+	[
+		{
+			// "expression": "\\!",
+			"expression_name": "Has Exclamation",
+			"effects": ["background_color=Black", "new_line", "foreground_color=Orange", "count", "status=Exclamation!"],
+			"run_at_eol": true,
+			"run_per_character": false
+		},
+	],
+	
+	"port_names":
 	{
 		// "COM1":  "Name",
 		// "COM2":  "Name",
@@ -70,52 +79,52 @@
 	},
 	
 	//Various Colors Used in UI drawing
-	"Colors":
+	"colors":
 	{
-		"Background":           "212121",
-		"Foreground":           "F8F8F2",
-		"Selection1":           "White",
-		"Selection2":           "Gray",
-		"RegexMatchBackground": "Black",
-		"UiGray1":              "494949",
-		"UiGray2":              "404040",
-		"UiGray3":              "303030",
-		"UiGray4":              "101010",
-		"UiLightGray1":         "B4B4B4",
-		"ReceiveLed":           [249,  38, 101, 255], //Red/Magenta
-		"TransmitLed":          [174, 129, 255, 255], //Purple
-		"HoverLine":            "303030", //UiGray3
-		"BannerColor1":         "494949", //UiGray1
-		"BannerColor2":         "303030", //UiGray3
-		"WindowTitleBar":       "303030", //UiGray3
-		"WindowBackground":     "494949", //UiGray1
-		"WindowBorder":         "B4B4B4", //UiLightGray1
-		"MarkColor1":           [255, 255, 255, 128],
-		"MarkColor2":           [255, 255, 255,   0],
-		"Highlight1":           [117, 113,  94, 255], //Comment Color
-		"Highlight2":           [166, 226,  46, 255], //Green Color
-		"Highlight3":           [249,  38, 101, 255], //Red/Magenta
-		"Highlight4":           [174, 129, 255, 255], //Purple
-		"Highlight5":           [102, 217, 239, 255], //Light Blue
+		"background":             "212121",
+		"foreground":             "F8F8F2",
+		"selection_1":            "White",
+		"selection_2":            "Gray",
+		"regex_match_background": "Black",
+		"ui_gray_1":              "494949",
+		"ui_gray_2":              "404040",
+		"ui_gray_3":              "303030",
+		"ui_gray_4":              "101010",
+		"ui_light_gray_1":        "B4B4B4",
+		"receive_led":            [249,  38, 101, 255], //Red/Magenta
+		"transmit_led":           [174, 129, 255, 255], //Purple
+		"hover_line":             "303030", //UiGray3
+		"banner_color_1":         "494949", //UiGray1
+		"banner_color_2":         "303030", //UiGray3
+		"window_title_bar":       "303030", //UiGray3
+		"window_background":      "494949", //UiGray1
+		"window_border":          "B4B4B4", //UiLightGray1
+		"mark_color_1":           [255, 255, 255, 128],
+		"mark_color_2":           [255, 255, 255,   0],
+		"highlight_1":            [117, 113,  94, 255], //Comment Color
+		"highlight_2":            [166, 226,  46, 255], //Green Color
+		"highlight_3":            [249,  38, 101, 255], //Red/Magenta
+		"highlight_4":            [174, 129, 255, 255], //Purple
+		"highlight_5":            [102, 217, 239, 255], //Light Blue
 		
-		"Button":               "White",
-		"ButtonText":           "Black",
-		"ButtonBorder":         "Black",
+		"button":                 "White",
+		"button_text":            "Black",
+		"button_border":          "Black",
 		
-		"ButtonHover":          "B4B4B4", //UiLightGray1
-		"ButtonHoverText":      "Black",
-		"ButtonHoverBorder":    "Black",
+		"button_hover":           "B4B4B4", //UiLightGray1
+		"button_hover_text":      "Black",
+		"button_hover_border":    "Black",
 		
-		"ButtonPress":          [249,  38, 101, 255], //Red/Magenta
-		"ButtonPressText":      "White",
-		"ButtonPressBorder":    "White",
+		"button_press":           [249,  38, 101, 255], //Red/Magenta
+		"button_press_text":      "White",
+		"button_press_border":    "White",
 		
-		"ButtonSelected":       [174, 129, 255, 255], //Purple
-		"ButtonSelectedText":   "Black",
-		"ButtonSelectedBorder": "White",
+		"button_selected":        [174, 129, 255, 255], //Purple
+		"button_selected_text":   "Black",
+		"button_selected_border": "White",
 		
-		"ButtonReady":          [166, 226,  46, 255], //Green Color
-		"ButtonReadyText":      "Black",
-		"ButtonReadyBorder":    "White",
+		"button_ready":           [166, 226,  46, 255], //Green Color
+		"button_ready_text":      "Black",
+		"button_ready_border":    "White",
 	},
 }
