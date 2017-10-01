@@ -47,7 +47,8 @@
 	[!] Implement the rest of the python configuration options
 	[!] Seperate font for drawing data and font for drawing UI elements
 	[!] Change the status message layout so it pops up as an overlay with formatted text rendering so the whole message always fits nicely
-	[?] What kind of support do we want for platform layer TemporaryArena? Should it be a seperate arena thats pushed and popped by the platform layer? Should we somehow pass a pointer back to the platform layer once the temporary arena has been created?
+	[!] Add a platform layer function to set the TempArena so we can add functions that push onto Temporary Memory when we call them
+	[!] Rename the global AppData_t* to app. Rename global PlatformInfo_t* to platform. Rename global AppInput_t* to input. Add global MemoryArena_t* called mainHeap.
 	[ ] String manipulation functions using the TemporaryArena
 	[ ] Add checking for COM port errors and whether or not we are still connected
 	[ ] Paste from clipboard
@@ -86,20 +87,20 @@
 	[ ] Set up regular expressions to define color of each line
 	[ ] Special characters for invalid ANSI characters
 	[ ] Hex string mode
-	[ ] Capture to file. 
+	[X] Capture to file. 
 	[ ] Add an option to freeze output (read the COM port and throw away data)
 	[ ] New Line Type option for input and output
-	[ ] Option to enable auto output echo
+	[X] Option to enable auto output echo
 	[ ] Option to enable an input line that sends messages all at once (Hex or string)
 	[ ] Command board with configurable command buttons
 	[ ] Save configurations to a file and load on startup
 	[ ] Try to auto-connect to last opened COM port on startup
 	[ ] Automatically add marks to lines when a certain amount of time has passed between characters receives
-	[ ] Fix scrollbar so that it doesn't keep sliding when we have grabbed it
-	[ ] Better way tp detect open COM ports
+	[?] Fix scrollbar so that it doesn't keep sliding when we have grabbed it
+	[ ] Better way to detect open COM ports
 	[ ] Search functionality
-	[ ] Call a python script when line is received or regular expression is matched
-	[ ] Add output of python script to buffer
+	[X] Call a python script when line is received or regular expression is matched
+	[X] Add output of python script to buffer
 	[ ] Changeable key mappings
 
 # Platform Layer TODO List
