@@ -13,7 +13,7 @@ Description:
 
 #define GetConfig(parentIndex, Type, tokenName, valuePntr) do                                     \
 {                                                                                                 \
-	ConfigError_t errorCode = TryGet##Type##Config(&jsonData, parentIndex, tokenName, valuePntr); \
+	ConfigError_t errorCode = TryGet##Type##Config(jsonData, parentIndex, tokenName, valuePntr); \
 	switch (errorCode)                                                                            \
 	{                                                                                             \
 		case ConfigError_None: /*DEBUG_PrintLine("Parsed \"%s\" correctly!", tokenName);*/ break; \
@@ -40,7 +40,7 @@ Description:
 
 #define GetStrConfig(parentIndex, tokenName, valuePntr, memoryArena) do                                      \
 {                                                                                                            \
-	ConfigError_t errorCode = TryGetStringConfig(&jsonData, parentIndex, tokenName, valuePntr, memoryArena); \
+	ConfigError_t errorCode = TryGetStringConfig(jsonData, parentIndex, tokenName, valuePntr, memoryArena); \
 	switch (errorCode)                                                                                       \
 	{                                                                                                        \
 		case ConfigError_None: /*DEBUG_PrintLine("Parsed \"%s\" correctly!", tokenName);*/ break;            \
@@ -65,8 +65,146 @@ Description:
 	};                                                                                                       \
 } while(0)
 
+void ParseRegexTriggersList(GlobalConfig_t* globalConfig, MemoryArena_t* memArena, JsonData_t* jsonData, i32 parentListIndex)
+{
+	u32 numTriggers = GetNumChildObjects(jsonData, parentListIndex);
+	globalConfig->numTriggers = numTriggers;
+	
+	if (numTriggers == 0)
+	{
+		globalConfig->triggers = nullptr;
+		return;
+	}
+	
+	globalConfig->triggers = PushArray(memArena, RegexTrigger_t, numTriggers);
+	
+	for (u32 listIndex = 0; listIndex < numTriggers; listIndex++)
+	{
+		RegexTrigger_t* triggerPntr = &globalConfig->triggers[listIndex];
+		triggerPntr->expression = nullptr;
+		triggerPntr->expressionName = nullptr;
+		triggerPntr->showOnlyCaptured = false;
+		triggerPntr->runAtEol = true;
+		triggerPntr->runPerCharacter = false;
+		triggerPntr->numEffects = 0;
+		triggerPntr->effects = nullptr;
+		triggerPntr->numComPorts = 0;
+		triggerPntr->comPorts = nullptr;
+		
+		i32 triggerObjectIndex = FindChildTokenByIndex(jsonData, parentListIndex, listIndex);
+		
+		if (triggerObjectIndex == -1)
+		{
+			DEBUG_PrintLine("Couldn't find child[%u] in \"regex_triggers\" array", listIndex);
+			continue;
+		}
+		else if (jsonData->tokens[triggerObjectIndex].type != JSMN_OBJECT)
+		{
+			DEBUG_Print("\"regex_triggers\" child[%u] was not an object.", listIndex);
+			continue;
+		}
+		
+		bool parseSuccess = true;
+		
+		GetStrConfig(triggerObjectIndex, "expression",      &triggerPntr->expression, memArena);
+		GetStrConfig(triggerObjectIndex, "expression_name", &triggerPntr->expressionName, memArena);
+		
+		GetConfig(triggerObjectIndex, Bool, "show_only_captured", &triggerPntr->showOnlyCaptured);
+		GetConfig(triggerObjectIndex, Bool, "run_at_eol",         &triggerPntr->runAtEol);
+		GetConfig(triggerObjectIndex, Bool, "run_per_character",  &triggerPntr->runPerCharacter);
+		
+		// DEBUG_PrintLine("Trigger[%u]:", listIndex);
+		// DEBUG_PrintLine("\tExpression:         \"%s\"", triggerPntr->expression);
+		// DEBUG_PrintLine("\tExpression Name:    \"%s\"", triggerPntr->expressionName);
+		// DEBUG_PrintLine("\tShow Only Captured: %s", triggerPntr->showOnlyCaptured ? "True" : "False");
+		// DEBUG_PrintLine("\tRun At Eol:         %s", triggerPntr->runAtEol ? "True" : "False");
+		// DEBUG_PrintLine("\tRun Per Character:  %s", triggerPntr->runPerCharacter ? "True" : "False");
+		
+		// +==============================+
+		// |    Parse the Effects List    |
+		// +==============================+
+		i32 effectsTokenIndex = FindChildTokenByName(jsonData, triggerObjectIndex, "effects");
+		if (effectsTokenIndex != -1)
+		{
+			i32 effectListIndex = GetChildToken(jsonData, effectsTokenIndex);
+			if (effectListIndex != -1 && jsonData->tokens[effectListIndex].type == JSMN_ARRAY)
+			{
+				u32 numEffects = GetNumChildTokens(jsonData, effectListIndex);
+				triggerPntr->numEffects = numEffects;
+				
+				// DEBUG_PrintLine("\t%u Effects:", numEffects);
+				if (numEffects > 0)
+				{
+					triggerPntr->effects = PushArray(memArena, const char*, numEffects);
+					
+					for (u32 effectIndex = 0; effectIndex < numEffects; effectIndex++)
+					{
+						const char** effectStrPntr = &triggerPntr->effects[effectIndex];
+						
+						i32 effectTokenIndex = FindChildTokenByIndex(jsonData, effectListIndex, effectIndex);
+						if (effectTokenIndex == -1) { continue; }
+						jsmntok_t* effectToken = &jsonData->tokens[effectTokenIndex];
+						
+						u32 effectStringLength = TokenLength(effectToken);
+						char* newString = PushArray(memArena, char, effectStringLength+1);
+						memcpy(newString, &jsonData->data[effectToken->start], effectStringLength);
+						newString[effectStringLength] = '\0';
+						*effectStrPntr = newString;
+						
+						// DEBUG_PrintLine("\t\tEffect[%u] \"%s\"", effectIndex, newString);
+					}
+				}
+			}
+		}
+		
+		// +==============================+
+		// |   Parse the Com Ports List   |
+		// +==============================+
+		i32 comPortsTokenIndex = FindChildTokenByName(jsonData, triggerObjectIndex, "com_ports");
+		if (comPortsTokenIndex != -1)
+		{
+			i32 comPortsListIndex = GetChildToken(jsonData, comPortsTokenIndex);
+			if (comPortsListIndex != -1 && jsonData->tokens[comPortsListIndex].type == JSMN_ARRAY)
+			{
+				u32 numComPorts = GetNumChildTokens(jsonData, comPortsListIndex);
+				triggerPntr->numComPorts = numComPorts;
+				
+				// DEBUG_PrintLine("\t%u Com Ports:", numComPorts);
+				if (numComPorts > 0)
+				{
+					triggerPntr->comPorts = PushArray(memArena, const char*, numComPorts);
+					
+					for (u32 comListIndex = 0; comListIndex < numComPorts; comListIndex++)
+					{
+						const char** comPortStrPntr = &triggerPntr->comPorts[comListIndex];
+						
+						i32 comPortTokenIndex = FindChildTokenByIndex(jsonData, comPortsListIndex, comListIndex);
+						if (comPortTokenIndex == -1) { continue; }
+						jsmntok_t* comPortToken = &jsonData->tokens[comPortTokenIndex];
+						
+						u32 comPortStrLength = TokenLength(comPortToken);
+						char* newString = PushArray(memArena, char, comPortStrLength+1);
+						memcpy(newString, &jsonData->data[comPortToken->start], comPortStrLength);
+						newString[comPortStrLength] = '\0';
+						*comPortStrPntr = newString;
+						
+						// DEBUG_PrintLine("\t\tComPort[%u] \"%s\"", comListIndex, newString);
+					}
+				}
+			}
+		}
+		
+		if (triggerPntr->expression == nullptr && triggerPntr->expressionName == nullptr)
+		{
+			DEBUG_PrintLine("Neither \"expression\" nor \"expression_name\" were defined for trigger[%u]", listIndex);
+		}
+		
+	}
+}
+
 void LoadGlobalConfiguration(const PlatformInfo_t* PlatformInfo, GlobalConfig_t* globalConfig, MemoryArena_t* memArena)
 {
+	TempPushMark();
 	ClearPointer(globalConfig);
 	
 	globalConfig->memArena = memArena;
@@ -100,12 +238,18 @@ void LoadGlobalConfiguration(const PlatformInfo_t* PlatformInfo, GlobalConfig_t*
 	SanatizeFileComments(fileData, globalConfigFile.size);
 
 	jsmn_parser jsonParser;
-	jsmntok_t jsonTokens[MAX_JSON_TOKENS];
 	jsmn_init(&jsonParser);
 	i32 numTokens = jsmn_parse(&jsonParser,
 		fileData, globalConfigFile.size,
-		jsonTokens, ArrayCount(jsonTokens));
-
+		nullptr, 0);
+	
+	jsmn_init(&jsonParser);
+	jsmntok_t* jsonTokens = TempArray(jsmntok_t, numTokens);
+	
+	numTokens = jsmn_parse(&jsonParser,
+		fileData, globalConfigFile.size,
+		jsonTokens, numTokens);
+	
 	if (numTokens < 0)
 	{
 		StatusError("JSON Parsing Error %d in GlobalConfig.json", numTokens);
@@ -121,11 +265,13 @@ void LoadGlobalConfiguration(const PlatformInfo_t* PlatformInfo, GlobalConfig_t*
 		StatusError("Top Item Was Not Object in GlobalConfig.json");
 		return;
 	}
+	else { DEBUG_PrintLine("%d/%u JSON tokens filled", numTokens, MAX_JSON_TOKENS); }
 	
-	JsonData_t jsonData = {};
-	jsonData.data = fileData;
-	jsonData.tokens = jsonTokens;
-	jsonData.numTokens = numTokens;
+	JsonData_t jsonDataReal = {};
+	jsonDataReal.data = fileData;
+	jsonDataReal.tokens = jsonTokens;
+	jsonDataReal.numTokens = numTokens;
+	JsonData_t* jsonData = &jsonDataReal;
 	
 	bool parseSuccess = true;
 	
@@ -143,14 +289,14 @@ void LoadGlobalConfiguration(const PlatformInfo_t* PlatformInfo, GlobalConfig_t*
 	// +====================================+
 	// | Parse Color Configuration Options  |
 	// +====================================+
-	i32 colorsTokenIndex = FindChildTokenByName(&jsonData, 0, "colors");
+	i32 colorsTokenIndex = FindChildTokenByName(jsonData, 0, "colors");
 	if (colorsTokenIndex == -1)
 	{
 		DEBUG_WriteLine("Couldn't find \"colors\" object in GlobalConfig.json");
 	}
 	else
 	{
-		i32 colorsObjectIndex = GetChildToken(&jsonData, colorsTokenIndex);
+		i32 colorsObjectIndex = GetChildToken(jsonData, colorsTokenIndex);
 		
 		#define ConfigurationColor( identifier, variableName, defaultValue) GetConfig(colorsObjectIndex, Color, identifier, &globalConfig->colors.variableName)
 		
@@ -161,14 +307,14 @@ void LoadGlobalConfiguration(const PlatformInfo_t* PlatformInfo, GlobalConfig_t*
 	// +==============================+
 	// | Parse COM Port Name Options  |
 	// +==============================+
-	i32 portNamesTokenIndex = FindChildTokenByName(&jsonData, 0, "port_names");
+	i32 portNamesTokenIndex = FindChildTokenByName(jsonData, 0, "port_names");
 	if (portNamesTokenIndex == -1)
 	{
 		DEBUG_WriteLine("Couldn't find \"port_names\" object in GlobalConfig.json");
 	}
 	else
 	{
-		i32 portNamesIndex = GetChildToken(&jsonData, portNamesTokenIndex);
+		i32 portNamesIndex = GetChildToken(jsonData, portNamesTokenIndex);
 		
 		for (u8 comIndex = ComPort_1; comIndex < NumComPorts; comIndex++)
 		{
@@ -180,18 +326,42 @@ void LoadGlobalConfiguration(const PlatformInfo_t* PlatformInfo, GlobalConfig_t*
 			globalConfig->comPortNames[comIndex] = assignedName;
 		}
 	}
-
+	
+	// +==============================+
+	// |  Parse Regex Triggers List   |
+	// +==============================+
+	i32 regexTriggersTokenIndex = FindChildTokenByName(jsonData, 0, "regex_triggers");
+	if (regexTriggersTokenIndex == -1)
+	{
+		DEBUG_WriteLine("Couldn't file \"regex_triggers\" object in GlobalConfig.json");
+	}
+	else
+	{
+		i32 regexTriggersListIndex = GetChildToken(jsonData, regexTriggersTokenIndex);
+		
+		if (regexTriggersListIndex == -1 || jsonTokens[regexTriggersListIndex].type != JSMN_ARRAY)
+		{
+			DEBUG_WriteLine("\"regex_triggers\" value was not array in GlobalConfig.json");
+		}
+		else
+		{
+			ParseRegexTriggersList(globalConfig, memArena, jsonData, regexTriggersListIndex);
+		}
+	}
+	
 	PlatformInfo->FreeFileMemoryPntr(&globalConfigFile);
 	
 	if (parseSuccess)
 	{
 		StatusSuccess("Global Configuration Loaded Successfully!");
 	}
+	
+	TempPopMark();
 }
 
 void DisposeGlobalConfig(GlobalConfig_t* globalConfig)
 {
-	DEBUG_WriteLine("Disposing of old strings in GlobalConfig");
+	DEBUG_WriteLine("Disposing old GlobalConfig");
 	
 	#define ConfigurationBool(  identifier, variableName, defaultValue) 
 	#define ConfigurationInt32( identifier, variableName, defaultValue) 
@@ -215,6 +385,35 @@ void DisposeGlobalConfig(GlobalConfig_t* globalConfig)
 			globalConfig->comPortNames[comIndex] = nullptr;
 		}
 	}
+	
+	for (u32 tIndex = 0; tIndex < globalConfig->numTriggers; tIndex++)
+	{
+		RegexTrigger_t* trigger = &globalConfig->triggers[tIndex];
+		
+		if (trigger->expression != nullptr) { ArenaPop(globalConfig->memArena, (char*)trigger->expression); }
+		if (trigger->expressionName != nullptr) { ArenaPop(globalConfig->memArena, (char*)trigger->expressionName); }
+		
+		for (u32 eIndex = 0; eIndex < trigger->numEffects; eIndex++)
+		{
+			const char* effectStr = trigger->effects[eIndex];
+			if (effectStr != nullptr)
+			{
+				ArenaPop(globalConfig->memArena, (char*)effectStr);
+			}
+		}
+		if (trigger->effects != nullptr) { ArenaPop(globalConfig->memArena, trigger->effects); }
+		
+		for (u32 eIndex = 0; eIndex < trigger->numComPorts; eIndex++)
+		{
+			const char* comPortStr = trigger->comPorts[eIndex];
+			if (comPortStr != nullptr)
+			{
+				ArenaPop(globalConfig->memArena, (char*)comPortStr);
+			}
+		}
+		if (trigger->comPorts != nullptr) { ArenaPop(globalConfig->memArena, trigger->comPorts); }
+	}
+	if (globalConfig->triggers != nullptr) { ArenaPop(globalConfig->memArena, globalConfig->triggers); }
 	
 	ClearPointer(globalConfig);
 }

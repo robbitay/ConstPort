@@ -7,6 +7,22 @@ Date:   08\02\2017
 #ifndef _APP_CONFIGURATION_H
 #define _APP_CONFIGURATION_H
 
+struct RegexTrigger_t
+{
+	const char* expression;
+	const char* expressionName;
+	
+	bool showOnlyCaptured;
+	bool runAtEol;
+	bool runPerCharacter;
+	
+	u32 numEffects;
+	const char** effects;
+	
+	u32 numComPorts;
+	const char** comPorts;
+};
+
 struct GlobalConfig_t
 {
 	MemoryArena_t* memArena;
@@ -28,6 +44,9 @@ struct GlobalConfig_t
 	} colors;
 	
 	const char* comPortNames[NumComPorts];
+	
+	u32 numTriggers;
+	RegexTrigger_t* triggers;
 };
 
 #endif // _APP_CONFIGURATION_H

@@ -33,6 +33,8 @@ while(True):
 			print("%02X" % (ord(newCharacter)), end="")
 			justWroteNewLine = False
 		#
+		# print("%02X" % (ord(newCharacter)), end="")
+		# justWroteNewLine = False
 	#
 	sys.stdout.flush()
 #

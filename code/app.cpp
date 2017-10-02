@@ -598,6 +598,133 @@ u32 SanatizeString(const char* charPntr, u32 numChars, char* outputBuffer = null
 	return result;
 }
 
+bool ApplyTriggerEffects(Line_t* newLine, RegexTrigger_t* trigger)
+{
+	AppData_t* appData = GL_AppData;
+	bool addLineToBuffer = true;
+	
+	for (u32 eIndex = 0; eIndex < trigger->numEffects; eIndex++)
+	{
+		const char* effectStr = trigger->effects[eIndex];
+		
+		if (strcmp(effectStr, "mark") == 0)
+		{
+			newLine->flags |= LineFlag_MarkBelow;
+		}
+		else if (strcmp(effectStr, "thick_mark") == 0)
+		{
+			newLine->flags |= LineFlag_MarkBelow | LineFlag_ThickMark;
+		}
+		else if (strcmp(effectStr, "clear_screen") == 0)
+		{
+			//TODO: Do something
+		}
+		else if (strcmp(effectStr, "new_line") == 0)
+		{
+			//TODO: Do something
+		}
+		else if (strcmp(effectStr, "clear_line") == 0)
+		{
+			addLineToBuffer = false;
+		}
+		else if (strcmp(effectStr, "count") == 0)
+		{
+			appData->genericCounter++;
+		}
+		else if (strstr(effectStr, "=") != nullptr)
+		{
+			char* nameStr = nullptr;
+			char* valueStr = nullptr;
+			
+			bool foundEquals = false;
+			u32 valueStartIndex = 0;
+			for (u32 cIndex = 0; effectStr[cIndex] != '\0'; cIndex++)
+			{
+				char c = effectStr[cIndex];
+				if (!foundEquals)
+				{
+					if (IsCharClassWhitespace(c) || c == '=')
+					{
+						if (nameStr == nullptr)
+						{
+							nameStr = TempString(cIndex+1);
+							memcpy(nameStr, &effectStr[0], cIndex);
+							nameStr[cIndex] = '\0';
+						}
+					}
+					if (c == '=') { foundEquals = true; }
+				}
+				else
+				{
+					if (IsCharClassWhitespace(c) == false)
+					{
+						valueStartIndex = cIndex;
+						break;
+					}
+				}
+			}
+			Assert(foundEquals);
+			
+			if (valueStartIndex != 0)
+			{
+				u32 valueStrLength = (u32)strlen(effectStr) - valueStartIndex;
+				valueStr = TempString(valueStrLength+1);
+				memcpy(valueStr, &effectStr[valueStartIndex], valueStrLength);
+				valueStr[valueStrLength] = '\0';
+			}
+			
+			if (nameStr == nullptr || nameStr[0] == '\0')
+			{
+				DEBUG_PrintLine("No name found in effect: \"%s\"", effectStr);
+			}
+			else if (valueStr == nullptr || valueStr[0] == '\0')
+			{
+				DEBUG_PrintLine("No value found in effect: \"%s\"", effectStr);
+			}
+			else
+			{
+				if (strcmp(nameStr, "background_color") == 0 ||
+					strcmp(nameStr, "foreground_color") == 0)
+				{
+					Color_t colorValue = {};
+					if (TryParseColor(valueStr, (u32)strlen(valueStr), &colorValue) == ConfigError_None)
+					{
+						if (strcmp(nameStr, "background_color") == 0)
+						{
+							// DEBUG_PrintLine("Background = %s", valueStr);
+							newLine->backgroundColor = colorValue;
+						}
+						else if (strcmp(nameStr, "foreground_color") == 0)
+						{
+							// DEBUG_PrintLine("Foreground = %s", valueStr);
+							newLine->matchColor = colorValue;
+						}
+					}
+					else
+					{
+						DEBUG_PrintLine("Could not parse color in effect: %s = \"%s\"", nameStr, valueStr);
+					}
+				}
+				
+				else if (strcmp(nameStr, "status") == 0)
+				{
+					StatusInfo(valueStr);
+				}
+				else
+				{
+					DEBUG_PrintLine("Unknown effect in regex trigger: \"%s\"", nameStr);
+				}
+			}
+		}
+		else
+		{
+			DEBUG_PrintLine("Unknown effect in regex trigger: \"%s\"", effectStr);
+		}
+	}
+	
+	return addLineToBuffer;
+}
+
 void DataReceived(const char* dataBuffer, i32 numBytes)
 {
 	const PlatformInfo_t* PlatformInfo = Gl_PlatformInfo;
@@ -662,64 +789,69 @@ void DataReceived(const char* dataBuffer, i32 numBytes)
 			else
 			{
 				//Throw the line on the end of the list
-				// +========================================+
-				// | Check Line Against Regular Expressions |
-				// +========================================+
-				const char* expression;
-				expression = GetRegularExpression(&appData->regexList, GC->genericCountRegexName);
-				if (expression != nullptr &&
-					TestRegularExpression(expression, finishedLine->chars, finishedLine->numChars))
+				
+				// +====================================+
+				// | Check Line Against Regex Triggers  |
+				// +====================================+
+				bool addLineToBuffer = true;
+				for (u32 rIndex = 0; rIndex < GC->numTriggers; rIndex++)
 				{
-					DEBUG_WriteLine("Counter++");
-					appData->genericCounter++;
-				}
-				expression = GetRegularExpression(&appData->regexList, GC->markLineRegexName);
-				if (expression != nullptr &&
-					TestRegularExpression(expression, finishedLine->chars, finishedLine->numChars))
-				{
-					DEBUG_WriteLine("Auto-Mark");
-					FlagSet(finishedLine->flags, LineFlag_MarkBelow | LineFlag_ThickMark);
+					RegexTrigger_t* trigger = &GC->triggers[rIndex];
+					
+					if (trigger->runAtEol)
+					{
+						bool appliedToThisComPort = (trigger->numComPorts == 0 || appData->comPort.isOpen == false);
+						if (appliedToThisComPort == false)
+						{
+							for (u32 comListIndex = 0; comListIndex < trigger->numComPorts; comListIndex++)
+							{
+								const char* supportedName = trigger->comPorts[comListIndex];
+								if (strcmp(supportedName, GetComPortReadableName(appData->comPort.index)) == 0)
+								{
+									appliedToThisComPort = true;
+									break;
+								}
+								else if (strcmp(supportedName, GC->comPortNames[appData->comPort.index]) == 0)
+								{
+									appliedToThisComPort = true;
+									break;
+								}
+							}
+						}
+						
+						if (appliedToThisComPort)
+						{
+							const char* regexStr = nullptr;
+							if (trigger->expression != nullptr)
+							{
+								regexStr = trigger->expression;
+							}
+							else if (trigger->expressionName != nullptr)
+							{
+								regexStr = GetRegularExpression(&appData->regexList, trigger->expressionName);
+							}
+							
+							if (regexStr != nullptr)
+							{
+								bool expressionMatched = TestRegularExpression(regexStr, finishedLine->chars, finishedLine->numChars);
+								if (expressionMatched)
+								{
+									addLineToBuffer &= ApplyTriggerEffects(finishedLine, trigger);
+								}
+							}
+						}
+					}
 				}
 				
-				expression = GetRegularExpression(&appData->regexList, GC->highlight1RegexName);
-				if (expression != nullptr && TestRegularExpression(expression, finishedLine->chars, finishedLine->numChars))
+				if (addLineToBuffer)
 				{
-					// DEBUG_WriteLine("Highlight1");
-					finishedLine->matchColor = GC->colors.highlight1;
+					lastLine = AddLineToList(&appData->lineList, "");
 				}
-				expression = GetRegularExpression(&appData->regexList, GC->highlight2RegexName);
-				if (expression != nullptr && TestRegularExpression(expression, finishedLine->chars, finishedLine->numChars))
+				else
 				{
-					// DEBUG_WriteLine("Highlight2");
-					finishedLine->matchColor = GC->colors.highlight2;
+					lastLine->numChars = 0;
+					lastLine->chars[0] = '\0';
 				}
-				expression = GetRegularExpression(&appData->regexList, GC->highlight3RegexName);
-				if (expression != nullptr && TestRegularExpression(expression, finishedLine->chars, finishedLine->numChars))
-				{
-					// DEBUG_WriteLine("Highlight3");
-					finishedLine->matchColor = GC->colors.highlight3;
-				}
-				expression = GetRegularExpression(&appData->regexList, GC->highlight4RegexName);
-				if (expression != nullptr && TestRegularExpression(expression, finishedLine->chars, finishedLine->numChars))
-				{
-					// DEBUG_WriteLine("Highlight4");
-					finishedLine->matchColor = GC->colors.highlight4;
-				}
-				expression = GetRegularExpression(&appData->regexList, GC->highlight5RegexName);
-				if (expression != nullptr && TestRegularExpression(expression, finishedLine->chars, finishedLine->numChars))
-				{
-					// DEBUG_WriteLine("Highlight5");
-					finishedLine->matchColor = GC->colors.highlight5;
-				}
-				
-				expression = GetRegularExpression(&appData->regexList, GC->backgroundColorRegexName);
-				if (expression != nullptr && TestRegularExpression(expression, finishedLine->chars, finishedLine->numChars))
-				{
-					// DEBUG_WriteLine("BackgroundColor");
-					finishedLine->backgroundColor = GC->colors.regexMatchBackground;
-				}
-				
-				lastLine = AddLineToList(&appData->lineList, "");
 			}
 		}
 		else if (newChar == '\b')

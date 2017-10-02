@@ -219,6 +219,39 @@ i32 FindChildTokenByName(JsonData_t* jsonData, i32 parentIndex, const char* name
 	return -1;
 }
 
+u32 GetNumChildTokens(JsonData_t* jsonData, i32 parentIndex)
+{
+	u32 result = 0;
+
+	for (i32 tIndex = 0; tIndex < jsonData->numTokens; tIndex++)
+	{
+		jsmntok_t* token = &jsonData->tokens[tIndex];
+		if (token->parent == parentIndex)
+		{
+			result++;
+		}
+	}
+	
+	return result;
+}
+
+u32 GetNumChildObjects(JsonData_t* jsonData, i32 parentIndex)
+{
+	u32 result = 0;
+
+	for (i32 tIndex = 0; tIndex < jsonData->numTokens; tIndex++)
+	{
+		jsmntok_t* token = &jsonData->tokens[tIndex];
+		if (token->parent == parentIndex &&
+			token->type == JSMN_OBJECT)
+		{
+			result++;
+		}
+	}
+	
+	return result;
+}
+
 i32 FindChildTokenByIndex(JsonData_t* jsonData, i32 parentIndex, i32 childIndex)
 {
 	i32 numItemsFound = 0;
