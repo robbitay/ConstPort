@@ -1,9 +1,12 @@
 *.sublime-workspace
 vc140.pdb
 build/*.*
+build/ConstPort
 !build/*.h
 !build/*.rc
 !build/build.bat
+!build/build.sh
 .vs/
 data/Raw/
 *.VC.*
+*.DS_Store
