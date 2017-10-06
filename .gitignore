@@ -2,6 +2,7 @@
 vc140.pdb
 build/*.*
 build/ConstPort
+build/*lib
 !build/*.h
 !build/*.rc
 !build/build.bat

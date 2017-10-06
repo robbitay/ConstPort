@@ -14,6 +14,10 @@ Description:
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
+#include <dlfcn.h>
+
+#include "platformInterface.h"
+
 #define HandleError(outputString) do {                             \
 	OSX_WriteLine(outputString);                                   \
 	MessageBox("An error occurred during startup!", outputString); \
@@ -63,6 +67,25 @@ int main()
 	}
 	
 	glfwMakeContextCurrent(window);
+	
+	void* dllHandle = dlopen("ConstPort.dll", RTLD_NOW);
+	printf("Dll Handle: %p\n", dllHandle);
+	
+	void* App_GetVersion      = dlsym(dllHandle, "App_GetVersion");
+	printf("App_GetVersion:      %p\n", App_GetVersion);
+	void* App_Initialize      = dlsym(dllHandle, "App_Initialize");
+	printf("App_Initialize:      %p\n", App_Initialize);
+	void* App_Reloaded        = dlsym(dllHandle, "App_Reloaded");
+	printf("App_Reloaded:        %p\n", App_Reloaded);
+	void* App_Update          = dlsym(dllHandle, "App_Update");
+	printf("App_Update:          %p\n", App_Update);
+	void* App_GetSoundSamples = dlsym(dllHandle, "App_GetSoundSamples");
+	printf("App_GetSoundSamples: %p\n", App_GetSoundSamples);
+	void* App_Closing         = dlsym(dllHandle, "App_Closing");
+	printf("App_Closing:         %p\n", App_Closing);
+	
+	dlclose(dllHandle);
+	printf("Dll closed\n");
 	
 	while (!glfwWindowShouldClose(window))
 	{

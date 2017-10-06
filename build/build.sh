@@ -6,7 +6,7 @@ ProjectName="ConstPort"
 
 PlatformMainFile="../code/osx_main.cpp"
 ApplicationMainFile="../code/app.cpp"
-CompilerFlags="-DOSX_COMPILATION=1"
+CompilerFlags="-DOSX_COMPILATION=1 -fvisibility=hidden"
 LinkerFlags="-std=gnu++0x"
 IncludeDirectories="-I../../../lib/mylib -I../../../lib/glfw/include -I../../../lib/glew/include -I../../../lib/stb -I../../../lib/jsmn -I../../../lib/boost_1_65_1/"
 LibraryDirectories="-L../../../lib/glfw/build/src/Debug -L../../../lib/glew/lib -L../../../lib/boost_1_65_1/bin.v2/libs/regex/build/darwin-4.2.1/debug/link-static/runtime-link-static/threading-multi"

@@ -963,7 +963,7 @@ u32 GetSelection(char* bufferOutput = nullptr)
 //+================================================================+
 //|                       App Get Version                          |
 //+================================================================+
-AppGetVersion_DEFINITION(App_GetVersion)
+EXPORT AppGetVersion_DEFINITION(App_GetVersion)
 {
 	Version_t version = {
 		APP_VERSION_MAJOR,
@@ -982,7 +982,7 @@ AppGetVersion_DEFINITION(App_GetVersion)
 //+================================================================+
 //|                       App Initialize                           |
 //+================================================================+
-AppInitialize_DEFINITION(App_Initialize)
+EXPORT AppInitialize_DEFINITION(App_Initialize)
 {
 	Gl_PlatformInfo = PlatformInfo;
 	Gl_AppMemory = AppMemory;
@@ -1076,7 +1076,7 @@ AppInitialize_DEFINITION(App_Initialize)
 //+================================================================+
 //|                        App Reloaded                            |
 //+================================================================+
-AppReloaded_DEFINITION(App_Reloaded)
+EXPORT AppReloaded_DEFINITION(App_Reloaded)
 {
 	Gl_PlatformInfo = PlatformInfo;
 	Gl_AppMemory = AppMemory;
@@ -1101,7 +1101,7 @@ AppReloaded_DEFINITION(App_Reloaded)
 //+================================================================+
 //|                         App Update                             |
 //+================================================================+
-AppUpdate_DEFINITION(App_Update)
+EXPORT AppUpdate_DEFINITION(App_Update)
 {
 	Gl_PlatformInfo = PlatformInfo;
 	Gl_AppMemory = AppMemory;
@@ -2379,7 +2379,7 @@ AppUpdate_DEFINITION(App_Update)
 //+================================================================+
 //|                   App Get Sound Samples                        |
 //+================================================================+
-AppGetSoundSamples_DEFINITION(App_GetSoundSamples)
+EXPORT AppGetSoundSamples_DEFINITION(App_GetSoundSamples)
 {
 	Gl_PlatformInfo = PlatformInfo;
 	Gl_AppMemory = AppMemory;
@@ -2392,7 +2392,7 @@ AppGetSoundSamples_DEFINITION(App_GetSoundSamples)
 //+================================================================+
 //|                        App Closing                             |
 //+================================================================+
-AppClosing_DEFINITION(App_Closing)
+EXPORT AppClosing_DEFINITION(App_Closing)
 {
 	Gl_PlatformInfo = PlatformInfo;
 	Gl_AppMemory = AppMemory;
