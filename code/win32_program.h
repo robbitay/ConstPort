@@ -26,20 +26,4 @@ typedef enum
 	ProgramStatus_Error,
 } ProgramStatus_t;
 
-
-#define StartProgramInstance_DEFINITION(functionName) ProgramInstance_t functionName(const char* commandStr)
-typedef StartProgramInstance_DEFINITION(StartProgramInstance_f);
-
-#define GetProgramStatus_DEFINITION(functionName) ProgramStatus_t functionName(const ProgramInstance_t* program)
-typedef GetProgramStatus_DEFINITION(GetProgramStatus_f);
-
-#define ReadProgramOutput_DEFINITION(functionName) u32 functionName(const ProgramInstance_t* program, char* outputBuffer, u32 outputBufferSize)
-typedef ReadProgramOutput_DEFINITION(ReadProgramOutput_f);
-
-#define WriteProgramInput_DEFINITION(functionName) u32 functionName(const ProgramInstance_t* program, const char* dataPntr, u32 numBytes)
-typedef WriteProgramInput_DEFINITION(WriteProgramInput_f);
-
-#define CloseProgramInstance_DEFINITION(functionName) void functionName(ProgramInstance_t* program)
-typedef CloseProgramInstance_DEFINITION(CloseProgramInstance_f);
-
 #endif //  _WIN_32_PROGRAM_H

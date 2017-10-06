@@ -12,7 +12,7 @@ Description:
 #include "my_assert.h"
 #include "platformInterface.h"
 #include "app_version.h"
-#include "Colors.h"
+#include "colors.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 #define STB_TRUETYPE_IMPLEMENTATION
@@ -1090,12 +1090,12 @@ AppReloaded_DEFINITION(App_Reloaded)
 	//Make sure our callbacks still match the location of the functions in the new DLL
 	Menu_t* menuPntr = GetMenuByName(&appData->menuHandler, "COM Menu");
 	menuPntr->specialPntr = nullptr;
-	menuPntr->updateFunctionPntr = ComMenuUpdate;
-	menuPntr->renderFunctionPntr = ComMenuRender;
+	menuPntr->updateFunctionPntr = (void*)ComMenuUpdate;
+	menuPntr->renderFunctionPntr = (void*)ComMenuRender;
 	menuPntr = GetMenuByName(&appData->menuHandler, "Context Menu");
 	menuPntr->specialPntr = nullptr;
-	menuPntr->updateFunctionPntr = ContextMenuUpdate;
-	menuPntr->renderFunctionPntr = ContextMenuRender;
+	menuPntr->updateFunctionPntr = (void*)ContextMenuUpdate;
+	menuPntr->renderFunctionPntr = (void*)ContextMenuRender;
 }
 
 //+================================================================+

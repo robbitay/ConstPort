@@ -24,6 +24,7 @@ struct Menu_t
 	
 	//NOTE: This can be a pointer to anything the update and render functions require
 	void* specialPntr;
+	
 	void* updateFunctionPntr;
 	void* renderFunctionPntr;
 	

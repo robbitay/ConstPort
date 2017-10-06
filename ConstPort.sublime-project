@@ -9,6 +9,9 @@
 		},
 		{
 			"path": "W:\\lib\\boost_1_65_0\\boost\\regex"
+		},
+		{
+			"path": "/MyStuff/Personal/lib/mylib"
 		}
 	],
 	"settings":

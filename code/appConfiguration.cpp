@@ -35,6 +35,9 @@ Description:
 		case ConfigError_NumberOutOfRange:                                                        \
 			StatusError("Error parsing \"%s\": Number Out of Range", tokenName);                  \
 			parseSuccess = false; break;                                                          \
+		case ConfigError_ExpectedArray:                                                           \
+			StatusError("Error parsing \"%s\": Expected Array", tokenName);                       \
+			parseSuccess = false; break;                                                          \
 	};                                                                                            \
 } while(0)
 
@@ -61,6 +64,9 @@ Description:
 			parseSuccess = false; break;                                                                     \
 		case ConfigError_NumberOutOfRange:                                                                   \
 			StatusError("Error parsing \"%s\": Number Out of Range", tokenName);                             \
+			parseSuccess = false; break;                                                                     \
+		case ConfigError_ExpectedArray:                                                                      \
+			StatusError("Error parsing \"%s\": Expected Array", tokenName);                                  \
 			parseSuccess = false; break;                                                                     \
 	};                                                                                                       \
 } while(0)

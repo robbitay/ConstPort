@@ -15,13 +15,13 @@ void InitializeRenderState(const PlatformInfo_t* PlatformInfo, RenderState_t* re
 	
 	Vertex_t squareVertices[] =
 	{
-		{  {0.0f, 0.0f, 0.0f}, ColorToVec4({Color_White}), {0.0f, 0.0f} },
-		{  {1.0f, 0.0f, 0.0f}, ColorToVec4({Color_White}), {1.0f, 0.0f} },
-		{  {0.0f, 1.0f, 0.0f}, ColorToVec4({Color_White}), {0.0f, 1.0f} },
+		{  {0.0f, 0.0f, 0.0f}, ColorToVec4(Color_White), {0.0f, 0.0f} },
+		{  {1.0f, 0.0f, 0.0f}, ColorToVec4(Color_White), {1.0f, 0.0f} },
+		{  {0.0f, 1.0f, 0.0f}, ColorToVec4(Color_White), {0.0f, 1.0f} },
 		
-		{  {0.0f, 1.0f, 0.0f}, ColorToVec4({Color_White}), {0.0f, 1.0f} },
-		{  {1.0f, 0.0f, 0.0f}, ColorToVec4({Color_White}), {1.0f, 0.0f} },
-		{  {1.0f, 1.0f, 0.0f}, ColorToVec4({Color_White}), {1.0f, 1.0f} },
+		{  {0.0f, 1.0f, 0.0f}, ColorToVec4(Color_White), {0.0f, 1.0f} },
+		{  {1.0f, 0.0f, 0.0f}, ColorToVec4(Color_White), {1.0f, 0.0f} },
+		{  {1.0f, 1.0f, 0.0f}, ColorToVec4(Color_White), {1.0f, 1.0f} },
 	};
 	renderState->squareBuffer = CreateVertexBuffer(squareVertices, ArrayCount(squareVertices));
 	
@@ -348,6 +348,7 @@ void RenderState_t::DrawString(const char* string, u32 numCharacters, v2 positio
 	{
 		case Alignment_Center: currentPos.x -= stringSize.x/2; break;
 		case Alignment_Right:  currentPos.x -= stringSize.x; break;
+		case Alignment_Left:   break;
 	};
 	
 	for (u32 cIndex = 0; cIndex < numCharacters; cIndex++)

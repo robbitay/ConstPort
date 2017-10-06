@@ -96,7 +96,7 @@ struct Vertex_t
 	union
 	{
 		v2 texCoord;
-		struct { r32 x, y; };
+		struct { r32 tX, tY; };
 	};
 };
 

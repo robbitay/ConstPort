@@ -64,7 +64,7 @@ r32 RenderLine(const AppInput_t* AppInput, Line_t* linePntr, v2 position, bool s
 					else
 					{
 						r32 halfAnimProgress = (linePntr->animProgress-0.5f) / 0.5f;
-						r32 bannerHeight = max(MIN_BANNER_HEIGHT, GC->elapsedBannerHeight * EaseCubicOut(halfAnimProgress));
+						r32 bannerHeight = MaxReal32(MIN_BANNER_HEIGHT, GC->elapsedBannerHeight * EaseCubicOut(halfAnimProgress));
 						result += bannerHeight;
 					}
 				}
@@ -128,7 +128,7 @@ void RenderLineGutter(const AppInput_t* AppInput, const Line_t* linePntr, v2 pos
 					else
 					{
 						r32 halfAnimProgress = (linePntr->animProgress-0.5f) / 0.5f;
-						bannerHeight = max(MIN_BANNER_HEIGHT, GC->elapsedBannerHeight * EaseCubicOut(halfAnimProgress));
+						bannerHeight = MaxReal32(MIN_BANNER_HEIGHT, GC->elapsedBannerHeight * EaseCubicOut(halfAnimProgress));
 						rec bannerRec = NewRectangle(
 							ui->viewRec.x,
 							position.y + appData->testFont.maxExtendDown + GC->lineSpacing/2, 

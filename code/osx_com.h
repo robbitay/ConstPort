@@ -1,5 +1,11 @@
-#ifndef _WIN32_COM_PORT_H
-#define _WIN32_COM_PORT_H
+/*
+File:   osx_com.h
+Author: Taylor Robbins
+Date:   10\05\2017
+*/
+
+#ifndef _OSX_COM_H
+#define _OSX_COM_H
 
 #define MAX_COM_PORT_NUM   12
 
@@ -78,7 +84,6 @@ typedef enum
 {
 	ComError_Generic = -1,
 	ComError_Other   = -2,
-	
 } ComError_t;
 
 struct ComSettings_t
@@ -118,7 +123,7 @@ struct ComPort_t
 	
 	ComSettings_t settings;
 	
-	HANDLE handle;
+	// HANDLE handle;
 };
 
 const char* GetComPortFileName(ComPortIndex_t comIndex)
@@ -236,4 +241,4 @@ const char* GetStopBitsString(StopBits_t stopBits)
 	};
 }
 
-#endif // _WIN32_COM_PORT_H
+#endif //  _OSX_COM_H

@@ -9,72 +9,101 @@ Description:
 #ifndef _PLATFORM_INTERFACE_H
 #define _PLATFORM_INTERFACE_H
 
-//TODO: How do we get rid of this??
-#include <windows.h>
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
-#include <stdint.h>
+#ifndef WINDOWS_COMPILATION
+#define WINDOWS_COMPILATION false
+#endif
+#ifndef OSX_COMPILATION
+#define OSX_COMPILATION false
+#endif
+#ifndef LINUX_COMPILATION
+#define LINUX_COMPILATION false
+#endif
 
+#if !WINDOWS_COMPILATION && !OSX_COMPILATION && !LINUX_COMPILATION
+#error WINDOWS_COMPILATION, OSX_COMPILATION, or LINUX_COMPILATION must be defined!
+#endif
+
+//TODO: How do we get rid of this??
+#if WINDOWS_COMPILATION
+#include <windows.h>
 #include "win32_defines.h"
 #include "win32_intrinsics.h"
-#include "myMath.h"
+#include "win32_helpers.h"
 #include "win32_com.h"
-#include "timeStructs.h"
 #include "win32_program.h"
+#include "win32_clipboard.h"
+#endif
 
-struct FileInfo_t
-{
-	uint32 size;
-	void* content;
-};
+#if OSX_COMPILATION
+#include "osx_defines.h"
+#include "osx_intrinsics.h"
+#include "osx_helpers.h"
+#include "osx_com.h"
+#include "osx_program.h"
+#include "osx_clipboard.h"
+#endif
 
-struct OpenFile_t
-{
-	bool isOpen;
-	HANDLE handle;
-};
+#if LINUX_COMPILATION
 
-//+================================================================+
-//|                Platform Function Definitions                   |
-//+================================================================+
+#endif
+
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
+
+#include "myMath.h"
+#include "timeStructs.h"
+
+// +--------------------------------------------------------------+
+// |                   Platform Layer Functions                   |
+// +--------------------------------------------------------------+
+#define GetComPortList_DEFINITION(functionName) u32 functionName(bool* arrayOut, u32 arrayOutSize)
+typedef GetComPortList_DEFINITION(GetComPortList_f);
+#define OpenComPort_DEFINITION(functionName) ComPort_t functionName(ComPortIndex_t portIndex, ComSettings_t settings)
+typedef OpenComPort_DEFINITION(OpenComPort_f);
+#define CloseComPort_DEFINITION(functionName) void functionName(ComPort_t* comPortPntr)
+typedef CloseComPort_DEFINITION(CloseComPort_f);
+#define ReadComPort_DEFINITION(functionName) i32 functionName(ComPort_t* comPortPntr, void* outputBuffer, u32 outputBufferLength)
+typedef ReadComPort_DEFINITION(ReadComPort_f);
+#define WriteComPort_DEFINITION(functionName) void functionName(ComPort_t* comPortPntr, const char* newChars, u32 numChars)
+typedef WriteComPort_DEFINITION(WriteComPort_f);
+
+#define StartProgramInstance_DEFINITION(functionName) ProgramInstance_t functionName(const char* commandStr)
+typedef StartProgramInstance_DEFINITION(StartProgramInstance_f);
+#define GetProgramStatus_DEFINITION(functionName) ProgramStatus_t functionName(const ProgramInstance_t* program)
+typedef GetProgramStatus_DEFINITION(GetProgramStatus_f);
+#define ReadProgramOutput_DEFINITION(functionName) u32 functionName(const ProgramInstance_t* program, char* outputBuffer, u32 outputBufferSize)
+typedef ReadProgramOutput_DEFINITION(ReadProgramOutput_f);
+#define WriteProgramInput_DEFINITION(functionName) u32 functionName(const ProgramInstance_t* program, const char* dataPntr, u32 numBytes)
+typedef WriteProgramInput_DEFINITION(WriteProgramInput_f);
+#define CloseProgramInstance_DEFINITION(functionName) void functionName(ProgramInstance_t* program)
+typedef CloseProgramInstance_DEFINITION(CloseProgramInstance_f);
+
 #define FreeFileMemory_DEFINITION(functionName)  void functionName(FileInfo_t* fileInfo)
 typedef FreeFileMemory_DEFINITION(FreeFileMemory_f);
-
 #define ReadEntireFile_DEFINITION(functionName)  FileInfo_t functionName(const char* filename)
 typedef ReadEntireFile_DEFINITION(ReadEntireFile_f);
-
 #define WriteEntireFile_DEFINITION(functionName) bool32 functionName(const char* filename, void* memory, uint32 memorySize)
 typedef WriteEntireFile_DEFINITION(WriteEntireFile_f);
-
 #define OpenFile_DEFINITION(functionName) bool32 functionName(const char* fileName, OpenFile_t* openFileOut)
 typedef OpenFile_DEFINITION(OpenFile_f);
-
 #define AppendFile_DEFINITION(functionName) bool32 functionName(OpenFile_t* filePntr, const void* newData, u32 newDataSize)
 typedef AppendFile_DEFINITION(AppendFile_f);
-
 #define CloseFile_DEFINITION(functionName) void functionName(OpenFile_t* filePntr)
 typedef CloseFile_DEFINITION(CloseFile_f);
-
 #define LaunchFile_DEFINITION(functionName) bool32 functionName(const char* filename)
 typedef LaunchFile_DEFINITION(LaunchFile_f);
 
-
 #define DebugWrite_DEFINITION(functionName)     void functionName(const char* string)
 typedef DebugWrite_DEFINITION(DebugWrite_f);
-
 #define DebugWriteLine_DEFINITION(functionName) void functionName(const char* message)
 typedef DebugWriteLine_DEFINITION(DebugWriteLine_f);
-
 #define DebugPrint_DEFINITION(functionName)     void functionName(const char* formatString, ...)
 typedef DebugPrint_DEFINITION(DebugPrint_f);
-
 #define DebugPrintLine_DEFINITION(functionName) void functionName(const char* formatString, ...)
 typedef DebugPrintLine_DEFINITION(DebugPrintLine_f);
 
-
 #define CopyToClipboard_DEFINITION(functionName) void functionName(const void* dataPntr, u32 dataSize)
 typedef CopyToClipboard_DEFINITION(CopyToClipboard_f);
-
 #define CopyFromClipboard_DEFINITION(functionName) u32 functionName(void* outputBuffer, u32 maxSize)
 typedef CopyFromClipboard_DEFINITION(CopyFromClipboard_f);
 

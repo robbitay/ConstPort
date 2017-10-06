@@ -54,8 +54,8 @@ Menu_t* AddMenu(MenuHandler_t* menuHandlerPntr, const char* name, rec drawRec,
 	newMenu->titleBarColor   = GC->colors.windowTitleBar;
 	
 	newMenu->specialPntr = specialPntr;
-	newMenu->updateFunctionPntr = updateFunctionPntr;
-	newMenu->renderFunctionPntr = renderFunctionPntr;
+	newMenu->updateFunctionPntr = (void*)updateFunctionPntr;
+	newMenu->renderFunctionPntr = (void*)renderFunctionPntr;
 	
 	UpdateMenuRecs(newMenu);
 	
