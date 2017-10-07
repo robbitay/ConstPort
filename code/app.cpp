@@ -992,7 +992,6 @@ EXPORT AppInitialize_DEFINITION(App_Initialize)
 	ClearPointer(appData);
 	GL_AppData = appData;
 	GC = &appData->globalConfig;
-	TempArena = &appData->tempArena;
 	
 	Assert(AppMemory->permanantSize > INPUT_ARENA_SIZE);
 	
@@ -1007,23 +1006,31 @@ EXPORT AppInitialize_DEFINITION(App_Initialize)
 	InitializeMemoryArenaHeap(&appData->mainHeap, extraSpaceStart + INPUT_ARENA_SIZE, mainHeapSize);
 	
 	InitializeMemoryArenaTemp(&appData->tempArena, AppMemory->transientPntr, AppMemory->transientSize, TRANSIENT_MAX_NUMBER_MARKS);
+	TempArena = &appData->tempArena;
 	TempPushMark();
 	
-	DEBUG_PrintLine("Input Arena: %s", FormattedSizeStr(INPUT_ARENA_SIZE));
-	DEBUG_PrintLine("Main Heap:   %s", FormattedSizeStr(mainHeapSize));
-	DEBUG_PrintLine("Temp Arena:  %s", FormattedSizeStr(AppMemory->transientSize));
+	DEBUG_PrintLine("Input Arena: %u", INPUT_ARENA_SIZE);
+	DEBUG_PrintLine("Main Heap:   %u", mainHeapSize);
+	DEBUG_PrintLine("Temp Arena:  %u", AppMemory->transientSize);
 	
 	// +================================+
 	// |    External Initializations    |
 	// +================================+
 	LoadGlobalConfiguration(PlatformInfo, &appData->globalConfig, &appData->mainHeap);
+	DEBUG_WriteLine("Initializing UI Elements");
 	InitializeUiElements(&appData->uiElements);
+	DEBUG_WriteLine("Initializing RenderState");
 	InitializeRenderState(PlatformInfo, &appData->renderState);
+	DEBUG_WriteLine("Initializing Menu Handler");
 	InitializeMenuHandler(&appData->menuHandler, &appData->mainHeap);
+	DEBUG_WriteLine("Initializing Regular Expression list");
 	InitializeRegexList(&appData->regexList, &appData->mainHeap);
+	DEBUG_WriteLine("Loading Regular Expressions list file");
 	LoadRegexFile(&appData->regexList, "Resources/Configuration/RegularExpressions.rgx", &appData->mainHeap);
+	DEBUG_WriteLine("Initializing Line List");
 	CreateLineList(&appData->lineList, &appData->mainHeap, "");
 	
+	DEBUG_WriteLine("Creating menus");
 	v2i screenSize = PlatformInfo->screenSize;
 	Menu_t* comMenu = AddMenu(&appData->menuHandler, "COM Menu", NewRectangle((r32)screenSize.x / 2 - 50, (r32)screenSize.y / 2 - 150, 400, 300),
 		ComMenuUpdate, ComMenuRender);
@@ -1036,6 +1043,7 @@ EXPORT AppInitialize_DEFINITION(App_Initialize)
 	// +================================+
 	// |          Load Content          |
 	// +================================+
+	DEBUG_WriteLine("Compiling shaders...");
 	appData->simpleShader = LoadShader(
 		"Resources/Shaders/simple-vertex.glsl",
 		"Resources/Shaders/simple-fragment.glsl");
@@ -1052,6 +1060,7 @@ EXPORT AppInitialize_DEFINITION(App_Initialize)
 	// +================================+
 	// |          Frame Buffer          |
 	// +================================+
+	DEBUG_WriteLine("Creating post-processing Frame Buffer");
 	appData->frameTexture = CreateTexture(nullptr, 2048, 2048);
 	appData->frameBuffer = CreateFrameBuffer(&appData->frameTexture);
 	if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
@@ -1062,6 +1071,7 @@ EXPORT AppInitialize_DEFINITION(App_Initialize)
 	// +================================+
 	// |      Other Initialization      |
 	// +================================+
+	DEBUG_WriteLine("Initializing COM ports");
 	appData->comPort.settings.baudRate = BaudRate_115200;
 	appData->comPort.settings.parity = Parity_None;
 	appData->comPort.settings.stopBits = StopBits_1;

@@ -28,7 +28,6 @@ Texture_t CreateTexture(const u8* bitmapData, i32 width, i32 height, bool pixela
 		GL_UNSIGNED_BYTE,	//type
 		bitmapData);		//data
 	
-	
 	// glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	// glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, pixelated ? GL_NEAREST_MIPMAP_NEAREST : GL_LINEAR_MIPMAP_LINEAR);
