@@ -13,10 +13,8 @@ LibraryDirectories="-L../../../lib/glfw/build/src/Debug -L../../../lib/glew/lib 
 Libraries="-lglfw3 -lglew -lboost_regex"
 Frameworks="-framework OpenGL -framework Cocoa -framework IOKit -framework CoreVideo"
 
-echo [Building Platform]
+echo [Building OSX Platform]
 g++ $CompilerFlags $PlatformMainFile -o $ProjectName $IncludeDirectories $LibraryDirectories $Libraries $Frameworks $LinkerFlags
-echo [Done]
 
-echo [Building Application]
+echo [Building OSX Application]
 g++ -shared $CompilerFlags $ApplicationMainFile -o $ProjectName.dll $IncludeDirectories $LibraryDirectories $Libraries $Frameworks $LinkerFlags
-echo [Done]

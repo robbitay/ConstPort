@@ -22,196 +22,14 @@ Description:
 #include "platformInterface.h"
 #include "osx_version.h"
 
-FreeFileMemory_DEFINITION(OSX_FreeFileMemory)
-{
-	if (fileInfo == nullptr) { return; }
-	if (fileInfo->content == nullptr) { return; }
-	
-	free(fileInfo->content);
-	fileInfo->content = nullptr;
-	fileInfo->size = 0;
-}
+PlatformInfo_t PlatformInfo;
 
-ReadEntireFile_DEFINITION(OSX_ReadEntireFile)
-{
-	FileInfo_t result = {};
-	
-	FILE* fileHandle = fopen(filename, "rb");
-	
-	if (fileHandle != nullptr)
-	{
-		fseek(fileHandle, 0, SEEK_END);
-		result.size = ftell(fileHandle);
-		result.content = malloc(result.size+1);
-		
-		fseek(fileHandle, 0, SEEK_SET);
-		fread(result.content, 1, result.size, fileHandle);
-		
-		((u8*)result.content)[result.size] = '\0';
-		
-		fclose(fileHandle);
-	}
-	
-	printf("ReadEntireFile(\"%s\") result: %u bytes %p\n", filename, result.size, result.content);
-	return result;
-}
-
-WriteEntireFile_DEFINITION(OSX_WriteEntireFile)
-{
-	//TODO: Write the file
-	
-	return false;
-}
-
-OpenFile_DEFINITION(OSX_OpenFile)
-{
-	ClearPointer(openFileOut);
-	
-	//TODO: Open the file
-	
-	return false;
-}
-
-AppendFile_DEFINITION(OSX_AppendFile)
-{
-	//TODO: Append the file
-	
-	return false;
-}
-
-CloseFile_DEFINITION(OSX_CloseFile)
-{
-	//TODO: Close the file handle
-	
-	ClearPointer(filePntr);
-}
-
-LaunchFile_DEFINITION(OSX_LaunchFile)
-{
-	//TODO: Launch the file
-	
-	return false;
-}
-
-DebugWrite_DEFINITION(OSX_DebugWrite)
-{
-	printf("%s", string);
-}
-
-DebugWriteLine_DEFINITION(OSX_DebugWriteLine)
-{
-	printf("%s", message);
-	printf("\n");
-}
-
-#define DEBUG_PRINT_BUFFER_SIZE 2048
-
-DebugPrint_DEFINITION(OSX_DebugPrint)
-{
-	char printBuffer[DEBUG_PRINT_BUFFER_SIZE];
-	va_list args;
-	
-	va_start(args, formatString);
-	size_t length = vsnprintf(printBuffer, DEBUG_PRINT_BUFFER_SIZE, formatString, args);
-	va_end(args);
-	
-	if (length == 0)
-	{
-		
-	}
-	else if (length < DEBUG_PRINT_BUFFER_SIZE)
-	{
-		printBuffer[length] = '\0';
-		printf("%s", printBuffer);
-	}
-	else
-	{
-		printf("[DEBUG PRINT BUFFER OVERFLOW]");
-	}
-}
-
-DebugPrintLine_DEFINITION(OSX_DebugPrintLine)
-{
-	char printBuffer[DEBUG_PRINT_BUFFER_SIZE];
-	va_list args;
-	
-	va_start(args, formatString);
-	size_t length = vsnprintf(printBuffer, DEBUG_PRINT_BUFFER_SIZE, formatString, args);
-	va_end(args);
-	
-	if (length == 0)
-	{
-		
-	}
-	else if (length < DEBUG_PRINT_BUFFER_SIZE)
-	{
-		printBuffer[length] = '\0';
-		printf("%s", printBuffer);
-	}
-	else
-	{
-		printf("[DEBUG PRINT BUFFER OVERFLOW]");
-	}
-	
-	printf("\n");
-}
-
-GetComPortList_DEFINITION(OSX_GetComPortList)
-{
-	u32 result = 0;
-	
-	for (u32 bIndex = 0; bIndex < arrayOutSize; bIndex++)
-	{
-		//TODO: Check to see if the com port exists
-		
-		arrayOut[bIndex] = false;
-	}
-	
-	return result;
-}
-
-OpenComPort_DEFINITION(OSX_OpenComPort)
-{
-	ComPort_t result = {};
-	
-	//TODO: Attempt to open the COM port
-	
-	return result;
-}
-
-CloseComPort_DEFINITION(OSX_CloseComPort)
-{
-	//TODO: Close the COM port
-	
-	ClearPointer(comPortPntr);
-}
-
-ReadComPort_DEFINITION(OSX_ReadComPort)
-{
-	//TODO: Read data from the COM port
-	
-	return 0;
-}
-
-WriteComPort_DEFINITION(OSX_WriteComPort)
-{
-	//TODO: Write to the COM port
-}
-
-CopyToClipboard_DEFINITION(OSX_CopyToClipboard)
-{
-	//TODO: Copy to the clipboard
-}
-
-CopyFromClipboard_DEFINITION(OSX_CopyFromClipboard)
-{
-	u32 result = 0;
-	
-	//TODO: Copy contents from the clipboard
-	
-	return result;
-}
-
+#include "osx_debug.cpp"
+#include "osx_clipboard.cpp"
+#include "osx_com.cpp"
+#include "osx_files.cpp"
+#include "osx_keymap.cpp"
+#include "osx_callbacks.cpp"
 
 // +--------------------------------------------------------------+
 // |                    Platform Layer Defines                    |
@@ -224,17 +42,6 @@ CopyFromClipboard_DEFINITION(OSX_CopyFromClipboard)
 #define BACKBUFFER_DEPTH_BITS   8
 #define BACKBUFFER_STENCIL_BITS 8
 #define ANTIALISING_NUM_SAMPLES 4
-
-#define HandleError(outputString) do {                             \
-	OSX_WriteLine(outputString);                                   \
-	MessageBox("An error occurred during startup!", outputString); \
-	return 1;                                                      \
-} while (0)
-
-void GlfwErrorCallback(int error, const char* description)
-{
-	printf("GLFW Error: %s\n", description);
-}
 
 int main()
 {
@@ -281,10 +88,16 @@ int main()
 		return 1;
 	}
 	
+	Assert(false);
+	
+	// +==============================+
+	// |        Configure GLFW        |
+	// +==============================+
 	glfwMakeContextCurrent(window);
 	
 	glfwGetFramebufferSize(window, &screenWidth, &screenHeight);
 	glViewport(0, 0, screenWidth, screenHeight);
+	glfwSwapInterval(1);
 	
 	//+--------------------------------------+
 	//|         GLEW Initialization          |
@@ -301,30 +114,30 @@ int main()
 	// +==============================+
 	// |  Initialize PlatformInfo_t   |
 	// +==============================+
-	PlatformInfo_t platformInfo = {};
-	platformInfo.platformType = Platform_OSX;
-	platformInfo.screenSize = NewVec2i(screenWidth, screenHeight);
-	platformInfo.windowHasFocus = true;
-	platformInfo.window = window;
+	PlatformInfo = {};
+	PlatformInfo.platformType = Platform_OSX;
+	PlatformInfo.screenSize = NewVec2i(screenWidth, screenHeight);
+	PlatformInfo.windowHasFocus = true;
+	PlatformInfo.window = window;
 	
-	platformInfo.FreeFileMemoryPntr    = OSX_FreeFileMemory;
-	platformInfo.ReadEntireFilePntr    = OSX_ReadEntireFile;
-	platformInfo.WriteEntireFilePntr   = OSX_WriteEntireFile;
-	platformInfo.OpenFilePntr          = OSX_OpenFile;
-	platformInfo.AppendFilePntr        = OSX_AppendFile;
-	platformInfo.CloseFilePntr         = OSX_CloseFile;
-	platformInfo.LaunchFilePntr        = OSX_LaunchFile;
-	platformInfo.DebugWritePntr        = OSX_DebugWrite;
-	platformInfo.DebugWriteLinePntr    = OSX_DebugWriteLine;
-	platformInfo.DebugPrintPntr        = OSX_DebugPrint;
-	platformInfo.DebugPrintLinePntr    = OSX_DebugPrintLine;
-	platformInfo.GetComPortListPntr    = OSX_GetComPortList;
-	platformInfo.OpenComPortPntr       = OSX_OpenComPort;
-	platformInfo.CloseComPortPntr      = OSX_CloseComPort;
-	platformInfo.ReadComPortPntr       = OSX_ReadComPort;
-	platformInfo.WriteComPortPntr      = OSX_WriteComPort;
-	platformInfo.CopyToClipboardPntr   = OSX_CopyToClipboard;
-	platformInfo.CopyFromClipboardPntr = OSX_CopyFromClipboard;
+	PlatformInfo.FreeFileMemoryPntr    = OSX_FreeFileMemory;
+	PlatformInfo.ReadEntireFilePntr    = OSX_ReadEntireFile;
+	PlatformInfo.WriteEntireFilePntr   = OSX_WriteEntireFile;
+	PlatformInfo.OpenFilePntr          = OSX_OpenFile;
+	PlatformInfo.AppendFilePntr        = OSX_AppendFile;
+	PlatformInfo.CloseFilePntr         = OSX_CloseFile;
+	PlatformInfo.LaunchFilePntr        = OSX_LaunchFile;
+	PlatformInfo.DebugWritePntr        = OSX_Write;
+	PlatformInfo.DebugWriteLinePntr    = OSX_WriteLine;
+	PlatformInfo.DebugPrintPntr        = OSX_Print;
+	PlatformInfo.DebugPrintLinePntr    = OSX_PrintLine;
+	PlatformInfo.GetComPortListPntr    = OSX_GetComPortList;
+	PlatformInfo.OpenComPortPntr       = OSX_OpenComPort;
+	PlatformInfo.CloseComPortPntr      = OSX_CloseComPort;
+	PlatformInfo.ReadComPortPntr       = OSX_ReadComPort;
+	PlatformInfo.WriteComPortPntr      = OSX_WriteComPort;
+	PlatformInfo.CopyToClipboardPntr   = OSX_CopyToClipboard;
+	PlatformInfo.CopyFromClipboardPntr = OSX_CopyFromClipboard;
 	
 	StartProgramInstance_f* StartProgramInstancePntr;
 	GetProgramStatus_f*     GetProgramStatusPntr;
@@ -376,16 +189,54 @@ int main()
 	// +==============================+
 	// |    Initialize Application    |
 	// +==============================+
-	App_Initialize(&platformInfo, &appMemory);
+	App_Initialize(&PlatformInfo, &appMemory);
+	
+	// +==============================+
+	// |       Setup App Input        |
+	// +==============================+
+	AppOutput_t appOutput = {};
+	AppInput_t appInputArray[2] = {};
+	AppInput_t* lastInput = &appInputArray[0];
+	AppInput_t* currentInput = &appInputArray[1];
+	
+	glfwSetWindowUserPointer(window, currentInput);
+	glfwSetWindowCloseCallback(window,     GlfwWindowCloseCallback);
+	glfwSetFramebufferSizeCallback(window, GlfwWindowSizeCallback);
+	glfwSetWindowPosCallback(window,       GlfwWindowMoveCallback);
+	glfwSetWindowIconifyCallback(window,   GlfwWindowMinimizeCallback);
+	glfwSetKeyCallback(window,             GlfwKeyPressedCallback);
+	glfwSetCharCallback(window,            GlfwCharPressedCallback);
+	glfwSetCursorPosCallback(window,       GlfwCursorPosCallback);
+	glfwSetMouseButtonCallback(window,     GlfwMousePressCallback);
+	glfwSetScrollCallback(window,          GlfwMouseScrollCallback);
 	
 	while (!glfwWindowShouldClose(window))
 	{
+		// +==============================+
+		// |    Swap AppInput Pointers    |
+		// +==============================+
+		AppInput_t* tempInputPointer = lastInput;
+		lastInput = currentInput;
+		currentInput = tempInputPointer;
+		*currentInput = *lastInput;
+		currentInput->textInputLength = 0;
+		currentInput->scrollDelta = Vec2_Zero;
+		//Clear the transition counts
+		for (uint32_t bIndex = 0; bIndex < ArrayCount(currentInput->buttons); bIndex++)
+		{
+			currentInput->buttons[bIndex].transCount = 0;
+		}
+		PlatformInfo.windowResized = false;
+		
+		glfwSetWindowUserPointer(window, currentInput);
+		
+		// +==============================+
+		// |      Poll Window Event       |
+		// +==============================+
 		glfwPollEvents();
 		
-		//Do game
+		App_Update(&PlatformInfo, &appMemory, currentInput, &appOutput);
 		
-		glClearColor(20/255.f, 20/255.f, 20/255.f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glfwSwapBuffers(window);
 	}
 	
