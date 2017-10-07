@@ -41,6 +41,9 @@ void InitializeRenderState(const PlatformInfo_t* PlatformInfo, RenderState_t* re
 //+================================================================+
 //|                     State Change Functions                     |
 //+================================================================+
+// +==============================+
+// |          BindShader          |
+// +==============================+
 void RenderState_t::BindShader(const Shader_t* shaderPntr)
 {
 	this->boundShader = shaderPntr;
@@ -48,6 +51,9 @@ void RenderState_t::BindShader(const Shader_t* shaderPntr)
 	glUseProgram(shaderPntr->programId);
 }
 
+// +==============================+
+// |         UpdateShader         |
+// +==============================+
 void RenderState_t::UpdateShader()
 {
 	Assert(this->boundShader != nullptr);
@@ -99,11 +105,17 @@ void RenderState_t::UpdateShader()
 	glUniformMatrix4fv(this->boundShader->projectionMatrixLocation, 1, GL_FALSE, &this->projectionMatrix.values[0][0]);
 }
 
+// +==============================+
+// |           BindFont           |
+// +==============================+
 void RenderState_t::BindFont(const Font_t* fontPntr)
 {
 	this->boundFont = fontPntr;
 }
 
+// +==============================+
+// |         BindTexture          |
+// +==============================+
 void RenderState_t::BindTexture(const Texture_t* texturePntr)
 {
 	this->boundTexture = texturePntr;
@@ -114,6 +126,9 @@ void RenderState_t::BindTexture(const Texture_t* texturePntr)
 	glUniform2f(this->boundShader->textureSizeLocation, (r32)this->boundTexture->width, (r32)this->boundTexture->height);
 }
 
+// +==============================+
+// |       BindAlphaTexture       |
+// +==============================+
 void RenderState_t::BindAlphaTexture(const Texture_t* texturePntr)
 {
 	this->boundAlphaTexture = texturePntr;
@@ -123,6 +138,9 @@ void RenderState_t::BindAlphaTexture(const Texture_t* texturePntr)
 	glUniform1i(this->boundShader->alphaTextureLocation, 1);
 	glUniform1i(this->boundShader->useAlphaTextureLocation, 1);
 }
+// +==============================+
+// |     DisableAlphaTexture      |
+// +==============================+
 void RenderState_t::DisableAlphaTexture()
 {
 	this->boundAlphaTexture = nullptr;
@@ -130,6 +148,9 @@ void RenderState_t::DisableAlphaTexture()
 	glUniform1i(this->boundShader->useAlphaTextureLocation, 0);
 }
 
+// +==============================+
+// |          BindBuffer          |
+// +==============================+
 void RenderState_t::BindBuffer(const VertexBuffer_t* vertBufferPntr)
 {
 	this->boundBuffer = vertBufferPntr;
@@ -141,6 +162,9 @@ void RenderState_t::BindBuffer(const VertexBuffer_t* vertBufferPntr)
 	glVertexAttribPointer(this->boundShader->texCoordAttribLocation, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex_t), (void*)(sizeof(v3)+sizeof(v4)));
 }
 
+// +==============================+
+// |       BindFrameBuffer        |
+// +==============================+
 void RenderState_t::BindFrameBuffer(const FrameBuffer_t* frameBuffer)
 {
 	this->boundFrameBuffer = frameBuffer;
@@ -155,26 +179,43 @@ void RenderState_t::BindFrameBuffer(const FrameBuffer_t* frameBuffer)
 	}
 }
 
+// +==============================+
+// |        SetWorldMatrix        |
+// +==============================+
 void RenderState_t::SetWorldMatrix(const Matrix4_t& worldMatrix)
 {
 	this->worldMatrix = worldMatrix;
 	glUniformMatrix4fv(this->boundShader->worldMatrixLocation, 1, GL_FALSE, &worldMatrix.values[0][0]);
 }
+// +==============================+
+// |        SetViewMatrix         |
+// +==============================+
 void RenderState_t::SetViewMatrix(const Matrix4_t& viewMatrix)
 {
 	this->viewMatrix = viewMatrix;
 	glUniformMatrix4fv(this->boundShader->viewMatrixLocation, 1, GL_FALSE, &viewMatrix.values[0][0]);
 }
+// +==============================+
+// |     SetProjectionMatrix      |
+// +==============================+
 void RenderState_t::SetProjectionMatrix(const Matrix4_t& projectionMatrix)
 {
 	this->projectionMatrix = projectionMatrix;
 	glUniformMatrix4fv(this->boundShader->projectionMatrixLocation, 1, GL_FALSE, &projectionMatrix.values[0][0]);
 }
 
+// +==============================+
+// |         SetViewport          |
+// +==============================+
 void RenderState_t::SetViewport(rec viewport)
 {
 	this->viewport = viewport;
 	
+	if (Gl_PlatformInfo->platformType == Platform_OSX)
+	{
+		// this->viewport.width  /= 2;
+		// this->viewport.height /= 2;
+	}
 	glViewport(
 		(i32)this->viewport.x, 
 		(i32)this->viewport.y, 
@@ -183,22 +224,34 @@ void RenderState_t::SetViewport(rec viewport)
 	);
 }
 
+// +==============================+
+// |           SetColor           |
+// +==============================+
 void RenderState_t::SetColor(Color_t color)
 {
 	v4 colorVec = ColorToVec4(color);
 	glUniform4f(this->boundShader->diffuseColorLocation, colorVec.r, colorVec.g, colorVec.b, colorVec.a);
 }
+// +==============================+
+// |      SetSecondaryColor       |
+// +==============================+
 void RenderState_t::SetSecondaryColor(Color_t color)
 {
 	v4 colorVec = ColorToVec4(color);
 	glUniform4f(this->boundShader->secondaryColorLocation, colorVec.r, colorVec.g, colorVec.b, colorVec.a);
 }
 
+// +==============================+
+// |      SetSourceRectangle      |
+// +==============================+
 void RenderState_t::SetSourceRectangle(rec sourceRectangle)
 {
 	glUniform4f(this->boundShader->sourceRectangleLocation, sourceRectangle.x, sourceRectangle.y, sourceRectangle.width, sourceRectangle.height);
 }
 
+// +==============================+
+// |      SetGradientEnabled      |
+// +==============================+
 void RenderState_t::SetGradientEnabled(bool doGradient)
 {
 	glUniform1i(this->boundShader->doGrayscaleGradientLocation, doGradient ? 1 : 0);
@@ -208,6 +261,9 @@ void RenderState_t::SetGradientEnabled(bool doGradient)
 //+================================================================+
 //|                       Drawing Functions                        |
 //+================================================================+
+// +==============================+
+// |       DrawTexturedRec        |
+// +==============================+
 void RenderState_t::DrawTexturedRec(rec rectangle, Color_t color)
 {
 	this->BindTexture(this->boundTexture);
@@ -220,6 +276,9 @@ void RenderState_t::DrawTexturedRec(rec rectangle, Color_t color)
 	this->BindBuffer(&this->squareBuffer);
 	glDrawArrays(GL_TRIANGLES, 0, this->squareBuffer.numVertices);
 }
+// +==============================+
+// |       DrawTexturedRec        |
+// +==============================+
 void RenderState_t::DrawTexturedRec(rec rectangle, Color_t color, rec sourceRectangle)
 {
 	rec realSourceRec = NewRectangle(
@@ -238,6 +297,9 @@ void RenderState_t::DrawTexturedRec(rec rectangle, Color_t color, rec sourceRect
 	glDrawArrays(GL_TRIANGLES, 0, this->squareBuffer.numVertices);
 }
 
+// +==============================+
+// |        DrawRectangle         |
+// +==============================+
 void RenderState_t::DrawRectangle(rec rectangle, Color_t color)
 {
 	this->BindTexture(&this->dotTexture);
@@ -251,6 +313,9 @@ void RenderState_t::DrawRectangle(rec rectangle, Color_t color)
 	glDrawArrays(GL_TRIANGLES, 0, this->squareBuffer.numVertices);
 }
 
+// +==============================+
+// |          DrawButton          |
+// +==============================+
 void RenderState_t::DrawButton(rec rectangle, Color_t backgroundColor, Color_t borderColor, r32 borderWidth)
 {
 	this->DrawRectangle(rectangle, backgroundColor);
@@ -261,6 +326,9 @@ void RenderState_t::DrawButton(rec rectangle, Color_t backgroundColor, Color_t b
 	this->DrawRectangle(NewRectangle(rectangle.x + rectangle.width - borderWidth, rectangle.y, borderWidth, rectangle.height), borderColor);
 }
 
+// +==============================+
+// |         DrawGradient         |
+// +==============================+
 void RenderState_t::DrawGradient(rec rectangle, Color_t color1, Color_t color2, Direction2D_t direction)
 {
 	this->BindTexture(&this->gradientTexture);
@@ -311,6 +379,9 @@ void RenderState_t::DrawGradient(rec rectangle, Color_t color1, Color_t color2, 
 	this->SetGradientEnabled(false);
 }
 
+// +==============================+
+// |          DrawCircle          |
+// +==============================+
 void RenderState_t::DrawCircle(v2 center, r32 radius, Color_t color)
 {
 	this->BindAlphaTexture(&this->circleTexture);
@@ -318,6 +389,9 @@ void RenderState_t::DrawCircle(v2 center, r32 radius, Color_t color)
 	this->DisableAlphaTexture();
 }
 
+// +==============================+
+// |        DrawCharacter         |
+// +==============================+
 void RenderState_t::DrawCharacter(u32 charIndex, v2 bottomLeft, Color_t color, r32 scale)
 {
 	const FontCharInfo_t* charInfo = &this->boundFont->chars[charIndex];
@@ -337,6 +411,9 @@ void RenderState_t::DrawCharacter(u32 charIndex, v2 bottomLeft, Color_t color, r
 	this->DrawTexturedRec(drawRectangle, color, sourceRectangle);
 }
 
+// +==============================+
+// |          DrawString          |
+// +==============================+
 void RenderState_t::DrawString(const char* string, u32 numCharacters, v2 position, Color_t color, r32 scale, Alignment_t alignment)
 {
 	this->BindTexture(&this->boundFont->bitmap);
@@ -371,11 +448,17 @@ void RenderState_t::DrawString(const char* string, u32 numCharacters, v2 positio
 	}
 }
 
+// +==============================+
+// |          DrawString          |
+// +==============================+
 void RenderState_t::DrawString(const char* nullTermString, v2 position, Color_t color, r32 scale, Alignment_t alignment)
 {
 	this->DrawString(nullTermString, (u32)strlen(nullTermString), position, color, scale, alignment);
 }
 
+// +==============================+
+// |         PrintString          |
+// +==============================+
 void RenderState_t::PrintString(v2 position, Color_t color, r32 scale, const char* formatString, ...)
 {
 	char printBuffer[256] = {};
@@ -388,6 +471,9 @@ void RenderState_t::PrintString(v2 position, Color_t color, r32 scale, const cha
 	this->DrawString(printBuffer, length, position, color, scale);
 }
 
+// +==============================+
+// |     DrawFormattedString      |
+// +==============================+
 void RenderState_t::DrawFormattedString(const char* string, u32 numCharacters, v2 position, r32 maxWidth, Color_t color, Alignment_t alignment, bool preserveWords)
 {
 	u32 cIndex = 0;
@@ -421,6 +507,9 @@ void RenderState_t::DrawFormattedString(const char* string, u32 numCharacters, v
 	}
 }
 
+// +==============================+
+// |     DrawFormattedString      |
+// +==============================+
 void RenderState_t::DrawFormattedString(const char* nullTermString, v2 position, r32 maxWidth, Color_t color, Alignment_t alignment, bool preserveWords)
 {
 	u32 numCharacters = (u32)strlen(nullTermString);

@@ -37,7 +37,7 @@ PlatformInfo_t PlatformInfo;
 #define WINDOW_TITLE     "ConstPort (OSX)"
 #define WINDOW_WIDTH     640
 #define WINDOW_HEIGHT    480
-#define WINDOW_RESIZABLE false
+#define WINDOW_RESIZABLE true
 #define TOPMOST_WINDOW   DEBUG
 #define BACKBUFFER_DEPTH_BITS   8
 #define BACKBUFFER_STENCIL_BITS 8

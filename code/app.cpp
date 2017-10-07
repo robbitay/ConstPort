@@ -2201,6 +2201,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	rs->DrawGradient(ui->mainMenuRec, GC->colors.uiGray1, GC->colors.uiGray3, Direction2D_Down);
 	rs->DrawRectangle(NewRectangle(0, ui->mainMenuRec.height-1, ui->mainMenuRec.width, 1), GC->colors.uiGray4);
 	
+	r32 mainMenuButtonsRight = 0;
 	for (u32 bIndex = 0; bIndex < NumMainMenuButtons; bIndex++)
 	{
 		rec buttonRec = ui->buttonRecs[bIndex];
@@ -2229,6 +2230,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		
 		rs->BindTexture(&ui->buttonTextures[bIndex]);
 		rs->DrawTexturedRec(buttonRec, iconColor);
+		mainMenuButtonsRight = buttonRec.x + buttonRec.width;
 	}
 	
 	// +================================+
@@ -2315,7 +2317,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	// +==================================+
 	if (GetRegularExpression(&appData->regexList, GC->genericCountRegexName) != nullptr)
 	{
-		rs->PrintString(NewVec2(230, appData->testFont.maxExtendUp + 10), GC->colors.foreground, 1.0f,
+		rs->PrintString(NewVec2(mainMenuButtonsRight + 10, appData->testFont.maxExtendUp + 10), GC->colors.foreground, 1.0f,
 						"Counter: %u", appData->genericCounter);
 	}
 	

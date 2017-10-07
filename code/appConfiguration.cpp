@@ -292,6 +292,18 @@ void LoadGlobalConfiguration(const PlatformInfo_t* PlatformInfo, GlobalConfig_t*
 	#define INCLUDE_GLOBAL_OPTIONS
 	#include "appConfigOptions.h"
 	
+	globalConfig->fontSize            *= GUI_SCALE;
+	globalConfig->lineSpacing         *= GUI_SCALE;
+	globalConfig->elapsedBannerHeight *= GUI_SCALE;
+	globalConfig->markHeight          *= GUI_SCALE;
+	globalConfig->thickMarkHeight     *= GUI_SCALE;
+	globalConfig->mouseClickTolerance *= GUI_SCALE;
+	globalConfig->menuBorderThickness *= GUI_SCALE;
+	globalConfig->scrollbarWidth      *= GUI_SCALE;
+	globalConfig->scrollbarPadding    *= GUI_SCALE;
+	globalConfig->minScrollbarHeight  *= GUI_SCALE;
+	globalConfig->minGutterWidth      *= GUI_SCALE;
+	
 	// +====================================+
 	// | Parse Color Configuration Options  |
 	// +====================================+
