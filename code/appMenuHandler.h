@@ -45,7 +45,7 @@ struct MenuHandler_t
 	i32 activeMenuIndex;
 };
 
-typedef void MenuUpdate_f(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInput, MenuHandler_t* menuHandler, Menu_t* menu);
-typedef void MenuRender_f(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInput, RenderState_t* renderState, MenuHandler_t* menuHandler, Menu_t* menu);
+typedef void MenuUpdate_f(MenuHandler_t* menuHandler, Menu_t* menu);
+typedef void MenuRender_f(RenderState_t* renderState, MenuHandler_t* menuHandler, Menu_t* menu);
 
 #endif // _APP_MENU_HANDLER_H

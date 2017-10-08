@@ -77,14 +77,13 @@ FrameBuffer_t CreateFrameBuffer(const Texture_t* texture)
 
 Shader_t LoadShader(const char* vertShaderFileName, const char* fragShaderFileName)
 {
-	const PlatformInfo_t* PlatformInfo = Gl_PlatformInfo;
 	Shader_t result = {};
 	GLint compiled;
 	int logLength;
 	char* logBuffer;
 	
-	FileInfo_t vertexShaderFile = PlatformInfo->ReadEntireFilePntr(vertShaderFileName);
-	FileInfo_t fragmentShaderFile = PlatformInfo->ReadEntireFilePntr(fragShaderFileName);
+	FileInfo_t vertexShaderFile = platform->ReadEntireFilePntr(vertShaderFileName);
+	FileInfo_t fragmentShaderFile = platform->ReadEntireFilePntr(fragShaderFileName);
 	
 	result.vertId = glCreateShader(GL_VERTEX_SHADER);
 	glShaderSource(result.vertId, 1, (const char* const*)&vertexShaderFile.content, NULL);
@@ -122,8 +121,8 @@ Shader_t LoadShader(const char* vertShaderFileName, const char* fragShaderFileNa
 		Assert(false);
 	}
 	
-	PlatformInfo->FreeFileMemoryPntr(&vertexShaderFile);
-	PlatformInfo->FreeFileMemoryPntr(&fragmentShaderFile);
+	platform->FreeFileMemoryPntr(&vertexShaderFile);
+	platform->FreeFileMemoryPntr(&fragmentShaderFile);
 	
 	result.programId = glCreateProgram();
 	glAttachShader(result.programId, result.fragId);
@@ -170,10 +169,9 @@ Shader_t LoadShader(const char* vertShaderFileName, const char* fragShaderFileNa
 
 Texture_t LoadTexture(const char* fileName, bool pixelated = false, bool repeat = true)
 {
-	const PlatformInfo_t* PlatformInfo = Gl_PlatformInfo;
 	Texture_t result = {};
 	
-	FileInfo_t textureFile = PlatformInfo->ReadEntireFilePntr(fileName);
+	FileInfo_t textureFile = platform->ReadEntireFilePntr(fileName);
 	
 	i32 numChannels;
 	i32 width, height;
@@ -184,7 +182,7 @@ Texture_t LoadTexture(const char* fileName, bool pixelated = false, bool repeat 
 	result = CreateTexture(imageData, width, height, pixelated, repeat);
 	
 	stbi_image_free(imageData);
-	PlatformInfo->FreeFileMemoryPntr(&textureFile);
+	platform->FreeFileMemoryPntr(&textureFile);
 	
 	return result;
 }
@@ -193,10 +191,9 @@ Font_t LoadFont(const char* fileName,
 	r32 fontSize, i32 bitmapWidth, i32 bitmapHeight,
 	u8 firstCharacter, u8 numCharacters)
 {
-	const PlatformInfo_t* PlatformInfo = Gl_PlatformInfo;
 	Font_t result = {};
 	
-	FileInfo_t fontFile = PlatformInfo->ReadEntireFilePntr(fileName);
+	FileInfo_t fontFile = platform->ReadEntireFilePntr(fileName);
 	
 	result.numChars = numCharacters;
 	result.firstChar = firstCharacter;
@@ -246,7 +243,7 @@ Font_t LoadFont(const char* fileName,
 	
 	TempPopMark();
 	
-	PlatformInfo->FreeFileMemoryPntr(&fontFile);
+	platform->FreeFileMemoryPntr(&fontFile);
 	
 	//Create information about character sizes
 	{

@@ -125,13 +125,11 @@ bool SplitFileLine(const char* linePntr, u32 lineLength, const char** namePntrOu
 
 void LoadRegexFile(RegexList_t* regexList, const char* filename, MemoryArena_t* memArena)
 {
-	const PlatformInfo_t* PlatformInfo = Gl_PlatformInfo;
-	
 	ClearPointer(regexList);
 	regexList->memArena = memArena;
 	CreateLinkedList(&regexList->list);
 	
-	FileInfo_t expressionFile = PlatformInfo->ReadEntireFilePntr(filename);
+	FileInfo_t expressionFile = platform->ReadEntireFilePntr(filename);
 	
 	const char* fileContents = (const char*)expressionFile.content;
 	u32 lineStart = 0;
@@ -209,7 +207,7 @@ void LoadRegexFile(RegexList_t* regexList, const char* filename, MemoryArena_t* 
 		}
 	}
 	
-	PlatformInfo->FreeFileMemoryPntr(&expressionFile);
+	platform->FreeFileMemoryPntr(&expressionFile);
 }
 
 void DisposeRegexFile(RegexList_t* regexList)

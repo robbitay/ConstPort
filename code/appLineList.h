@@ -1,11 +1,11 @@
 /*
-File:   lineList.h
+File:   appLineList.h
 Author: Taylor Robbins
 Date:   07\22\2017
 */
 
-#ifndef _LINE_LIST_H
-#define _LINE_LIST_H
+#ifndef _APP_LINE_LIST_H
+#define _APP_LINE_LIST_H
 
 enum
 {
@@ -55,4 +55,4 @@ inline TextLocation_t NewTextLocation(i32 lineNum, i32 charIndex)
 	return { lineNum, charIndex };
 }
 
-#endif // _LINE_LIST_H
+#endif // _APP_LINE_LIST_H

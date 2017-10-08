@@ -3,20 +3,32 @@
 ProjectName="ConstPort"
 CompilePlatform=0
 CompileApplication=1
+DebugBuild=1
+
+if [ $DebugBuild -gt 0 ]
+then
+	DebugDepCompilerFlags="-DDEBUG=1"
+	DebugDepLibDirs="-L../../../lib/glfw/build/src/Debug -L../../../lib/boost_1_65_1/bin.v2/libs/regex/build/darwin-4.2.1/debug/link-static/runtime-link-static/threading-multi"
+else
+	DebugDepCompilerFlags="-DDEBUG=0"
+	DebugDepLibDirs="-L../../../lib/glfw/build/src/Release -L../../../lib/boost_1_65_1/bin.v2/libs/regex/build/darwin-4.2.1/release/link-static/runtime-link-static/threading-multi"
+fi
 
 PlatformMainFile="../code/osx_main.cpp"
 ApplicationMainFile="../code/app.cpp"
-CompilerFlags="-g -DDEBUG=1 -DOSX_COMPILATION=1 -fvisibility=hidden"
+CompilerFlags="-g -DOSX_COMPILATION=1"
 LinkerFlags="-std=gnu++0x"
 IncludeDirectories="-I../../../lib/mylib -I../../../lib/glfw/include -I../../../lib/glew/include -I../../../lib/stb -I../../../lib/jsmn -I../../../lib/boost_1_65_1/"
-LibraryDirectories="-L../../../lib/glfw/build/src/Debug -L../../../lib/glew/lib -L../../../lib/boost_1_65_1/bin.v2/libs/regex/build/darwin-4.2.1/debug/link-static/runtime-link-static/threading-multi"
+LibraryDirectories=" -L../../../lib/glew/lib"
 Libraries="-lglfw3 -lglew -lboost_regex"
 Frameworks="-framework OpenGL -framework Cocoa -framework IOKit -framework CoreVideo"
 
 if [ $CompilePlatform -gt 0 ]
 then
-	echo [Building OSX Platform]
-	g++ $CompilerFlags $PlatformMainFile -o $ProjectName $IncludeDirectories $LibraryDirectories $Libraries $Frameworks $LinkerFlags
+	python ../IncrementVersionNumber.py ../code/win32_version.h
+	
+	# echo [Building OSX Platform]
+	g++ $CompilerFlags $DebugDepCompilerFlags $PlatformMainFile -o $ProjectName $IncludeDirectories $LibraryDirectories $Libraries $Frameworks $LinkerFlags $DebugDepLibDirs
 	
 	if [ $? -ne 0 ]
 	then
@@ -30,8 +42,10 @@ fi
 
 if [ $CompileApplication -gt 0 ]
 then
-	echo [Building OSX Application]
-	g++ -shared $CompilerFlags $ApplicationMainFile -o $ProjectName.dll $IncludeDirectories $LibraryDirectories $Libraries $Frameworks $LinkerFlags
+	python ../IncrementVersionNumber.py ../code/app_version.h
+	
+	# echo [Building OSX Application]
+	g++ -shared -fvisibility=hidden $CompilerFlags $DebugDepCompilerFlags $ApplicationMainFile -o $ProjectName.dll $IncludeDirectories $LibraryDirectories $Libraries $Frameworks $LinkerFlags $DebugDepLibDirs
 	
 	if [ $? -ne 0 ]
 	then

@@ -1,5 +1,5 @@
 /*
-File:   lineList.cpp
+File:   appLineList.cpp
 Author: Taylor Robbins
 Date:   06\09\2017
 Description: 
@@ -74,7 +74,7 @@ inline void LineAppend(LineList_t* lineList, Line_t* line, char newCharacter)
 	//First Character to come in on this line, record the timestamp
 	if (line->numChars == 0)
 	{
-		line->timestamp = GetTimestamp(Gl_PlatformInfo->localTime);
+		line->timestamp = GetTimestamp(platform->localTime);
 	}
 	line->numChars++;
 	line->chars[line->numChars] = '\0';

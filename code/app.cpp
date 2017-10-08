@@ -24,17 +24,20 @@ Description:
 #include "easing.h"
 #include "charClasses.h"
 
-const PlatformInfo_t* Gl_PlatformInfo = nullptr;
-const    AppMemory_t* Gl_AppMemory    = nullptr;
+// +--------------------------------------------------------------+
+// |                  Platform Global Variables                   |
+// +--------------------------------------------------------------+
+const PlatformInfo_t* platform = nullptr;
+const AppInput_t* input = nullptr;
 
 #include "appHelpers.cpp"
 
-//+================================================================+
-//|                          Includes                              |
-//+================================================================+
+// +--------------------------------------------------------------+
+// |                     Application Includes                     |
+// +--------------------------------------------------------------+
 #include "appDefines.h"
 #include "appStructs.h"
-#include "lineList.h"
+#include "appLineList.h"
 #include "appRenderState.h"
 #include "appMenuHandler.h"
 #include "appUiHandler.h"
@@ -42,8 +45,13 @@ const    AppMemory_t* Gl_AppMemory    = nullptr;
 #include "appConfiguration.h"
 #include "appData.h"
 
-AppData_t*      GL_AppData = nullptr;
-GlobalConfig_t* GC         = nullptr;
+// +--------------------------------------------------------------+
+// |                 Application Global Variables                 |
+// +--------------------------------------------------------------+
+AppData_t* app = nullptr;
+GlobalConfig_t* GC = nullptr;
+v2 RenderScreenSize = {};
+v2 RenderMousePos = {};
 
 u32 GetElapsedString(u64 timespan, char* outputBuffer, u32 outputBufferSize)
 {
@@ -79,19 +87,16 @@ u32 GetElapsedString(u64 timespan, char* outputBuffer, u32 outputBufferSize)
 
 void StatusMessage(const char* functionName, StatusMessage_t messageType, const char* formatString, ...)
 {
-	AppData_t* appData = GL_AppData;
-	const PlatformInfo_t* PlatformInfo = Gl_PlatformInfo;
-	
-	ClearArray(appData->statusMessage);
+	ClearArray(app->statusMessage);
 	va_list args;
 	va_start(args, formatString);
-	size_t length = vsnprintf(appData->statusMessage, ArrayCount(appData->statusMessage), formatString, args);
-	appData->statusMessage[ArrayCount(appData->statusMessage)-1] = '\0';
+	size_t length = vsnprintf(app->statusMessage, ArrayCount(app->statusMessage), formatString, args);
+	app->statusMessage[ArrayCount(app->statusMessage)-1] = '\0';
 	va_end(args);
-	appData->statusMessageType = messageType;
-	appData->statusMessageTime = PlatformInfo->localTime;
+	app->statusMessageType = messageType;
+	app->statusMessageTime = platform->localTime;
 	
-	DEBUG_PrintLine("[%s]: %s", functionName, appData->statusMessage);
+	DEBUG_PrintLine("[%s]: %s", functionName, app->statusMessage);
 }
 
 #define StatusDebug(formatString, ...)   StatusMessage(__func__, StatusMessage_Debug,   formatString, ##__VA_ARGS__)
@@ -99,12 +104,12 @@ void StatusMessage(const char* functionName, StatusMessage_t messageType, const 
 #define StatusSuccess(formatString, ...) StatusMessage(__func__, StatusMessage_Success, formatString, ##__VA_ARGS__)
 #define StatusError(formatString, ...)   StatusMessage(__func__, StatusMessage_Error,   formatString, ##__VA_ARGS__)
 
-//+================================================================+
-//|                       Source Files                             |
-//+================================================================+
+// +--------------------------------------------------------------+
+// |                   Application Source Files                   |
+// +--------------------------------------------------------------+
 #include "appConfiguration.cpp"
 #include "appFontHelpers.cpp"
-#include "lineList.cpp"
+#include "appLineList.cpp"
 #include "appLoadingFunctions.cpp"
 #include "appRenderState.cpp"
 #include "appMenuHandler.cpp"
@@ -114,7 +119,7 @@ void StatusMessage(const char* functionName, StatusMessage_t messageType, const 
 
 void ClearConsole()
 {
-	AppData_t* appData = GL_AppData;
+	AppData_t* appData = app;
 	
 	DEBUG_WriteLine("Clearing Console");
 	DestroyLineList(&appData->lineList);
@@ -129,16 +134,13 @@ void ClearConsole()
 
 void RefreshComPortList()
 {
-	AppData_t* appData = GL_AppData;
-	const PlatformInfo_t* PlatformInfo = Gl_PlatformInfo;
-	
-	appData->numComPortsAvailable = PlatformInfo->GetComPortListPntr(
-		&appData->availableComPorts[0], ArrayCount(appData->availableComPorts));
+	app->numComPortsAvailable = platform->GetComPortListPntr(
+		&app->availableComPorts[0], ArrayCount(app->availableComPorts));
 		
-	StatusDebug("Found %u COM ports", appData->numComPortsAvailable);
-	for (u32 cIndex = 0; cIndex < ArrayCount(appData->availableComPorts); cIndex++)
+	StatusDebug("Found %u COM ports", app->numComPortsAvailable);
+	for (u32 cIndex = 0; cIndex < ArrayCount(app->availableComPorts); cIndex++)
 	{
-		if (appData->availableComPorts[cIndex] == true)
+		if (app->availableComPorts[cIndex] == true)
 		{
 			DEBUG_PrintLine("\"%s\"Available!", GetComPortReadableName((ComPortIndex_t)cIndex));
 		}
@@ -147,20 +149,17 @@ void RefreshComPortList()
 
 void OpenComPort(ComPortIndex_t comPortIndex, ComSettings_t settings)
 {
-	AppData_t* appData = GL_AppData;
-	const PlatformInfo_t* PlatformInfo = Gl_PlatformInfo;
-	
-	if (appData->comPort.isOpen)
+	if (app->comPort.isOpen)
 	{
-		PlatformInfo->CloseComPortPntr(&appData->comPort);
-		StatusError("Closed %s", GetComPortReadableName(appData->comPort.index));
+		platform->CloseComPortPntr(&app->comPort);
+		StatusError("Closed %s", GetComPortReadableName(app->comPort.index));
 	}
 	
 	ClearConsole();
 	
-	appData->comPort = PlatformInfo->OpenComPortPntr(comPortIndex, settings);
+	app->comPort = platform->OpenComPortPntr(comPortIndex, settings);
 	
-	if (appData->comPort.isOpen)
+	if (app->comPort.isOpen)
 	{
 		StatusSuccess("%s Opened Successfully", GetComPortReadableName(comPortIndex));
 	}
@@ -170,9 +169,9 @@ void OpenComPort(ComPortIndex_t comPortIndex, ComSettings_t settings)
 	}
 }
 
-void ComMenuUpdate(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInput, MenuHandler_t* menuHandler, Menu_t* menuPntr)
+void ComMenuUpdate(MenuHandler_t* menuHandler, Menu_t* menuPntr)
 {
-	AppData_t* appData = GL_AppData;
+	AppData_t* appData = app;
 	
 	if (ButtonPressed(Button_Escape))
 	{
@@ -266,7 +265,7 @@ void ComMenuUpdate(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 				baudRateRec.y + baudIndex*appData->testFont.lineHeight,
 				baudRateRec.width, appData->testFont.lineHeight
 			);
-			if (IsInsideRectangle(AppInput->mousePos, currentRec) && IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], currentRec) &&
+			if (IsInsideRectangle(RenderMousePos, currentRec) && IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, currentRec) &&
 				ButtonReleased(MouseButton_Left))
 			{
 				appData->comMenuOptions.settings.baudRate = (BaudRate_t)baudIndex;
@@ -279,7 +278,7 @@ void ComMenuUpdate(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 				numBitsRec.y + bitIndex*appData->testFont.lineHeight,
 				numBitsRec.width, appData->testFont.lineHeight
 			);
-			if (IsInsideRectangle(AppInput->mousePos, currentRec) && IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], currentRec) &&
+			if (IsInsideRectangle(RenderMousePos, currentRec) && IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, currentRec) &&
 				ButtonReleased(MouseButton_Left))
 			{
 				appData->comMenuOptions.settings.numBits = (u8)(bitIndex+1);
@@ -292,7 +291,7 @@ void ComMenuUpdate(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 				parityTypesRec.y + parityIndex*appData->testFont.lineHeight,
 				parityTypesRec.width, appData->testFont.lineHeight
 			);
-			if (IsInsideRectangle(AppInput->mousePos, currentRec) && IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], currentRec) &&
+			if (IsInsideRectangle(RenderMousePos, currentRec) && IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, currentRec) &&
 				ButtonReleased(MouseButton_Left))
 			{
 				appData->comMenuOptions.settings.parity = (Parity_t)parityIndex;
@@ -305,7 +304,7 @@ void ComMenuUpdate(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 				stopBitsRec.y + stopBitIndex*appData->testFont.lineHeight,
 				stopBitsRec.width, appData->testFont.lineHeight
 			);
-			if (IsInsideRectangle(AppInput->mousePos, currentRec) && IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], currentRec) &&
+			if (IsInsideRectangle(RenderMousePos, currentRec) && IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, currentRec) &&
 				ButtonReleased(MouseButton_Left))
 			{
 				appData->comMenuOptions.settings.stopBits = (StopBits_t)stopBitIndex;
@@ -322,8 +321,8 @@ void ComMenuUpdate(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 				rec tabRec = NewRectangle(tabIndex * tabWidth, 0, tabWidth, tabHeight);
 				tabRec.topLeft += menuPntr->usableRec.topLeft;
 				
-				if (ButtonReleased(MouseButton_Left) && AppInput->mouseMaxDist[MouseButton_Left] < 10 &&
-					IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], tabRec))
+				if (ButtonReleased(MouseButton_Left) && input->mouseMaxDist[MouseButton_Left] / GUI_SCALE < 10 &&
+					IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, tabRec))
 				{
 					appData->comMenuOptions.index = (ComPortIndex_t)comIndex;
 					appData->comMenuOptions.isOpen = true;
@@ -334,8 +333,8 @@ void ComMenuUpdate(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 		}
 		
 		//Check for connect button press
-		bool connectButtonPressed = (IsInsideRectangle(AppInput->mousePos, connectButtonRec) &&
-			ButtonReleased(MouseButton_Left) && IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], connectButtonRec));
+		bool connectButtonPressed = (IsInsideRectangle(RenderMousePos, connectButtonRec) &&
+			ButtonReleased(MouseButton_Left) && IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, connectButtonRec));
 		if (appData->comMenuOptions.isOpen &&
 			(connectButtonPressed || ButtonReleased(Button_Enter)))
 		{
@@ -344,9 +343,9 @@ void ComMenuUpdate(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 		}
 	}
 }
-void ComMenuRender(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInput, RenderState_t* renderState, MenuHandler_t* menuHandler, Menu_t* menuPntr)
+void ComMenuRender(RenderState_t* renderState, MenuHandler_t* menuHandler, Menu_t* menuPntr)
 {
-	AppData_t* appData = GL_AppData;
+	AppData_t* appData = app;
 	
 	if (menuPntr->show)
 	{
@@ -553,9 +552,9 @@ void ComMenuRender(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInpu
 	}
 }
 
-void ContextMenuUpdate(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInput, MenuHandler_t* menuHandler, Menu_t* menu)
+void ContextMenuUpdate(MenuHandler_t* menuHandler, Menu_t* menu)
 {
-	AppData_t* appData = GL_AppData;
+	AppData_t* appData = app;
 	UiElements_t* ui = &appData->uiElements;
 	
 	v2 textSize = MeasureString(&appData->testFont, ui->contextStringBuffer);
@@ -564,9 +563,9 @@ void ContextMenuUpdate(const PlatformInfo_t* PlatformInfo, const AppInput_t* App
 	menu->drawRec = RectangleInflate(menu->drawRec, CONTEXT_MENU_PADDING);
 	menu->drawRec.topLeft = ui->mousePos + NewVec2(0, -3 - menu->drawRec.height);
 }
-void ContextMenuRender(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInput, RenderState_t* renderState, MenuHandler_t* menuHandler, Menu_t* menu)
+void ContextMenuRender(RenderState_t* renderState, MenuHandler_t* menuHandler, Menu_t* menu)
 {
-	AppData_t* appData = GL_AppData;
+	AppData_t* appData = app;
 	UiElements_t* ui = &appData->uiElements;
 	
 	v2 textPos = menu->usableRec.topLeft + NewVec2(CONTEXT_MENU_PADDING, CONTEXT_MENU_PADDING + appData->testFont.maxExtendUp);
@@ -600,7 +599,7 @@ u32 SanatizeString(const char* charPntr, u32 numChars, char* outputBuffer = null
 
 bool ApplyTriggerEffects(Line_t* newLine, RegexTrigger_t* trigger)
 {
-	AppData_t* appData = GL_AppData;
+	AppData_t* appData = app;
 	bool addLineToBuffer = true;
 	
 	for (u32 eIndex = 0; eIndex < trigger->numEffects; eIndex++)
@@ -727,9 +726,7 @@ bool ApplyTriggerEffects(Line_t* newLine, RegexTrigger_t* trigger)
 
 void DataReceived(const char* dataBuffer, i32 numBytes)
 {
-	const PlatformInfo_t* PlatformInfo = Gl_PlatformInfo;
-	AppData_t* appData = GL_AppData;
-	Line_t* lastLine = GetLastLine(&appData->lineList);
+	Line_t* lastLine = GetLastLine(&app->lineList);
 	
 	for (i32 cIndex = 0; cIndex < numBytes; cIndex++)
 	{
@@ -740,10 +737,10 @@ void DataReceived(const char* dataBuffer, i32 numBytes)
 			
 			if (finishedLine->timestamp == 0)
 			{
-				finishedLine->timestamp = GetTimestamp(PlatformInfo->localTime);
+				finishedLine->timestamp = GetTimestamp(platform->localTime);
 			}
 			
-			if (appData->writeToFile)
+			if (app->writeToFile)
 			{
 				//Write the line to the outputFile
 				
@@ -756,7 +753,7 @@ void DataReceived(const char* dataBuffer, i32 numBytes)
 					IsPostMeridian(lineTime.hour) ? "pm" : "am",
 					GetMonthStr((Month_t)lineTime.month), GetDayOfMonthString(lineTime.day), lineTime.year);
 				
-				PlatformInfo->AppendFilePntr(&appData->outputFile, timestampBuffer, timestampLength);
+				platform->AppendFilePntr(&app->outputFile, timestampBuffer, timestampLength);
 				
 				for (u32 cIndex2 = 0; cIndex2 < finishedLine->numChars; cIndex2++)
 				{
@@ -781,10 +778,10 @@ void DataReceived(const char* dataBuffer, i32 numBytes)
 						finishedLine->chars[cIndex2] = ' ';
 					}
 				}
-				PlatformInfo->AppendFilePntr(&appData->outputFile, finishedLine->chars, finishedLine->numChars);
-				PlatformInfo->AppendFilePntr(&appData->outputFile, "\r\n", 2);
+				platform->AppendFilePntr(&app->outputFile, finishedLine->chars, finishedLine->numChars);
+				platform->AppendFilePntr(&app->outputFile, "\r\n", 2);
 				
-				LineReset(&appData->lineList, finishedLine);
+				LineReset(&app->lineList, finishedLine);
 			}
 			else
 			{
@@ -800,18 +797,18 @@ void DataReceived(const char* dataBuffer, i32 numBytes)
 					
 					if (trigger->runAtEol)
 					{
-						bool appliedToThisComPort = (trigger->numComPorts == 0 || appData->comPort.isOpen == false);
+						bool appliedToThisComPort = (trigger->numComPorts == 0 || app->comPort.isOpen == false);
 						if (appliedToThisComPort == false)
 						{
 							for (u32 comListIndex = 0; comListIndex < trigger->numComPorts; comListIndex++)
 							{
 								const char* supportedName = trigger->comPorts[comListIndex];
-								if (strcmp(supportedName, GetComPortReadableName(appData->comPort.index)) == 0)
+								if (strcmp(supportedName, GetComPortReadableName(app->comPort.index)) == 0)
 								{
 									appliedToThisComPort = true;
 									break;
 								}
-								else if (strcmp(supportedName, GC->comPortNames[appData->comPort.index]) == 0)
+								else if (strcmp(supportedName, GC->comPortNames[app->comPort.index]) == 0)
 								{
 									appliedToThisComPort = true;
 									break;
@@ -828,7 +825,7 @@ void DataReceived(const char* dataBuffer, i32 numBytes)
 							}
 							else if (trigger->expressionName != nullptr)
 							{
-								regexStr = GetRegularExpression(&appData->regexList, trigger->expressionName);
+								regexStr = GetRegularExpression(&app->regexList, trigger->expressionName);
 							}
 							
 							if (regexStr != nullptr)
@@ -845,7 +842,7 @@ void DataReceived(const char* dataBuffer, i32 numBytes)
 				
 				if (addLineToBuffer)
 				{
-					lastLine = AddLineToList(&appData->lineList, "");
+					lastLine = AddLineToList(&app->lineList, "");
 				}
 				else
 				{
@@ -864,22 +861,19 @@ void DataReceived(const char* dataBuffer, i32 numBytes)
 		}
 		else
 		{
-			LineAppend(&appData->lineList, lastLine, newChar);
+			LineAppend(&app->lineList, lastLine, newChar);
 		}
 	}
 	
-	appData->rxShiftRegister |= 0x80;
+	app->rxShiftRegister |= 0x80;
 }
 
 //NOTE: This function serves as a measuring function AS WELL AS
 //		a buffer filling function if not passed nullptr for bufferOutput
 u32 GetSelection(char* bufferOutput = nullptr)
 {
-	const PlatformInfo_t* PlatformInfo = Gl_PlatformInfo;
-	AppData_t* appData = GL_AppData;
-	
-	TextLocation_t minLocation = TextLocationMin(appData->selectionStart, appData->selectionEnd);
-	TextLocation_t maxLocation = TextLocationMax(appData->selectionStart, appData->selectionEnd);
+	TextLocation_t minLocation = TextLocationMin(app->selectionStart, app->selectionEnd);
+	TextLocation_t maxLocation = TextLocationMax(app->selectionStart, app->selectionEnd);
 	
 	if (minLocation.lineNum == maxLocation.lineNum &&
 		minLocation.charIndex == maxLocation.charIndex)
@@ -888,9 +882,9 @@ u32 GetSelection(char* bufferOutput = nullptr)
 		return 0;
 	}
 	
-	u8 newLineSize = (PlatformInfo->platformType == Platform_Windows) ? 2 : 1;
+	u8 newLineSize = (platform->platformType == Platform_Windows) ? 2 : 1;
 	char newLine[2] = {};
-	if (PlatformInfo->platformType == Platform_Windows)
+	if (platform->platformType == Platform_Windows)
 	{
 		newLine[0] = '\r';
 		newLine[1] = '\n';
@@ -904,7 +898,7 @@ u32 GetSelection(char* bufferOutput = nullptr)
 	
 	if (minLocation.lineNum == maxLocation.lineNum)
 	{
-		Line_t* linePntr = GetLineAt(&appData->lineList, minLocation.lineNum);
+		Line_t* linePntr = GetLineAt(&app->lineList, minLocation.lineNum);
 		bufferLength = maxLocation.charIndex - minLocation.charIndex;
 		
 		if (bufferOutput != nullptr)
@@ -916,7 +910,7 @@ u32 GetSelection(char* bufferOutput = nullptr)
 	else
 	{
 		{ //First Line
-			Line_t* minLinePntr = GetLineAt(&appData->lineList, minLocation.lineNum);
+			Line_t* minLinePntr = GetLineAt(&app->lineList, minLocation.lineNum);
 			bufferLength += SanatizeString(&minLinePntr->chars[minLocation.charIndex], minLinePntr->numChars - minLocation.charIndex);
 			bufferLength += newLineSize;
 			if (bufferOutput != nullptr)
@@ -928,9 +922,9 @@ u32 GetSelection(char* bufferOutput = nullptr)
 		}
 		
 		//In Between Lines
-		for (i32 lineIndex = minLocation.lineNum+1; lineIndex < maxLocation.lineNum && lineIndex < appData->lineList.numLines; lineIndex++)
+		for (i32 lineIndex = minLocation.lineNum+1; lineIndex < maxLocation.lineNum && lineIndex < app->lineList.numLines; lineIndex++)
 		{
-			Line_t* linePntr = GetLineAt(&appData->lineList, lineIndex);
+			Line_t* linePntr = GetLineAt(&app->lineList, lineIndex);
 			bufferLength += SanatizeString(linePntr->chars, linePntr->numChars);
 			bufferLength += newLineSize;
 			if (bufferOutput != nullptr)
@@ -942,7 +936,7 @@ u32 GetSelection(char* bufferOutput = nullptr)
 		}
 		
 		{ //Last Line
-			Line_t* maxLinePntr = GetLineAt(&appData->lineList, maxLocation.lineNum);
+			Line_t* maxLinePntr = GetLineAt(&app->lineList, maxLocation.lineNum);
 			bufferLength += SanatizeString(maxLinePntr->chars, maxLocation.charIndex);
 			if (bufferOutput != nullptr)
 			{
@@ -984,58 +978,52 @@ EXPORT AppGetVersion_DEFINITION(App_GetVersion)
 //+================================================================+
 EXPORT AppInitialize_DEFINITION(App_Initialize)
 {
-	Gl_PlatformInfo = PlatformInfo;
-	Gl_AppMemory = AppMemory;
+	platform = PlatformInfo;
+	app = (AppData_t*)AppMemory->permanantPntr;
+	GC = &app->globalConfig;
+	TempArena = &app->tempArena;
+	RenderScreenSize = NewVec2(platform->screenSize.x / GUI_SCALE, platform->screenSize.y / GUI_SCALE);
+	
 	DEBUG_WriteLine("Initializing Game...");
-	
-	AppData_t* appData = (AppData_t*)AppMemory->permanantPntr;
-	ClearPointer(appData);
-	GL_AppData = appData;
-	GC = &appData->globalConfig;
-	
-	Assert(AppMemory->permanantSize > INPUT_ARENA_SIZE);
 	
 	// +==================================+
 	// |          Memory Arenas           |
 	// +==================================+
-	u8* extraSpaceStart = ((u8*)appData) + sizeof(AppData_t);
+	Assert(AppMemory->permanantSize > INPUT_ARENA_SIZE);
+	ClearPointer(app);
 	
-	InitializeMemoryArenaLinear(&appData->inputArena, extraSpaceStart, INPUT_ARENA_SIZE);
+	u8* extraSpaceStart = ((u8*)app) + sizeof(AppData_t);
+	
+	InitializeMemoryArenaLinear(&app->inputArena, extraSpaceStart, INPUT_ARENA_SIZE);
 	
 	u32 mainHeapSize = AppMemory->permanantSize - sizeof(AppData_t) - INPUT_ARENA_SIZE;
-	InitializeMemoryArenaHeap(&appData->mainHeap, extraSpaceStart + INPUT_ARENA_SIZE, mainHeapSize);
+	InitializeMemoryArenaHeap(&app->mainHeap, extraSpaceStart + INPUT_ARENA_SIZE, mainHeapSize);
 	
-	InitializeMemoryArenaTemp(&appData->tempArena, AppMemory->transientPntr, AppMemory->transientSize, TRANSIENT_MAX_NUMBER_MARKS);
-	TempArena = &appData->tempArena;
+	InitializeMemoryArenaTemp(&app->tempArena, AppMemory->transientPntr, AppMemory->transientSize, TRANSIENT_MAX_NUMBER_MARKS);
+	
+	DEBUG_PrintLine("Input Arena: %u bytes", INPUT_ARENA_SIZE);
+	DEBUG_PrintLine("Main Heap:   %u bytes", mainHeapSize);
+	DEBUG_PrintLine("Temp Arena:  %u bytes", AppMemory->transientSize);
+	
 	TempPushMark();
-	
-	DEBUG_PrintLine("Input Arena: %u", INPUT_ARENA_SIZE);
-	DEBUG_PrintLine("Main Heap:   %u", mainHeapSize);
-	DEBUG_PrintLine("Temp Arena:  %u", AppMemory->transientSize);
 	
 	// +================================+
 	// |    External Initializations    |
 	// +================================+
-	LoadGlobalConfiguration(PlatformInfo, &appData->globalConfig, &appData->mainHeap);
-	DEBUG_WriteLine("Initializing UI Elements");
-	InitializeUiElements(&appData->uiElements);
-	DEBUG_WriteLine("Initializing RenderState");
-	InitializeRenderState(PlatformInfo, &appData->renderState);
-	DEBUG_WriteLine("Initializing Menu Handler");
-	InitializeMenuHandler(&appData->menuHandler, &appData->mainHeap);
-	DEBUG_WriteLine("Initializing Regular Expression list");
-	InitializeRegexList(&appData->regexList, &appData->mainHeap);
-	DEBUG_WriteLine("Loading Regular Expressions list file");
-	LoadRegexFile(&appData->regexList, "Resources/Configuration/RegularExpressions.rgx", &appData->mainHeap);
-	DEBUG_WriteLine("Initializing Line List");
-	CreateLineList(&appData->lineList, &appData->mainHeap, "");
+	LoadGlobalConfiguration(platform, &app->globalConfig, &app->mainHeap);
+	InitializeUiElements(&app->uiElements);
+	InitializeRenderState(platform, &app->renderState);
+	InitializeMenuHandler(&app->menuHandler, &app->mainHeap);
+	InitializeRegexList(&app->regexList, &app->mainHeap);
+	LoadRegexFile(&app->regexList, "Resources/Configuration/RegularExpressions.rgx", &app->mainHeap);
+	CreateLineList(&app->lineList, &app->mainHeap, "");
 	
 	DEBUG_WriteLine("Creating menus");
-	v2i screenSize = PlatformInfo->screenSize;
-	Menu_t* comMenu = AddMenu(&appData->menuHandler, "COM Menu", NewRectangle((r32)screenSize.x / 2 - 50, (r32)screenSize.y / 2 - 150, 400, 300),
+	
+	Menu_t* comMenu = AddMenu(&app->menuHandler, "COM Menu", NewRectangle((r32)RenderScreenSize.x / 2 - 50, (r32)RenderScreenSize.y / 2 - 150, 400, 300),
 		ComMenuUpdate, ComMenuRender);
 	comMenu->show = false;
-	Menu_t* contextMenu = AddMenu(&appData->menuHandler, "Context Menu", NewRectangle(0, 0, 100, 100),
+	Menu_t* contextMenu = AddMenu(&app->menuHandler, "Context Menu", NewRectangle(0, 0, 100, 100),
 		ContextMenuUpdate, ContextMenuRender);
 	contextMenu->titleBarSize = 0;
 	contextMenu->show = true;
@@ -1044,25 +1032,25 @@ EXPORT AppInitialize_DEFINITION(App_Initialize)
 	// |          Load Content          |
 	// +================================+
 	DEBUG_WriteLine("Compiling shaders...");
-	appData->simpleShader = LoadShader(
+	app->simpleShader = LoadShader(
 		"Resources/Shaders/simple-vertex.glsl",
 		"Resources/Shaders/simple-fragment.glsl");
-	appData->outlineShader = LoadShader(
+	app->outlineShader = LoadShader(
 		"Resources/Shaders/outline-vertex.glsl",
 		"Resources/Shaders/outline-fragment.glsl");
 	
-	appData->testTexture = LoadTexture("Resources/Sprites/buttonIcon3.png");
-	appData->scrollBarEndcapTexture = LoadTexture("Resources/Sprites/scrollBarEndcap.png", false, false);
+	app->testTexture = LoadTexture("Resources/Sprites/buttonIcon3.png");
+	app->scrollBarEndcapTexture = LoadTexture("Resources/Sprites/scrollBarEndcap.png", false, false);
 	
-	appData->testFont = LoadFont("Resources/Fonts/consola.ttf",
+	app->testFont = LoadFont("Resources/Fonts/consola.ttf",
 		(r32)GC->fontSize, 1024, 1024, ' ', 96);
 	
 	// +================================+
 	// |          Frame Buffer          |
 	// +================================+
 	DEBUG_WriteLine("Creating post-processing Frame Buffer");
-	appData->frameTexture = CreateTexture(nullptr, 2048, 2048);
-	appData->frameBuffer = CreateFrameBuffer(&appData->frameTexture);
+	app->frameTexture = CreateTexture(nullptr, 2048, 2048);
+	app->frameBuffer = CreateFrameBuffer(&app->frameTexture);
 	if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 	{
 		DEBUG_WriteLine("FrameBuffer incomplete!");
@@ -1072,10 +1060,10 @@ EXPORT AppInitialize_DEFINITION(App_Initialize)
 	// |      Other Initialization      |
 	// +================================+
 	DEBUG_WriteLine("Initializing COM ports");
-	appData->comPort.settings.baudRate = BaudRate_115200;
-	appData->comPort.settings.parity = Parity_None;
-	appData->comPort.settings.stopBits = StopBits_1;
-	appData->comPort.settings.numBits = 8;
+	app->comPort.settings.baudRate = BaudRate_115200;
+	app->comPort.settings.parity = Parity_None;
+	app->comPort.settings.stopBits = StopBits_1;
+	app->comPort.settings.numBits = 8;
 	
 	RefreshComPortList();
 	
@@ -1088,21 +1076,20 @@ EXPORT AppInitialize_DEFINITION(App_Initialize)
 //+================================================================+
 EXPORT AppReloaded_DEFINITION(App_Reloaded)
 {
-	Gl_PlatformInfo = PlatformInfo;
-	Gl_AppMemory = AppMemory;
-	AppData_t* appData = (AppData_t*)AppMemory->permanantPntr;
-	GL_AppData = appData;
-	GC = &appData->globalConfig;
-	TempArena = &appData->tempArena;
+	platform = PlatformInfo;
+	app = (AppData_t*)AppMemory->permanantPntr;
+	GC = &app->globalConfig;
+	TempArena = &app->tempArena;
+	RenderScreenSize = NewVec2(platform->screenSize.x / GUI_SCALE, platform->screenSize.y / GUI_SCALE);
 	
 	StatusDebug("App Reloaded");
 	
 	//Make sure our callbacks still match the location of the functions in the new DLL
-	Menu_t* menuPntr = GetMenuByName(&appData->menuHandler, "COM Menu");
+	Menu_t* menuPntr = GetMenuByName(&app->menuHandler, "COM Menu");
 	menuPntr->specialPntr = nullptr;
 	menuPntr->updateFunctionPntr = (void*)ComMenuUpdate;
 	menuPntr->renderFunctionPntr = (void*)ComMenuRender;
-	menuPntr = GetMenuByName(&appData->menuHandler, "Context Menu");
+	menuPntr = GetMenuByName(&app->menuHandler, "Context Menu");
 	menuPntr->specialPntr = nullptr;
 	menuPntr->updateFunctionPntr = (void*)ContextMenuUpdate;
 	menuPntr->renderFunctionPntr = (void*)ContextMenuRender;
@@ -1113,22 +1100,24 @@ EXPORT AppReloaded_DEFINITION(App_Reloaded)
 //+================================================================+
 EXPORT AppUpdate_DEFINITION(App_Update)
 {
-	Gl_PlatformInfo = PlatformInfo;
-	Gl_AppMemory = AppMemory;
-	AppData_t* appData = (AppData_t*)AppMemory->permanantPntr;
-	GL_AppData = appData;
-	GC = &appData->globalConfig;
-	TempArena = &appData->tempArena;
-	UiElements_t* ui = &appData->uiElements;
-	RenderState_t* rs = &appData->renderState;
+	platform = PlatformInfo;
+	input = AppInput;
+	app = (AppData_t*)AppMemory->permanantPntr;
+	GC = &app->globalConfig;
+	TempArena = &app->tempArena;
+	RenderScreenSize = NewVec2(platform->screenSize.x / GUI_SCALE, platform->screenSize.y / GUI_SCALE);
+	RenderMousePos = NewVec2(input->mousePos.x / GUI_SCALE, input->mousePos.y / GUI_SCALE);
+	
+	UiElements_t* ui = &app->uiElements;
+	RenderState_t* rs = &app->renderState;
 	
 	TempPushMark();
 	
 	ClearArray(AppOutput->windowTitle);
-	if (appData->comPort.isOpen)
+	if (app->comPort.isOpen)
 	{
 		snprintf(AppOutput->windowTitle, sizeof(AppOutput->windowTitle)-1,
-			"%s - Const Port", GC->comPortNames[appData->comPort.index]);
+			"%s - Const Port", GC->comPortNames[app->comPort.index]);
 	}
 	else
 	{
@@ -1136,17 +1125,17 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 			"Const Port [Disconnected]");
 	}
 	
-	RecalculateUiElements(AppInput, ui, true);
+	RecalculateUiElements(ui, true);
 	
-	Menu_t* comMenu = GetMenuByName(&appData->menuHandler, "COM Menu");
-	Menu_t* contextMenu = GetMenuByName(&appData->menuHandler, "Context Menu");
-	Menu_t* hoverMenu = GetMenuAtPoint(&appData->menuHandler, AppInput->mousePos);
+	Menu_t* comMenu = GetMenuByName(&app->menuHandler, "COM Menu");
+	Menu_t* contextMenu = GetMenuByName(&app->menuHandler, "Context Menu");
+	Menu_t* hoverMenu = GetMenuAtPoint(&app->menuHandler, RenderMousePos);
 	ui->mouseInMenu = (hoverMenu != nullptr && hoverMenu != contextMenu);
-	Color_t color1 = ColorFromHSV((i32)(PlatformInfo->programTime*180) % 360, 1.0f, 1.0f);
-	Color_t color2 = ColorFromHSV((i32)(PlatformInfo->programTime*180 + 125) % 360, 1.0f, 1.0f);
-	Color_t selectionColor = ColorLerp(GC->colors.selection1, GC->colors.selection2, (Sin32((r32)PlatformInfo->programTime*6.0f) + 1.0f) / 2.0f);
-	Color_t hoverLocColor  = ColorLerp(GC->colors.foreground, GC->colors.background, (Sin32((r32)PlatformInfo->programTime*8.0f) + 1.0f) / 2.0f);
-	// Color_t selectionColor = ColorFromHSV(180, 1.0f, (r32)(Sin32((r32)PlatformInfo->programTime*5) + 1.0f) / 2.0f);
+	Color_t color1 = ColorFromHSV((i32)(platform->programTime*180) % 360, 1.0f, 1.0f);
+	Color_t color2 = ColorFromHSV((i32)(platform->programTime*180 + 125) % 360, 1.0f, 1.0f);
+	Color_t selectionColor = ColorLerp(GC->colors.selection1, GC->colors.selection2, (Sin32((r32)platform->programTime*6.0f) + 1.0f) / 2.0f);
+	Color_t hoverLocColor  = ColorLerp(GC->colors.foreground, GC->colors.background, (Sin32((r32)platform->programTime*8.0f) + 1.0f) / 2.0f);
+	// Color_t selectionColor = ColorFromHSV(180, 1.0f, (r32)(Sin32((r32)platform->programTime*5) + 1.0f) / 2.0f);
 	
 	//+================================+
 	//|  Context Menu Showing/Filling  |
@@ -1156,7 +1145,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		ButtonDown(Button_Control) &&// && mousePos.x <= ui->gutterRec.width)
 		(IsInsideRectangle(ui->mousePos, ui->viewRec) || IsInsideRectangle(ui->mousePos, ui->gutterRec)))
 	{
-		Line_t* linePntr = GetLineAt(&appData->lineList, ui->hoverLocation.lineNum);
+		Line_t* linePntr = GetLineAt(&app->lineList, ui->hoverLocation.lineNum);
 		
 		if (linePntr != nullptr && linePntr->timestamp != 0)
 		{
@@ -1173,7 +1162,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 			}
 			else
 			{
-				i64 secondsDifference = SubtractTimes(PlatformInfo->localTime, lineTime, TimeUnit_Seconds);
+				i64 secondsDifference = SubtractTimes(platform->localTime, lineTime, TimeUnit_Seconds);
 				i64 absDifference = Abs64i(secondsDifference);
 				u32 numCharacters = GetElapsedString((u64)absDifference, &ui->contextStringBuffer[0], ArrayCount(ui->contextStringBuffer));
 				strncpy(&ui->contextStringBuffer[numCharacters], " Ago", sizeof(ui->contextStringBuffer) - numCharacters - 1);
@@ -1186,29 +1175,29 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	// +==============================+
 	// |    Read From The COM Port    |
 	// +==============================+
-	if (appData->comPort.isOpen)
+	if (app->comPort.isOpen)
 	{
 		i32 readResult = 1;
 		while (readResult > 0)
 		{
 			char buffer[4096] = {};
-			readResult = PlatformInfo->ReadComPortPntr(&appData->comPort, buffer, ArrayCount(buffer)-1);
+			readResult = platform->ReadComPortPntr(&app->comPort, buffer, ArrayCount(buffer)-1);
 			if (readResult > 0)
 			{
 				// DEBUG_PrintLine("Read %d bytes \"%.*s\"", readResult, readResult, buffer);
 				
-				if (appData->programInstance.isOpen == false ||
+				if (app->programInstance.isOpen == false ||
 					GC->sendComDataToPython == false ||
 					GC->alsoShowComData == true)
 				{
 					DataReceived(buffer, readResult);
 				}
 				
-				if (appData->programInstance.isOpen && GC->sendComDataToPython)
+				if (app->programInstance.isOpen && GC->sendComDataToPython)
 				{
 					DEBUG_PrintLine("Writing to program instance \"%.*s\"", readResult, buffer);
 					
-					u32 numBytesWritten = PlatformInfo->WriteProgramInputPntr(&appData->programInstance, &buffer[0], readResult);
+					u32 numBytesWritten = platform->WriteProgramInputPntr(&app->programInstance, &buffer[0], readResult);
 					if ((i32)numBytesWritten != readResult)
 					{
 						DEBUG_PrintLine("Only wrote %u/%u bytes to program instance", numBytesWritten, readResult);
@@ -1225,14 +1214,14 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	// +==============================+
 	// |  Read From Program Instance  |
 	// +==============================+
-	if (appData->programInstance.isOpen)
+	if (app->programInstance.isOpen)
 	{
 		char readBuffer[256] = {};
 		
 		u32 numBytesRead = 1;
 		while (numBytesRead > 0)
 		{
-			numBytesRead = PlatformInfo->ReadProgramOutputPntr(&appData->programInstance, readBuffer, ArrayCount(readBuffer));
+			numBytesRead = platform->ReadProgramOutputPntr(&app->programInstance, readBuffer, ArrayCount(readBuffer));
 			
 			if (numBytesRead > 0)
 			{
@@ -1249,11 +1238,11 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 			// }
 		}
 		
-		ProgramStatus_t programStatus = PlatformInfo->GetProgramStatusPntr(&appData->programInstance);
+		ProgramStatus_t programStatus = platform->GetProgramStatusPntr(&app->programInstance);
 		if (programStatus != ProgramStatus_Running)
 		{
 			DEBUG_WriteLine("Program instance finished!");
-			PlatformInfo->CloseProgramInstancePntr(&appData->programInstance);
+			platform->CloseProgramInstancePntr(&app->programInstance);
 		}
 	}
 	
@@ -1262,20 +1251,20 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	// +============================================+
 	if (true)
 	{
-		bool writeToComPort = (appData->comPort.isOpen && (appData->programInstance.isOpen == false || GC->sendInputToPython == false || GC->alsoSendInputToCom));
-		bool writeToProgram = (appData->programInstance.isOpen && GC->sendInputToPython);
+		bool writeToComPort = (app->comPort.isOpen && (app->programInstance.isOpen == false || GC->sendInputToPython == false || GC->alsoSendInputToCom));
+		bool writeToProgram = (app->programInstance.isOpen && GC->sendInputToPython);
 		bool echoInput = GC->autoEchoInput;
 		
-		if (AppInput->textInputLength > 0)
+		if (input->textInputLength > 0)
 		{
-			// DEBUG_PrintLine("Writing \"%.*s\"", AppInput->textInputLength, AppInput->textInput);
-			if (echoInput) { DataReceived(&AppInput->textInput[0], AppInput->textInputLength); }
+			// DEBUG_PrintLine("Writing \"%.*s\"", input->textInputLength, input->textInput);
+			if (echoInput) { DataReceived(&input->textInput[0], input->textInputLength); }
 			if (writeToComPort)
 			{
-				PlatformInfo->WriteComPortPntr(&appData->comPort, &AppInput->textInput[0], AppInput->textInputLength);
-				appData->txShiftRegister |= 0x80;
+				platform->WriteComPortPntr(&app->comPort, &input->textInput[0], input->textInputLength);
+				app->txShiftRegister |= 0x80;
 			}
-			if (writeToProgram) { PlatformInfo->WriteProgramInputPntr(&appData->programInstance, &AppInput->textInput[0], AppInput->textInputLength); }
+			if (writeToProgram) { platform->WriteProgramInputPntr(&app->programInstance, &input->textInput[0], input->textInputLength); }
 		}
 		
 		if (!comMenu->show && ButtonPressed(Button_Enter))
@@ -1286,10 +1275,10 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 			if (echoInput) { DataReceived("\n", 1); }
 			if (writeToComPort)
 			{
-				PlatformInfo->WriteComPortPntr(&appData->comPort, &newChar, 1);
-				appData->txShiftRegister |= 0x80;
+				platform->WriteComPortPntr(&app->comPort, &newChar, 1);
+				app->txShiftRegister |= 0x80;
 			}
-			if (writeToProgram) { PlatformInfo->WriteProgramInputPntr(&appData->programInstance, &newChar, 1); }
+			if (writeToProgram) { platform->WriteProgramInputPntr(&app->programInstance, &newChar, 1); }
 		}
 		
 		if (!comMenu->show && ButtonPressed(Button_Backspace))
@@ -1300,12 +1289,12 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 			if (echoInput) { DataReceived("\b", 1); }
 			if (writeToComPort)
 			{
-				PlatformInfo->WriteComPortPntr(&appData->comPort, &newChar, 1);
-				appData->txShiftRegister |= 0x80;
+				platform->WriteComPortPntr(&app->comPort, &newChar, 1);
+				app->txShiftRegister |= 0x80;
 			}
 			if (writeToProgram)
 			{
-				PlatformInfo->WriteProgramInputPntr(&appData->programInstance, &newChar, 1);
+				platform->WriteProgramInputPntr(&app->programInstance, &newChar, 1);
 			}
 		}
 	}
@@ -1313,11 +1302,11 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	//+==================================+
 	//|        Recenter COM menu         |
 	//+==================================+
-	if (PlatformInfo->windowResized)
+	if (platform->windowResized)
 	{
 		comMenu->drawRec.topLeft = NewVec2(
-			PlatformInfo->screenSize.x / 2 - comMenu->drawRec.width/2,
-			PlatformInfo->screenSize.y / 2 - comMenu->drawRec.height/2);
+			RenderScreenSize.x / 2 - comMenu->drawRec.width/2,
+			RenderScreenSize.y / 2 - comMenu->drawRec.height/2);
 	}
 	
 	//+================================+
@@ -1337,7 +1326,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 			comMenu->show = true;
 			
 			RefreshComPortList();
-			appData->comMenuOptions = appData->comPort;
+			app->comMenuOptions = app->comPort;
 		}
 	}
 	
@@ -1361,7 +1350,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 				char* selectionTempBuffer = TempString(selectionSize+1);
 				GetSelection(selectionTempBuffer);
 				
-				PlatformInfo->CopyToClipboardPntr(selectionTempBuffer, selectionSize);
+				platform->CopyToClipboardPntr(selectionTempBuffer, selectionSize);
 				
 				TempPopMark();
 			}
@@ -1374,10 +1363,10 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	if (ButtonPressed(Button_R) &&
 		ButtonDown(Button_Control))
 	{
-		DisposeGlobalConfig(&appData->globalConfig);
-		LoadGlobalConfiguration(PlatformInfo, &appData->globalConfig, &appData->mainHeap);
-		DisposeRegexFile(&appData->regexList);
-		LoadRegexFile(&appData->regexList, "Resources/Configuration/RegularExpressions.rgx", &appData->mainHeap);
+		DisposeGlobalConfig(&app->globalConfig);
+		LoadGlobalConfiguration(platform, &app->globalConfig, &app->mainHeap);
+		DisposeRegexFile(&app->regexList);
+		LoadRegexFile(&app->regexList, "Resources/Configuration/RegularExpressions.rgx", &app->mainHeap);
 	}
 	
 	//+==================================+
@@ -1385,21 +1374,21 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	//+==================================+
 	if (ButtonPressed(Button_A) && ButtonDown(Button_Control))
 	{
-		if (appData->selectionStart.lineNum == appData->selectionEnd.lineNum &&
-			appData->selectionStart.charIndex == appData->selectionEnd.charIndex)
+		if (app->selectionStart.lineNum == app->selectionEnd.lineNum &&
+			app->selectionStart.charIndex == app->selectionEnd.charIndex)
 		{
 			//Select all
-			appData->selectionStart = NewTextLocation(0, 0);
-			Line_t* lastLinePntr = GetLastLine(&appData->lineList);
-			appData->selectionEnd = NewTextLocation(appData->lineList.numLines-1, lastLinePntr->numChars);
+			app->selectionStart = NewTextLocation(0, 0);
+			Line_t* lastLinePntr = GetLastLine(&app->lineList);
+			app->selectionEnd = NewTextLocation(app->lineList.numLines-1, lastLinePntr->numChars);
 			
 			StatusInfo("Selected Everything");
 		}
 		else
 		{
 			//Deselect all
-			appData->selectionStart = NewTextLocation(0, 0);
-			appData->selectionEnd = NewTextLocation(0, 0);
+			app->selectionStart = NewTextLocation(0, 0);
+			app->selectionEnd = NewTextLocation(0, 0);
 			
 			StatusError("Unselected Everything");
 		}
@@ -1411,26 +1400,26 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	if (ButtonPressed(Button_F) && ButtonDown(Button_Control))
 	{
 		char outputFileName[32]; ClearArray(outputFileName);
-		const char* comPortName = GetComPortReadableName(appData->comPort.index);
+		const char* comPortName = GetComPortReadableName(app->comPort.index);
 		strcpy(&outputFileName[0], comPortName);
 		strcpy(&outputFileName[strlen(comPortName)], "_Output.txt");
 		
 		DEBUG_PrintLine("Outputting to file: \"%s\"", outputFileName);
 		
-		if (appData->writeToFile)
+		if (app->writeToFile)
 		{
-			PlatformInfo->CloseFilePntr(&appData->outputFile);
-			appData->writeToFile = false;
+			platform->CloseFilePntr(&app->outputFile);
+			app->writeToFile = false;
 			StatusSuccess("Stopped outputting to file");
 		}
 		else
 		{
-			if (PlatformInfo->OpenFilePntr(outputFileName, &appData->outputFile))
+			if (platform->OpenFilePntr(outputFileName, &app->outputFile))
 			{
 				StatusSuccess("Opened file successfully");
-				appData->writeToFile = true;
+				app->writeToFile = true;
 				const char* newString = "\r\n\r\n[File Opened for Writing]\r\n";
-				PlatformInfo->AppendFilePntr(&appData->outputFile, newString, (u32)strlen(newString));
+				platform->AppendFilePntr(&app->outputFile, newString, (u32)strlen(newString));
 			}
 			else
 			{
@@ -1463,13 +1452,13 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 			
 			RefreshComPortList();
 			
-			if (appData->availableComPorts[cIndex] == false)
+			if (app->availableComPorts[cIndex] == false)
 			{
 				StatusError("%s not Available!", GetComPortReadableName(cIndex));
 			}
 			else
 			{
-				OpenComPort(cIndex, appData->comPort.settings);
+				OpenComPort(cIndex, app->comPort.settings);
 			}
 		}
 	}
@@ -1479,10 +1468,10 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	// +================================+
 	if (ButtonPressed(Button_F11))
 	{
-		appData->showDebugMenu = !appData->showDebugMenu;
+		app->showDebugMenu = !app->showDebugMenu;
 	}
 	
-	RecalculateUiElements(AppInput, ui, false);
+	RecalculateUiElements(ui, false);
 	
 	if (ButtonDown(Button_Right))
 	{
@@ -1501,30 +1490,30 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		ui->scrollOffsetGoto.y -= ButtonDown(Button_Shift) ? 16 : 5;
 		ui->followingEndOfFile = false;
 	}
-	if (AppInput->scrollDelta.y != 0)
+	if (input->scrollDelta.y != 0)
 	{
 		if (ButtonDown(Button_Shift))
 		{
-			ui->scrollOffsetGoto.x -= AppInput->scrollDelta.y * (r32)GC->scrollMultiplier;
+			ui->scrollOffsetGoto.x -= input->scrollDelta.y * (r32)GC->scrollMultiplier;
 		}
 		else
 		{
-			ui->scrollOffsetGoto.y -= AppInput->scrollDelta.y * (r32)GC->scrollMultiplier;
+			ui->scrollOffsetGoto.y -= input->scrollDelta.y * (r32)GC->scrollMultiplier;
 			
-			if (AppInput->scrollDelta.y > 0)
+			if (input->scrollDelta.y > 0)
 			{
 				ui->followingEndOfFile = false;
 			}
 		}
 	}
-	if (AppInput->scrollDelta.x != 0)
+	if (input->scrollDelta.x != 0)
 	{
-		ui->scrollOffsetGoto.x -= AppInput->scrollDelta.x * (r32)GC->scrollMultiplier;
+		ui->scrollOffsetGoto.x -= input->scrollDelta.x * (r32)GC->scrollMultiplier;
 	}
 	
-	bool gotoEndButtonPressed = (IsInsideRectangle(AppInput->mousePos, ui->gotoEndButtonRec) &&
+	bool gotoEndButtonPressed = (IsInsideRectangle(RenderMousePos, ui->gotoEndButtonRec) &&
 		ButtonReleased(MouseButton_Left) &&
-		IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], ui->gotoEndButtonRec));
+		IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, ui->gotoEndButtonRec));
 	if (gotoEndButtonPressed || ButtonPressed(Button_End))
 	{
 		ui->followingEndOfFile = true;
@@ -1550,10 +1539,10 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	if (ButtonPressed(Button_P) && ButtonDown(Button_Control) &&
 		GC->pythonScriptEnabled)
 	{
-		if (appData->programInstance.isOpen)
+		if (app->programInstance.isOpen)
 		{
 			StatusInfo("Closing python instance");
-			PlatformInfo->CloseProgramInstancePntr(&appData->programInstance);
+			platform->CloseProgramInstancePntr(&app->programInstance);
 		}
 		else
 		{
@@ -1561,8 +1550,8 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 			{
 				char* commandStr = TempPrint("python %s", GC->pythonScript);
 				StatusInfo("Running System Command: \"%s\"", commandStr);
-				appData->programInstance = PlatformInfo->StartProgramInstancePntr(commandStr);
-				if (appData->programInstance.isOpen == false)
+				app->programInstance = platform->StartProgramInstancePntr(commandStr);
+				if (app->programInstance.isOpen == false)
 				{
 					StatusError("Python exec failed: \"%s\"", commandStr);
 				}
@@ -1584,7 +1573,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		u32 selectionLength = GetSelection(nullptr);
 		if (selectionLength > 0)
 		{
-			const char* countExpression = GetRegularExpression(&appData->regexList, GC->genericCountRegexName);
+			const char* countExpression = GetRegularExpression(&app->regexList, GC->genericCountRegexName);
 			if (countExpression != nullptr)
 			{
 				TempPushMark();
@@ -1608,12 +1597,12 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	//+==================================+
 	if (ui->mouseInMenu == false &&
 		ButtonReleased(MouseButton_Left) && IsInsideRectangle(ui->mousePos, ui->mainMenuRec) &&
-		IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], ui->mainMenuRec))
+		IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, ui->mainMenuRec))
 	{
 		for (u32 bIndex = 0; bIndex < ArrayCount(ui->buttonRecs); bIndex++)
 		{
 			if (IsInsideRectangle(ui->mousePos, ui->buttonRecs[bIndex]) &&
-				IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], ui->buttonRecs[bIndex]))
+				IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, ui->buttonRecs[bIndex]))
 			{
 				switch (bIndex)
 				{
@@ -1628,7 +1617,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 							comMenu->show = true;
 							
 							RefreshComPortList();
-							appData->comMenuOptions = appData->comPort;
+							app->comMenuOptions = app->comPort;
 						}
 					} break;
 					
@@ -1637,21 +1626,21 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 						//TODO: Create file if it doesn't exist
 						if (ButtonDown(Button_Shift) && ButtonDown(Button_Control))
 						{
-							PlatformInfo->LaunchFilePntr("Resources\\Configuration\\PlatformConfig.json");
-							PlatformInfo->LaunchFilePntr("Resources\\Configuration\\RegularExpressions.rgx");
-							PlatformInfo->LaunchFilePntr("Resources\\Configuration\\GlobalConfig.json");
+							platform->LaunchFilePntr("Resources\\Configuration\\PlatformConfig.json");
+							platform->LaunchFilePntr("Resources\\Configuration\\RegularExpressions.rgx");
+							platform->LaunchFilePntr("Resources\\Configuration\\GlobalConfig.json");
 						}
 						else if (ButtonDown(Button_Shift))
 						{
-							PlatformInfo->LaunchFilePntr("Resources\\Configuration\\PlatformConfig.json");
+							platform->LaunchFilePntr("Resources\\Configuration\\PlatformConfig.json");
 						}
 						else if (ButtonDown(Button_Control))
 						{
-							PlatformInfo->LaunchFilePntr("Resources\\Configuration\\RegularExpressions.rgx");
+							platform->LaunchFilePntr("Resources\\Configuration\\RegularExpressions.rgx");
 						}
 						else
 						{
-							PlatformInfo->LaunchFilePntr("Resources\\Configuration\\GlobalConfig.json");
+							platform->LaunchFilePntr("Resources\\Configuration\\GlobalConfig.json");
 						}
 					} break;
 					
@@ -1667,10 +1656,10 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	//+================================+
 	//|       Clear Button Press       |
 	//+================================+
-	if (IsInsideRectangle(AppInput->mousePos, ui->clearButtonRec))
+	if (IsInsideRectangle(RenderMousePos, ui->clearButtonRec))
 	{
 		if (ButtonReleased(MouseButton_Left) &&
-			IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], ui->clearButtonRec))
+			IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, ui->clearButtonRec))
 		{
 			ClearConsole();
 		}
@@ -1679,17 +1668,17 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	//+==================================+
 	//|    Save To File Button Press     |
 	//+==================================+
-	bool saveButtonPressed = (IsInsideRectangle(AppInput->mousePos, ui->saveButtonRec) &&
+	bool saveButtonPressed = (IsInsideRectangle(RenderMousePos, ui->saveButtonRec) &&
 		ButtonReleased(MouseButton_Left) &&
-		IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], ui->saveButtonRec));
+		IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, ui->saveButtonRec));
 	if (saveButtonPressed ||
 		(ButtonDown(Button_Control) && ButtonPressed(Button_S)))
 	{
 		char fileNameBuffer[256] = {};
 		u32 fileNameLength = snprintf(&fileNameBuffer[0], sizeof(fileNameBuffer),
 			"ConstPortSave_%02u-%02u-%u_%u-%02u-%02u.txt",
-			PlatformInfo->localTime.year, PlatformInfo->localTime.month, PlatformInfo->localTime.day,
-			PlatformInfo->localTime.hour, PlatformInfo->localTime.minute, PlatformInfo->localTime.second);
+			platform->localTime.year, platform->localTime.month, platform->localTime.day,
+			platform->localTime.hour, platform->localTime.minute, platform->localTime.second);
 		
 		u32 selectionSize = GetSelection(nullptr);
 		if (selectionSize > 0)
@@ -1701,12 +1690,12 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 			
 			//NOTE: GetSelection adds a \0 on the end so need to remove it
 			DEBUG_PrintLine("Saving %u bytes to %s", selectionSize-1, fileNameBuffer);
-			PlatformInfo->WriteEntireFilePntr(fileNameBuffer, fileBuffer, selectionSize-1);
+			platform->WriteEntireFilePntr(fileNameBuffer, fileBuffer, selectionSize-1);
 			DEBUG_WriteLine("Done!");
 			
 			TempPopMark();
 			
-			if (PlatformInfo->LaunchFilePntr(fileNameBuffer))
+			if (platform->LaunchFilePntr(fileNameBuffer))
 			{
 				DEBUG_WriteLine("Opened output file for viewing");
 			}
@@ -1725,10 +1714,10 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	if (ButtonDown(MouseButton_Left) && !ui->mouseInMenu)
 	{
 		//Handle scrollbar interaction with mouse
-		if (IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], ui->scrollBarGutterRec) &&
+		if (IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, ui->scrollBarGutterRec) &&
 			ui->scrollBarRec.height < ui->scrollBarGutterRec.height)
 		{
-			if (AppInput->buttons[MouseButton_Left].transCount > 0)//Pressed the button down
+			if (input->buttons[MouseButton_Left].transCount > 0)//Pressed the button down
 			{
 				ui->mouseScrollbarOffset = ui->mousePos.y - ui->scrollBarRec.y;
 				if (IsInsideRectangle(ui->mousePos, ui->scrollBarRec))
@@ -1764,22 +1753,22 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 				ui->scrollOffset.y = (newPixelLocation / (ui->scrollBarGutterRec.height - ui->scrollBarRec.height)) * ui->maxScrollOffset.y;
 				ui->scrollOffsetGoto.y = ui->scrollOffset.y;
 				
-				if (ui->scrollOffsetGoto.y < ui->maxScrollOffset.y - appData->testFont.lineHeight)
+				if (ui->scrollOffsetGoto.y < ui->maxScrollOffset.y - app->testFont.lineHeight)
 				{
 					ui->followingEndOfFile = false;
 				}
 			}
 		}
-		else if (IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], ui->viewRec))
+		else if (IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, ui->viewRec))
 		{
-			if (AppInput->buttons[MouseButton_Left].transCount > 0)//Pressed the button down
+			if (input->buttons[MouseButton_Left].transCount > 0)//Pressed the button down
 			{
-				appData->selectionStart = ui->hoverLocation;
-				appData->selectionEnd = ui->hoverLocation;
+				app->selectionStart = ui->hoverLocation;
+				app->selectionEnd = ui->hoverLocation;
 			}
 			else //if (IsInsideRectangle(ui->mousePos, ui->viewRec)) //Mouse Button Holding
 			{
-				appData->selectionEnd = ui->hoverLocation;
+				app->selectionEnd = ui->hoverLocation;
 			}
 		}
 	}
@@ -1788,12 +1777,12 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	//|   Mark lines using the mouse   |
 	//+================================+
 	if (ui->mouseInMenu == false &&
-		IsInsideRectangle(ui->mousePos, ui->gutterRec) && IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], ui->gutterRec))
+		IsInsideRectangle(ui->mousePos, ui->gutterRec) && IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, ui->gutterRec))
 	{
 		if (ButtonReleased(MouseButton_Left) &&
-			ui->markIndex >= 0 && ui->markIndex < appData->lineList.numLines)
+			ui->markIndex >= 0 && ui->markIndex < app->lineList.numLines)
 		{
-			Line_t* linePntr = GetLineAt(&appData->lineList, ui->markIndex);
+			Line_t* linePntr = GetLineAt(&app->lineList, ui->markIndex);
 			
 			if (!IsFlagSet(linePntr->flags, LineFlag_MarkBelow) ||
 				(ButtonDown(Button_Shift) && !IsFlagSet(linePntr->flags, LineFlag_ThickMark)))
@@ -1817,11 +1806,11 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	
 	if (ButtonDown(Button_Control) && ButtonPressed(Button_M))
 	{
-		i32 lastIndex = appData->lineList.numLines - 1;
-		Line_t* linePntr = GetLineAt(&appData->lineList, lastIndex);
+		i32 lastIndex = app->lineList.numLines - 1;
+		Line_t* linePntr = GetLineAt(&app->lineList, lastIndex);
 		if (linePntr->numChars == 0 && lastIndex > 0)
 		{
-			linePntr = GetLineAt(&appData->lineList, lastIndex - 1);
+			linePntr = GetLineAt(&app->lineList, lastIndex - 1);
 		}
 		
 		//Set mark
@@ -1847,10 +1836,10 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	//+================================+
 	//|          Update Menus          |
 	//+================================+
-	MenuHandlerUpdate(PlatformInfo, AppInput, &appData->menuHandler);
+	MenuHandlerUpdate(&app->menuHandler);
 	
-	UpdateUiElements(AppInput, ui);
-	RecalculateUiElements(AppInput, ui, false);
+	UpdateUiElements(ui);
+	RecalculateUiElements(ui, false);
 	if (ui->followingEndOfFile)
 	{
 		ui->scrollOffsetGoto.y = ui->maxScrollOffset.y;
@@ -1873,21 +1862,21 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	//+--------------------------------------+
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_BLEND);
-	rs->SetViewport(NewRectangle(0, 0, (r32)PlatformInfo->screenSize.x, (r32)PlatformInfo->screenSize.y));
+	rs->SetViewport(NewRectangle(0, 0, (r32)platform->screenSize.x, (r32)platform->screenSize.y));
 	
 	glClearColor((GC->colors.background.r/255.f), (GC->colors.background.g/255.f), (GC->colors.background.b/255.f), 1.0f);
 	// glClearColor((200/255.f), (200/255.f), (200/255.f), 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	
 	rs->BindFrameBuffer(nullptr);
-	rs->BindShader(&appData->simpleShader);
-	rs->BindFont(&appData->testFont);
+	rs->BindShader(&app->simpleShader);
+	rs->BindFont(&app->testFont);
 	rs->SetGradientEnabled(false);
 	
 	Matrix4_t worldMatrix, viewMatrix, projMatrix;
 	viewMatrix = Matrix4_Identity;
-	projMatrix = Matrix4Scale(NewVec3(2.0f/PlatformInfo->screenSize.x, -2.0f/PlatformInfo->screenSize.y, 1.0f));
-	projMatrix = Mat4Mult(projMatrix, Matrix4Translate(NewVec3(-PlatformInfo->screenSize.x/2.0f, -PlatformInfo->screenSize.y/2.0f, 0.0f)));
+	projMatrix = Matrix4Scale(NewVec3(2.0f/RenderScreenSize.x, -2.0f/RenderScreenSize.y, 1.0f));
+	projMatrix = Mat4Mult(projMatrix, Matrix4Translate(NewVec3(-RenderScreenSize.x/2.0f, -RenderScreenSize.y/2.0f, 0.0f)));
 	rs->SetViewMatrix(viewMatrix);
 	rs->SetProjectionMatrix(projMatrix);
 	
@@ -1902,12 +1891,12 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		rs->SetViewMatrix(Matrix4Translate(NewVec3(ui->viewRec.x - ui->scrollOffset.x, ui->viewRec.y - ui->scrollOffset.y, 0)));
 		{//Items drawn relative to view
 			
-			v2 currentPos = NewVec2((r32)GC->lineSpacing, ui->scrollOffset.y - ui->firstRenderLineOffset + appData->testFont.maxExtendUp);
-			for (i32 lineIndex = firstLine; lineIndex < appData->lineList.numLines; lineIndex++)
+			v2 currentPos = NewVec2((r32)GC->lineSpacing, ui->scrollOffset.y - ui->firstRenderLineOffset + app->testFont.maxExtendUp);
+			for (i32 lineIndex = firstLine; lineIndex < app->lineList.numLines; lineIndex++)
 			{
-				Line_t* linePntr = GetLineAt(&appData->lineList, lineIndex);
+				Line_t* linePntr = GetLineAt(&app->lineList, lineIndex);
 				
-				r32 lineHeight = RenderLine(AppInput, linePntr, currentPos, true);
+				r32 lineHeight = RenderLine(linePntr, currentPos, true);
 				//Draw line highlight
 				if (GC->highlightHoverLine &&
 					lineIndex == ui->hoverLocation.lineNum &&
@@ -1916,30 +1905,30 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 				{
 					rec backRec = NewRectangle(
 						currentPos.x + ui->scrollOffset.x,
-						currentPos.y - appData->testFont.maxExtendUp,
+						currentPos.y - app->testFont.maxExtendUp,
 						ui->viewRec.width, lineHeight
 					);
 					rs->DrawRectangle(backRec, GC->colors.hoverLine);
 				}
 				
-				RenderLine(AppInput, linePntr, currentPos, false);
+				RenderLine(linePntr, currentPos, false);
 				
 				if (GC->showHoverCursor &&
 					lineIndex == ui->hoverLocation.lineNum &&
 					IsInsideRectangle(ui->mousePos, ui->viewRec) &&
 					!ui->mouseInMenu)
 				{
-					v2 skipSize = MeasureString(&appData->testFont, linePntr->chars, ui->hoverLocation.charIndex);
+					v2 skipSize = MeasureString(&app->testFont, linePntr->chars, ui->hoverLocation.charIndex);
 					rec cursorRec = NewRectangle(
 						currentPos.x + skipSize.x,
-						currentPos.y - appData->testFont.maxExtendUp,
-						1, appData->testFont.lineHeight
+						currentPos.y - app->testFont.maxExtendUp,
+						1, app->testFont.lineHeight
 					);
 					rs->DrawRectangle(cursorRec, hoverLocColor);
 				}
 				
 				currentPos.y += lineHeight + GC->lineSpacing;
-				if (currentPos.y - appData->testFont.maxExtendUp >= ui->scrollOffset.y + ui->viewRec.height)
+				if (currentPos.y - app->testFont.maxExtendUp >= ui->scrollOffset.y + ui->viewRec.height)
 				{
 					//We've reached the bottom of the view
 					break;
@@ -1950,29 +1939,29 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		rs->SetViewMatrix(Matrix4_Identity);
 	}
 	
-	rs->BindFrameBuffer(&appData->frameBuffer);
+	rs->BindFrameBuffer(&app->frameBuffer);
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	
 	//+--------------------------------------+
 	//|          Render Selection            |
 	//+--------------------------------------+
-	if (appData->selectionStart.lineNum != appData->selectionEnd.lineNum ||
-		appData->selectionStart.charIndex != appData->selectionEnd.charIndex)
+	if (app->selectionStart.lineNum != app->selectionEnd.lineNum ||
+		app->selectionStart.charIndex != app->selectionEnd.charIndex)
 	{
-		TextLocation_t minLocation = TextLocationMin(appData->selectionStart, appData->selectionEnd);
-		TextLocation_t maxLocation = TextLocationMax(appData->selectionStart, appData->selectionEnd);
+		TextLocation_t minLocation = TextLocationMin(app->selectionStart, app->selectionEnd);
+		TextLocation_t maxLocation = TextLocationMax(app->selectionStart, app->selectionEnd);
 		i32 firstLine = max(0, ui->firstRenderLine);
 		
 		rs->SetViewMatrix(Matrix4Translate(NewVec3(ui->viewRec.x - ui->scrollOffset.x, ui->viewRec.y - ui->scrollOffset.y, 0)));
 		{//Items drawn relative to view
 			
-			v2 currentPos = NewVec2(0, ui->scrollOffset.y - ui->firstRenderLineOffset + appData->testFont.maxExtendUp);
+			v2 currentPos = NewVec2(0, ui->scrollOffset.y - ui->firstRenderLineOffset + app->testFont.maxExtendUp);
 			for (i32 lineIndex = firstLine;
-				lineIndex < appData->lineList.numLines && lineIndex <= maxLocation.lineNum;
+				lineIndex < app->lineList.numLines && lineIndex <= maxLocation.lineNum;
 				lineIndex++)
 			{
-				Line_t* linePntr = GetLineAt(&appData->lineList, lineIndex);
+				Line_t* linePntr = GetLineAt(&app->lineList, lineIndex);
 				
 				if (lineIndex >= minLocation.lineNum && lineIndex <= maxLocation.lineNum)
 				{
@@ -1982,30 +1971,30 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 					if (lineIndex == minLocation.lineNum &&
 						lineIndex == maxLocation.lineNum)
 					{
-						skipSize = MeasureString(&appData->testFont, linePntr->chars, minLocation.charIndex);
-						selectionSize = MeasureString(&appData->testFont, &linePntr->chars[minLocation.charIndex], maxLocation.charIndex - minLocation.charIndex);
+						skipSize = MeasureString(&app->testFont, linePntr->chars, minLocation.charIndex);
+						selectionSize = MeasureString(&app->testFont, &linePntr->chars[minLocation.charIndex], maxLocation.charIndex - minLocation.charIndex);
 					}
 					else if (lineIndex == minLocation.lineNum)
 					{
-						skipSize = MeasureString(&appData->testFont, linePntr->chars, minLocation.charIndex);
-						selectionSize = MeasureString(&appData->testFont, &linePntr->chars[minLocation.charIndex]);
-						// selectionSize.x += MeasureString(&appData->testFont, " ", 1).x;
+						skipSize = MeasureString(&app->testFont, linePntr->chars, minLocation.charIndex);
+						selectionSize = MeasureString(&app->testFont, &linePntr->chars[minLocation.charIndex]);
+						// selectionSize.x += MeasureString(&app->testFont, " ", 1).x;
 					}
 					else if (lineIndex == maxLocation.lineNum)
 					{
-						selectionSize = MeasureString(&appData->testFont, linePntr->chars, maxLocation.charIndex);
+						selectionSize = MeasureString(&app->testFont, linePntr->chars, maxLocation.charIndex);
 					}
 					else
 					{
-						selectionSize = MeasureString(&appData->testFont, linePntr->chars);
-						// selectionSize.x += MeasureString(&appData->testFont, " ", 1).x;
+						selectionSize = MeasureString(&app->testFont, linePntr->chars);
+						// selectionSize.x += MeasureString(&app->testFont, " ", 1).x;
 					}
 					
-					rec backRec = NewRectangle(GC->lineSpacing + currentPos.x + skipSize.x, currentPos.y - appData->testFont.maxExtendUp, selectionSize.x, appData->testFont.lineHeight);//linePntr->lineHeight);
+					rec backRec = NewRectangle(GC->lineSpacing + currentPos.x + skipSize.x, currentPos.y - app->testFont.maxExtendUp, selectionSize.x, app->testFont.lineHeight);//linePntr->lineHeight);
 					backRec = RectangleInflate(backRec, (r32)GC->lineSpacing/2);
 					rs->DrawRectangle(backRec, selectionColor);
 					
-					if (currentPos.y - appData->testFont.maxExtendUp >= ui->scrollOffset.y + ui->viewRec.height)
+					if (currentPos.y - app->testFont.maxExtendUp >= ui->scrollOffset.y + ui->viewRec.height)
 					{
 						//We've reached the bottom of the view
 						break;
@@ -2023,14 +2012,14 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	//|           Post Processing            |
 	//+--------------------------------------+
 	rs->BindFrameBuffer(nullptr);
-	rs->BindShader(&appData->outlineShader);
+	rs->BindShader(&app->outlineShader);
 	rs->UpdateShader();
 	
 	rs->SetSecondaryColor(NewColor(0, 0, 0, 20)); //TODO: Add this as a configuration option
-	rs->BindTexture(&appData->frameTexture);
-	rs->DrawTexturedRec(NewRectangle(0, ui->screenSize.y, (r32)appData->frameTexture.width, (r32)-appData->frameTexture.height), {Color_White});
+	rs->BindTexture(&app->frameTexture);
+	rs->DrawTexturedRec(NewRectangle(0, ui->screenSize.y, (r32)app->frameTexture.width, (r32)-app->frameTexture.height), {Color_White});
 	
-	rs->BindShader(&appData->simpleShader);
+	rs->BindShader(&app->simpleShader);
 	rs->UpdateShader();
 	
 	//+--------------------------------------+
@@ -2043,15 +2032,15 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		rs->SetViewMatrix(Matrix4Translate(NewVec3(ui->gutterRec.x, ui->gutterRec.y - ui->scrollOffset.y, 0)));
 		{//Items drawn relative to view
 			
-			v2 currentPos = NewVec2(0, ui->scrollOffset.y - ui->firstRenderLineOffset + appData->testFont.maxExtendUp);
-			for (i32 lineIndex = firstLine; lineIndex < appData->lineList.numLines; lineIndex++)
+			v2 currentPos = NewVec2(0, ui->scrollOffset.y - ui->firstRenderLineOffset + app->testFont.maxExtendUp);
+			for (i32 lineIndex = firstLine; lineIndex < app->lineList.numLines; lineIndex++)
 			{
-				Line_t* linePntr = GetLineAt(&appData->lineList, lineIndex);
+				Line_t* linePntr = GetLineAt(&app->lineList, lineIndex);
 				
-				RenderLineGutter(AppInput, linePntr, currentPos, lineIndex, linePntr->lineHeight);
+				RenderLineGutter(linePntr, currentPos, lineIndex, linePntr->lineHeight);
 				
 				currentPos.y += linePntr->lineHeight + GC->lineSpacing;
-				if (currentPos.y - appData->testFont.maxExtendUp >= ui->scrollOffset.y + ui->viewRec.height)
+				if (currentPos.y - app->testFont.maxExtendUp >= ui->scrollOffset.y + ui->viewRec.height)
 				{
 					//We've reached the bottom of the view
 					break;
@@ -2078,7 +2067,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		endCapRec.y += endCapRec.height;
 		endCapRec.height = -endCapRec.height;
 		rs->DrawRectangle(RectangleInflate(centerScrollBarRec, 1), GC->colors.uiGray4);
-		rs->BindAlphaTexture(&appData->scrollBarEndcapTexture);
+		rs->BindAlphaTexture(&app->scrollBarEndcapTexture);
 		rs->DrawRectangle(RectangleInflate(startCapRec, 1), GC->colors.uiGray4);
 		rs->DrawRectangle(RectangleInflate(endCapRec, 1), GC->colors.uiGray4);
 		
@@ -2095,72 +2084,72 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		rs->DrawGradient(ui->statusBarRec, GC->colors.uiGray1, GC->colors.uiGray3, Direction2D_Right);
 		// rs->DrawGradient(NewRectangle(10, 10, 300, 300), color1, color2, Direction2D_Right);
 		// rs->PrintString(
-		// 	NewVec2(0, ui->screenSize.y-appData->testFont.maxExtendDown), GC->colors.foreground, 1.0f,
-		// 	"Heap: %u/%u used", appData->mainHeap.used, appData->mainHeap.size);
+		// 	NewVec2(0, ui->screenSize.y-app->testFont.maxExtendDown), GC->colors.foreground, 1.0f,
+		// 	"Heap: %u/%u used", app->mainHeap.used, app->mainHeap.size);
 		// rs->PrintString(
-		// 	NewVec2(0, ui->screenSize.y-appData->testFont.maxExtendDown), GC->colors.foreground, 1.0f,
+		// 	NewVec2(0, ui->screenSize.y-app->testFont.maxExtendDown), GC->colors.foreground, 1.0f,
 		// 	"Line %d Char %d", ui->hoverLocation.lineNum+1, ui->hoverLocation.charIndex);
 		// rs->PrintString(
-		// 	NewVec2(0, ui->screenSize.y-appData->testFont.maxExtendDown), GC->colors.foreground, 1.0f,
+		// 	NewVec2(0, ui->screenSize.y-app->testFont.maxExtendDown), GC->colors.foreground, 1.0f,
 		// 	"Offset: %f", ui->firstRenderLineOffset);
 		// rs->PrintString(
-		// 	NewVec2(0, ui->screenSize.y-appData->testFont.maxExtendDown), GC->colors.foreground, 1.0f,
+		// 	NewVec2(0, ui->screenSize.y-app->testFont.maxExtendDown), GC->colors.foreground, 1.0f,
 		// 	"%s %u:%02u%s (%s %s, %u) [%u]",
-		// 	GetDayOfWeekStr(GetDayOfWeek(PlatformInfo->localTime)),
-		// 	Convert24HourTo12Hour(PlatformInfo->localTime.hour), PlatformInfo->localTime.minute,
-		// 	IsPostMeridian(PlatformInfo->localTime.hour) ? "pm" : "am",
-		// 	GetMonthStr((Month_t)PlatformInfo->localTime.month), GetDayOfMonthString(PlatformInfo->localTime.day), PlatformInfo->localTime.year,
-		// 	GetTimestamp(PlatformInfo->localTime));
+		// 	GetDayOfWeekStr(GetDayOfWeek(platform->localTime)),
+		// 	Convert24HourTo12Hour(platform->localTime.hour), platform->localTime.minute,
+		// 	IsPostMeridian(platform->localTime.hour) ? "pm" : "am",
+		// 	GetMonthStr((Month_t)platform->localTime.month), GetDayOfMonthString(platform->localTime.day), platform->localTime.year,
+		// 	GetTimestamp(platform->localTime));
 		// rs->PrintString(
-		// 	NewVec2(0, ui->screenSize.y-appData->testFont.maxExtendDown), GC->colors.foreground, 1.0f,
+		// 	NewVec2(0, ui->screenSize.y-app->testFont.maxExtendDown), GC->colors.foreground, 1.0f,
 		// 	"First: %d Last: %d", firstLine, lastLine);
-		// PrintString(appData, appData->testFont,
-		// 	NewVec2(0, ui->screenSize.y-appData->testFont.maxExtendDown), GC->colors.foreground, 1.0f,
-		// 	"%u Lines Offset: %f (%fpx long)", appData->lineList.numLines, ui->scrollOffset, ui->fileHeight);
-		// Line_t* linePntr = GetLineAt(&appData->lineList, ui->hoverLocation.lineNum);
+		// PrintString(app, app->testFont,
+		// 	NewVec2(0, ui->screenSize.y-app->testFont.maxExtendDown), GC->colors.foreground, 1.0f,
+		// 	"%u Lines Offset: %f (%fpx long)", app->lineList.numLines, ui->scrollOffset, ui->fileHeight);
+		// Line_t* linePntr = GetLineAt(&app->lineList, ui->hoverLocation.lineNum);
 		// if (linePntr != nullptr)
 		// {
 		// 	Line_t* lineBefore = (Line_t*)linePntr->header.lastItem;
 		// 	Line_t* lineAfter = (Line_t*)linePntr->header.nextItem;
 		
 		// 	rs->PrintString(
-		// 		NewVec2(0, ui->screenSize.y-appData->testFont.maxExtendDown), GC->colors.foreground, 1.0f,
+		// 		NewVec2(0, ui->screenSize.y-app->testFont.maxExtendDown), GC->colors.foreground, 1.0f,
 		// 		"%08X <- #%u %08X -> %08X", lineBefore, ui->hoverLocation.lineNum, linePntr, lineAfter);
 		// }
 		
-		Line_t* lastLine = GetLastLine(&appData->lineList);
+		Line_t* lastLine = GetLastLine(&app->lineList);
 		// DEBUG_PrintLine("Last Item: %p", lastLine->header.lastItem);
-		if (lastLine->timestamp == 0 && appData->lineList.numLines > 1)
+		if (lastLine->timestamp == 0 && app->lineList.numLines > 1)
 		{
-			lastLine = GetLineAt(&appData->lineList, appData->lineList.numLines-1 - 1);
+			lastLine = GetLineAt(&app->lineList, app->lineList.numLines-1 - 1);
 		}
 		
 		//Print the status message
-		if (GetTimestamp(appData->statusMessageTime) != 0)
+		if (GetTimestamp(app->statusMessageTime) != 0)
 		{
-			i64 secondsDifference = SubtractTimes(PlatformInfo->localTime, appData->statusMessageTime, TimeUnit_Seconds);
+			i64 secondsDifference = SubtractTimes(platform->localTime, app->statusMessageTime, TimeUnit_Seconds);
 			if (secondsDifference >= 0 && secondsDifference < GC->statusMessageTime)
 			{
 				Color_t messageColor = GC->colors.foreground;
 				
-				if (appData->statusMessageType == StatusMessage_Debug)
+				if (app->statusMessageType == StatusMessage_Debug)
 				{
 					messageColor = GC->colors.uiLightGray1;
 				}
-				else if (appData->statusMessageType == StatusMessage_Info)
+				else if (app->statusMessageType == StatusMessage_Info)
 				{
 					messageColor = GC->colors.foreground;
 				}
-				else if (appData->statusMessageType == StatusMessage_Success)
+				else if (app->statusMessageType == StatusMessage_Success)
 				{
 					messageColor = GC->colors.highlight2;
 				}
-				else if (appData->statusMessageType == StatusMessage_Error)
+				else if (app->statusMessageType == StatusMessage_Error)
 				{
 					messageColor = GC->colors.highlight3;
 				}
 				
-				rs->DrawString(appData->statusMessage, NewVec2(5, ui->screenSize.y-appData->testFont.maxExtendDown), messageColor, 1.0f);
+				rs->DrawString(app->statusMessage, NewVec2(5, ui->screenSize.y-app->testFont.maxExtendDown), messageColor, 1.0f);
 			}
 		}
 		
@@ -2169,10 +2158,10 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 			Color_t buttonColor = GC->colors.uiGray1;
 			Color_t outlineColor = GC->colors.background;
 			
-			if (IsInsideRectangle(AppInput->mousePos, ui->gotoEndButtonRec))
+			if (IsInsideRectangle(RenderMousePos, ui->gotoEndButtonRec))
 			{
 				if (ButtonDown(MouseButton_Left) &&
-					IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], ui->gotoEndButtonRec))
+					IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, ui->gotoEndButtonRec))
 				{
 					buttonColor = GC->colors.highlight3;
 					outlineColor = GC->colors.foreground;
@@ -2186,11 +2175,11 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 			rs->DrawButton(ui->gotoEndButtonRec, buttonColor, outlineColor);
 		}
 		
-		if (appData->comPort.isOpen && GC->showComNameInStatusBar)
+		if (app->comPort.isOpen && GC->showComNameInStatusBar)
 		{
-			v2 comNameSize = MeasureString(&appData->testFont, GC->comPortNames[appData->comPort.index]);
-			rs->DrawString(GC->comPortNames[appData->comPort.index],
-				NewVec2(ui->gotoEndButtonRec.x - comNameSize.x - 5, ui->screenSize.y-appData->testFont.maxExtendDown),
+			v2 comNameSize = MeasureString(&app->testFont, GC->comPortNames[app->comPort.index]);
+			rs->DrawString(GC->comPortNames[app->comPort.index],
+				NewVec2(ui->gotoEndButtonRec.x - comNameSize.x - 5, ui->screenSize.y-app->testFont.maxExtendDown),
 				GC->colors.foreground, 1.0f);
 		}
 	}
@@ -2211,7 +2200,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		
 		if (IsInsideRectangle(ui->mousePos, buttonRec) && !ui->mouseInMenu)
 		{
-			if (ButtonDown(MouseButton_Left) && IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], buttonRec))
+			if (ButtonDown(MouseButton_Left) && IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, buttonRec))
 			{
 				// iconColor = Color_Highlight2;
 				highlightColor = {Color_Black};//Color_Highlight4;
@@ -2237,41 +2226,41 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	// |         Rx and Tx LEDs         |
 	// +================================+
 	{
-		if (appData->rxTxShiftCountdown == 0)
+		if (app->rxTxShiftCountdown == 0)
 		{
-			appData->rxTxShiftCountdown = GC->rxTxLedDelay;
+			app->rxTxShiftCountdown = GC->rxTxLedDelay;
 			
-			appData->rxShiftRegister = (u8)(appData->rxShiftRegister >> 1);
-			appData->txShiftRegister = (u8)(appData->txShiftRegister >> 1);
+			app->rxShiftRegister = (u8)(app->rxShiftRegister >> 1);
+			app->txShiftRegister = (u8)(app->txShiftRegister >> 1);
 		}
 		else
 		{
-			appData->rxTxShiftCountdown--;
+			app->rxTxShiftCountdown--;
 		}
 		
 		Color_t centerColor = GC->colors.uiGray4;
-		if ((appData->rxShiftRegister&0x80) > 0 ||
-			(appData->rxShiftRegister&0x40) > 0)
+		if ((app->rxShiftRegister&0x80) > 0 ||
+			(app->rxShiftRegister&0x40) > 0)
 		{
 			centerColor = GC->colors.receiveLed;
 		}
 		rs->DrawRectangle(ui->rxLedRec, centerColor);
 		centerColor = GC->colors.uiGray4;
-		if ((appData->txShiftRegister&0x80) > 0 ||
-			(appData->txShiftRegister&0x40) > 0)
+		if ((app->txShiftRegister&0x80) > 0 ||
+			(app->txShiftRegister&0x40) > 0)
 		{
 			centerColor = GC->colors.transmitLed;
 		}
 		rs->DrawRectangle(ui->txLedRec, centerColor);
 		for (u32 shift = 0; shift < sizeof(u8)*8; shift++)
 		{
-			if (IsFlagSet(appData->rxShiftRegister, (1<<shift)))
+			if (IsFlagSet(app->rxShiftRegister, (1<<shift)))
 			{
 				rec deflatedRec = RectangleInflate(ui->rxLedRec, (r32)(8-shift) * 1);
 				rs->DrawButton(deflatedRec, {Color_TransparentBlack}, GC->colors.receiveLed, 1);
 			}
 			
-			if (IsFlagSet(appData->txShiftRegister, (1<<shift)))
+			if (IsFlagSet(app->txShiftRegister, (1<<shift)))
 			{
 				rec deflatedRec = RectangleInflate(ui->txLedRec, (r32)(8-shift) * 1);
 				rs->DrawButton(deflatedRec, {Color_TransparentBlack}, GC->colors.transmitLed, 1);
@@ -2284,10 +2273,10 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	// +================================+
 	{
 		const char* clearStr = "Clear";
-		v2 textSize = MeasureString(&appData->testFont, clearStr);
+		v2 textSize = MeasureString(&app->testFont, clearStr);
 		v2 textPos = NewVec2(
 			ui->clearButtonRec.x + ui->clearButtonRec.width/2 - textSize.x/2,
-			ui->clearButtonRec.y + ui->clearButtonRec.height/2 + appData->testFont.lineHeight/2 - appData->testFont.maxExtendDown
+			ui->clearButtonRec.y + ui->clearButtonRec.height/2 + app->testFont.lineHeight/2 - app->testFont.maxExtendDown
 		);
 		
 		Color_t buttonColor, textColor, borderColor;
@@ -2300,13 +2289,13 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	// +==============================+
 	// |     Python Running Label     |
 	// +==============================+
-	if (appData->programInstance.isOpen)
+	if (app->programInstance.isOpen)
 	{
 		const char* runningStr = "Py";
-		v2 strSize = MeasureString(&appData->testFont, runningStr);
+		v2 strSize = MeasureString(&app->testFont, runningStr);
 		v2 textPos = NewVec2(
 			ui->clearButtonRec.x - strSize.x - 5,
-			ui->mainMenuRec.y + appData->testFont.maxExtendUp
+			ui->mainMenuRec.y + app->testFont.maxExtendUp
 		);
 		
 		rs->DrawString(runningStr, textPos, GC->colors.foreground);
@@ -2315,23 +2304,23 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	// +==================================+
 	// |         Generic Counter          |
 	// +==================================+
-	if (GetRegularExpression(&appData->regexList, GC->genericCountRegexName) != nullptr)
+	if (GetRegularExpression(&app->regexList, GC->genericCountRegexName) != nullptr)
 	{
-		// rs->PrintString(NewVec2(mainMenuButtonsRight + 10, appData->testFont.maxExtendUp + 10), GC->colors.foreground, 1.0f,
-		// 				"Counter: %u", appData->genericCounter);
+		// rs->PrintString(NewVec2(mainMenuButtonsRight + 10, app->testFont.maxExtendUp + 10), GC->colors.foreground, 1.0f,
+		// 				"Counter: %u", app->genericCounter);
 	}
 	
 	// +==================================+
 	// |       Save To File Button        |
 	// +==================================+
-	if (appData->selectionStart.lineNum != appData->selectionEnd.lineNum ||
-		appData->selectionStart.charIndex != appData->selectionEnd.charIndex)
+	if (app->selectionStart.lineNum != app->selectionEnd.lineNum ||
+		app->selectionStart.charIndex != app->selectionEnd.charIndex)
 	{
 		const char* clearStr = "Save To File";
-		v2 textSize = MeasureString(&appData->testFont, clearStr);
+		v2 textSize = MeasureString(&app->testFont, clearStr);
 		v2 textPos = NewVec2(
 			ui->saveButtonRec.x + ui->saveButtonRec.width/2 - textSize.x/2,
-			ui->saveButtonRec.y + ui->saveButtonRec.height/2 + appData->testFont.lineHeight/2 - appData->testFont.maxExtendDown
+			ui->saveButtonRec.y + ui->saveButtonRec.height/2 + app->testFont.lineHeight/2 - app->testFont.maxExtendDown
 		);
 		
 		Color_t buttonColor, textColor, borderColor;
@@ -2341,43 +2330,42 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		rs->DrawString(clearStr, textPos, textColor);
 	}
 	
-	MenuHandlerDrawMenus(PlatformInfo, AppInput, &appData->renderState, &appData->menuHandler);
+	MenuHandlerDrawMenus(&app->renderState, &app->menuHandler);
 	
 	// +================================+
 	// |       Draw Debug Overlay       |
 	// +================================+
 	#if DEBUG
-	if (appData->showDebugMenu)
+	if (app->showDebugMenu)
 	{
-		rec overlayRec = NewRectangle(10, 10, (r32)PlatformInfo->screenSize.x - 10*2, (r32)PlatformInfo->screenSize.y - 10*2);
+		rec overlayRec = NewRectangle(10, 10, (r32)RenderScreenSize.x - 10*2, (r32)RenderScreenSize.y - 10*2);
 		
 		rs->DrawButton(overlayRec, ColorTransparent({Color_Black}, 0.5f), ColorTransparent({Color_White}, 0.5f));
 		
-		v2 textPos = NewVec2(overlayRec.x + 5, overlayRec.y + 5 + appData->testFont.maxExtendUp);
+		v2 textPos = NewVec2(overlayRec.x + 5, overlayRec.y + 5 + app->testFont.maxExtendUp);
 		
 		rs->PrintString(textPos, {Color_White}, 1.0f, "Input Arena: %u/%u (%.3f%%)",
-			appData->inputArena.used, appData->inputArena.size,
-			(r32)appData->inputArena.used / (r32)appData->inputArena.size * 100.0f);
-		textPos.y += appData->testFont.lineHeight;
+			app->inputArena.used, app->inputArena.size,
+			(r32)app->inputArena.used / (r32)app->inputArena.size * 100.0f);
+		textPos.y += app->testFont.lineHeight;
 		
 		rs->PrintString(textPos, {Color_White}, 1.0f, "Main Heap: %u/%u (%.3f%%)",
-			appData->mainHeap.used, appData->mainHeap.size,
-			(r32)appData->mainHeap.used / (r32)appData->mainHeap.size * 100.0f);
-		textPos.y += appData->testFont.lineHeight;
+			app->mainHeap.used, app->mainHeap.size,
+			(r32)app->mainHeap.used / (r32)app->mainHeap.size * 100.0f);
+		textPos.y += app->testFont.lineHeight;
 		
 		rs->PrintString(textPos, {Color_White}, 1.0f, "Temp Arena: %u/%u (%.3f%%)",
 			ArenaGetHighWaterMark(TempArena), TempArena->size,
 			(r32)ArenaGetHighWaterMark(TempArena) / (r32)TempArena->size * 100.0f);
-		textPos.y += appData->testFont.lineHeight;
-		
+		textPos.y += app->testFont.lineHeight;
 	}
 	#endif
 	
 	// Assert(true == false);
 	
-	// DrawCircle(appData, AppInput->mouseStartPos[MouseButton_Left], AppInput->mouseMaxDist[MouseButton_Left], {Color_Red});
-	// DrawCircle(appData, AppInput->mouseStartPos[MouseButton_Right], AppInput->mouseMaxDist[MouseButton_Right], {Color_Blue});
-	// DrawCircle(appData, AppInput->mouseStartPos[MouseButton_Middle], AppInput->mouseMaxDist[MouseButton_Middle], {Color_Green});
+	// DrawCircle(app, input->mouseStartPos[MouseButton_Left]/GUI_SCALE, input->mouseMaxDist[MouseButton_Left], {Color_Red});
+	// DrawCircle(app, input->mouseStartPos[MouseButton_Right]/GUI_SCALE, input->mouseMaxDist[MouseButton_Right], {Color_Blue});
+	// DrawCircle(app, input->mouseStartPos[MouseButton_Middle]/GUI_SCALE, input->mouseMaxDist[MouseButton_Middle], {Color_Green});
 	
 	// rs->DrawRectangle(ui->statusBarRec, {Color_Yellow});
 	// rs->DrawRectangle(ui->scrollBarGutterRec, {Color_Red});
@@ -2393,12 +2381,13 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 //+================================================================+
 EXPORT AppGetSoundSamples_DEFINITION(App_GetSoundSamples)
 {
-	Gl_PlatformInfo = PlatformInfo;
-	Gl_AppMemory = AppMemory;
-	AppData_t* appData = (AppData_t*)AppMemory->permanantPntr;
-	GL_AppData = appData;
-	GC = &appData->globalConfig;
-	TempArena = &appData->tempArena;
+	platform = PlatformInfo;
+	input = AppInput;
+	app = (AppData_t*)AppMemory->permanantPntr;
+	GC = &app->globalConfig;
+	TempArena = &app->tempArena;
+	RenderScreenSize = NewVec2(platform->screenSize.x / GUI_SCALE, platform->screenSize.y / GUI_SCALE);
+	RenderMousePos = NewVec2(input->mousePos.x / GUI_SCALE, input->mousePos.y / GUI_SCALE);
 }
 
 //+================================================================+
@@ -2406,12 +2395,11 @@ EXPORT AppGetSoundSamples_DEFINITION(App_GetSoundSamples)
 //+================================================================+
 EXPORT AppClosing_DEFINITION(App_Closing)
 {
-	Gl_PlatformInfo = PlatformInfo;
-	Gl_AppMemory = AppMemory;
-	AppData_t* appData = (AppData_t*)AppMemory->permanantPntr;
-	GL_AppData = appData;
-	GC = &appData->globalConfig;
-	TempArena = &appData->tempArena;
+	platform = PlatformInfo;
+	app = (AppData_t*)AppMemory->permanantPntr;
+	GC = &app->globalConfig;
+	TempArena = &app->tempArena;
+	RenderScreenSize = NewVec2(platform->screenSize.x / GUI_SCALE, platform->screenSize.y / GUI_SCALE);
 	
 	DEBUG_WriteLine("Application closing!");
 	

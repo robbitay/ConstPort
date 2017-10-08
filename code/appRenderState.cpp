@@ -211,7 +211,7 @@ void RenderState_t::SetViewport(rec viewport)
 {
 	this->viewport = viewport;
 	
-	if (Gl_PlatformInfo->platformType == Platform_OSX)
+	if (platform->platformType == Platform_OSX)
 	{
 		// this->viewport.width  /= 2;
 		// this->viewport.height /= 2;

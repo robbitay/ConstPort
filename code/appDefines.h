@@ -14,22 +14,22 @@ Date:   06\08\2017
 #endif
 
 // #define MIN_GUTTER_WIDTH           40 //px
-#define MENU_DEFAULT_TITLEBAR_SIZE GUI_SCALE*22 //px
-#define CONTEXT_MENU_PADDING       GUI_SCALE*5  //px
-#define MAIN_MENU_BUTTON_PADDING   GUI_SCALE*10 //px
-#define MAIN_MENU_HEIGHT           GUI_SCALE*(40+MAIN_MENU_BUTTON_PADDING*2) //px
-#define COM_MENU_TAB_PADDING       GUI_SCALE*5  //px
-#define COM_MENU_TAB_HEIGHT        GUI_SCALE*35 //px
-#define COM_MENU_OUTER_PADDING     GUI_SCALE*5  //px
-#define COM_MENU_INNER_PADDING     GUI_SCALE*10 //px
-#define CONNECT_BUTTON_WIDTH       GUI_SCALE*80 //px
-#define CONNECT_BUTTON_HEIGHT      GUI_SCALE*25 //px
-#define RX_TX_LED_SIZE             GUI_SCALE*8  //px
-#define CLEAR_BUTTON_WIDTH         GUI_SCALE*60 //px
-#define CLEAR_BUTTON_HEIGHT        GUI_SCALE*20 //px
-#define SAVE_BUTTON_WIDTH          GUI_SCALE*120 //px
-#define SAVE_BUTTON_HEIGHT         GUI_SCALE*20 //px
-#define MIN_BANNER_HEIGHT          GUI_SCALE*2  //px
+#define MENU_DEFAULT_TITLEBAR_SIZE 22 //px
+#define CONTEXT_MENU_PADDING       5  //px
+#define MAIN_MENU_BUTTON_PADDING   10 //px
+#define MAIN_MENU_HEIGHT           (40+MAIN_MENU_BUTTON_PADDING*2) //px
+#define COM_MENU_TAB_PADDING       5  //px
+#define COM_MENU_TAB_HEIGHT        35 //px
+#define COM_MENU_OUTER_PADDING     5  //px
+#define COM_MENU_INNER_PADDING     10 //px
+#define CONNECT_BUTTON_WIDTH       80 //px
+#define CONNECT_BUTTON_HEIGHT      25 //px
+#define RX_TX_LED_SIZE             8  //px
+#define CLEAR_BUTTON_WIDTH         60 //px
+#define CLEAR_BUTTON_HEIGHT        20 //px
+#define SAVE_BUTTON_WIDTH          120 //px
+#define SAVE_BUTTON_HEIGHT         20 //px
+#define MIN_BANNER_HEIGHT          2  //px
 #define BANNER_EXPAND_SPEED        0.003f //percentage
 #define STATUS_MESSAGE_BUFFER_SIZE 128//bytes
 

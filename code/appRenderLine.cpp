@@ -9,11 +9,9 @@ Description:
 */
 
 //Returns the height of the line
-r32 RenderLine(const AppInput_t* AppInput, Line_t* linePntr, v2 position, bool sizeOnly = false)
+r32 RenderLine(Line_t* linePntr, v2 position, bool sizeOnly = false)
 {
-	AppData_t* appData = GL_AppData;
-	const PlatformInfo_t* PlatformInfo = Gl_PlatformInfo;
-	UiElements_t* ui = &appData->uiElements;
+	UiElements_t* ui = &app->uiElements;
 	r32 result = 0;
 	
 	Color_t color = linePntr->matchColor;
@@ -24,14 +22,14 @@ r32 RenderLine(const AppInput_t* AppInput, Line_t* linePntr, v2 position, bool s
 		//TODO: Draw this non-relative to the camera?
 		rec backgroundRec = NewRectangle(
 			0,
-			position.y - appData->testFont.maxExtendUp - GC->lineSpacing/2,
+			position.y - app->testFont.maxExtendUp - GC->lineSpacing/2,
 			10000,
-			appData->testFont.lineHeight + GC->lineSpacing
+			app->testFont.lineHeight + GC->lineSpacing
 		);
-		appData->renderState.DrawRectangle(backgroundRec, backgroundColor);
-		appData->renderState.DrawString(linePntr->chars, position, color, 1.0f);
+		app->renderState.DrawRectangle(backgroundRec, backgroundColor);
+		app->renderState.DrawString(linePntr->chars, position, color, 1.0f);
 	}
-	result += appData->testFont.lineHeight;
+	result += app->testFont.lineHeight;
 	
 	if (GC->elapsedBannerEnabled)
 	{
@@ -40,7 +38,7 @@ r32 RenderLine(const AppInput_t* AppInput, Line_t* linePntr, v2 position, bool s
 		{
 			u64 nextLineTimestamp = nextLine->timestamp;
 			if (nextLineTimestamp == 0)
-				nextLineTimestamp = GetTimestamp(PlatformInfo->localTime);
+				nextLineTimestamp = GetTimestamp(platform->localTime);
 			
 			if (nextLineTimestamp > linePntr->timestamp)
 			{
@@ -85,12 +83,10 @@ r32 RenderLine(const AppInput_t* AppInput, Line_t* linePntr, v2 position, bool s
 	return result;
 }
 
-void RenderLineGutter(const AppInput_t* AppInput, const Line_t* linePntr, v2 position, i32 lineIndex, r32 lineHeight)
+void RenderLineGutter(const Line_t* linePntr, v2 position, i32 lineIndex, r32 lineHeight)
 {
-	AppData_t* appData = GL_AppData;
-	const PlatformInfo_t* PlatformInfo = Gl_PlatformInfo;
-	UiElements_t* ui = &appData->uiElements;
-	RenderState_t* rs = &appData->renderState;
+	UiElements_t* ui = &app->uiElements;
+	RenderState_t* rs = &app->renderState;
 	
 	if (GC->showLineNumbers)
 	{
@@ -105,7 +101,7 @@ void RenderLineGutter(const AppInput_t* AppInput, const Line_t* linePntr, v2 pos
 		{
 			u64 nextLineTimestamp = nextLine->timestamp;
 			if (nextLineTimestamp == 0)
-				nextLineTimestamp = GetTimestamp(PlatformInfo->localTime);
+				nextLineTimestamp = GetTimestamp(platform->localTime);
 			
 			if (nextLineTimestamp > linePntr->timestamp)
 			{
@@ -118,7 +114,7 @@ void RenderLineGutter(const AppInput_t* AppInput, const Line_t* linePntr, v2 pos
 						r32 bannerWidth = ui->viewRec.width * EaseCubicOut(halfAnimProgress);
 						rec bannerRec = NewRectangle(
 							ui->viewRec.x + ui->viewRec.width/2 - bannerWidth/2,
-							position.y + appData->testFont.maxExtendDown,
+							position.y + app->testFont.maxExtendDown,
 							bannerWidth,
 							2
 						);
@@ -131,7 +127,7 @@ void RenderLineGutter(const AppInput_t* AppInput, const Line_t* linePntr, v2 pos
 						bannerHeight = MaxReal32(MIN_BANNER_HEIGHT, GC->elapsedBannerHeight * EaseCubicOut(halfAnimProgress));
 						rec bannerRec = NewRectangle(
 							ui->viewRec.x,
-							position.y + appData->testFont.maxExtendDown + GC->lineSpacing/2, 
+							position.y + app->testFont.maxExtendDown + GC->lineSpacing/2, 
 							ui->viewRec.width,
 							bannerHeight
 						);
@@ -142,10 +138,10 @@ void RenderLineGutter(const AppInput_t* AppInput, const Line_t* linePntr, v2 pos
 							char timespanStrBuffer[32] = {};
 							u32 timespanStrLength = GetElapsedString(difference, timespanStrBuffer, ArrayCount(timespanStrBuffer));
 							strncpy(&timespanStrBuffer[timespanStrLength], " Passed", ArrayCount(timespanStrBuffer)-1 - timespanStrLength);
-							v2 stringSize = MeasureString(&appData->testFont, timespanStrBuffer);
+							v2 stringSize = MeasureString(&app->testFont, timespanStrBuffer);
 							v2 stringDrawPos = NewVec2(
 								bannerRec.x + bannerRec.width/2 - stringSize.x/2,
-								bannerRec.y + bannerRec.height/2 - stringSize.y/2 + appData->testFont.maxExtendUp
+								bannerRec.y + bannerRec.height/2 - stringSize.y/2 + app->testFont.maxExtendUp
 							);
 							r32 stringOpacity = (linePntr->animProgress-0.8f) / 0.2f;
 							Color_t stringColor = GC->colors.foreground;
@@ -160,12 +156,12 @@ void RenderLineGutter(const AppInput_t* AppInput, const Line_t* linePntr, v2 pos
 	}
 	
 	if (IsFlagSet(linePntr->flags, LineFlag_MarkBelow) ||
-		(ButtonDown(MouseButton_Left) && IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], ui->gutterRec) && ui->markIndex != -1 && ui->markIndex == lineIndex))
+		(ButtonDown(MouseButton_Left) && IsInsideRectangle(input->mouseStartPos[MouseButton_Left] / GUI_SCALE, ui->gutterRec) && ui->markIndex != -1 && ui->markIndex == lineIndex))
 	{
 		if (bannerHeight > 0) bannerHeight += 2;
 		rec markRec = NewRectangle(
 			ui->gutterRec.x, 
-			position.y + appData->testFont.maxExtendDown + bannerHeight, 
+			position.y + app->testFont.maxExtendDown + bannerHeight, 
 			ui->gutterRec.width + ui->viewRec.width,
 			(r32)GC->markHeight
 		);
@@ -180,7 +176,7 @@ void RenderLineGutter(const AppInput_t* AppInput, const Line_t* linePntr, v2 pos
 		bool drawButtonBelow = false;
 		#if 0
 		//TODO: Only do this check if this line is within the view bounds
-		if (IsInsideRectangle(AppInput->mousePos, ui->viewRec) &&
+		if (IsInsideRectangle(RenderMousePos, ui->viewRec) &&
 			ui->hoverLocation.lineNum >= 0)
 		{
 			if (ui->hoverLocation.lineNum <= lineIndex)
@@ -221,8 +217,8 @@ void RenderLineGutter(const AppInput_t* AppInput, const Line_t* linePntr, v2 pos
 		Color_t markColor1 = GC->colors.markColor1;
 		Color_t markColor2 = GC->colors.markColor2;
 		if (ui->markIndex == lineIndex &&
-			// IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], ui->gutterRec) &&
-			IsInsideRectangle(AppInput->mousePos, ui->gutterRec))
+			// IsInsideRectangle(input->mouseStartPos[MouseButton_Left] / GUI_SCALE, ui->gutterRec) &&
+			IsInsideRectangle(RenderMousePos, ui->gutterRec))
 		{
 			markColor1 = GC->colors.highlight2;
 			markColor2 = GC->colors.highlight2;
@@ -243,12 +239,11 @@ void RenderLineGutter(const AppInput_t* AppInput, const Line_t* linePntr, v2 pos
 	}
 }
 
-v2 MeasureLines(const AppInput_t* AppInput, LineList_t* lineList, const Font_t* font)
+v2 MeasureLines(LineList_t* lineList, const Font_t* font)
 {
-	AppData_t* appData = GL_AppData;
 	v2 result = Vec2_Zero;
-	UiElements_t* ui = &appData->uiElements;
-	RenderState_t* rs = &appData->renderState;
+	UiElements_t* ui = &app->uiElements;
+	RenderState_t* rs = &app->renderState;
 	Line_t* linePntr = (Line_t*)lineList->list.firstItem;
 	u32 numCharsMax = 0;
 	i32 lineIndex = 0;
@@ -272,7 +267,7 @@ v2 MeasureLines(const AppInput_t* AppInput, LineList_t* lineList, const Font_t* 
 		}
 		
 		r32 beforeHeight = result.y;
-		r32 lineHeight = RenderLine(AppInput, linePntr, Vec2_Zero, true);
+		r32 lineHeight = RenderLine(linePntr, Vec2_Zero, true);
 		
 		result.y += lineHeight;
 		result.y += GC->lineSpacing;
@@ -288,7 +283,7 @@ v2 MeasureLines(const AppInput_t* AppInput, LineList_t* lineList, const Font_t* 
 		{
 			ui->hoverLocation.lineNum = lineIndex;
 			ui->hoverMouseLineOffset = relMousePos - NewVec2(0, beforeHeight);
-			ui->hoverLocation.charIndex = GetStringIndexForLocation(&appData->testFont, linePntr->chars, ui->hoverMouseLineOffset);
+			ui->hoverLocation.charIndex = GetStringIndexForLocation(&app->testFont, linePntr->chars, ui->hoverMouseLineOffset);
 			ui->markIndex = lineIndex;
 			if (ui->markIndex > 0 && ui->hoverMouseLineOffset.y < (lineHeight+GC->lineSpacing) / 2.0f)
 			{

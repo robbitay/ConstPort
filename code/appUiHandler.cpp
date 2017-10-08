@@ -22,14 +22,12 @@ void InitializeUiElements(UiElements_t* ui)
 	ui->buttonTextures[Button_Help] =            LoadTexture("Resources/Sprites/buttonIcon2.png");
 }
 
-void RecalculateUiElements(const AppInput_t* AppInput, UiElements_t* ui, bool resetFollowingEndOfFile)
+void RecalculateUiElements(UiElements_t* ui, bool resetFollowingEndOfFile)
 {
-	AppData_t* appData = GL_AppData;
-	
 	//Static sizing helpers
-	ui->mousePos = AppInput->mousePos;
-	ui->screenSize = NewVec2((r32)Gl_PlatformInfo->screenSize.x, (r32)Gl_PlatformInfo->screenSize.y);
-	ui->lineHeight = appData->testFont.lineHeight + GC->lineSpacing;
+	ui->mousePos = RenderMousePos;
+	ui->screenSize = RenderScreenSize;
+	ui->lineHeight = app->testFont.lineHeight + GC->lineSpacing;
 	
 	//Static Rectangles
 	ui->mainMenuRec = NewRectangle(
@@ -68,9 +66,9 @@ void RecalculateUiElements(const AppInput_t* AppInput, UiElements_t* ui, bool re
 	);
 	ui->statusBarRec = NewRectangle(
 		0, 
-		ui->screenSize.y - appData->testFont.lineHeight, 
+		ui->screenSize.y - app->testFont.lineHeight, 
 		ui->screenSize.x, 
-		appData->testFont.lineHeight
+		app->testFont.lineHeight
 	);
 	ui->scrollBarGutterRec = NewRectangle(
 		ui->screenSize.x - (r32)GC->scrollbarWidth - (r32)GC->scrollbarPadding*2, 
@@ -92,7 +90,7 @@ void RecalculateUiElements(const AppInput_t* AppInput, UiElements_t* ui, bool re
 	);
 	if (GC->showLineNumbers)
 	{
-		ui->gutterRec.width = NumDecimalDigits(appData->lineList.numLines) * MeasureString(&appData->testFont, " ", 1).x + 2;
+		ui->gutterRec.width = NumDecimalDigits(app->lineList.numLines) * MeasureString(&app->testFont, " ", 1).x + 2;
 		if (ui->gutterRec.width < (r32)GC->minGutterWidth) ui->gutterRec.width = (r32)GC->minGutterWidth;
 	}
 	ui->viewRec = NewRectangle(
@@ -103,7 +101,7 @@ void RecalculateUiElements(const AppInput_t* AppInput, UiElements_t* ui, bool re
 	);
 	
 	//Dynamic helpers
-	ui->fileSize = MeasureLines(AppInput, &appData->lineList, &appData->testFont);
+	ui->fileSize = MeasureLines(&app->lineList, &app->testFont);
 	ui->fileSize.x += 10;
 	// DEBUG_PrintLine("FileSize = (%f, %f)", ui->fileSize.x, ui->fileSize.y);
 	ui->maxScrollOffset = NewVec2(
@@ -140,16 +138,14 @@ void RecalculateUiElements(const AppInput_t* AppInput, UiElements_t* ui, bool re
 	//NOTE: Since MeasureLines also captures the position of the hoverLocation and scrollOffset of the first line that
 	//		needs to be rendered it is dependant on the scrollOffset to be in it's proper position for these calculations
 	//		Therefore we have to run it once more to update those locations correctly after min and max offset have been accounted for
-	MeasureLines(AppInput, &appData->lineList, &appData->testFont);
+	MeasureLines(&app->lineList, &app->testFont);
 	
 	// DEBUG_PrintLine("scrollOffset = (%f, %f)", ui->scrollOffset.x, ui->scrollOffset.y);
 	// DEBUG_PrintLine("MaxScrollOffset = (%f, %f)", ui->maxScrollOffset.x, ui->maxScrollOffset.y);
 }
 
-void UpdateUiElements(const AppInput_t* AppInput, UiElements_t* ui)
+void UpdateUiElements(UiElements_t* ui)
 {
-	AppData_t* appData = GL_AppData;
-	
 	v2 gotoOffset = (ui->scrollOffsetGoto - ui->scrollOffset);
 	
 	if (Abs32(gotoOffset.x) < 1)

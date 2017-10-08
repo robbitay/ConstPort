@@ -8,50 +8,48 @@ Description:
 
 //#included from app.cpp
 
-#define DEBUG_Write(formatStr) do {                 \
-	if (Gl_PlatformInfo != nullptr &&               \
-		Gl_PlatformInfo->DebugWritePntr != nullptr) \
-	{                                               \
-		Gl_PlatformInfo->DebugWritePntr(formatStr); \
-	}                                               \
+#define DEBUG_Write(formatStr) do {          \
+	if (platform != nullptr &&               \
+		platform->DebugWritePntr != nullptr) \
+	{                                        \
+		platform->DebugWritePntr(formatStr); \
+	}                                        \
 } while (0)
 
-#define DEBUG_WriteLine(formatStr) do {                 \
-	if (Gl_PlatformInfo != nullptr &&                   \
-		Gl_PlatformInfo->DebugWriteLinePntr != nullptr) \
-	{                                                   \
-		Gl_PlatformInfo->DebugWriteLinePntr(formatStr); \
-	}                                                   \
+#define DEBUG_WriteLine(formatStr) do {          \
+	if (platform != nullptr &&                   \
+		platform->DebugWriteLinePntr != nullptr) \
+	{                                            \
+		platform->DebugWriteLinePntr(formatStr); \
+	}                                            \
 } while (0)
 
-#define DEBUG_Print(formatStr, ...) do {                         \
-	if (Gl_PlatformInfo != nullptr &&                            \
-		Gl_PlatformInfo->DebugPrintPntr != nullptr)              \
-	{                                                            \
-		Gl_PlatformInfo->DebugPrintPntr(formatStr, __VA_ARGS__); \
-	}                                                            \
+#define DEBUG_Print(formatStr, ...) do {                  \
+	if (platform != nullptr &&                            \
+		platform->DebugPrintPntr != nullptr)              \
+	{                                                     \
+		platform->DebugPrintPntr(formatStr, __VA_ARGS__); \
+	}                                                     \
 } while (0)
 
-#define DEBUG_PrintLine(formatStr, ...) do {                         \
-	if (Gl_PlatformInfo != nullptr &&                                \
-		Gl_PlatformInfo->DebugPrintLinePntr != nullptr)              \
-	{                                                                \
-		Gl_PlatformInfo->DebugPrintLinePntr(formatStr, __VA_ARGS__); \
-	}                                                                \
+#define DEBUG_PrintLine(formatStr, ...) do {                  \
+	if (platform != nullptr &&                                \
+		platform->DebugPrintLinePntr != nullptr)              \
+	{                                                         \
+		platform->DebugPrintLinePntr(formatStr, __VA_ARGS__); \
+	}                                                         \
 } while (0)
 
-//NOTE: Must have access to AppInput
-#define ButtonPressed(button) ((AppInput->buttons[button].isDown && AppInput->buttons[button].transCount > 0) || AppInput->buttons[button].transCount >= 2)
-#define ButtonReleased(button) ((!AppInput->buttons[button].isDown && AppInput->buttons[button].transCount > 0) || AppInput->buttons[button].transCount >= 2)
-#define ButtonDown(button) (AppInput->buttons[button].isDown)
+#define ButtonPressed(button) ((input->buttons[button].isDown && input->buttons[button].transCount > 0) || input->buttons[button].transCount >= 2)
+#define ButtonReleased(button) ((!input->buttons[button].isDown && input->buttons[button].transCount > 0) || input->buttons[button].transCount >= 2)
+#define ButtonDown(button) (input->buttons[button].isDown)
 
-//NOTE: Must have access to AppInput
 //This code shows up for most buttons so I pulled it out into a macro to make it look nice
 #define ButtonColorChoice(buttonColor, textColor, borderColor, rectangle, isSelected, isReady) do \
 {                                                                                                 \
 	if (ButtonDown(MouseButton_Left) &&                                                           \
-		IsInsideRectangle(AppInput->mousePos, rectangle) &&                                       \
-		IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], rectangle))                  \
+		IsInsideRectangle(RenderMousePos, rectangle) &&                                           \
+		IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, rectangle))           \
 	{                                                                                             \
 		buttonColor = GC->colors.buttonPress;                                                     \
 		textColor   = GC->colors.buttonPressText;                                                 \
@@ -63,7 +61,7 @@ Description:
 		textColor   = GC->colors.buttonSelectedText;                                              \
 		borderColor = GC->colors.buttonSelectedBorder;                                            \
 	}                                                                                             \
-	else if (IsInsideRectangle(AppInput->mousePos, rectangle))                                    \
+	else if (IsInsideRectangle(RenderMousePos, rectangle))                                        \
 	{                                                                                             \
 		buttonColor = GC->colors.buttonHover;                                                     \
 		textColor   = GC->colors.buttonHoverText;                                                 \

@@ -46,7 +46,7 @@ del build\*.pdb > NUL 2> NUL
 if "%CompilePlatform%"=="1" (
 	echo[
 	
-	python IncrementVersionNumber.py code\win32_version.h
+	python ..\IncrementVersionNumber.py ..\code\win32_version.h
 	
 	cl /Fe%BuildFolder%%ProjectName%.exe %CompilerFlags% %IncludeDirectories% code\win32_main.cpp /link %LibraryDirectories% %LinkerFlags% %Libraries% kernel32.lib build\resources.res
 
@@ -60,7 +60,7 @@ if "%CompilePlatform%"=="1" (
 if "%CompileApplication%"=="1" (
 	echo[
 	
-	python IncrementVersionNumber.py code\app_version.h
+	python ..\IncrementVersionNumber.py ..\code\app_version.h
 	
 	cl /Fe%BuildFolder%%ProjectName%.dll %CompilerFlags% %IncludeDirectories% code\app.cpp /link %LibraryDirectories% %LinkerFlags% %Libraries% %AppExports% /DLL /PDB:"%BuildFolder%%ProjectName%_%TimeString%.pdb"
 

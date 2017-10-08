@@ -92,7 +92,7 @@ Menu_t* GetMenuAtPoint(MenuHandler_t* menuHandlerPntr, v2 point)
 	return nullptr;
 }
 
-void MenuHandlerUpdate(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInput, MenuHandler_t* menuHandler)
+void MenuHandlerUpdate(MenuHandler_t* menuHandler)
 {
 	for (i32 mIndex = 0; mIndex < menuHandler->menuList.numItems; mIndex++)
 	{
@@ -114,26 +114,22 @@ void MenuHandlerUpdate(const PlatformInfo_t* PlatformInfo, const AppInput_t* App
 					(!menuHandler->movingMenu && 
 					!menuHandler->resizingMenuVert && !menuHandler->resizingMenuHor))
 				{
-					v2 mousePos = AppInput->mousePos;
-					v2 mouseStart = AppInput->mouseStartPos[MouseButton_Left];
-					r32 mouseMaxDist = AppInput->mouseMaxDist[MouseButton_Left];
-					
-					if (AppInput->buttons[MouseButton_Left].isDown)
+					if (input->buttons[MouseButton_Left].isDown)
 					{
-						if (AppInput->buttons[MouseButton_Left].transCount > 0)
+						if (input->buttons[MouseButton_Left].transCount > 0)
 						{
-							if (IsInsideRectangle(mousePos, menuPntr->titleBarRec))
+							if (IsInsideRectangle(RenderMousePos, menuPntr->titleBarRec))
 							{
 								menuHandler->movingMenu = true;
 								menuHandler->resizingMenuVert = false;
 								menuHandler->resizingMenuHor = false;
-								menuHandler->grabMenuOffset = mousePos - menuPntr->titleBarRec.topLeft;
+								menuHandler->grabMenuOffset = RenderMousePos - menuPntr->titleBarRec.topLeft;
 								menuHandler->activeMenuIndex = mIndex;
 							}
 						}
 						else if (menuHandler->movingMenu)
 						{
-							menuPntr->drawRec.topLeft = mousePos - menuHandler->grabMenuOffset;
+							menuPntr->drawRec.topLeft = RenderMousePos - menuHandler->grabMenuOffset;
 						}
 					}
 					else
@@ -145,11 +141,11 @@ void MenuHandlerUpdate(const PlatformInfo_t* PlatformInfo, const AppInput_t* App
 				}
 			}
 			
-			if (!AppInput->buttons[MouseButton_Left].isDown && AppInput->buttons[MouseButton_Left].transCount > 0 &&
-				AppInput->mouseMaxDist[MouseButton_Left] < 10)
+			if (!input->buttons[MouseButton_Left].isDown && input->buttons[MouseButton_Left].transCount > 0 &&
+				input->mouseMaxDist[MouseButton_Left] / GUI_SCALE < 10)
 			{
-				if (IsInsideRectangle(AppInput->mousePos, closeRec) &&
-					IsInsideRectangle(AppInput->mouseStartPos[MouseButton_Left], closeRec))
+				if (IsInsideRectangle(RenderMousePos, closeRec) &&
+					IsInsideRectangle(input->mouseStartPos[MouseButton_Left] / GUI_SCALE, closeRec))
 				{
 					menuPntr->show = false;
 				}
@@ -159,16 +155,16 @@ void MenuHandlerUpdate(const PlatformInfo_t* PlatformInfo, const AppInput_t* App
 				menuPntr->drawRec.x = 0;
 			if (menuPntr->drawRec.y < 0)
 				menuPntr->drawRec.y = 0;
-			if (menuPntr->drawRec.x > PlatformInfo->screenSize.x - menuPntr->drawRec.width)
-				menuPntr->drawRec.x = PlatformInfo->screenSize.x - menuPntr->drawRec.width;
-			if (menuPntr->drawRec.y > PlatformInfo->screenSize.y - menuPntr->drawRec.height)
-				menuPntr->drawRec.y = PlatformInfo->screenSize.y - menuPntr->drawRec.height;
+			if (menuPntr->drawRec.x > platform->screenSize.x - menuPntr->drawRec.width)
+				menuPntr->drawRec.x = platform->screenSize.x - menuPntr->drawRec.width;
+			if (menuPntr->drawRec.y > platform->screenSize.y - menuPntr->drawRec.height)
+				menuPntr->drawRec.y = platform->screenSize.y - menuPntr->drawRec.height;
 			
 			UpdateMenuRecs(menuPntr);
 			
 			if (menuPntr->updateFunctionPntr != nullptr)
 			{
-				((MenuUpdate_f*)menuPntr->updateFunctionPntr)(PlatformInfo, AppInput, menuHandler, menuPntr);
+				((MenuUpdate_f*)menuPntr->updateFunctionPntr)(menuHandler, menuPntr);
 			}
 			
 			UpdateMenuRecs(menuPntr);
@@ -180,7 +176,7 @@ void MenuHandlerUpdate(const PlatformInfo_t* PlatformInfo, const AppInput_t* App
 	}
 }
 
-void MenuHandlerDrawMenus(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInput, RenderState_t* renderState, MenuHandler_t* menuHandler)
+void MenuHandlerDrawMenus(RenderState_t* renderState, MenuHandler_t* menuHandler)
 {
 	for (i32 mIndex = 0; mIndex < menuHandler->menuList.numItems; mIndex++)
 	{
@@ -208,7 +204,7 @@ void MenuHandlerDrawMenus(const PlatformInfo_t* PlatformInfo, const AppInput_t* 
 				closeRec = RectangleInflate(closeRec, -5);
 				
 				renderState->BindTexture(&menuHandler->closeTexture);
-				if (IsInsideRectangle(AppInput->mousePos, closeRec))
+				if (IsInsideRectangle(RenderMousePos, closeRec))
 				{
 					renderState->DrawTexturedRec(closeRec, {Color_Gray});
 				}
@@ -252,7 +248,7 @@ void MenuHandlerDrawMenus(const PlatformInfo_t* PlatformInfo, const AppInput_t* 
 			
 			if (menuPntr->renderFunctionPntr != nullptr)
 			{
-				((MenuRender_f*)menuPntr->renderFunctionPntr)(PlatformInfo, AppInput, renderState, menuHandler, menuPntr);
+				((MenuRender_f*)menuPntr->renderFunctionPntr)(renderState, menuHandler, menuPntr);
 			}
 		}
 	}

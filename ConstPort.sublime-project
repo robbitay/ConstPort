@@ -868,15 +868,16 @@
 			"AppMemory",
 			"AppOutput",
 			"GC",
-			"GL_AppData",
-			"Gl_AppMemory",
-			"Gl_PlatformInfo",
 			"PlatformInfo",
 			"PlatformVersion",
+			"RenderMousePos",
+			"RenderScreenSize",
 			"TempArena",
 			"WindowOpen",
 			"WindowResized",
-			"appData"
+			"app",
+			"input",
+			"platform"
 		],
 		"custom_types":
 		[
