@@ -18,6 +18,10 @@ Description:
 #include <sys/mman.h>
 #include <stdlib.h>
 #include <string.h>
+#include <libgen.h> //needed for dirname
+#include <fcntl.h> //needed for open
+#include <unistd.h> //needed for close
+#include <cerrno>
 
 #include "platformInterface.h"
 #include "osx_version.h"
@@ -34,6 +38,8 @@ PlatformInfo_t PlatformInfo;
 // +--------------------------------------------------------------+
 // |                    Platform Layer Defines                    |
 // +--------------------------------------------------------------+
+#define APPLICATION_DLL_NAME "ConstPort.dll"
+
 #define WINDOW_TITLE     "ConstPort (OSX)"
 #define WINDOW_WIDTH     640
 #define WINDOW_HEIGHT    480
@@ -43,11 +49,37 @@ PlatformInfo_t PlatformInfo;
 #define BACKBUFFER_STENCIL_BITS 8
 #define ANTIALISING_NUM_SAMPLES 4
 
-int main()
+const char* GetExecutableDirectory(int argc, char** argv)
+{
+	const char* result = nullptr;
+	
+	char* filePath = realpath(argv[0], 0);
+	result = dirname(filePath);
+	free(filePath);
+	
+	return result;
+}
+
+int main(int argc, char** argv)
 {
 	i32 screenWidth, screenHeight;
 	
 	printf("ConstPort OSX Platform v%u.%u(%u)\n", PLATFORM_VERSION_MAJOR, PLATFORM_VERSION_MINOR, PLATFORM_VERSION_BUILD);
+	
+	const char* exeDirectory = GetExecutableDirectory(argc, argv);
+	
+	// +==================================+
+	// | Print the command line arguments |
+	// +==================================+
+	#if 0
+	printf("Command Line Arguments: %d\n", argc);
+	for (i32 aIndex = 0; aIndex < argc; aIndex++)
+	{
+		printf("[%d] = \"%s\"\n", aIndex, argv[aIndex]);
+	}
+	printf("Current Directory: \"%s\"\n", realpath("./", 0));
+	printf("Executable Directory: \"%s\"\n", exeDirectory);
+	#endif
 	
 	// +==============================+
 	// |       Initialize GLFW        |
@@ -148,7 +180,9 @@ int main()
 	// +==============================+
 	// |   Load the Application DLL   |
 	// +==============================+
-	void* dllHandle = dlopen("ConstPort.dll", RTLD_NOW);
+	char dllPathBuffer[256] = {};
+	snprintf(dllPathBuffer, ArrayCount(dllPathBuffer), "%s/%s", exeDirectory, APPLICATION_DLL_NAME);
+	void* dllHandle = dlopen(dllPathBuffer, RTLD_NOW);
 	printf("Dll Handle: %p\n", dllHandle);
 	
 	AppGetVersion_f* App_GetVersion           = (AppGetVersion_f*)dlsym(dllHandle, "App_GetVersion");

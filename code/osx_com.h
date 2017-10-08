@@ -7,6 +7,8 @@ Date:   10\05\2017
 #ifndef _OSX_COM_H
 #define _OSX_COM_H
 
+#include <termios.h>
+
 #define MAX_COM_PORT_NUM   12
 
 //TODO: Is there ever a COM0?
@@ -123,14 +125,14 @@ struct ComPort_t
 	
 	ComSettings_t settings;
 	
-	// HANDLE handle;
+	int handle;
 };
 
 const char* GetComPortFileName(ComPortIndex_t comIndex)
 {
 	switch (comIndex)
 	{
-		case ComPort_1:  return "COM1";
+		case ComPort_1:  return "/dev/tty.usbserial-A506KDE9";
 		case ComPort_2:  return "COM2";
 		case ComPort_3:  return "COM3";
 		case ComPort_4:  return "COM4";
@@ -163,7 +165,7 @@ const char* GetComPortReadableName(ComPortIndex_t comIndex)
 {
 	switch (comIndex)
 	{
-		case ComPort_1:  return "COM1";
+		case ComPort_1:  return "USB Serial A506KDE9";
 		case ComPort_2:  return "COM2";
 		case ComPort_3:  return "COM3";
 		case ComPort_4:  return "COM4";

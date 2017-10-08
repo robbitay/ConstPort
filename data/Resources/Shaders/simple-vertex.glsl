@@ -1,4 +1,4 @@
-#version 130
+#version 330
 
 uniform mat4 WorldMatrix;
 uniform mat4 ViewMatrix;
@@ -19,5 +19,4 @@ void main()
 	fTexCoord = SourceRectangle.xy + (inTexCoord * SourceRectangle.zw);
 	mat4 transformMatrix = ProjectionMatrix * (ViewMatrix * WorldMatrix);
 	gl_Position = transformMatrix * vec4(inPosition, 1.0);
-	fPosition = gl_Position.xyz;
 }

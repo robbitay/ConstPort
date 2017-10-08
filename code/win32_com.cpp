@@ -8,6 +8,9 @@ Description:
 #included from win32_main.cpp
 */
 
+// +==============================+
+// |     Win32_GetComPortList     |
+// +==============================+
 GetComPortList_DEFINITION(Win32_GetComPortList)
 {
 	u32 result = 0;
@@ -39,6 +42,9 @@ GetComPortList_DEFINITION(Win32_GetComPortList)
 	return result;
 }
 
+// +==============================+
+// |      Win32_OpenComPort       |
+// +==============================+
 OpenComPort_DEFINITION(Win32_OpenComPort)
 {
 	ComPort_t result = {};
@@ -149,6 +155,9 @@ OpenComPort_DEFINITION(Win32_OpenComPort)
 	return result;
 }
 
+// +==============================+
+// |      Win32_CloseComPort      |
+// +==============================+
 CloseComPort_DEFINITION(Win32_CloseComPort)
 {
 	if (comPortPntr == nullptr) return;
@@ -161,6 +170,9 @@ CloseComPort_DEFINITION(Win32_CloseComPort)
 	}
 }
 
+// +==============================+
+// |      Win32_ReadComPort       |
+// +==============================+
 ReadComPort_DEFINITION(Win32_ReadComPort)
 {
 	Assert(comPortPntr != nullptr);
@@ -183,6 +195,9 @@ ReadComPort_DEFINITION(Win32_ReadComPort)
 	}
 }
 
+// +==============================+
+// |      Win32_WriteComPort      |
+// +==============================+
 WriteComPort_DEFINITION(Win32_WriteComPort)
 {
 	Assert(comPortPntr != nullptr);

@@ -12,6 +12,9 @@
 		},
 		{
 			"path": "/MyStuff/Personal/lib/mylib"
+		},
+		{
+			"path": "/usr/include"
 		}
 	],
 	"settings":

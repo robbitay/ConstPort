@@ -1,8 +1,8 @@
 #!/bin/bash
 
-echo "OSX Build!"
-
 ProjectName="ConstPort"
+CompilePlatform=1
+CompileApplication=0
 
 PlatformMainFile="../code/osx_main.cpp"
 ApplicationMainFile="../code/app.cpp"
@@ -13,8 +13,32 @@ LibraryDirectories="-L../../../lib/glfw/build/src/Debug -L../../../lib/glew/lib 
 Libraries="-lglfw3 -lglew -lboost_regex"
 Frameworks="-framework OpenGL -framework Cocoa -framework IOKit -framework CoreVideo"
 
-echo [Building OSX Platform]
-g++ $CompilerFlags $PlatformMainFile -o $ProjectName $IncludeDirectories $LibraryDirectories $Libraries $Frameworks $LinkerFlags
+if [ $CompilePlatform -gt 0 ]
+then
+	echo [Building OSX Platform]
+	g++ $CompilerFlags $PlatformMainFile -o $ProjectName $IncludeDirectories $LibraryDirectories $Libraries $Frameworks $LinkerFlags
+	
+	if [ $? -ne 0 ]
+	then
+	    echo Platform Build Failed!
+	else
+		echo Platform Build Succeeded!
+	fi
+	
+	echo 
+fi
 
-echo [Building OSX Application]
-g++ -shared $CompilerFlags $ApplicationMainFile -o $ProjectName.dll $IncludeDirectories $LibraryDirectories $Libraries $Frameworks $LinkerFlags
+if [ $CompileApplication -gt 0 ]
+then
+	echo [Building OSX Application]
+	g++ -shared $CompilerFlags $ApplicationMainFile -o $ProjectName.dll $IncludeDirectories $LibraryDirectories $Libraries $Frameworks $LinkerFlags
+	
+	if [ $? -ne 0 ]
+	then
+	    echo Application Build Failed!
+	else
+		echo Application Build Succeeded!
+	fi
+	
+	echo
+fi
