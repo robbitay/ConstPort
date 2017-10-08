@@ -48,7 +48,7 @@ void GlfwKeyPressedCallback(GLFWwindow* window, i32 key, i32 scanCode, i32 actio
 }
 void GlfwCharPressedCallback(GLFWwindow* window, u32 codepoint)
 {
-	Win32_PrintLine("Text Input: 0x%X", codepoint);
+	// Win32_PrintLine("Text Input: 0x%X", codepoint);
 	AppInput_t* currentInput = (AppInput_t*)glfwGetWindowUserPointer(window);
 	
 	if (currentInput->textInputLength < ArrayCount(currentInput->textInput))

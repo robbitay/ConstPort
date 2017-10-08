@@ -37,6 +37,7 @@ OpenComPort_DEFINITION(OSX_OpenComPort)
 	ComPort_t result = {};
 	result.handle = -1;
 	result.index = portIndex;
+	result.settings = settings;
 	
 	const char* portFileName = GetComPortFileName(portIndex);
 	// char portFilePath[256] = {};
@@ -45,47 +46,31 @@ OpenComPort_DEFINITION(OSX_OpenComPort)
 	
 	printf("Attempting to open \"%s\"\n", portFileName);
 	int fileHandle = open(portFileName, O_RDWR | O_NDELAY | O_NOCTTY);
-	printf("open result: %d\n", fileHandle);
 	
 	if (fileHandle != -1)
 	{
 		fcntl(fileHandle, F_SETFL, FNDELAY);
 		
-		/*
-		struct termios {
-			tcflag_t	c_iflag;	//input flags
-			tcflag_t	c_oflag;	//output flags
-			tcflag_t	c_cflag;	//control flags
-			tcflag_t	c_lflag;	//local flags
-			cc_t		c_cc[NCCS];	//control chars
-			speed_t		c_ispeed;	//input speed
-			speed_t		c_ospeed;	//output speed
-		};
-		*/
-		#if 1
 		termios termSettings = {};
-		termios oldTermSettings = {};
 		
-		printf("Getting port settings...\n");
-		if (tcgetattr(fileHandle, &oldTermSettings) != 0)
+		if (tcgetattr(fileHandle, &termSettings) != 0) { printf("tcgetattr call failed: %s!\n", GetErrnoName(errno)); }
+		
+		switch (settings.baudRate)
 		{
-			printf("tcgetattr returned an error: %d!\n", errno);
+			case BaudRate_110:    cfsetospeed(&termSettings, B110);    cfsetispeed(&termSettings, B110);    break;
+			case BaudRate_300:    cfsetospeed(&termSettings, B300);    cfsetispeed(&termSettings, B300);    break;
+			case BaudRate_600:    cfsetospeed(&termSettings, B600);    cfsetispeed(&termSettings, B600);    break;
+			case BaudRate_1200:   cfsetospeed(&termSettings, B1200);   cfsetispeed(&termSettings, B1200);   break;
+			case BaudRate_2400:   cfsetospeed(&termSettings, B2400);   cfsetispeed(&termSettings, B2400);   break;
+			case BaudRate_4800:   cfsetospeed(&termSettings, B4800);   cfsetispeed(&termSettings, B4800);   break;
+			case BaudRate_9600:   cfsetospeed(&termSettings, B9600);   cfsetispeed(&termSettings, B9600);   break;
+			case BaudRate_14400:  cfsetospeed(&termSettings, B14400);  cfsetispeed(&termSettings, B14400);  break;
+			case BaudRate_19200:  cfsetospeed(&termSettings, B19200);  cfsetispeed(&termSettings, B19200);  break;
+			case BaudRate_38400:  cfsetospeed(&termSettings, B38400);  cfsetispeed(&termSettings, B38400);  break;
+			case BaudRate_57600:  cfsetospeed(&termSettings, B57600);  cfsetispeed(&termSettings, B57600);  break;
+			case BaudRate_115200: cfsetospeed(&termSettings, B115200); cfsetispeed(&termSettings, B115200); break;
+			default: printf("Unknown Baud Rate selected!\n"); return result;
 		}
-		termSettings = oldTermSettings;
-		
-		printf("termSettings.c_iflag  = %u\n", (u32)termSettings.c_iflag);
-		printf("termSettings.c_oflag  = %u\n", (u32)termSettings.c_oflag);
-		printf("termSettings.c_cflag  = %u\n", (u32)termSettings.c_cflag);
-		printf("termSettings.c_lflag  = %u\n", (u32)termSettings.c_lflag);
-		for (u32 cIndex = 0; cIndex < NCCS; cIndex++)
-		{
-			printf("termSettings.c_cc[%u]  = %02X\n", cIndex, termSettings.c_cc[cIndex]);
-		}
-		printf("termSettings.c_ispeed = %u\n", (u32)termSettings.c_ispeed);
-		printf("termSettings.c_ospeed = %u\n", (u32)termSettings.c_ospeed);
-		
-		cfsetospeed(&termSettings, B115200);
-		cfsetispeed(&termSettings, B115200);
 		
 		/* Setting other Port Stuff */
 		FlagUnset(termSettings.c_cflag, PARENB); //Disable parity
@@ -101,17 +86,15 @@ OpenComPort_DEFINITION(OSX_OpenComPort)
 		
 		cfmakeraw(&termSettings);
 		
-		printf("Flushing the port\n");
 		tcflush(fileHandle, TCIFLUSH); //Flush the port
-		printf("Setting the port settings\n");
 		if (tcsetattr (fileHandle, TCSANOW, &termSettings) != 0)
 		{
-			printf("tcsetattr returned an error: %d\n", errno);
+			printf("tcsetattr call failed: %s\n", GetErrnoName(errno));
+			close(fileHandle);
+			return result;
 		}
-		#endif
 		
 		result.isOpen = true;
-		result.settings = settings;
 		result.handle = fileHandle;
 		printf("Port opened successfully!\n");
 	}
@@ -151,7 +134,7 @@ ReadComPort_DEFINITION(OSX_ReadComPort)
 		switch (errno)
 		{
 			case EAGAIN: return 0;
-			default: printf("read returned %lld\n", readResult); return readResult;
+			default: printf("read call failed: %s\n", GetErrnoName(errno)); return -1;
 		};
 	}
 	
@@ -171,6 +154,6 @@ WriteComPort_DEFINITION(OSX_WriteComPort)
 	
 	if (writeResult == -1)
 	{
-		printf("write call failed %u\n", errno);
+		printf("write call failed %s\n", GetErrnoName(errno));
 	}
 }

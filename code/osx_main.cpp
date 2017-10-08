@@ -28,6 +28,7 @@ Description:
 
 PlatformInfo_t PlatformInfo;
 
+#include "osx_helpers.cpp"
 #include "osx_debug.cpp"
 #include "osx_clipboard.cpp"
 #include "osx_com.cpp"
