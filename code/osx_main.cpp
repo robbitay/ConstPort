@@ -22,6 +22,8 @@ Description:
 #include <fcntl.h> //needed for open
 #include <unistd.h> //needed for close
 #include <cerrno>
+#include <time.h> //needed for gmtime
+#include <sys/stat.h> //needed for stat
 
 #include "platformInterface.h"
 #include "osx_version.h"
@@ -35,6 +37,7 @@ PlatformInfo_t PlatformInfo;
 #include "osx_files.cpp"
 #include "osx_keymap.cpp"
 #include "osx_callbacks.cpp"
+#include "osx_appLoading.cpp"
 
 // +--------------------------------------------------------------+
 // |                    Platform Layer Defines                    |
@@ -183,27 +186,17 @@ int main(int argc, char** argv)
 	// +==============================+
 	char dllPathBuffer[256] = {};
 	snprintf(dllPathBuffer, ArrayCount(dllPathBuffer), "%s/%s", exeDirectory, APPLICATION_DLL_NAME);
-	void* dllHandle = dlopen(dllPathBuffer, RTLD_NOW);
-	printf("Dll Handle: %p\n", dllHandle);
-	
-	AppGetVersion_f* App_GetVersion           = (AppGetVersion_f*)dlsym(dllHandle, "App_GetVersion");
-	printf("App_GetVersion:      %p\n", App_GetVersion);
-	Assert(App_GetVersion != nullptr);
-	AppInitialize_f* App_Initialize           = (AppInitialize_f*)dlsym(dllHandle, "App_Initialize");
-	printf("App_Initialize:      %p\n", App_Initialize);
-	Assert(App_Initialize != nullptr);
-	AppReloaded_f* App_Reloaded               = (AppReloaded_f*)dlsym(dllHandle, "App_Reloaded");
-	printf("App_Reloaded:        %p\n", App_Reloaded);
-	Assert(App_Reloaded != nullptr);
-	AppUpdate_f* App_Update                   = (AppUpdate_f*)dlsym(dllHandle, "App_Update");
-	printf("App_Update:          %p\n", App_Update);
-	Assert(App_Update != nullptr);
-	AppGetSoundSamples_f* App_GetSoundSamples = (AppGetSoundSamples_f*)dlsym(dllHandle, "App_GetSoundSamples");
-	printf("App_GetSoundSamples: %p\n", App_GetSoundSamples);
-	Assert(App_GetSoundSamples != nullptr);
-	AppClosing_f* App_Closing                 = (AppClosing_f*)dlsym(dllHandle, "App_Closing");
-	printf("App_Closing:         %p\n", App_Closing);
-	Assert(App_Closing != nullptr);
+	char tempDllPathBuffer[256] = {};
+	snprintf(tempDllPathBuffer, ArrayCount(tempDllPathBuffer), "%s/TEMP_%s", exeDirectory, APPLICATION_DLL_NAME);
+	LoadedApp_t application;
+	LoadDllCode(dllPathBuffer, tempDllPathBuffer, &application);
+	if (application.isValid == false)
+	{
+		printf("Unable to load application DLL at \"%s\"\n", dllPathBuffer);
+		glfwDestroyWindow(window);
+		glfwTerminate();
+		return 1;
+	}
 	
 	// +==================================+
 	// | Allocate the Application Memory  |
@@ -224,7 +217,7 @@ int main(int argc, char** argv)
 	// +==============================+
 	// |    Initialize Application    |
 	// +==============================+
-	App_Initialize(&PlatformInfo, &appMemory);
+	application.Initialize(&PlatformInfo, &appMemory);
 	
 	// +==============================+
 	// |       Setup App Input        |
@@ -245,8 +238,27 @@ int main(int argc, char** argv)
 	glfwSetMouseButtonCallback(window,     GlfwMousePressCallback);
 	glfwSetScrollCallback(window,          GlfwMouseScrollCallback);
 	
+	// +==============================+
+	// |       Main Update Loop       |
+	// +==============================+
 	while (!glfwWindowShouldClose(window))
 	{
+		#if DEBUG
+		time_t newFileWriteTime = GetLastModifiedTime(dllPathBuffer);
+		
+		if (application.lastWriteTime != newFileWriteTime)
+		{
+			FreeDllCode(&application);
+			LoadDllCode(dllPathBuffer, tempDllPathBuffer, &application);
+			if (application.isValid)
+			{
+				printf("Loaded new application version %u.%u(%u)\n",
+					application.version.major, application.version.minor, application.version.build);
+			}
+			application.Reloaded(&PlatformInfo, &appMemory);
+		}
+		#endif
+		
 		// +==============================+
 		// |    Swap AppInput Pointers    |
 		// +==============================+
@@ -270,13 +282,10 @@ int main(int argc, char** argv)
 		// +==============================+
 		glfwPollEvents();
 		
-		App_Update(&PlatformInfo, &appMemory, currentInput, &appOutput);
+		application.Update(&PlatformInfo, &appMemory, currentInput, &appOutput);
 		
 		glfwSwapBuffers(window);
 	}
-	
-	dlclose(dllHandle);
-	printf("Dll closed\n");
 	
 	glfwDestroyWindow(window);
 	glfwTerminate();

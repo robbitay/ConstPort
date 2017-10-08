@@ -1,12 +1,12 @@
 #!/bin/bash
 
 ProjectName="ConstPort"
-CompilePlatform=1
-CompileApplication=0
+CompilePlatform=0
+CompileApplication=1
 
 PlatformMainFile="../code/osx_main.cpp"
 ApplicationMainFile="../code/app.cpp"
-CompilerFlags="-g -DOSX_COMPILATION=1 -fvisibility=hidden"
+CompilerFlags="-g -DDEBUG=1 -DOSX_COMPILATION=1 -fvisibility=hidden"
 LinkerFlags="-std=gnu++0x"
 IncludeDirectories="-I../../../lib/mylib -I../../../lib/glfw/include -I../../../lib/glew/include -I../../../lib/stb -I../../../lib/jsmn -I../../../lib/boost_1_65_1/"
 LibraryDirectories="-L../../../lib/glfw/build/src/Debug -L../../../lib/glew/lib -L../../../lib/boost_1_65_1/bin.v2/libs/regex/build/darwin-4.2.1/debug/link-static/runtime-link-static/threading-multi"

@@ -2317,8 +2317,8 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	// +==================================+
 	if (GetRegularExpression(&appData->regexList, GC->genericCountRegexName) != nullptr)
 	{
-		rs->PrintString(NewVec2(mainMenuButtonsRight + 10, appData->testFont.maxExtendUp + 10), GC->colors.foreground, 1.0f,
-						"Counter: %u", appData->genericCounter);
+		// rs->PrintString(NewVec2(mainMenuButtonsRight + 10, appData->testFont.maxExtendUp + 10), GC->colors.foreground, 1.0f,
+		// 				"Counter: %u", appData->genericCounter);
 	}
 	
 	// +==================================+
