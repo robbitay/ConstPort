@@ -28,6 +28,8 @@ Description:
 #include <windows.h>
 #include "win32_defines.h"
 #include "win32_intrinsics.h"
+#include "win32_assert.h"
+
 #include "win32_helpers.h"
 #include "win32_com.h"
 #include "win32_program.h"
@@ -39,6 +41,8 @@ Description:
 #if OSX_COMPILATION
 #include "osx_defines.h"
 #include "osx_intrinsics.h"
+#include "osx_assert.h"
+
 #include "osx_helpers.h"
 #include "osx_com.h"
 #include "osx_program.h"

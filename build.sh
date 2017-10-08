@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ProjectName="ConstPort"
-CompilePlatform=0
+CompilePlatform=1
 CompileApplication=1
 DebugBuild=1
 
@@ -25,7 +25,7 @@ Frameworks="-framework OpenGL -framework Cocoa -framework IOKit -framework CoreV
 
 if [ $CompilePlatform -gt 0 ]
 then
-	python ../IncrementVersionNumber.py ../code/win32_version.h
+	python ../IncrementVersionNumber.py ../code/osx_version.h
 	
 	# echo [Building OSX Platform]
 	g++ $CompilerFlags $DebugDepCompilerFlags $PlatformMainFile -o $ProjectName $IncludeDirectories $LibraryDirectories $Libraries $Frameworks $LinkerFlags $DebugDepLibDirs

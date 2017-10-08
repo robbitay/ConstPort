@@ -9,7 +9,15 @@ Description:
 
 
 #include <stdarg.h>
-#include "my_assert.h"
+#define USE_ASSERT_FAILURE_FUNCTION true
+#if WINDOWS_COMPILATION
+#include "win32_assert.h"
+#elif OSX_COMPILATION
+#include "osx_assert.h"
+#else
+#error No supported platform defined. No Assert macro used.
+#endif
+
 #include "platformInterface.h"
 #include "app_version.h"
 #include "colors.h"
@@ -2361,11 +2369,9 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	}
 	#endif
 	
-	// Assert(true == false);
-	
-	// DrawCircle(app, input->mouseStartPos[MouseButton_Left]/GUI_SCALE, input->mouseMaxDist[MouseButton_Left], {Color_Red});
-	// DrawCircle(app, input->mouseStartPos[MouseButton_Right]/GUI_SCALE, input->mouseMaxDist[MouseButton_Right], {Color_Blue});
-	// DrawCircle(app, input->mouseStartPos[MouseButton_Middle]/GUI_SCALE, input->mouseMaxDist[MouseButton_Middle], {Color_Green});
+	// rs->DrawCircle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, input->mouseMaxDist[MouseButton_Left]/GUI_SCALE, {Color_Red});
+	// rs->DrawCircle(input->mouseStartPos[MouseButton_Right]/GUI_SCALE, input->mouseMaxDist[MouseButton_Right]/GUI_SCALE, {Color_Blue});
+	// rs->DrawCircle(input->mouseStartPos[MouseButton_Middle]/GUI_SCALE, input->mouseMaxDist[MouseButton_Middle]/GUI_SCALE, {Color_Green});
 	
 	// rs->DrawRectangle(ui->statusBarRec, {Color_Yellow});
 	// rs->DrawRectangle(ui->scrollBarGutterRec, {Color_Red});
