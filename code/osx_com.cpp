@@ -17,7 +17,7 @@ GetComPortList_DEFINITION(OSX_GetComPortList)
 	{
 		bool comExists = false;
 		
-		if (bIndex == 0)
+		if (bIndex == 0 || bIndex == 1)
 		{
 			comExists = true;
 			result++;
@@ -44,11 +44,13 @@ OpenComPort_DEFINITION(OSX_OpenComPort)
 	// printf("ComPortPath: \"%s\"\n", portFilePath);
 	
 	printf("Attempting to open \"%s\"\n", portFileName);
-	int fileHandle = open(portFileName, O_RDWR | O_NONBLOCK | O_NOCTTY);
+	int fileHandle = open(portFileName, O_RDWR | O_NDELAY | O_NOCTTY);
 	printf("open result: %d\n", fileHandle);
 	
 	if (fileHandle != -1)
 	{
+		fcntl(fileHandle, F_SETFL, FNDELAY);
+		
 		/*
 		struct termios {
 			tcflag_t	c_iflag;	//input flags
@@ -60,6 +62,7 @@ OpenComPort_DEFINITION(OSX_OpenComPort)
 			speed_t		c_ospeed;	//output speed
 		};
 		*/
+		#if 1
 		termios termSettings = {};
 		termios oldTermSettings = {};
 		
@@ -105,6 +108,7 @@ OpenComPort_DEFINITION(OSX_OpenComPort)
 		{
 			printf("tcsetattr returned an error: %d\n", errno);
 		}
+		#endif
 		
 		result.isOpen = true;
 		result.settings = settings;
@@ -139,18 +143,19 @@ ReadComPort_DEFINITION(OSX_ReadComPort)
 	Assert(comPortPntr->isOpen);
 	Assert(comPortPntr->handle != -1);
 	
-	i32 result = 0;
+	// printf("Reading %u bytes from file %d\n", 1, comPortPntr->handle);
+	i64 readResult = read(comPortPntr->handle, outputBuffer, 1);
 	
-	printf("Reading %u bytes from file %d\n", outputBufferLength, comPortPntr->handle);
-	ssize_t readResult = read(comPortPntr->handle, outputBuffer, outputBufferLength);
-	printf("ReadResult: %lu\n", readResult);
-	
-	if (readResult != -1)
+	if (readResult == -1)
 	{
-		result = readResult;
+		switch (errno)
+		{
+			case EAGAIN: return 0;
+			default: printf("read returned %lld\n", readResult); return readResult;
+		};
 	}
 	
-	return result;
+	return readResult;
 }
 
 // +==============================+
@@ -158,5 +163,14 @@ ReadComPort_DEFINITION(OSX_ReadComPort)
 // +==============================+
 WriteComPort_DEFINITION(OSX_WriteComPort)
 {
-	//TODO: Write to the COM port
+	Assert(comPortPntr != nullptr);
+	Assert(comPortPntr->isOpen);
+	Assert(comPortPntr->handle != -1);
+	
+	i64 writeResult = write(comPortPntr->handle, newChars, numChars);
+	
+	if (writeResult == -1)
+	{
+		printf("write call failed %u\n", errno);
+	}
 }

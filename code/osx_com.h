@@ -133,7 +133,7 @@ const char* GetComPortFileName(ComPortIndex_t comIndex)
 	switch (comIndex)
 	{
 		case ComPort_1:  return "/dev/tty.usbserial-A506KDE9";
-		case ComPort_2:  return "COM2";
+		case ComPort_2:  return "/dev/ttys000";
 		case ComPort_3:  return "COM3";
 		case ComPort_4:  return "COM4";
 		case ComPort_5:  return "COM5";
@@ -166,7 +166,7 @@ const char* GetComPortReadableName(ComPortIndex_t comIndex)
 	switch (comIndex)
 	{
 		case ComPort_1:  return "USB Serial A506KDE9";
-		case ComPort_2:  return "COM2";
+		case ComPort_2:  return "ttys000";
 		case ComPort_3:  return "COM3";
 		case ComPort_4:  return "COM4";
 		case ComPort_5:  return "COM5";
