@@ -93,6 +93,12 @@ GetComPortList_DEFINITION(Win32_GetComPortList)
 		}
 	}
 	
+	#if 1
+	BoundedStrListAdd(&result, "Test1");
+	BoundedStrListAdd(&result, "Test2");
+	BoundedStrListAdd(&result, "Test3");
+	#endif
+	
 	return result;
 }
 
@@ -103,6 +109,7 @@ GetComPortList_DEFINITION(Win32_GetComPortList)
 OpenComPort_DEFINITION(Win32_OpenComPort)
 {
 	ComPort_t result = {};
+	result.settings = settings;
 	result.handle = INVALID_HANDLE_VALUE;
 	
 	HANDLE comHandle = CreateFileA(GetComPortFileName(comPortName), 

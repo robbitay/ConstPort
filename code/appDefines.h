@@ -8,9 +8,9 @@ Date:   06\08\2017
 #define _APP_DEFINES_H
 
 #if OSX_COMPILATION
-#define GUI_SCALE 2
+#define GUI_SCALE 2.0f
 #else
-#define GUI_SCALE 1
+#define GUI_SCALE 1.0f
 #endif
 
 // #define MIN_GUTTER_WIDTH           40 //px

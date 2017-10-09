@@ -158,9 +158,11 @@
 		"button_text":            "Black",
 		"button_border":          "Black",
 		
+		//NOTE: The hover colors are mulitplied on top of the other states
+		//      (except when the button is being pressed)
 		"button_hover":           "B4B4B4", //UiLightGray1
-		"button_hover_text":      "Black",
-		"button_hover_border":    "Black",
+		"button_hover_text":      "White",
+		"button_hover_border":    "White",
 		
 		"button_press":           [249,  38, 101, 255], //Red/Magenta
 		"button_press_text":      "White",
@@ -168,10 +170,10 @@
 		
 		"button_selected":        [174, 129, 255, 255], //Purple
 		"button_selected_text":   "Black",
-		"button_selected_border": "White",
+		"button_selected_border": "Black",
 		
 		"button_ready":           [166, 226,  46, 255], //Green Color
 		"button_ready_text":      "Black",
-		"button_ready_border":    "White",
+		"button_ready_border":    "Black",
 	},
 }

@@ -25,14 +25,12 @@ void InitializeUiElements(UiElements_t* ui)
 void RecalculateUiElements(UiElements_t* ui, bool resetFollowingEndOfFile)
 {
 	//Static sizing helpers
-	ui->mousePos = RenderMousePos;
-	ui->screenSize = RenderScreenSize;
 	ui->lineHeight = app->testFont.lineHeight + GC->lineSpacing;
 	
 	//Static Rectangles
 	ui->mainMenuRec = NewRectangle(
 		0, 0,
-		ui->screenSize.x, 
+		RenderScreenSize.x, 
 		MAIN_MENU_HEIGHT
 	);
 	for (u32 bIndex = 0; bIndex < NumMainMenuButtons; bIndex++)
@@ -66,27 +64,27 @@ void RecalculateUiElements(UiElements_t* ui, bool resetFollowingEndOfFile)
 	);
 	ui->statusBarRec = NewRectangle(
 		0, 
-		ui->screenSize.y - app->testFont.lineHeight, 
-		ui->screenSize.x, 
+		RenderScreenSize.y - app->testFont.lineHeight, 
+		RenderScreenSize.x, 
 		app->testFont.lineHeight
 	);
 	ui->scrollBarGutterRec = NewRectangle(
-		ui->screenSize.x - (r32)GC->scrollbarWidth - (r32)GC->scrollbarPadding*2, 
+		RenderScreenSize.x - (r32)GC->scrollbarWidth - (r32)GC->scrollbarPadding*2, 
 		ui->mainMenuRec.y + ui->mainMenuRec.height, 
 		(r32)GC->scrollbarWidth + (r32)GC->scrollbarPadding*2, 
-		ui->screenSize.y - ui->statusBarRec.height - (ui->mainMenuRec.y + ui->mainMenuRec.height)
+		RenderScreenSize.y - ui->statusBarRec.height - (ui->mainMenuRec.y + ui->mainMenuRec.height)
 	);
 	ui->gotoEndButtonRec = NewRectangle(
 		ui->scrollBarGutterRec.x,
 		ui->scrollBarGutterRec.y + ui->scrollBarGutterRec.height,
 		ui->scrollBarGutterRec.width,
-		ui->screenSize.y - ui->scrollBarGutterRec.y + ui->scrollBarGutterRec.height
+		RenderScreenSize.y - ui->scrollBarGutterRec.y + ui->scrollBarGutterRec.height
 	);
 	ui->gutterRec = NewRectangle(
 		0, 
 		ui->mainMenuRec.y + ui->mainMenuRec.height, 
 		(r32)GC->minGutterWidth,
-		ui->screenSize.y - ui->statusBarRec.height - (ui->mainMenuRec.y + ui->mainMenuRec.height)
+		RenderScreenSize.y - ui->statusBarRec.height - (ui->mainMenuRec.y + ui->mainMenuRec.height)
 	);
 	if (GC->showLineNumbers)
 	{
@@ -96,8 +94,8 @@ void RecalculateUiElements(UiElements_t* ui, bool resetFollowingEndOfFile)
 	ui->viewRec = NewRectangle(
 		ui->gutterRec.width, 
 		ui->mainMenuRec.y + ui->mainMenuRec.height,
-		ui->screenSize.x - ui->gutterRec.width - ui->scrollBarGutterRec.width, 
-		ui->screenSize.y - ui->statusBarRec.height - (ui->mainMenuRec.y + ui->mainMenuRec.height)
+		RenderScreenSize.x - ui->gutterRec.width - ui->scrollBarGutterRec.width, 
+		RenderScreenSize.y - ui->statusBarRec.height - (ui->mainMenuRec.y + ui->mainMenuRec.height)
 	);
 	
 	//Dynamic helpers

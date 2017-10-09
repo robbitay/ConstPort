@@ -248,7 +248,7 @@ v2 MeasureLines(LineList_t* lineList, const Font_t* font)
 	u32 numCharsMax = 0;
 	i32 lineIndex = 0;
 	i32 firstLineIndex = 0;
-	v2 relMousePos = ui->scrollOffset + ui->mousePos - ui->viewRec.topLeft - NewVec2((r32)GC->lineSpacing, 0);
+	v2 relMousePos = ui->scrollOffset + RenderMousePos - ui->viewRec.topLeft - NewVec2((r32)GC->lineSpacing, 0);
 	ui->hoverLocation.lineNum = -1;
 	ui->firstRenderLine = 0;
 	ui->firstRenderLineOffset = 0;

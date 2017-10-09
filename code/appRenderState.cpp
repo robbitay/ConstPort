@@ -9,7 +9,7 @@ Description:
 #included from app.cpp 
 */
 
-void InitializeRenderState(const PlatformInfo_t* PlatformInfo, RenderState_t* renderState)
+void InitializeRenderState(RenderState_t* renderState)
 {
 	ClearPointer(renderState);
 	
@@ -31,7 +31,7 @@ void InitializeRenderState(const PlatformInfo_t* PlatformInfo, RenderState_t* re
 	Color_t textureData = {Color_White};
 	renderState->dotTexture = CreateTexture((u8*)&textureData, 1, 1);
 	
-	renderState->viewport = NewRectangle(0, 0, (r32)PlatformInfo->screenSize.x, (r32)PlatformInfo->screenSize.y);
+	renderState->viewport = NewRectangle(0, 0, (r32)RenderScreenSize.x, (r32)RenderScreenSize.y);
 	renderState->worldMatrix = Matrix4_Identity;
 	renderState->viewMatrix = Matrix4_Identity;
 	renderState->projectionMatrix = Matrix4_Identity;

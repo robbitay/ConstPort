@@ -201,25 +201,35 @@ void ShowComMenu()
 	}
 }
 
-void OpenComPort(const char* comPortName, ComSettings_t settings)
+bool OpenComPort(const char* comPortName, ComSettings_t settings)
 {
-	if (app->comPort.isOpen)
+	if (app->comPort.isOpen && strcmp(app->comPort.name, comPortName) == 0)
 	{
+		//NOTE: If we want to open the same port again we have to close it first before opening it
+		//      Otherwise we will try to open and only close the port if the open succeeds
 		platform->CloseComPortPntr(&app->mainHeap, &app->comPort);
 		StatusError("Closed %s", app->comPort.name);
 	}
 	
-	ClearConsole();
+	ComPort_t newComPort = platform->OpenComPortPntr(&app->mainHeap, comPortName, settings);
 	
-	app->comPort = platform->OpenComPortPntr(&app->mainHeap, comPortName, settings);
-	
-	if (app->comPort.isOpen)
+	if (newComPort.isOpen)
 	{
-		StatusSuccess("%s Opened Successfully", app->comPort.name);
+		if (app->comPort.isOpen)
+		{
+			platform->CloseComPortPntr(&app->mainHeap, &app->comPort);
+			StatusError("Closed %s", app->comPort.name);
+		}
+		ClearConsole();
+		app->comPort = newComPort;
+		
+		StatusSuccess("\"%s\" Opened Successfully", comPortName);
+		return true;
 	}
 	else
 	{
-		StatusError("Couldn't open %s port.", app->comPort.name);
+		StatusError("Couldn't open \"%s\"!", comPortName);
+		return false;
 	}
 }
 
@@ -389,8 +399,10 @@ void ComMenuUpdate(MenuHandler_t* menuHandler, Menu_t* menuPntr)
 		if (app->comMenuOptions.isOpen &&
 			(connectButtonPressed || ButtonReleased(Button_Enter)))
 		{
-			OpenComPort(app->comMenuOptions.name, app->comMenuOptions.settings);
-			menuPntr->show = false;
+			if (OpenComPort(app->comMenuOptions.name, app->comMenuOptions.settings))
+			{
+				menuPntr->show = false;
+			}
 		}
 	}
 }
@@ -564,14 +576,12 @@ void ComMenuRender(RenderState_t* renderState, MenuHandler_t* menuHandler, Menu_
 			
 			Color_t buttonColor, textColor, borderColor;
 			ButtonColorChoice(buttonColor, textColor, borderColor, tabRec,
-				(app->comMenuOptions.isOpen == true && strcmp(app->comMenuOptions.name, portName) == 0),
-				app->comPort.isOpen && strcmp(app->comPort.name, portName) == 0);
+				app->comPort.isOpen && strcmp(app->comPort.name, portName) == 0,
+				(app->comMenuOptions.isOpen == true && strcmp(app->comMenuOptions.name, portName) == 0));
 			
 			renderState->DrawButton(tabRec, buttonColor, borderColor);
 			// renderState->DrawRectangle(NewRectangle(stringPosition.x - stringSize.x/2, stringPosition.y - app->testFont.maxExtendUp, stringSize.x, stringSize.y), {Color_Red});
 			renderState->DrawFormattedString(portUserName, stringPosition, tabWidth - COM_MENU_TAB_PADDING*2, textColor, Alignment_Center, true);
-			
-			tabIndex++;
 		}
 		
 		//Draw the connect button
@@ -616,7 +626,7 @@ void ContextMenuUpdate(MenuHandler_t* menuHandler, Menu_t* menu)
 	
 	menu->drawRec.size = textSize;
 	menu->drawRec = RectangleInflate(menu->drawRec, CONTEXT_MENU_PADDING);
-	menu->drawRec.topLeft = ui->mousePos + NewVec2(0, -3 - menu->drawRec.height);
+	menu->drawRec.topLeft = RenderMousePos + NewVec2(0, -3 - menu->drawRec.height);
 }
 void ContextMenuRender(RenderState_t* renderState, MenuHandler_t* menuHandler, Menu_t* menu)
 {
@@ -1061,7 +1071,7 @@ EXPORT AppInitialize_DEFINITION(App_Initialize)
 	// +================================+
 	LoadGlobalConfiguration(platform, &app->globalConfig, &app->mainHeap);
 	InitializeUiElements(&app->uiElements);
-	InitializeRenderState(platform, &app->renderState);
+	InitializeRenderState(&app->renderState);
 	InitializeMenuHandler(&app->menuHandler, &app->mainHeap);
 	InitializeRegexList(&app->regexList, &app->mainHeap);
 	LoadRegexFile(&app->regexList, "Resources/Configuration/RegularExpressions.rgx", &app->mainHeap);
@@ -1118,6 +1128,8 @@ EXPORT AppInitialize_DEFINITION(App_Initialize)
 	
 	TempPopMark();
 	DEBUG_WriteLine("Initialization Done!");
+	app->appInitTempHighWaterMark = ArenaGetHighWaterMark(TempArena);
+	ArenaResetHighWaterMark(TempArena);
 }
 
 //+================================================================+
@@ -1159,9 +1171,31 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	
 	UiElements_t* ui = &app->uiElements;
 	RenderState_t* rs = &app->renderState;
+	Menu_t* comMenu = GetMenuByName(&app->menuHandler, "COM Menu");
+	Menu_t* contextMenu = GetMenuByName(&app->menuHandler, "Context Menu");
+	Menu_t* hoverMenu = GetMenuAtPoint(&app->menuHandler, RenderMousePos);
+	Color_t color1 = ColorFromHSV((i32)(platform->programTime*180) % 360, 1.0f, 1.0f);
+	Color_t color2 = ColorFromHSV((i32)(platform->programTime*180 + 125) % 360, 1.0f, 1.0f);
+	Color_t selectionColor = ColorLerp(GC->colors.selection1, GC->colors.selection2, (Sin32((r32)platform->programTime*6.0f) + 1.0f) / 2.0f);
+	Color_t hoverLocColor  = ColorLerp(GC->colors.foreground, GC->colors.background, (Sin32((r32)platform->programTime*8.0f) + 1.0f) / 2.0f);
+	// Color_t selectionColor = ColorFromHSV(180, 1.0f, (r32)(Sin32((r32)platform->programTime*5) + 1.0f) / 2.0f);
 	
+	// +==============================+
+	// |  Clear Button Handled Array  |
+	// +==============================+
+	for (u32 bIndex = 0; bIndex < ArrayCount(app->buttonHandled); bIndex++)
+	{
+		app->buttonHandled[bIndex] = false;
+	}
+	
+	// +==============================+
+	// | Temp Arena Update Loop Push  |
+	// +==============================+
 	TempPushMark();
 	
+	// +==============================+
+	// |     Set the Window Title     |
+	// +==============================+
 	ClearArray(AppOutput->windowTitle);
 	if (app->comPort.isOpen)
 	{
@@ -1175,16 +1209,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	}
 	
 	RecalculateUiElements(ui, true);
-	
-	Menu_t* comMenu = GetMenuByName(&app->menuHandler, "COM Menu");
-	Menu_t* contextMenu = GetMenuByName(&app->menuHandler, "Context Menu");
-	Menu_t* hoverMenu = GetMenuAtPoint(&app->menuHandler, RenderMousePos);
 	ui->mouseInMenu = (hoverMenu != nullptr && hoverMenu != contextMenu);
-	Color_t color1 = ColorFromHSV((i32)(platform->programTime*180) % 360, 1.0f, 1.0f);
-	Color_t color2 = ColorFromHSV((i32)(platform->programTime*180 + 125) % 360, 1.0f, 1.0f);
-	Color_t selectionColor = ColorLerp(GC->colors.selection1, GC->colors.selection2, (Sin32((r32)platform->programTime*6.0f) + 1.0f) / 2.0f);
-	Color_t hoverLocColor  = ColorLerp(GC->colors.foreground, GC->colors.background, (Sin32((r32)platform->programTime*8.0f) + 1.0f) / 2.0f);
-	// Color_t selectionColor = ColorFromHSV(180, 1.0f, (r32)(Sin32((r32)platform->programTime*5) + 1.0f) / 2.0f);
 	
 	//+================================+
 	//|  Context Menu Showing/Filling  |
@@ -1192,7 +1217,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	contextMenu->show = false;
 	if (ui->mouseInMenu == false &&
 		ButtonDown(Button_Control) &&// && mousePos.x <= ui->gutterRec.width)
-		(IsInsideRectangle(ui->mousePos, ui->viewRec) || IsInsideRectangle(ui->mousePos, ui->gutterRec)))
+		(IsInsideRectangle(RenderMousePos, ui->viewRec) || IsInsideRectangle(RenderMousePos, ui->gutterRec)))
 	{
 		Line_t* linePntr = GetLineAt(&app->lineList, ui->hoverLocation.lineNum);
 		
@@ -1606,8 +1631,6 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		}
 	}
 	
-	
-	
 	// +==================================+
 	// |     Test Regular Expression      |
 	// +==================================+
@@ -1639,12 +1662,12 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	//|        Main Menu Buttons         |
 	//+==================================+
 	if (ui->mouseInMenu == false &&
-		ButtonReleased(MouseButton_Left) && IsInsideRectangle(ui->mousePos, ui->mainMenuRec) &&
+		ButtonReleased(MouseButton_Left) && IsInsideRectangle(RenderMousePos, ui->mainMenuRec) &&
 		IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, ui->mainMenuRec))
 	{
 		for (u32 bIndex = 0; bIndex < ArrayCount(ui->buttonRecs); bIndex++)
 		{
-			if (IsInsideRectangle(ui->mousePos, ui->buttonRecs[bIndex]) &&
+			if (IsInsideRectangle(RenderMousePos, ui->buttonRecs[bIndex]) &&
 				IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, ui->buttonRecs[bIndex]))
 			{
 				switch (bIndex)
@@ -1760,8 +1783,8 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		{
 			if (input->buttons[MouseButton_Left].transCount > 0)//Pressed the button down
 			{
-				ui->mouseScrollbarOffset = ui->mousePos.y - ui->scrollBarRec.y;
-				if (IsInsideRectangle(ui->mousePos, ui->scrollBarRec))
+				ui->mouseScrollbarOffset = RenderMousePos.y - ui->scrollBarRec.y;
+				if (IsInsideRectangle(RenderMousePos, ui->scrollBarRec))
 				{
 					ui->startedOnScrollbar = true;
 				}
@@ -1781,7 +1804,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 			}
 			else if (ui->startedOnScrollbar) //holding the button
 			{
-				r32 newPixelLocation = ui->mousePos.y - ui->mouseScrollbarOffset - ui->scrollBarGutterRec.y;
+				r32 newPixelLocation = RenderMousePos.y - ui->mouseScrollbarOffset - ui->scrollBarGutterRec.y;
 				if (newPixelLocation > ui->scrollBarGutterRec.y + (ui->scrollBarGutterRec.height - ui->scrollBarRec.height))
 				{
 					newPixelLocation = ui->scrollBarGutterRec.y + (ui->scrollBarGutterRec.height - ui->scrollBarRec.height);
@@ -1807,7 +1830,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 				app->selectionStart = ui->hoverLocation;
 				app->selectionEnd = ui->hoverLocation;
 			}
-			else //if (IsInsideRectangle(ui->mousePos, ui->viewRec)) //Mouse Button Holding
+			else //if (IsInsideRectangle(RenderMousePos, ui->viewRec)) //Mouse Button Holding
 			{
 				app->selectionEnd = ui->hoverLocation;
 			}
@@ -1818,7 +1841,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	//|   Mark lines using the mouse   |
 	//+================================+
 	if (ui->mouseInMenu == false &&
-		IsInsideRectangle(ui->mousePos, ui->gutterRec) && IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, ui->gutterRec))
+		IsInsideRectangle(RenderMousePos, ui->gutterRec) && IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, ui->gutterRec))
 	{
 		if (ButtonReleased(MouseButton_Left) &&
 			ui->markIndex >= 0 && ui->markIndex < app->lineList.numLines)
@@ -1889,7 +1912,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	//+==================================+
 	//|           Cursor Type            |
 	//+==================================+
-	if (IsInsideRectangle(ui->mousePos, ui->viewRec) && !ui->mouseInMenu && GC->showTextCursor)
+	if (IsInsideRectangle(RenderMousePos, ui->viewRec) && !ui->mouseInMenu && GC->showTextCursor)
 	{
 		AppOutput->cursorType = Cursor_Text;
 	}
@@ -1941,7 +1964,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 				//Draw line highlight
 				if (GC->highlightHoverLine &&
 					lineIndex == ui->hoverLocation.lineNum &&
-					IsInsideRectangle(ui->mousePos, ui->viewRec) &&
+					IsInsideRectangle(RenderMousePos, ui->viewRec) &&
 					!ui->mouseInMenu)
 				{
 					rec backRec = NewRectangle(
@@ -1956,7 +1979,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 				
 				if (GC->showHoverCursor &&
 					lineIndex == ui->hoverLocation.lineNum &&
-					IsInsideRectangle(ui->mousePos, ui->viewRec) &&
+					IsInsideRectangle(RenderMousePos, ui->viewRec) &&
 					!ui->mouseInMenu)
 				{
 					v2 skipSize = MeasureString(&app->testFont, linePntr->chars, ui->hoverLocation.charIndex);
@@ -2058,7 +2081,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	
 	rs->SetSecondaryColor(NewColor(0, 0, 0, 20)); //TODO: Add this as a configuration option
 	rs->BindTexture(&app->frameTexture);
-	rs->DrawTexturedRec(NewRectangle(0, ui->screenSize.y, (r32)app->frameTexture.width, (r32)-app->frameTexture.height), {Color_White});
+	rs->DrawTexturedRec(NewRectangle(0, RenderScreenSize.y, (r32)app->frameTexture.width, (r32)-app->frameTexture.height), {Color_White});
 	
 	rs->BindShader(&app->simpleShader);
 	rs->UpdateShader();
@@ -2125,16 +2148,16 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		rs->DrawGradient(ui->statusBarRec, GC->colors.uiGray1, GC->colors.uiGray3, Direction2D_Right);
 		// rs->DrawGradient(NewRectangle(10, 10, 300, 300), color1, color2, Direction2D_Right);
 		// rs->PrintString(
-		// 	NewVec2(0, ui->screenSize.y-app->testFont.maxExtendDown), GC->colors.foreground, 1.0f,
+		// 	NewVec2(0, RenderScreenSize.y-app->testFont.maxExtendDown), GC->colors.foreground, 1.0f,
 		// 	"Heap: %u/%u used", app->mainHeap.used, app->mainHeap.size);
 		// rs->PrintString(
-		// 	NewVec2(0, ui->screenSize.y-app->testFont.maxExtendDown), GC->colors.foreground, 1.0f,
+		// 	NewVec2(0, RenderScreenSize.y-app->testFont.maxExtendDown), GC->colors.foreground, 1.0f,
 		// 	"Line %d Char %d", ui->hoverLocation.lineNum+1, ui->hoverLocation.charIndex);
 		// rs->PrintString(
-		// 	NewVec2(0, ui->screenSize.y-app->testFont.maxExtendDown), GC->colors.foreground, 1.0f,
+		// 	NewVec2(0, RenderScreenSize.y-app->testFont.maxExtendDown), GC->colors.foreground, 1.0f,
 		// 	"Offset: %f", ui->firstRenderLineOffset);
 		// rs->PrintString(
-		// 	NewVec2(0, ui->screenSize.y-app->testFont.maxExtendDown), GC->colors.foreground, 1.0f,
+		// 	NewVec2(0, RenderScreenSize.y-app->testFont.maxExtendDown), GC->colors.foreground, 1.0f,
 		// 	"%s %u:%02u%s (%s %s, %u) [%u]",
 		// 	GetDayOfWeekStr(GetDayOfWeek(platform->localTime)),
 		// 	Convert24HourTo12Hour(platform->localTime.hour), platform->localTime.minute,
@@ -2142,10 +2165,10 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		// 	GetMonthStr((Month_t)platform->localTime.month), GetDayOfMonthString(platform->localTime.day), platform->localTime.year,
 		// 	GetTimestamp(platform->localTime));
 		// rs->PrintString(
-		// 	NewVec2(0, ui->screenSize.y-app->testFont.maxExtendDown), GC->colors.foreground, 1.0f,
+		// 	NewVec2(0, RenderScreenSize.y-app->testFont.maxExtendDown), GC->colors.foreground, 1.0f,
 		// 	"First: %d Last: %d", firstLine, lastLine);
 		// PrintString(app, app->testFont,
-		// 	NewVec2(0, ui->screenSize.y-app->testFont.maxExtendDown), GC->colors.foreground, 1.0f,
+		// 	NewVec2(0, RenderScreenSize.y-app->testFont.maxExtendDown), GC->colors.foreground, 1.0f,
 		// 	"%u Lines Offset: %f (%fpx long)", app->lineList.numLines, ui->scrollOffset, ui->fileHeight);
 		// Line_t* linePntr = GetLineAt(&app->lineList, ui->hoverLocation.lineNum);
 		// if (linePntr != nullptr)
@@ -2154,7 +2177,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		// 	Line_t* lineAfter = (Line_t*)linePntr->header.nextItem;
 		
 		// 	rs->PrintString(
-		// 		NewVec2(0, ui->screenSize.y-app->testFont.maxExtendDown), GC->colors.foreground, 1.0f,
+		// 		NewVec2(0, RenderScreenSize.y-app->testFont.maxExtendDown), GC->colors.foreground, 1.0f,
 		// 		"%08X <- #%u %08X -> %08X", lineBefore, ui->hoverLocation.lineNum, linePntr, lineAfter);
 		// }
 		
@@ -2190,7 +2213,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 					messageColor = GC->colors.highlight3;
 				}
 				
-				rs->DrawString(app->statusMessage, NewVec2(5, ui->screenSize.y-app->testFont.maxExtendDown), messageColor, 1.0f);
+				rs->DrawString(app->statusMessage, NewVec2(5, RenderScreenSize.y-app->testFont.maxExtendDown), messageColor, 1.0f);
 			}
 		}
 		
@@ -2221,7 +2244,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 			const char* comPortUserName = GetPortUserName(app->comPort.name);
 			v2 comNameSize = MeasureString(&app->testFont, comPortUserName);
 			rs->DrawString(comPortUserName,
-				NewVec2(ui->gotoEndButtonRec.x - comNameSize.x - 5, ui->screenSize.y-app->testFont.maxExtendDown),
+				NewVec2(ui->gotoEndButtonRec.x - comNameSize.x - 5, RenderScreenSize.y-app->testFont.maxExtendDown),
 				GC->colors.foreground, 1.0f);
 		}
 	}
@@ -2240,7 +2263,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		Color_t highlightColor = {Color_Red};
 		Color_t iconColor = {Color_White};
 		
-		if (IsInsideRectangle(ui->mousePos, buttonRec) && !ui->mouseInMenu)
+		if (IsInsideRectangle(RenderMousePos, buttonRec) && !ui->mouseInMenu)
 		{
 			if (ButtonDown(MouseButton_Left) && IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, buttonRec))
 			{
@@ -2253,7 +2276,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		rs->BindTexture(&ui->buttonBaseTexture);
 		rs->DrawTexturedRec(buttonRec, baseColor);
 		
-		if (IsInsideRectangle(ui->mousePos, buttonRec) && !ui->mouseInMenu)
+		if (IsInsideRectangle(RenderMousePos, buttonRec) && !ui->mouseInMenu)
 		{
 			rs->BindTexture(&ui->buttonHighlightTexture);
 			rs->DrawTexturedRec(buttonRec, highlightColor);
@@ -2386,6 +2409,11 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		
 		v2 textPos = NewVec2(overlayRec.x + 5, overlayRec.y + 5 + app->testFont.maxExtendUp);
 		
+		rs->PrintString(textPos, {Color_White}, 1.0f, "AppData Size: %u/%u (%.3f%%)",
+			sizeof(AppData_t), AppMemory->permanantSize,
+			(r32)sizeof(AppData_t) / (r32)AppMemory->permanantSize * 100.0f);
+		textPos.y += app->testFont.lineHeight;
+		
 		rs->PrintString(textPos, {Color_White}, 1.0f, "Input Arena: %u/%u (%.3f%%)",
 			app->inputArena.used, app->inputArena.size,
 			(r32)app->inputArena.used / (r32)app->inputArena.size * 100.0f);
@@ -2396,7 +2424,12 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 			(r32)app->mainHeap.used / (r32)app->mainHeap.size * 100.0f);
 		textPos.y += app->testFont.lineHeight;
 		
-		rs->PrintString(textPos, {Color_White}, 1.0f, "Temp Arena: %u/%u (%.3f%%)",
+		rs->PrintString(textPos, {Color_White}, 1.0f, "Temp Init: %u/%u (%.3f%%)",
+			app->appInitTempHighWaterMark, TempArena->size,
+			(r32)app->appInitTempHighWaterMark / (r32)TempArena->size * 100.0f);
+		textPos.y += app->testFont.lineHeight;
+		
+		rs->PrintString(textPos, {Color_White}, 1.0f, "Temp Update: %u/%u (%.3f%%)",
 			ArenaGetHighWaterMark(TempArena), TempArena->size,
 			(r32)ArenaGetHighWaterMark(TempArena) / (r32)TempArena->size * 100.0f);
 		textPos.y += app->testFont.lineHeight;
@@ -2413,7 +2446,11 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	// rs->DrawRectangle(NewRectangle(0, 0, ui->gutterRec.width, screenSize.y - ui->statusBarRec.height), {Color_Orange});
 	// rs->DrawRectangle(ui->statusBarRec, {Color_Yellow});
 	
+	// +==============================+
+	// |  Temp Arena Update Loop Pop  |
+	// +==============================+
 	TempPopMark();
+	if (ButtonPressed(Button_T) && ButtonDown(Button_Control)) { ArenaResetHighWaterMark(TempArena); }
 }
 
 //+================================================================+

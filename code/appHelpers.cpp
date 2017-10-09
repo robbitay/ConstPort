@@ -40,9 +40,14 @@ Description:
 	}                                                         \
 } while (0)
 
+#define HandleButton(button) do { app->buttonHandled[button] = true; } while(0)
+
 #define ButtonPressed(button) ((input->buttons[button].isDown && input->buttons[button].transCount > 0) || input->buttons[button].transCount >= 2)
+#define ButtonPressedUnhandled(button) (app->buttonHandled[button] == false && ((input->buttons[button].isDown && input->buttons[button].transCount > 0) || input->buttons[button].transCount >= 2))
 #define ButtonReleased(button) ((!input->buttons[button].isDown && input->buttons[button].transCount > 0) || input->buttons[button].transCount >= 2)
+#define ButtonReleasedUnhandled(button) (app->buttonHandled[button] == false && ((!input->buttons[button].isDown && input->buttons[button].transCount > 0) || input->buttons[button].transCount >= 2))
 #define ButtonDown(button) (input->buttons[button].isDown)
+#define ButtonDownUnhandled(button) (app->buttonHandled[button] == false && input->buttons[button].isDown)
 
 //This code shows up for most buttons so I pulled it out into a macro to make it look nice
 #define ButtonColorChoice(buttonColor, textColor, borderColor, rectangle, isSelected, isReady) do \
@@ -61,12 +66,6 @@ Description:
 		textColor   = GC->colors.buttonSelectedText;                                              \
 		borderColor = GC->colors.buttonSelectedBorder;                                            \
 	}                                                                                             \
-	else if (IsInsideRectangle(RenderMousePos, rectangle))                                        \
-	{                                                                                             \
-		buttonColor = GC->colors.buttonHover;                                                     \
-		textColor   = GC->colors.buttonHoverText;                                                 \
-		borderColor = GC->colors.buttonHoverBorder;                                               \
-	}                                                                                             \
 	else if (isReady)                                                                             \
 	{                                                                                             \
 		buttonColor = GC->colors.buttonReady;                                                     \
@@ -78,6 +77,12 @@ Description:
 		buttonColor = GC->colors.button;                                                          \
 		textColor   = GC->colors.buttonText;                                                      \
 		borderColor = GC->colors.buttonBorder;                                                    \
+	}                                                                                             \
+	if (IsInsideRectangle(RenderMousePos, rectangle) && !ButtonDown(MouseButton_Left))            \
+	{                                                                                             \
+		buttonColor = ColorMultiply(buttonColor, GC->colors.buttonHover);                         \
+		textColor   = ColorMultiply(textColor,   GC->colors.buttonHoverText);                     \
+		borderColor = ColorMultiply(borderColor, GC->colors.buttonHoverBorder);                   \
 	}                                                                                             \
 } while(0)
 

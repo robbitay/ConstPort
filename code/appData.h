@@ -12,6 +12,7 @@ struct AppData_t
 	MemoryArena_t mainHeap;
 	MemoryArena_t inputArena;
 	MemoryArena_t tempArena;
+	u32 appInitTempHighWaterMark;
 	
 	RenderState_t renderState;
 	MenuHandler_t menuHandler;
@@ -64,6 +65,8 @@ struct AppData_t
 	bool showDebugMenu;
 	
 	ProgramInstance_t programInstance;
+	
+	bool buttonHandled[Buttons_NumButtons];
 };
 
 #endif // _APP_DATA_H

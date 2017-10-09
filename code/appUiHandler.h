@@ -14,8 +14,6 @@ enum
 
 struct UiElements_t
 {
-	v2 screenSize;
-	v2 mousePos;
 	i32 markIndex;
 	r32 mouseScrollbarOffset;
 	
