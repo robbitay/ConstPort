@@ -29,7 +29,7 @@ ReadEntireFile_DEFINITION(Win32_ReadEntireFile)
 		{
 			//TODO: Define and use SafeTruncateUInt64 
 			uint32 fileSize32 = (uint32)(fileSize.QuadPart);
-			result.content = VirtualAlloc(0, fileSize32, MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE);
+			result.content = VirtualAlloc(0, fileSize32+1, MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE);
 			if(result.content)
 			{
 				DWORD bytesRead;
@@ -38,6 +38,7 @@ ReadEntireFile_DEFINITION(Win32_ReadEntireFile)
 				{
 					// NOTE: File read successfully
 					result.size = fileSize32;
+					((u8*)result.content)[fileSize32] = '\0';
 				}
 				else
 				{

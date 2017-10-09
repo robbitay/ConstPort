@@ -4,15 +4,14 @@ call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x64
 
 set TimeString=%date:~-4,4%%date:~-10,2%%date:~-7,2%%time:~0,2%%time:~3,2%%time:~6,2%
 
-mkdir build > NUL 2> NUL
+rem mkdir build > NUL 2> NUL
 rem echo Running from %cd%
 rem echo Time is %TimeString%
 
-set CompilePlatform=0
+set CompilePlatform=1
 set CompileApplication=1
 set DebugBuild=1
 set ProjectName=ConstPort
-set BuildFolder=build\
 
 REM The boost regex library should be built using the b2 tool that comes
 REM with the Boost distribution with the following command:
@@ -22,33 +21,33 @@ REM 	b2 regex runtime-debugging=off variant=release runtime-link=static link=sta
 if "%DebugBuild%"=="1" (
 	set DebugDependantFlags=/MTd -DDEBUG=1
 	set DebugDependantPaths=/LIBPATH:"W:\lib\glew-2.0.0\lib\Debug\x64" /LIBPATH:"W:\lib\glfw-3.2.1\build\src\Debug"
-	set DebugDependantLibraries=glew32d.lib libboost_regex-vc140-mt-sgd-1_65.lib
+	set DebugDependantLibraries=glew32d.lib libboost_regex-vc140-mt-sgd-1_65_1.lib
 ) else (
 	set DebugDependantFlags=/MT -DDEBUG=0
 	set DebugDependantPaths=/LIBPATH:"W:\lib\glew-2.0.0\lib\Release\x64" /LIBPATH:"W:\lib\glfw-3.2.1\build\src\Release"
-	set DebugDependantLibraries=glew32.lib libboost_regex-vc140-mt-s-1_65.lib
+	set DebugDependantLibraries=glew32.lib libboost_regex-vc140-mt-s-1_65_1.lib
 )
 
-set CompilerFlags=%DebugDependantFlags% -DUSE_ASSERT_FAILURE_FUNCTION=1 /FC /Zi /EHsc /nologo /GS- /Gm- -GR- /EHa- /Fm /Od /Oi /WX /W4 /wd4201 /wd4100 /wd4189 /wd4996 /wd4127 /wd4505 /wd4101 /wd4702 /wd4458 /wd4324
+set CompilerFlags=%DebugDependantFlags% -DWINDOWS_COMPILATION=1 /FC /Zi /EHsc /nologo /GS- /Gm- -GR- /EHa- /Fm /Od /Oi /WX /W4 /wd4201 /wd4100 /wd4189 /wd4996 /wd4127 /wd4505 /wd4101 /wd4702 /wd4458 /wd4324
 set LinkerFlags=-incremental:no
-set IncludeDirectories=/I"W:\lib\mylib" /I"W:\lib\glew-2.0.0\include" /I"W:\lib\glfw-3.2.1\include" /I"W:\lib\stb" /I"W:\lib\jsmn" /I"W:\lib\boost_1_65_0"
-set LibraryDirectories=%DebugDependantPaths% /LIBPATH:"W:\lib\boost_1_65_0\stage\lib"
+set IncludeDirectories=/I"W:\lib\mylib" /I"W:\lib\glew-2.0.0\include" /I"W:\lib\glfw-3.2.1\include" /I"W:\lib\stb" /I"W:\lib\jsmn" /I"W:\lib\boost_1_65_1"
+set LibraryDirectories=%DebugDependantPaths% /LIBPATH:"W:\lib\boost_1_65_1\stage\lib"
 set Libraries=gdi32.lib User32.lib Shell32.lib opengl32.lib glfw3.lib Shlwapi.lib %DebugDependantLibraries%
 set AppExports=/EXPORT:App_GetVersion /EXPORT:App_Initialize /EXPORT:App_Update /EXPORT:App_GetSoundSamples /EXPORT:App_Closing /EXPORT:App_Reloaded
 
 rem echo [Building...]
 
 REM Compile the resources file to generate resources.res which defines our program icon
-rc /nologo build\resources.rc
+rc /nologo ..\code\resources.rc
 
-del build\*.pdb > NUL 2> NUL
+del *.pdb > NUL 2> NUL
 
 if "%CompilePlatform%"=="1" (
 	echo[
 	
 	python ..\IncrementVersionNumber.py ..\code\win32_version.h
 	
-	cl /Fe%BuildFolder%%ProjectName%.exe %CompilerFlags% %IncludeDirectories% code\win32_main.cpp /link %LibraryDirectories% %LinkerFlags% %Libraries% kernel32.lib build\resources.res
+	cl /Fe%ProjectName%.exe %CompilerFlags% %IncludeDirectories% ..\code\win32_main.cpp /link %LibraryDirectories% %LinkerFlags% %Libraries% kernel32.lib ..\code\resources.res
 
 	if "%ERRORLEVEL%"=="0" (
 		echo [Platform Build Succeeded!]
@@ -62,7 +61,7 @@ if "%CompileApplication%"=="1" (
 	
 	python ..\IncrementVersionNumber.py ..\code\app_version.h
 	
-	cl /Fe%BuildFolder%%ProjectName%.dll %CompilerFlags% %IncludeDirectories% code\app.cpp /link %LibraryDirectories% %LinkerFlags% %Libraries% %AppExports% /DLL /PDB:"%BuildFolder%%ProjectName%_%TimeString%.pdb"
+	cl /Fe%ProjectName%.dll %CompilerFlags% %IncludeDirectories% ..\code\app.cpp /link %LibraryDirectories% %LinkerFlags% %Libraries% %AppExports% /DLL /PDB:"%ProjectName%_%TimeString%.pdb"
 
 	if "%ERRORLEVEL%"=="0" (
 		echo [Application Build Succeeded!]

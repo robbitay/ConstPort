@@ -990,7 +990,7 @@ EXPORT AppInitialize_DEFINITION(App_Initialize)
 	app = (AppData_t*)AppMemory->permanantPntr;
 	GC = &app->globalConfig;
 	TempArena = &app->tempArena;
-	RenderScreenSize = NewVec2(platform->screenSize.x / GUI_SCALE, platform->screenSize.y / GUI_SCALE);
+	RenderScreenSize = NewVec2((r32)platform->screenSize.x / GUI_SCALE, (r32)platform->screenSize.y / GUI_SCALE);
 	
 	DEBUG_WriteLine("Initializing Game...");
 	
@@ -1088,7 +1088,7 @@ EXPORT AppReloaded_DEFINITION(App_Reloaded)
 	app = (AppData_t*)AppMemory->permanantPntr;
 	GC = &app->globalConfig;
 	TempArena = &app->tempArena;
-	RenderScreenSize = NewVec2(platform->screenSize.x / GUI_SCALE, platform->screenSize.y / GUI_SCALE);
+	RenderScreenSize = NewVec2((r32)platform->screenSize.x / GUI_SCALE, (r32)platform->screenSize.y / GUI_SCALE);
 	
 	StatusDebug("App Reloaded");
 	
@@ -1113,7 +1113,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	app = (AppData_t*)AppMemory->permanantPntr;
 	GC = &app->globalConfig;
 	TempArena = &app->tempArena;
-	RenderScreenSize = NewVec2(platform->screenSize.x / GUI_SCALE, platform->screenSize.y / GUI_SCALE);
+	RenderScreenSize = NewVec2((r32)platform->screenSize.x / GUI_SCALE, (r32)platform->screenSize.y / GUI_SCALE);
 	RenderMousePos = NewVec2(input->mousePos.x / GUI_SCALE, input->mousePos.y / GUI_SCALE);
 	
 	UiElements_t* ui = &app->uiElements;
@@ -2392,7 +2392,7 @@ EXPORT AppGetSoundSamples_DEFINITION(App_GetSoundSamples)
 	app = (AppData_t*)AppMemory->permanantPntr;
 	GC = &app->globalConfig;
 	TempArena = &app->tempArena;
-	RenderScreenSize = NewVec2(platform->screenSize.x / GUI_SCALE, platform->screenSize.y / GUI_SCALE);
+	RenderScreenSize = NewVec2((r32)platform->screenSize.x / GUI_SCALE, (r32)platform->screenSize.y / GUI_SCALE);
 	RenderMousePos = NewVec2(input->mousePos.x / GUI_SCALE, input->mousePos.y / GUI_SCALE);
 }
 
@@ -2405,7 +2405,7 @@ EXPORT AppClosing_DEFINITION(App_Closing)
 	app = (AppData_t*)AppMemory->permanantPntr;
 	GC = &app->globalConfig;
 	TempArena = &app->tempArena;
-	RenderScreenSize = NewVec2(platform->screenSize.x / GUI_SCALE, platform->screenSize.y / GUI_SCALE);
+	RenderScreenSize = NewVec2((r32)platform->screenSize.x / GUI_SCALE, (r32)platform->screenSize.y / GUI_SCALE);
 	
 	DEBUG_WriteLine("Application closing!");
 	

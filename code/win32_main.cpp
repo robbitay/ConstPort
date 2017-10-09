@@ -21,7 +21,6 @@ Description:
 #include "stb_image.h"
 
 //Project Headers
-#include "my_assert.h"
 #include "platformInterface.h"
 #include "win32_version.h"
 

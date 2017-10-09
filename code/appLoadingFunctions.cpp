@@ -82,6 +82,8 @@ Shader_t LoadShader(const char* vertShaderFileName, const char* fragShaderFileNa
 	int logLength;
 	char* logBuffer;
 	
+	Assert(true);
+	
 	FileInfo_t vertexShaderFile = platform->ReadEntireFilePntr(vertShaderFileName);
 	FileInfo_t fragmentShaderFile = platform->ReadEntireFilePntr(fragShaderFileName);
 	
@@ -96,11 +98,11 @@ Shader_t LoadShader(const char* vertShaderFileName, const char* fragShaderFileNa
 		compiled ? "Successfully" : "Unsuccessfully", logLength);
 	if (logLength > 0)
 	{
-		logBuffer = TempString(logLength);
+		logBuffer = TempString(logLength+1);
+		logBuffer[logLength] = '\0';
 		glGetShaderInfoLog(result.vertId, logLength, NULL, logBuffer);
 		DEBUG_PrintLine("Log: \"%s\"", logBuffer);
-		free(logBuffer);
-		Assert(false);
+		Assert(compiled > 0);
 	}
 	
 	result.fragId = glCreateShader(GL_FRAGMENT_SHADER);
@@ -114,11 +116,11 @@ Shader_t LoadShader(const char* vertShaderFileName, const char* fragShaderFileNa
 		compiled ? "Successfully" : "Unsuccessfully", logLength);
 	if (logLength > 0)
 	{
-		logBuffer = TempString(logLength);
+		logBuffer = TempString(logLength+1);
+		logBuffer[logLength] = '\0';
 		glGetShaderInfoLog(result.fragId, logLength, NULL, logBuffer);
 		DEBUG_PrintLine("Log: \"%s\"", logBuffer);
-		free(logBuffer);
-		Assert(false);
+		Assert(compiled > 0);
 	}
 	
 	platform->FreeFileMemoryPntr(&vertexShaderFile);
@@ -135,11 +137,11 @@ Shader_t LoadShader(const char* vertShaderFileName, const char* fragShaderFileNa
 		compiled ? "Successfully" : "Unsuccessfully", logLength);
 	if (logLength > 0)
 	{
-		logBuffer = TempString(logLength);
+		logBuffer = TempString(logLength+1);
+		logBuffer[logLength] = '\0';
 		glGetProgramInfoLog(result.programId, logLength, NULL, logBuffer);
 		DEBUG_PrintLine("Log: \"%s\"", logBuffer);
-		free(logBuffer);
-		Assert(false);
+		Assert(compiled > 0);
 	}
 	
 	result.positionAttribLocation      = glGetAttribLocation(result.programId, "inPosition");
