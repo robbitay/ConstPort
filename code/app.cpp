@@ -126,13 +126,13 @@ void StatusMessage(const char* functionName, StatusMessage_t messageType, const 
 
 const char* GetPortUserName(const char* portName)
 {
-	for (u32 nIndex = 0; nIndex < GC->comNameKeys.numStrings; nIndex++)
+	for (u32 nIndex = 0; nIndex < GC->comNameKeys.count; nIndex++)
 	{
-		Assert(nIndex < GC->comNameValues.numStrings);
+		Assert(nIndex < GC->comNameValues.count);
 		
-		if (strcmp(GC->comNameKeys.strings[nIndex], portName) == 0)
+		if (strcmp(GC->comNameKeys[nIndex], portName) == 0)
 		{
-			return GC->comNameValues.strings[nIndex];
+			return GC->comNameValues[nIndex];
 		}
 	}
 	
@@ -141,9 +141,9 @@ const char* GetPortUserName(const char* portName)
 
 bool IsComAvailable(const char* comName)
 {
-	for (u32 cIndex = 0; cIndex < app->availablePorts.numStrings; cIndex++)
+	for (u32 cIndex = 0; cIndex < app->availablePorts.count; cIndex++)
 	{
-		if (strcmp(app->availablePorts.strings[cIndex], comName) == 0)
+		if (strcmp(app->availablePorts[cIndex], comName) == 0)
 		{
 			return true;
 		}
@@ -170,10 +170,10 @@ void RefreshComPortList()
 	BoundedStrListDestroy(&app->availablePorts, &app->mainHeap);
 	app->availablePorts = platform->GetComPortListPntr(&app->mainHeap);
 	
-	StatusDebug("Found %u COM ports", app->availablePorts.numStrings);
-	for (u32 cIndex = 0; cIndex < app->availablePorts.numStrings; cIndex++)
+	StatusDebug("Found %u COM ports", app->availablePorts.count);
+	for (u32 cIndex = 0; cIndex < app->availablePorts.count; cIndex++)
 	{
-		DEBUG_PrintLine("\"%s\"Available!", app->availablePorts.strings[cIndex]);
+		DEBUG_PrintLine("\"%s\"Available!", app->availablePorts[cIndex]);
 	}
 }
 
@@ -247,7 +247,7 @@ void ComMenuUpdate(MenuHandler_t* menuHandler, Menu_t* menuPntr)
 	
 	if (menuPntr->show)
 	{
-		u32 numTabs = app->availablePorts.numStrings + (app->comPort.isOpen ? 1 : 0);
+		u32 numTabs = app->availablePorts.count + (app->comPort.isOpen ? 1 : 0);
 		r32 tabWidth = menuPntr->usableRec.width / numTabs;
 		{
 			r32 tabMinimumWidth = MeasureString(&app->testFont, "1234567890").x + COM_MENU_TAB_PADDING*2;
@@ -290,7 +290,7 @@ void ComMenuUpdate(MenuHandler_t* menuHandler, Menu_t* menuPntr)
 		for (u32 tabIndex = ComPort_1; tabIndex < numTabs; tabIndex++)
 		{
 			char* portName = nullptr;
-			if (tabIndex < app->availablePorts.numStrings) { portName = app->availablePorts.strings[tabIndex]; }
+			if (tabIndex < app->availablePorts.count) { portName = app->availablePorts[tabIndex]; }
 			else { portName = app->comPort.name; }
 			
 			const char* portUserName = GetPortUserName(portName);
@@ -379,7 +379,7 @@ void ComMenuUpdate(MenuHandler_t* menuHandler, Menu_t* menuPntr)
 		for (u32 tabIndex = 0; tabIndex < numTabs; tabIndex++)
 		{
 			char* tabName = nullptr;
-			if (tabIndex < app->availablePorts.numStrings) { tabName = app->availablePorts.strings[tabIndex]; }
+			if (tabIndex < app->availablePorts.count) { tabName = app->availablePorts[tabIndex]; }
 			else { tabName = app->comPort.name; }
 			
 			rec tabRec = NewRectangle(tabIndex * tabWidth, 0, tabWidth, tabHeight);
@@ -410,7 +410,7 @@ void ComMenuRender(RenderState_t* renderState, MenuHandler_t* menuHandler, Menu_
 {
 	if (menuPntr->show)
 	{
-		u32 numTabs = app->availablePorts.numStrings + (app->comPort.isOpen ? 1 : 0);
+		u32 numTabs = app->availablePorts.count + (app->comPort.isOpen ? 1 : 0);
 		r32 tabWidth = menuPntr->usableRec.width / numTabs;
 		rec baudRateRec = NewRectangle(
 			menuPntr->usableRec.x + COM_MENU_OUTER_PADDING,
@@ -440,7 +440,7 @@ void ComMenuRender(RenderState_t* renderState, MenuHandler_t* menuHandler, Menu_
 		for (u32 tabIndex = ComPort_1; tabIndex < numTabs; tabIndex++)
 		{
 			char* portName = nullptr;
-			if (tabIndex < app->availablePorts.numStrings) { portName = app->availablePorts.strings[tabIndex]; }
+			if (tabIndex < app->availablePorts.count) { portName = app->availablePorts[tabIndex]; }
 			else { portName = app->comPort.name; }
 			
 			const char* portUserName = GetPortUserName(portName);
@@ -566,7 +566,7 @@ void ComMenuRender(RenderState_t* renderState, MenuHandler_t* menuHandler, Menu_
 		for (u32 tabIndex = 0; tabIndex < numTabs; tabIndex++)
 		{
 			char* portName = nullptr;
-			if (tabIndex < app->availablePorts.numStrings) { portName = app->availablePorts.strings[tabIndex]; }
+			if (tabIndex < app->availablePorts.count) { portName = app->availablePorts[tabIndex]; }
 			else { portName = app->comPort.name; }
 			const char* portUserName = GetPortUserName(portName);
 			rec tabRec = NewRectangle(tabIndex * tabWidth, 0, tabWidth, tabHeight);
