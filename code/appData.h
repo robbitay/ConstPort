@@ -38,8 +38,7 @@ struct AppData_t
 	
 	//NOTE: This list will not contain the comPort that is
 	//		currently connected.
-	u32 numComPortsAvailable;
-	bool availableComPorts[NumComPorts];
+	BoundedStrList_t availablePorts;
 	
 	UiElements_t uiElements;
 	

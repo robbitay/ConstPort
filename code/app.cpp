@@ -25,7 +25,6 @@ Description:
 #include "stb_image.h"
 #define STB_TRUETYPE_IMPLEMENTATION
 #include "stb_truetype.h"
-#include "memoryArena.h"
 #include "tempMemory.h"
 #include "tempMemory.cpp"
 #include "linkedList.h"
@@ -125,99 +124,111 @@ void StatusMessage(const char* functionName, StatusMessage_t messageType, const 
 #include "appUiHandler.cpp"
 #include "appRegularExpressions.cpp"
 
+const char* GetPortUserName(const char* portName)
+{
+	//TODO: Implement me
+	return portName;
+}
+
+bool IsComAvailable(const char* comName)
+{
+	for (u32 cIndex = 0; cIndex < app->availablePorts.numStrings; cIndex++)
+	{
+		if (strcmp(app->availablePorts.strings[cIndex], comName) == 0)
+		{
+			return true;
+		}
+	}
+	
+	return false;
+}
+
 void ClearConsole()
 {
-	AppData_t* appData = app;
-	
 	DEBUG_WriteLine("Clearing Console");
-	DestroyLineList(&appData->lineList);
-	CreateLineList(&appData->lineList, &appData->mainHeap, "");
+	DestroyLineList(&app->lineList);
+	CreateLineList(&app->lineList, &app->mainHeap, "");
 	
-	appData->selectionStart = NewTextLocation(0, 0);
-	appData->selectionEnd = NewTextLocation(0, 0);
-	appData->uiElements.hoverLocation = NewTextLocation(0, 0);
+	app->selectionStart = NewTextLocation(0, 0);
+	app->selectionEnd = NewTextLocation(0, 0);
+	app->uiElements.hoverLocation = NewTextLocation(0, 0);
 	
-	appData->genericCounter = 0;
+	app->genericCounter = 0;
 }
 
 void RefreshComPortList()
 {
-	app->numComPortsAvailable = platform->GetComPortListPntr(
-		&app->availableComPorts[0], ArrayCount(app->availableComPorts));
-		
-	StatusDebug("Found %u COM ports", app->numComPortsAvailable);
-	for (u32 cIndex = 0; cIndex < ArrayCount(app->availableComPorts); cIndex++)
+	BoundedStrListDestroy(&app->availablePorts, &app->mainHeap);
+	app->availablePorts = platform->GetComPortListPntr(&app->mainHeap);
+	
+	StatusDebug("Found %u COM ports", app->availablePorts.numStrings);
+	for (u32 cIndex = 0; cIndex < app->availablePorts.numStrings; cIndex++)
 	{
-		if (app->availableComPorts[cIndex] == true)
-		{
-			DEBUG_PrintLine("\"%s\"Available!", GetComPortReadableName((ComPortIndex_t)cIndex));
-		}
+		DEBUG_PrintLine("\"%s\"Available!", app->availablePorts.strings[cIndex]);
 	}
 }
 
-void OpenComPort(ComPortIndex_t comPortIndex, ComSettings_t settings)
+void OpenComPort(const char* comPortName, ComSettings_t settings)
 {
 	if (app->comPort.isOpen)
 	{
-		platform->CloseComPortPntr(&app->comPort);
-		StatusError("Closed %s", GetComPortReadableName(app->comPort.index));
+		platform->CloseComPortPntr(&app->mainHeap, &app->comPort);
+		StatusError("Closed %s", app->comPort.name);
 	}
 	
 	ClearConsole();
 	
-	app->comPort = platform->OpenComPortPntr(comPortIndex, settings);
+	app->comPort = platform->OpenComPortPntr(&app->mainHeap, comPortName, settings);
 	
 	if (app->comPort.isOpen)
 	{
-		StatusSuccess("%s Opened Successfully", GetComPortReadableName(comPortIndex));
+		StatusSuccess("%s Opened Successfully", app->comPort.name);
 	}
 	else
 	{
-		StatusError("Couldn't open %s port.", GetComPortReadableName(comPortIndex));
+		StatusError("Couldn't open %s port.", app->comPort.name);
 	}
 }
 
 void ComMenuUpdate(MenuHandler_t* menuHandler, Menu_t* menuPntr)
 {
-	AppData_t* appData = app;
-	
 	if (ButtonPressed(Button_Escape))
 	{
 		menuPntr->show = !menuPntr->show;
 		if (menuPntr->show)
 		{
 			RefreshComPortList();
-			appData->comMenuOptions = appData->comPort;
+			app->comMenuOptions = app->comPort;
 		}
 	}
 	
 	if (menuPntr->show)
 	{
-		u32 numTabs = appData->numComPortsAvailable + (appData->comPort.isOpen ? 1 : 0);
+		u32 numTabs = app->availablePorts.numStrings + (app->comPort.isOpen ? 1 : 0);
 		r32 tabWidth = menuPntr->usableRec.width / numTabs;
 		{
-			r32 tabMinimumWidth = MeasureString(&appData->testFont, "1234567890").x + COM_MENU_TAB_PADDING*2;
+			r32 tabMinimumWidth = MeasureString(&app->testFont, "1234567890").x + COM_MENU_TAB_PADDING*2;
 			if (tabWidth < tabMinimumWidth) { tabWidth = tabMinimumWidth; }
 		}
 		rec baudRateRec = NewRectangle(
 			menuPntr->usableRec.x + COM_MENU_OUTER_PADDING,
-			menuPntr->usableRec.y + appData->testFont.lineHeight + COM_MENU_OUTER_PADDING,
-			78, appData->testFont.lineHeight * NumBaudRates
+			menuPntr->usableRec.y + app->testFont.lineHeight + COM_MENU_OUTER_PADDING,
+			78, app->testFont.lineHeight * NumBaudRates
 		);
 		rec numBitsRec = NewRectangle(
 			baudRateRec.x + baudRateRec.width + COM_MENU_INNER_PADDING,
-			menuPntr->usableRec.y + appData->testFont.lineHeight + COM_MENU_OUTER_PADDING,
-			55, appData->testFont.lineHeight * 8
+			menuPntr->usableRec.y + app->testFont.lineHeight + COM_MENU_OUTER_PADDING,
+			55, app->testFont.lineHeight * 8
 		);
 		rec parityTypesRec = NewRectangle(
 			numBitsRec.x + numBitsRec.width + COM_MENU_INNER_PADDING,
-			menuPntr->usableRec.y + appData->testFont.lineHeight + COM_MENU_OUTER_PADDING,
-			60, appData->testFont.lineHeight * NumParityTypes
+			menuPntr->usableRec.y + app->testFont.lineHeight + COM_MENU_OUTER_PADDING,
+			60, app->testFont.lineHeight * NumParityTypes
 		);
 		rec stopBitsRec = NewRectangle(
 			parityTypesRec.x + parityTypesRec.width + COM_MENU_INNER_PADDING,
-			menuPntr->usableRec.y + appData->testFont.lineHeight + COM_MENU_OUTER_PADDING,
-			80, appData->testFont.lineHeight * NumStopBitTypes
+			menuPntr->usableRec.y + app->testFont.lineHeight + COM_MENU_OUTER_PADDING,
+			80, app->testFont.lineHeight * NumStopBitTypes
 		);
 		
 		// +==============================+
@@ -233,16 +244,18 @@ void ComMenuUpdate(MenuHandler_t* menuHandler, Menu_t* menuPntr)
 		// |   Calculate The Tab Height   |
 		// +==============================+
 		r32 tabHeight = COM_MENU_TAB_HEIGHT;
-		for (u32 comIndex = ComPort_1; comIndex < NumComPorts; comIndex++)
+		for (u32 tabIndex = ComPort_1; tabIndex < numTabs; tabIndex++)
 		{
-			if ((appData->availableComPorts[comIndex] || appData->comPort.index == (ComPortIndex_t)comIndex) &&
-				strcmp(GC->comPortNames[comIndex], GetComPortReadableName((ComPortIndex_t)comIndex)) != 0)
+			char* portName = nullptr;
+			if (tabIndex < app->availablePorts.numStrings) { portName = app->availablePorts.strings[tabIndex]; }
+			else { portName = app->comPort.name; }
+			
+			const char* portUserName = GetPortUserName(portName);
+			
+			v2 givenNameSize = MeasureFormattedString(&app->testFont, portUserName, tabWidth - COM_MENU_TAB_PADDING*2, true);
+			if (givenNameSize.y + COM_MENU_TAB_PADDING*2 > tabHeight)
 			{
-				v2 givenNameSize = MeasureFormattedString(&appData->testFont, GC->comPortNames[comIndex], tabWidth - COM_MENU_TAB_PADDING*2, true);
-				if (givenNameSize.y + COM_MENU_TAB_PADDING*2 > tabHeight)
-				{
-					tabHeight = givenNameSize.y + COM_MENU_TAB_PADDING*2;
-				}
+				tabHeight = givenNameSize.y + COM_MENU_TAB_PADDING*2;
 			}
 		}
 		baudRateRec.y    += tabHeight;
@@ -270,130 +283,127 @@ void ComMenuUpdate(MenuHandler_t* menuHandler, Menu_t* menuPntr)
 		for (i32 baudIndex = 0; baudIndex < NumBaudRates; baudIndex++)
 		{
 			rec currentRec = NewRectangle(baudRateRec.x,
-				baudRateRec.y + baudIndex*appData->testFont.lineHeight,
-				baudRateRec.width, appData->testFont.lineHeight
+				baudRateRec.y + baudIndex*app->testFont.lineHeight,
+				baudRateRec.width, app->testFont.lineHeight
 			);
 			if (IsInsideRectangle(RenderMousePos, currentRec) && IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, currentRec) &&
 				ButtonReleased(MouseButton_Left))
 			{
-				appData->comMenuOptions.settings.baudRate = (BaudRate_t)baudIndex;
+				app->comMenuOptions.settings.baudRate = (BaudRate_t)baudIndex;
 			}
 		}
 		
 		for (i32 bitIndex = 0; bitIndex < 8; bitIndex++)
 		{
 			rec currentRec = NewRectangle(numBitsRec.x,
-				numBitsRec.y + bitIndex*appData->testFont.lineHeight,
-				numBitsRec.width, appData->testFont.lineHeight
+				numBitsRec.y + bitIndex*app->testFont.lineHeight,
+				numBitsRec.width, app->testFont.lineHeight
 			);
 			if (IsInsideRectangle(RenderMousePos, currentRec) && IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, currentRec) &&
 				ButtonReleased(MouseButton_Left))
 			{
-				appData->comMenuOptions.settings.numBits = (u8)(bitIndex+1);
+				app->comMenuOptions.settings.numBits = (u8)(bitIndex+1);
 			}
 		}
 		
 		for (i32 parityIndex = 0; parityIndex < NumParityTypes; parityIndex++)
 		{
 			rec currentRec = NewRectangle(parityTypesRec.x,
-				parityTypesRec.y + parityIndex*appData->testFont.lineHeight,
-				parityTypesRec.width, appData->testFont.lineHeight
+				parityTypesRec.y + parityIndex*app->testFont.lineHeight,
+				parityTypesRec.width, app->testFont.lineHeight
 			);
 			if (IsInsideRectangle(RenderMousePos, currentRec) && IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, currentRec) &&
 				ButtonReleased(MouseButton_Left))
 			{
-				appData->comMenuOptions.settings.parity = (Parity_t)parityIndex;
+				app->comMenuOptions.settings.parity = (Parity_t)parityIndex;
 			}
 		}
 		
 		for (i32 stopBitIndex = 0; stopBitIndex < NumStopBitTypes; stopBitIndex++)
 		{
 			rec currentRec = NewRectangle(stopBitsRec.x,
-				stopBitsRec.y + stopBitIndex*appData->testFont.lineHeight,
-				stopBitsRec.width, appData->testFont.lineHeight
+				stopBitsRec.y + stopBitIndex*app->testFont.lineHeight,
+				stopBitsRec.width, app->testFont.lineHeight
 			);
 			if (IsInsideRectangle(RenderMousePos, currentRec) && IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, currentRec) &&
 				ButtonReleased(MouseButton_Left))
 			{
-				appData->comMenuOptions.settings.stopBits = (StopBits_t)stopBitIndex;
+				app->comMenuOptions.settings.stopBits = (StopBits_t)stopBitIndex;
 			}
 		}
 		
 		//Check for tab Presses
-		u32 tabIndex = 0;
-		for (u32 comIndex = 0; comIndex < ArrayCount(appData->availableComPorts); comIndex++)
+		for (u32 tabIndex = 0; tabIndex < numTabs; tabIndex++)
 		{
-			if (appData->availableComPorts[comIndex] == true ||
-				(appData->comPort.isOpen && (ComPortIndex_t)comIndex == appData->comPort.index))
+			char* tabName = nullptr;
+			if (tabIndex < app->availablePorts.numStrings) { tabName = app->availablePorts.strings[tabIndex]; }
+			else { tabName = app->comPort.name; }
+			
+			rec tabRec = NewRectangle(tabIndex * tabWidth, 0, tabWidth, tabHeight);
+			tabRec.topLeft += menuPntr->usableRec.topLeft;
+			
+			if (ButtonReleased(MouseButton_Left) && IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, tabRec))
 			{
-				rec tabRec = NewRectangle(tabIndex * tabWidth, 0, tabWidth, tabHeight);
-				tabRec.topLeft += menuPntr->usableRec.topLeft;
-				
-				if (ButtonReleased(MouseButton_Left) && input->mouseMaxDist[MouseButton_Left] / GUI_SCALE < 10 &&
-					IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, tabRec))
-				{
-					appData->comMenuOptions.index = (ComPortIndex_t)comIndex;
-					appData->comMenuOptions.isOpen = true;
-				}
-				
-				tabIndex++;
+				if (app->comMenuOptions.name != nullptr) { ArenaPop(&app->mainHeap, app->comMenuOptions.name); }
+				DuplicateString(app->comMenuOptions.name, tabName, &app->mainHeap);
+				app->comMenuOptions.isOpen = true;
 			}
 		}
 		
 		//Check for connect button press
 		bool connectButtonPressed = (IsInsideRectangle(RenderMousePos, connectButtonRec) &&
 			ButtonReleased(MouseButton_Left) && IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, connectButtonRec));
-		if (appData->comMenuOptions.isOpen &&
+		if (app->comMenuOptions.isOpen &&
 			(connectButtonPressed || ButtonReleased(Button_Enter)))
 		{
-			OpenComPort(appData->comMenuOptions.index, appData->comMenuOptions.settings);
+			OpenComPort(app->comMenuOptions.name, app->comMenuOptions.settings);
 			menuPntr->show = false;
 		}
 	}
 }
 void ComMenuRender(RenderState_t* renderState, MenuHandler_t* menuHandler, Menu_t* menuPntr)
 {
-	AppData_t* appData = app;
-	
 	if (menuPntr->show)
 	{
-		u32 numTabs = appData->numComPortsAvailable + (appData->comPort.isOpen ? 1 : 0);
+		u32 numTabs = app->availablePorts.numStrings + (app->comPort.isOpen ? 1 : 0);
 		r32 tabWidth = menuPntr->usableRec.width / numTabs;
 		rec baudRateRec = NewRectangle(
 			menuPntr->usableRec.x + COM_MENU_OUTER_PADDING,
-			menuPntr->usableRec.y + appData->testFont.lineHeight + COM_MENU_OUTER_PADDING,
-			78, appData->testFont.lineHeight * NumBaudRates
+			menuPntr->usableRec.y + app->testFont.lineHeight + COM_MENU_OUTER_PADDING,
+			78, app->testFont.lineHeight * NumBaudRates
 		);
 		rec numBitsRec = NewRectangle(
 			baudRateRec.x + baudRateRec.width + COM_MENU_INNER_PADDING,
-			menuPntr->usableRec.y + appData->testFont.lineHeight + COM_MENU_OUTER_PADDING,
-			55, appData->testFont.lineHeight * 8
+			menuPntr->usableRec.y + app->testFont.lineHeight + COM_MENU_OUTER_PADDING,
+			55, app->testFont.lineHeight * 8
 		);
 		rec parityTypesRec = NewRectangle(
 			numBitsRec.x + numBitsRec.width + COM_MENU_INNER_PADDING,
-			menuPntr->usableRec.y + appData->testFont.lineHeight + COM_MENU_OUTER_PADDING,
-			60, appData->testFont.lineHeight * NumParityTypes
+			menuPntr->usableRec.y + app->testFont.lineHeight + COM_MENU_OUTER_PADDING,
+			60, app->testFont.lineHeight * NumParityTypes
 		);
 		rec stopBitsRec = NewRectangle(
 			parityTypesRec.x + parityTypesRec.width + COM_MENU_INNER_PADDING,
-			menuPntr->usableRec.y + appData->testFont.lineHeight + COM_MENU_OUTER_PADDING,
-			80, appData->testFont.lineHeight * NumStopBitTypes
+			menuPntr->usableRec.y + app->testFont.lineHeight + COM_MENU_OUTER_PADDING,
+			80, app->testFont.lineHeight * NumStopBitTypes
 		);
 		
 		// +==============================+
 		// |   Calculate The Tab Height   |
 		// +==============================+
 		r32 tabHeight = COM_MENU_TAB_HEIGHT;
-		for (u32 comIndex = ComPort_1; comIndex < NumComPorts; comIndex++)
+		for (u32 tabIndex = ComPort_1; tabIndex < numTabs; tabIndex++)
 		{
-			if ((appData->availableComPorts[comIndex] || appData->comPort.index == (ComPortIndex_t)comIndex) &&
-				strcmp(GC->comPortNames[comIndex], GetComPortReadableName((ComPortIndex_t)comIndex)) != 0)
+			char* portName = nullptr;
+			if (tabIndex < app->availablePorts.numStrings) { portName = app->availablePorts.strings[tabIndex]; }
+			else { portName = app->comPort.name; }
+			
+			const char* portUserName = GetPortUserName(portName);
+			
+			v2 givenNameSize = MeasureFormattedString(&app->testFont, portUserName, tabWidth - COM_MENU_TAB_PADDING*2, true);
+			if (givenNameSize.y + COM_MENU_TAB_PADDING*2 > tabHeight)
 			{
-				v2 givenNameSize = MeasureFormattedString(&appData->testFont, GC->comPortNames[comIndex], tabWidth - COM_MENU_TAB_PADDING*2, true);
-				if (givenNameSize.y + COM_MENU_TAB_PADDING*2 > tabHeight)
-				{
-					tabHeight = givenNameSize.y + COM_MENU_TAB_PADDING*2;
-				}
+				tabHeight = givenNameSize.y + COM_MENU_TAB_PADDING*2;
 			}
 		}
 		baudRateRec.y    += tabHeight;
@@ -410,22 +420,22 @@ void ComMenuRender(RenderState_t* renderState, MenuHandler_t* menuHandler, Menu_
 		// +==============================+
 		// |  Draw the Baud Rate Options  |
 		// +==============================+
-		renderState->DrawString("Baud Rate", NewVec2(baudRateRec.x, baudRateRec.y - appData->testFont.maxExtendDown), GC->colors.foreground);
+		renderState->DrawString("Baud Rate", NewVec2(baudRateRec.x, baudRateRec.y - app->testFont.maxExtendDown), GC->colors.foreground);
 		renderState->DrawRectangle(baudRateRec, GC->colors.foreground);
 		for (i32 baudIndex = 0; baudIndex < NumBaudRates; baudIndex++)
 		{
 			const char* baudString = GetBaudRateString((BaudRate_t)baudIndex);
 			rec currentRec = NewRectangle(baudRateRec.x,
-				baudRateRec.y + baudIndex*appData->testFont.lineHeight,
-				baudRateRec.width, appData->testFont.lineHeight
+				baudRateRec.y + baudIndex*app->testFont.lineHeight,
+				baudRateRec.width, app->testFont.lineHeight
 			);
 			v2 textPos = baudRateRec.topLeft + NewVec2(
-				baudRateRec.width/2 - MeasureString(&appData->testFont, baudString).x/2,
-				appData->testFont.maxExtendUp + baudIndex*appData->testFont.lineHeight);
+				baudRateRec.width/2 - MeasureString(&app->testFont, baudString).x/2,
+				app->testFont.maxExtendUp + baudIndex*app->testFont.lineHeight);
 			
 			Color_t backColor, textColor, borderColor;
 			ButtonColorChoice(backColor, textColor, borderColor, currentRec,
-				((BaudRate_t)baudIndex == appData->comMenuOptions.settings.baudRate), false);
+				((BaudRate_t)baudIndex == app->comMenuOptions.settings.baudRate), false);
 			
 			renderState->DrawRectangle(currentRec, backColor);
 			renderState->DrawString(baudString, textPos, textColor);
@@ -434,23 +444,23 @@ void ComMenuRender(RenderState_t* renderState, MenuHandler_t* menuHandler, Menu_
 		// +==============================+
 		// |   Draw the # Bits Options    |
 		// +==============================+
-		renderState->DrawString("# Bits", NewVec2(numBitsRec.x, numBitsRec.y - appData->testFont.maxExtendDown), {GC->colors.foreground});
+		renderState->DrawString("# Bits", NewVec2(numBitsRec.x, numBitsRec.y - app->testFont.maxExtendDown), {GC->colors.foreground});
 		renderState->DrawRectangle(numBitsRec, GC->colors.foreground);
 		for (i32 bitIndex = 0; bitIndex < 8; bitIndex++)
 		{
 			char numBitsString[4] = {};
 			snprintf(numBitsString, ArrayCount(numBitsString)-1, "%d", bitIndex+1);
 			rec currentRec = NewRectangle(numBitsRec.x,
-				numBitsRec.y + bitIndex*appData->testFont.lineHeight,
-				numBitsRec.width, appData->testFont.lineHeight
+				numBitsRec.y + bitIndex*app->testFont.lineHeight,
+				numBitsRec.width, app->testFont.lineHeight
 			);
 			v2 textPos = numBitsRec.topLeft + NewVec2(
-				numBitsRec.width/2 - MeasureString(&appData->testFont, numBitsString).x/2,
-				appData->testFont.maxExtendUp + bitIndex*appData->testFont.lineHeight);
+				numBitsRec.width/2 - MeasureString(&app->testFont, numBitsString).x/2,
+				app->testFont.maxExtendUp + bitIndex*app->testFont.lineHeight);
 			
 			Color_t backColor, textColor, borderColor;
 			ButtonColorChoice(backColor, textColor, borderColor, currentRec,
-				((u8)(bitIndex+1) == appData->comMenuOptions.settings.numBits), false);
+				((u8)(bitIndex+1) == app->comMenuOptions.settings.numBits), false);
 			
 			renderState->DrawRectangle(currentRec, backColor);
 			renderState->DrawString(numBitsString, textPos, textColor);
@@ -459,22 +469,22 @@ void ComMenuRender(RenderState_t* renderState, MenuHandler_t* menuHandler, Menu_
 		// +==============================+
 		// |   Draw the Parity Options    |
 		// +==============================+
-		renderState->DrawString("Parity", NewVec2(parityTypesRec.x, parityTypesRec.y - appData->testFont.maxExtendDown), {GC->colors.foreground});
+		renderState->DrawString("Parity", NewVec2(parityTypesRec.x, parityTypesRec.y - app->testFont.maxExtendDown), {GC->colors.foreground});
 		renderState->DrawRectangle(parityTypesRec, GC->colors.foreground);
 		for (i32 parityIndex = 0; parityIndex < NumParityTypes; parityIndex++)
 		{
 			const char* parityString = GetParityString((Parity_t)parityIndex);
 			rec currentRec = NewRectangle(parityTypesRec.x,
-				parityTypesRec.y + parityIndex*appData->testFont.lineHeight,
-				parityTypesRec.width, appData->testFont.lineHeight
+				parityTypesRec.y + parityIndex*app->testFont.lineHeight,
+				parityTypesRec.width, app->testFont.lineHeight
 			);
 			v2 textPos = parityTypesRec.topLeft + NewVec2(
-				parityTypesRec.width/2 - MeasureString(&appData->testFont, parityString).x/2,
-				appData->testFont.maxExtendUp + parityIndex*appData->testFont.lineHeight);
+				parityTypesRec.width/2 - MeasureString(&app->testFont, parityString).x/2,
+				app->testFont.maxExtendUp + parityIndex*app->testFont.lineHeight);
 			
 			Color_t backColor, textColor, borderColor;
 			ButtonColorChoice(backColor, textColor, borderColor, currentRec,
-				((Parity_t)parityIndex == appData->comMenuOptions.settings.parity), false);
+				((Parity_t)parityIndex == app->comMenuOptions.settings.parity), false);
 			
 			renderState->DrawRectangle(currentRec, backColor);
 			renderState->DrawString(parityString, textPos, textColor);
@@ -483,22 +493,22 @@ void ComMenuRender(RenderState_t* renderState, MenuHandler_t* menuHandler, Menu_
 		// +==============================+
 		// |  Draw the Stop Bits Options  |
 		// +==============================+
-		renderState->DrawString("Stop Bits", NewVec2(stopBitsRec.x, stopBitsRec.y - appData->testFont.maxExtendDown), {GC->colors.foreground});
+		renderState->DrawString("Stop Bits", NewVec2(stopBitsRec.x, stopBitsRec.y - app->testFont.maxExtendDown), {GC->colors.foreground});
 		renderState->DrawRectangle(stopBitsRec, GC->colors.foreground);
 		for (i32 stopBitIndex = 0; stopBitIndex < NumStopBitTypes; stopBitIndex++)
 		{
 			const char* stopBitsString = GetStopBitsString((StopBits_t)stopBitIndex);
 			rec currentRec = NewRectangle(stopBitsRec.x,
-				stopBitsRec.y + stopBitIndex*appData->testFont.lineHeight,
-				stopBitsRec.width, appData->testFont.lineHeight
+				stopBitsRec.y + stopBitIndex*app->testFont.lineHeight,
+				stopBitsRec.width, app->testFont.lineHeight
 			);
 			v2 textPos = stopBitsRec.topLeft + NewVec2(
-				stopBitsRec.width/2 - MeasureString(&appData->testFont, stopBitsString).x/2,
-				appData->testFont.maxExtendUp + stopBitIndex*appData->testFont.lineHeight);
+				stopBitsRec.width/2 - MeasureString(&app->testFont, stopBitsString).x/2,
+				app->testFont.maxExtendUp + stopBitIndex*app->testFont.lineHeight);
 			
 			Color_t buttonColor, textColor, borderColor;
 			ButtonColorChoice(buttonColor, textColor, borderColor, currentRec,
-				((StopBits_t)stopBitIndex == appData->comMenuOptions.settings.stopBits), false);
+				((StopBits_t)stopBitIndex == app->comMenuOptions.settings.stopBits), false);
 			
 			renderState->DrawRectangle(currentRec, buttonColor);
 			renderState->DrawString(stopBitsString, textPos, textColor);
@@ -507,43 +517,48 @@ void ComMenuRender(RenderState_t* renderState, MenuHandler_t* menuHandler, Menu_
 		// +==============================+
 		// |      Draw the Port Tabs      |
 		// +==============================+
-		u32 tabIndex = 0;
-		for (u32 comIndex = 0; comIndex < ArrayCount(appData->availableComPorts); comIndex++)
+		//Check for tab Presses
+		for (u32 tabIndex = 0; tabIndex < numTabs; tabIndex++)
 		{
-			if (appData->availableComPorts[comIndex] == true ||
-				(appData->comPort.isOpen && (ComPortIndex_t)comIndex == appData->comPort.index))
-			{
-				v2 stringSize = MeasureFormattedString(&appData->testFont, GC->comPortNames[comIndex], tabWidth - COM_MENU_TAB_PADDING*2, true);
-				rec tabRec = NewRectangle(tabIndex * tabWidth, 0, tabWidth, tabHeight);
-				tabRec.topLeft += menuPntr->usableRec.topLeft;
-				v2 stringPosition = tabRec.topLeft + NewVec2(tabRec.width/2, tabRec.height/2 - stringSize.y/2 + appData->testFont.maxExtendUp);
-				
-				Color_t buttonColor, textColor, borderColor;
-				ButtonColorChoice(buttonColor, textColor, borderColor, tabRec,
-					(appData->comMenuOptions.isOpen == true && (ComPortIndex_t)comIndex == appData->comMenuOptions.index), false);
-				
-				renderState->DrawButton(tabRec, buttonColor, borderColor);
-				// renderState->DrawRectangle(NewRectangle(stringPosition.x - stringSize.x/2, stringPosition.y - appData->testFont.maxExtendUp, stringSize.x, stringSize.y), {Color_Red});
-				renderState->DrawFormattedString(GC->comPortNames[comIndex], stringPosition, tabWidth - COM_MENU_TAB_PADDING*2, textColor, Alignment_Center, true);
-				
-				tabIndex++;
-			}
+			char* portName = nullptr;
+			if (tabIndex < app->availablePorts.numStrings) { portName = app->availablePorts.strings[tabIndex]; }
+			else { portName = app->comPort.name; }
+			const char* portUserName = GetPortUserName(portName);
+			rec tabRec = NewRectangle(tabIndex * tabWidth, 0, tabWidth, tabHeight);
+			tabRec.topLeft += menuPntr->usableRec.topLeft;
+			v2 stringSize = MeasureFormattedString(&app->testFont, portUserName, tabWidth - COM_MENU_TAB_PADDING*2, true);
+			v2 stringPosition = tabRec.topLeft + NewVec2(tabRec.width/2, tabRec.height/2 - stringSize.y/2 + app->testFont.maxExtendUp);
+			
+			Color_t buttonColor, textColor, borderColor;
+			ButtonColorChoice(buttonColor, textColor, borderColor, tabRec,
+				(app->comMenuOptions.isOpen == true && strcmp(app->comMenuOptions.name, portName) == 0),
+				app->comPort.isOpen && strcmp(app->comPort.name, portName) == 0);
+			
+			renderState->DrawButton(tabRec, buttonColor, borderColor);
+			// renderState->DrawRectangle(NewRectangle(stringPosition.x - stringSize.x/2, stringPosition.y - app->testFont.maxExtendUp, stringSize.x, stringSize.y), {Color_Red});
+			renderState->DrawFormattedString(portUserName, stringPosition, tabWidth - COM_MENU_TAB_PADDING*2, textColor, Alignment_Center, true);
+			
+			tabIndex++;
 		}
 		
 		//Draw the connect button
 		{
 			const char* connectButtonText = "Connect";
-			v2 textSize = MeasureString(&appData->testFont, connectButtonText);
+			v2 textSize = MeasureString(&app->testFont, connectButtonText);
 			v2 stringPosition = NewVec2(
 				connectButtonRec.x + connectButtonRec.width/2 - textSize.x/2,
-				connectButtonRec.y + connectButtonRec.height/2 + appData->testFont.lineHeight/2 - appData->testFont.maxExtendDown
+				connectButtonRec.y + connectButtonRec.height/2 + app->testFont.lineHeight/2 - app->testFont.maxExtendDown
 			);
-			bool settingsHaveChanged = ((!appData->comPort.isOpen && appData->comMenuOptions.isOpen) ||
-				appData->comMenuOptions.settings != appData->comPort.settings ||
-				appData->comMenuOptions.index != appData->comPort.index);
+			bool settingsHaveChanged = ((!app->comPort.isOpen && app->comMenuOptions.isOpen) || app->comMenuOptions.settings != app->comPort.settings);
+			if (app->comMenuOptions.name == nullptr && app->comPort.name != nullptr) { settingsHaveChanged = true; }
+			else if (app->comMenuOptions.name != nullptr && app->comPort.name == nullptr) { settingsHaveChanged = true; }
+			else if (app->comMenuOptions.name != nullptr && app->comPort.name != nullptr)
+			{
+				if (strcmp(app->comMenuOptions.name, app->comPort.name) != 0) { settingsHaveChanged = true; }
+			}
 			
 			Color_t buttonColor, borderColor, textColor;
-			if (!appData->comMenuOptions.isOpen)
+			if (!app->comMenuOptions.isOpen)
 			{
 				buttonColor = GC->colors.uiGray1;
 				textColor   = {Color_Black};
@@ -562,10 +577,9 @@ void ComMenuRender(RenderState_t* renderState, MenuHandler_t* menuHandler, Menu_
 
 void ContextMenuUpdate(MenuHandler_t* menuHandler, Menu_t* menu)
 {
-	AppData_t* appData = app;
-	UiElements_t* ui = &appData->uiElements;
+	UiElements_t* ui = &app->uiElements;
 	
-	v2 textSize = MeasureString(&appData->testFont, ui->contextStringBuffer);
+	v2 textSize = MeasureString(&app->testFont, ui->contextStringBuffer);
 	
 	menu->drawRec.size = textSize;
 	menu->drawRec = RectangleInflate(menu->drawRec, CONTEXT_MENU_PADDING);
@@ -573,11 +587,10 @@ void ContextMenuUpdate(MenuHandler_t* menuHandler, Menu_t* menu)
 }
 void ContextMenuRender(RenderState_t* renderState, MenuHandler_t* menuHandler, Menu_t* menu)
 {
-	AppData_t* appData = app;
-	UiElements_t* ui = &appData->uiElements;
+	UiElements_t* ui = &app->uiElements;
 	
-	v2 textPos = menu->usableRec.topLeft + NewVec2(CONTEXT_MENU_PADDING, CONTEXT_MENU_PADDING + appData->testFont.maxExtendUp);
-	appData->renderState.DrawString(ui->contextStringBuffer, textPos, GC->colors.foreground);
+	v2 textPos = menu->usableRec.topLeft + NewVec2(CONTEXT_MENU_PADDING, CONTEXT_MENU_PADDING + app->testFont.maxExtendUp);
+	app->renderState.DrawString(ui->contextStringBuffer, textPos, GC->colors.foreground);
 }
 
 u32 SanatizeString(const char* charPntr, u32 numChars, char* outputBuffer = nullptr)
@@ -607,7 +620,6 @@ u32 SanatizeString(const char* charPntr, u32 numChars, char* outputBuffer = null
 
 bool ApplyTriggerEffects(Line_t* newLine, RegexTrigger_t* trigger)
 {
-	AppData_t* appData = app;
 	bool addLineToBuffer = true;
 	
 	for (u32 eIndex = 0; eIndex < trigger->numEffects; eIndex++)
@@ -636,7 +648,7 @@ bool ApplyTriggerEffects(Line_t* newLine, RegexTrigger_t* trigger)
 		}
 		else if (strcmp(effectStr, "count") == 0)
 		{
-			appData->genericCounter++;
+			app->genericCounter++;
 		}
 		else if (strstr(effectStr, "=") != nullptr)
 		{
@@ -811,12 +823,8 @@ void DataReceived(const char* dataBuffer, i32 numBytes)
 							for (u32 comListIndex = 0; comListIndex < trigger->numComPorts; comListIndex++)
 							{
 								const char* supportedName = trigger->comPorts[comListIndex];
-								if (strcmp(supportedName, GetComPortReadableName(app->comPort.index)) == 0)
-								{
-									appliedToThisComPort = true;
-									break;
-								}
-								else if (strcmp(supportedName, GC->comPortNames[app->comPort.index]) == 0)
+								if (strcmp(supportedName, app->comPort.name) == 0 ||
+									strcmp(supportedName, GetPortUserName(app->comPort.name)) == 0)
 								{
 									appliedToThisComPort = true;
 									break;
@@ -1125,7 +1133,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	if (app->comPort.isOpen)
 	{
 		snprintf(AppOutput->windowTitle, sizeof(AppOutput->windowTitle)-1,
-			"%s - Const Port", GC->comPortNames[app->comPort.index]);
+			"%s - Const Port", GetPortUserName(app->comPort.name));
 	}
 	else
 	{
@@ -1407,10 +1415,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	// +==================================+
 	if (ButtonPressed(Button_F) && ButtonDown(Button_Control))
 	{
-		char outputFileName[32]; ClearArray(outputFileName);
-		const char* comPortName = GetComPortReadableName(app->comPort.index);
-		strcpy(&outputFileName[0], comPortName);
-		strcpy(&outputFileName[strlen(comPortName)], "_Output.txt");
+		char* outputFileName = TempCombine(GetPortUserName(app->comPort.name), "_Output.txt");
 		
 		DEBUG_PrintLine("Outputting to file: \"%s\"", outputFileName);
 		
@@ -1441,32 +1446,32 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	//+==================================+
 	if (ButtonDown(Button_Control))
 	{
-		ComPortIndex_t cIndex = NumComPorts;
+		const char* quickComSelection = nullptr;
 		
-		if (ButtonReleased(Button_1)) cIndex = ComPort_1;
-		if (ButtonReleased(Button_2)) cIndex = ComPort_2;
-		if (ButtonReleased(Button_3)) cIndex = ComPort_3;
-		if (ButtonReleased(Button_4)) cIndex = ComPort_4;
-		if (ButtonReleased(Button_5)) cIndex = ComPort_5;
-		if (ButtonReleased(Button_6)) cIndex = ComPort_6;
-		if (ButtonReleased(Button_7)) cIndex = ComPort_7;
-		if (ButtonReleased(Button_8)) cIndex = ComPort_8;
-		if (ButtonReleased(Button_9)) cIndex = ComPort_9;
+		if (ButtonReleased(Button_1)) quickComSelection = "COM1";
+		if (ButtonReleased(Button_2)) quickComSelection = "COM2";
+		if (ButtonReleased(Button_3)) quickComSelection = "COM3";
+		if (ButtonReleased(Button_4)) quickComSelection = "COM4";
+		if (ButtonReleased(Button_5)) quickComSelection = "COM5";
+		if (ButtonReleased(Button_6)) quickComSelection = "COM6";
+		if (ButtonReleased(Button_7)) quickComSelection = "COM7";
+		if (ButtonReleased(Button_8)) quickComSelection = "COM8";
+		if (ButtonReleased(Button_9)) quickComSelection = "COM9";
 		
-		if (cIndex != NumComPorts)
+		if (quickComSelection != nullptr)
 		{
 			if (comMenu->show)
 				comMenu->show = false;
 			
 			RefreshComPortList();
 			
-			if (app->availableComPorts[cIndex] == false)
+			if (IsComAvailable(quickComSelection))
 			{
-				StatusError("%s not Available!", GetComPortReadableName(cIndex));
+				StatusError("%s not Available!", quickComSelection);
 			}
 			else
 			{
-				OpenComPort(cIndex, app->comPort.settings);
+				OpenComPort(quickComSelection, app->comPort.settings);
 			}
 		}
 	}
@@ -2185,8 +2190,9 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		
 		if (app->comPort.isOpen && GC->showComNameInStatusBar)
 		{
-			v2 comNameSize = MeasureString(&app->testFont, GC->comPortNames[app->comPort.index]);
-			rs->DrawString(GC->comPortNames[app->comPort.index],
+			const char* comPortUserName = GetPortUserName(app->comPort.name);
+			v2 comNameSize = MeasureString(&app->testFont, comPortUserName);
+			rs->DrawString(comPortUserName,
 				NewVec2(ui->gotoEndButtonRec.x - comNameSize.x - 5, ui->screenSize.y-app->testFont.maxExtendDown),
 				GC->colors.foreground, 1.0f);
 		}

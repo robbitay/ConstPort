@@ -1,7 +1,8 @@
 #ifndef _WIN32_COM_PORT_H
 #define _WIN32_COM_PORT_H
 
-#define MAX_COM_PORT_NUM   12
+#define MAX_COM_PORT_NUM   24
+#define MAX_COM_PORT_NAME_LENGTH 5
 
 //TODO: Is there ever a COM0?
 typedef enum
@@ -114,78 +115,11 @@ bool operator != (ComSettings_t left, ComSettings_t right)
 struct ComPort_t
 {
 	bool isOpen;
-	ComPortIndex_t index;
-	
+	char* name;
 	ComSettings_t settings;
 	
 	HANDLE handle;
 };
-
-const char* GetComPortFileName(ComPortIndex_t comIndex)
-{
-	switch (comIndex)
-	{
-		case ComPort_1:  return "COM1";
-		case ComPort_2:  return "COM2";
-		case ComPort_3:  return "COM3";
-		case ComPort_4:  return "COM4";
-		case ComPort_5:  return "COM5";
-		case ComPort_6:  return "COM6";
-		case ComPort_7:  return "COM7";
-		case ComPort_8:  return "COM8";
-		case ComPort_9:  return "COM9";
-		case ComPort_10: return "\\\\.\\COM10";
-		case ComPort_11: return "\\\\.\\COM11";
-		case ComPort_12: return "\\\\.\\COM12";
-		case ComPort_13: return "\\\\.\\COM13";
-		case ComPort_14: return "\\\\.\\COM14";
-		case ComPort_15: return "\\\\.\\COM15";
-		case ComPort_16: return "\\\\.\\COM16";
-		case ComPort_17: return "\\\\.\\COM17";
-		case ComPort_18: return "\\\\.\\COM18";
-		case ComPort_19: return "\\\\.\\COM19";
-		case ComPort_20: return "\\\\.\\COM20";
-		case ComPort_21: return "\\\\.\\COM21";
-		case ComPort_22: return "\\\\.\\COM22";
-		case ComPort_23: return "\\\\.\\COM23";
-		case ComPort_24: return "\\\\.\\COM24";
-		
-		default:         return "Unkwn";
-	};
-}
-
-const char* GetComPortReadableName(ComPortIndex_t comIndex)
-{
-	switch (comIndex)
-	{
-		case ComPort_1:  return "COM1";
-		case ComPort_2:  return "COM2";
-		case ComPort_3:  return "COM3";
-		case ComPort_4:  return "COM4";
-		case ComPort_5:  return "COM5";
-		case ComPort_6:  return "COM6";
-		case ComPort_7:  return "COM7";
-		case ComPort_8:  return "COM8";
-		case ComPort_9:  return "COM9";
-		case ComPort_10: return "COM10";
-		case ComPort_11: return "COM11";
-		case ComPort_12: return "COM12";
-		case ComPort_13: return "COM13";
-		case ComPort_14: return "COM14";
-		case ComPort_15: return "COM15";
-		case ComPort_16: return "COM16";
-		case ComPort_17: return "COM17";
-		case ComPort_18: return "COM18";
-		case ComPort_19: return "COM19";
-		case ComPort_20: return "COM20";
-		case ComPort_21: return "COM21";
-		case ComPort_22: return "COM22";
-		case ComPort_23: return "COM23";
-		case ComPort_24: return "COM24";
-		
-		default:         return "Unkwn";
-	};
-}
 
 const char* GetBaudRateString(BaudRate_t baudRate)
 {
@@ -233,6 +167,39 @@ const char* GetStopBitsString(StopBits_t stopBits)
 		case StopBits_2:   return "2";
 		
 		default:           return "Unk";
+	};
+}
+
+const char* GetComPortReadableName(ComPortIndex_t comIndex)
+{
+	switch (comIndex)
+	{
+		case ComPort_1:  return "COM1";
+		case ComPort_2:  return "COM2";
+		case ComPort_3:  return "COM3";
+		case ComPort_4:  return "COM4";
+		case ComPort_5:  return "COM5";
+		case ComPort_6:  return "COM6";
+		case ComPort_7:  return "COM7";
+		case ComPort_8:  return "COM8";
+		case ComPort_9:  return "COM9";
+		case ComPort_10: return "COM10";
+		case ComPort_11: return "COM11";
+		case ComPort_12: return "COM12";
+		case ComPort_13: return "COM13";
+		case ComPort_14: return "COM14";
+		case ComPort_15: return "COM15";
+		case ComPort_16: return "COM16";
+		case ComPort_17: return "COM17";
+		case ComPort_18: return "COM18";
+		case ComPort_19: return "COM19";
+		case ComPort_20: return "COM20";
+		case ComPort_21: return "COM21";
+		case ComPort_22: return "COM22";
+		case ComPort_23: return "COM23";
+		case ComPort_24: return "COM24";
+		
+		default:         return "Unkwn";
 	};
 }
 

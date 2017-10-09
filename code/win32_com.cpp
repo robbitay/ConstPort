@@ -8,34 +8,88 @@ Description:
 #included from win32_main.cpp
 */
 
+const char* GetComPortFileName(const char* portName)
+{
+	Assert(portName != nullptr);
+	u32 portNameLength = (u32)strlen(portName);
+	
+	if (portNameLength == 4)
+	{
+		if (portName[0] == 'C' && portName[1] == 'O' && portName[2] == 'M' &&
+			portName[3] >= '0' && portName[3] <= '9')
+		{
+			return portName;
+		}
+		else
+		{
+			return "Unknown";
+		}
+	}
+	else if (portNameLength == 5)
+	{
+		if (portName[0] == 'C' && portName[1] == 'O' && portName[2] == 'M' &&
+			portName[3] >= '1' && portName[3] <= '9' && portName[4] >= '0' && portName[4] <= '9')
+		{
+			     if (portName[3] == '1' && portName[4] == '0') { return "\\\\.\\COM10"; }
+			else if (portName[3] == '1' && portName[4] == '1') { return "\\\\.\\COM11"; }
+			else if (portName[3] == '1' && portName[4] == '2') { return "\\\\.\\COM12"; }
+			else if (portName[3] == '1' && portName[4] == '3') { return "\\\\.\\COM13"; }
+			else if (portName[3] == '1' && portName[4] == '4') { return "\\\\.\\COM14"; }
+			else if (portName[3] == '1' && portName[4] == '5') { return "\\\\.\\COM15"; }
+			else if (portName[3] == '1' && portName[4] == '6') { return "\\\\.\\COM16"; }
+			else if (portName[3] == '1' && portName[4] == '7') { return "\\\\.\\COM17"; }
+			else if (portName[3] == '1' && portName[4] == '8') { return "\\\\.\\COM18"; }
+			else if (portName[3] == '1' && portName[4] == '9') { return "\\\\.\\COM19"; }
+			else if (portName[3] == '2' && portName[4] == '0') { return "\\\\.\\COM20"; }
+			else if (portName[3] == '2' && portName[4] == '1') { return "\\\\.\\COM21"; }
+			else if (portName[3] == '2' && portName[4] == '2') { return "\\\\.\\COM22"; }
+			else if (portName[3] == '2' && portName[4] == '3') { return "\\\\.\\COM23"; }
+			else if (portName[3] == '2' && portName[4] == '4') { return "\\\\.\\COM24"; }
+			else
+			{
+				return "Unknown";
+			}
+		}
+		else
+		{
+			return "Unknown";
+		}
+	}
+	else
+	{
+		return "Unknown";
+	}
+}
+
 // +==============================+
 // |     Win32_GetComPortList     |
 // +==============================+
+// BoundedStrList_t Win32_GetComPortList(MemoryArena_t* memArena)
 GetComPortList_DEFINITION(Win32_GetComPortList)
 {
-	u32 result = 0;
+	Assert(memArena != nullptr);
 	
-	for (u8 cIndex = 0; cIndex < arrayOutSize && cIndex < NumComPorts; cIndex++)
+	BoundedStrList_t result = {};
+	BoundedStrListCreate(&result, NumComPorts, MAX_COM_PORT_NAME_LENGTH, memArena);
+	
+	for (u8 cIndex = 0; cIndex < NumComPorts; cIndex++)
 	{
 		ComPortIndex_t comIndex = (ComPortIndex_t)cIndex;
-		bool* boolPntr = &arrayOut[cIndex]; 
+		const char* portName = GetComPortReadableName(comIndex);
 		
-		// Win32_PrintLine("Trying to open %s...", GetComPortReadableName(comIndex));
+		// Win32_PrintLine("Trying to open %s...", portName);
 		
-		HANDLE comHandle = CreateFileA(GetComPortFileName(comIndex), 
-			GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
+		HANDLE comHandle = CreateFileA(GetComPortFileName(portName), GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
 		
 		if (comHandle != INVALID_HANDLE_VALUE)
 		{
-			// Win32_PrintLine("%s Exists!", GetComPortReadableName(comIndex));
-			*boolPntr = true;
-			result++;
+			// Win32_PrintLine("%s Exists!", portName);
+			BoundedStrListAdd(&result, portName);
 			CloseHandle(comHandle);
 		}
 		else
 		{
 			// Win32_PrintLine("Couldn't open %s", GetComPortReadableName(comIndex));
-			*boolPntr = false;
 		}
 	}
 	
@@ -45,19 +99,15 @@ GetComPortList_DEFINITION(Win32_GetComPortList)
 // +==============================+
 // |      Win32_OpenComPort       |
 // +==============================+
+// ComPort_t Win32_OpenComPort(MemoryArena_t* memArena, const char* comPortName, ComSettings_t settings)
 OpenComPort_DEFINITION(Win32_OpenComPort)
 {
 	ComPort_t result = {};
-	result.index = portIndex;
 	result.handle = INVALID_HANDLE_VALUE;
 	
-	HANDLE comHandle = CreateFileA(GetComPortFileName(portIndex), 
-		GENERIC_READ | GENERIC_WRITE, 
-		0,
-		NULL,
-		OPEN_EXISTING,
-		0,
-		NULL);
+	HANDLE comHandle = CreateFileA(GetComPortFileName(comPortName), 
+		GENERIC_READ | GENERIC_WRITE, 0, NULL,
+		OPEN_EXISTING, 0, NULL);
 	
 	if (comHandle == INVALID_HANDLE_VALUE)
 	{
@@ -151,6 +201,10 @@ OpenComPort_DEFINITION(Win32_OpenComPort)
 	result.handle = comHandle;
 	result.settings = settings;
 	result.isOpen = true;
+	u32 comPortNameLength = (u32)strlen(comPortName);
+	result.name = PushArray(memArena, char, comPortNameLength+1);
+	strncpy(result.name, comPortName, comPortNameLength);
+	result.name[comPortNameLength] = '\0';
 	
 	return result;
 }
@@ -167,6 +221,12 @@ CloseComPort_DEFINITION(Win32_CloseComPort)
 		CloseHandle(comPortPntr->handle);
 		comPortPntr->handle = INVALID_HANDLE_VALUE;
 		comPortPntr->isOpen = false;
+	}
+	
+	if (comPortPntr->name != nullptr)
+	{
+		ArenaPop(memArena, comPortPntr->name);
+		comPortPntr->name = nullptr;
 	}
 }
 

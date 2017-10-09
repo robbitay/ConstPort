@@ -61,15 +61,17 @@ Description:
 
 #include "myMath.h"
 #include "timeStructs.h"
+#include "memoryArena.h"
+#include "boundedStrList.h"
 
 // +--------------------------------------------------------------+
 // |                   Platform Layer Functions                   |
 // +--------------------------------------------------------------+
-#define GetComPortList_DEFINITION(functionName) u32 functionName(bool* arrayOut, u32 arrayOutSize)
+#define GetComPortList_DEFINITION(functionName) BoundedStrList_t functionName(MemoryArena_t* memArena)
 typedef GetComPortList_DEFINITION(GetComPortList_f);
-#define OpenComPort_DEFINITION(functionName) ComPort_t functionName(ComPortIndex_t portIndex, ComSettings_t settings)
+#define OpenComPort_DEFINITION(functionName) ComPort_t functionName(MemoryArena_t* memArena, const char* comPortName, ComSettings_t settings)
 typedef OpenComPort_DEFINITION(OpenComPort_f);
-#define CloseComPort_DEFINITION(functionName) void functionName(ComPort_t* comPortPntr)
+#define CloseComPort_DEFINITION(functionName) void functionName(MemoryArena_t* memArena, ComPort_t* comPortPntr)
 typedef CloseComPort_DEFINITION(CloseComPort_f);
 #define ReadComPort_DEFINITION(functionName) i32 functionName(ComPort_t* comPortPntr, void* outputBuffer, u32 outputBufferLength)
 typedef ReadComPort_DEFINITION(ReadComPort_f);

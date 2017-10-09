@@ -81,6 +81,13 @@ Description:
 	}                                                                                             \
 } while(0)
 
+#define DuplicateString(assignVariable, valuePntr, memArenaPntr) do           \
+{                                                                             \
+	assignVariable = PushArray(memArenaPntr, char, (u32)strlen(valuePntr)+1); \
+	strncpy(assignVariable, valuePntr, strlen(valuePntr));                    \
+	assignVariable[strlen(valuePntr)] = '\0';                                 \
+} while(0)
+
 char* FormattedSizeStr(u32 numBytes)
 {
 	char* result = nullptr;
