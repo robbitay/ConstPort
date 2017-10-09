@@ -126,7 +126,16 @@ void StatusMessage(const char* functionName, StatusMessage_t messageType, const 
 
 const char* GetPortUserName(const char* portName)
 {
-	//TODO: Implement me
+	for (u32 nIndex = 0; nIndex < GC->comNameKeys.numStrings; nIndex++)
+	{
+		Assert(nIndex < GC->comNameValues.numStrings);
+		
+		if (strcmp(GC->comNameKeys.strings[nIndex], portName) == 0)
+		{
+			return GC->comNameValues.strings[nIndex];
+		}
+	}
+	
 	return portName;
 }
 
@@ -165,6 +174,30 @@ void RefreshComPortList()
 	for (u32 cIndex = 0; cIndex < app->availablePorts.numStrings; cIndex++)
 	{
 		DEBUG_PrintLine("\"%s\"Available!", app->availablePorts.strings[cIndex]);
+	}
+}
+
+void HideComMenu()
+{
+	Menu_t* comMenu = GetMenuByName(&app->menuHandler, "COM Menu");
+	if (comMenu->show)
+	{
+		comMenu->show = false;
+		if (app->comMenuOptions.name != nullptr) { ArenaPop(&app->mainHeap, app->comMenuOptions.name); }
+	}
+}
+
+void ShowComMenu()
+{
+	Menu_t* comMenu = GetMenuByName(&app->menuHandler, "COM Menu");
+	if (comMenu->show == false)
+	{
+		comMenu->show = true;
+		app->comMenuOptions = app->comPort;
+		if (app->comPort.name != nullptr)
+		{
+			app->comMenuOptions.name = DupStr(app->comPort.name, &app->mainHeap);
+		}
 	}
 }
 
@@ -345,7 +378,7 @@ void ComMenuUpdate(MenuHandler_t* menuHandler, Menu_t* menuPntr)
 			if (ButtonReleased(MouseButton_Left) && IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, tabRec))
 			{
 				if (app->comMenuOptions.name != nullptr) { ArenaPop(&app->mainHeap, app->comMenuOptions.name); }
-				DuplicateString(app->comMenuOptions.name, tabName, &app->mainHeap);
+				app->comMenuOptions.name = DupStr(tabName, &app->mainHeap);
 				app->comMenuOptions.isOpen = true;
 			}
 		}
@@ -1283,7 +1316,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 			if (writeToProgram) { platform->WriteProgramInputPntr(&app->programInstance, &input->textInput[0], input->textInputLength); }
 		}
 		
-		if (!comMenu->show && ButtonPressed(Button_Enter))
+		if (comMenu->show == false && ButtonPressed(Button_Enter))
 		{
 			DEBUG_WriteLine("Writing New Line");
 			
@@ -1335,14 +1368,12 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		
 		if (comMenu->show)
 		{
-			comMenu->show = false;
+			HideComMenu();
 		}
 		else
 		{
-			comMenu->show = true;
-			
 			RefreshComPortList();
-			app->comMenuOptions = app->comPort;
+			ShowComMenu();
 		}
 	}
 	
@@ -1460,8 +1491,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		
 		if (quickComSelection != nullptr)
 		{
-			if (comMenu->show)
-				comMenu->show = false;
+			if (comMenu->show) HideComMenu();
 			
 			RefreshComPortList();
 			
@@ -1623,14 +1653,12 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 					{
 						if (comMenu->show)
 						{
-							comMenu->show = false;
+							HideComMenu();
 						}
 						else
 						{
-							comMenu->show = true;
-							
 							RefreshComPortList();
-							app->comMenuOptions = app->comPort;
+							ShowComMenu();
 						}
 					} break;
 					

@@ -39,5 +39,7 @@ Date:   06\08\2017
 #define MAX_JSON_TOKENS            2048
 #define GLOBAL_CONFIG_FILEPATH     "Resources/Configuration/GlobalConfig.json"
 #define OUTPUT_FILE_NAME           "Output.txt"
+#define MAX_USER_PORT_NAMES        24
+#define MAX_USER_PORT_NAME_LENGTH  40
 
 #endif // _APP_DEFINES_H

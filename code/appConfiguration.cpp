@@ -231,11 +231,9 @@ void LoadGlobalConfiguration(const PlatformInfo_t* PlatformInfo, GlobalConfig_t*
 	#define INCLUDE_COLOR_OPTIONS
 	#include "appConfigOptions.h"
 	
-	for (u8 comIndex = ComPort_1; comIndex < NumComPorts; comIndex++)
-	{
-		globalConfig->comPortNames[comIndex] = GetComPortReadableName((ComPortIndex_t)comIndex);
-	}
-
+	BoundedStrListCreate(&globalConfig->comNameKeys, MAX_USER_PORT_NAMES, MAX_COM_PORT_NAME_LENGTH, TempArena);
+	BoundedStrListCreate(&globalConfig->comNameValues, MAX_USER_PORT_NAMES, MAX_USER_PORT_NAME_LENGTH, TempArena);
+	
 	//+==================================+
 	//|       Parse the JSON File        |
 	//+==================================+
@@ -332,18 +330,42 @@ void LoadGlobalConfiguration(const PlatformInfo_t* PlatformInfo, GlobalConfig_t*
 	}
 	else
 	{
-		i32 portNamesIndex = GetChildToken(jsonData, portNamesTokenIndex);
+		i32 portNamesArrayIndex = GetChildToken(jsonData, portNamesTokenIndex);
+		u32 numChildren = GetNumChildTokens(jsonData, portNamesArrayIndex);
 		
-		for (u8 comIndex = ComPort_1; comIndex < NumComPorts; comIndex++)
+		for (u32 childIndex = 0; childIndex < numChildren; childIndex++)
 		{
-			const char* comName = GetComPortReadableName((ComPortIndex_t)comIndex);
+			i32 childKeyTokenIndex = FindChildTokenByIndex(jsonData, portNamesArrayIndex, childIndex);
+			if (childKeyTokenIndex == -1) { continue; }
+			jsmntok_t* childKeyToken = &jsonData->tokens[childKeyTokenIndex];
+			i32 childValueTokenIndex = GetChildToken(jsonData, childKeyTokenIndex);
+			if (childValueTokenIndex == -1) { continue; }
+			jsmntok_t* childValueToken = &jsonData->tokens[childValueTokenIndex];
 			
-			const char* assignedName = comName;
-			GetStrConfig(portNamesIndex, comName, &assignedName, memArena);
+			const char* keyStrPntr = &jsonData->data[childKeyToken->start];
+			char* keyString = DupStrN(keyStrPntr, TokenLength(childKeyToken), TempArena);
 			
-			globalConfig->comPortNames[comIndex] = assignedName;
+			const char* valueStrPntr = &jsonData->data[childValueToken->start];
+			char* valueString = DupStrN(valueStrPntr, TokenLength(childValueToken), TempArena);
+			
+			if (strlen(keyString) > MAX_COM_PORT_NAME_LENGTH)
+			{
+				DEBUG_PrintLine("\"port_names\" item[%u]: Identifier \"%s\" %u char length > max %u chars", childIndex, keyString, strlen(keyString), MAX_COM_PORT_NAME_LENGTH);
+			}
+			else if (strlen(valueString) > MAX_USER_PORT_NAME_LENGTH)
+			{
+				DEBUG_PrintLine("\"port_names\" item[%u]: Name \"%s\" %u char length > max %u chars", childIndex, valueString, strlen(valueString), MAX_USER_PORT_NAME_LENGTH);
+			}
+			else
+			{
+				DEBUG_PrintLine("User Name[%u]: \"%s\" = \"%s\"", childIndex, keyString, valueString);
+				BoundedStrListAdd(&globalConfig->comNameKeys, keyString);
+				BoundedStrListAdd(&globalConfig->comNameValues, valueString);
+			}
 		}
 	}
+	BoundedStrListSolidify(&globalConfig->comNameKeys,   TempArena, memArena, false);
+	BoundedStrListSolidify(&globalConfig->comNameValues, TempArena, memArena, false);
 	
 	// +==============================+
 	// |  Parse Regex Triggers List   |
@@ -395,14 +417,8 @@ void DisposeGlobalConfig(GlobalConfig_t* globalConfig)
 	#define INCLUDE_GLOBAL_OPTIONS
 	#include "appConfigOptions.h"
 	
-	for (u8 comIndex = ComPort_1; comIndex < NumComPorts; comIndex++)
-	{
-		if (globalConfig->comPortNames[comIndex] != nullptr)
-		{
-			ArenaPop(globalConfig->memArena, (char*)globalConfig->comPortNames[comIndex]);
-			globalConfig->comPortNames[comIndex] = nullptr;
-		}
-	}
+	BoundedStrListDestroy(&globalConfig->comNameKeys, globalConfig->memArena);
+	BoundedStrListDestroy(&globalConfig->comNameValues, globalConfig->memArena);
 	
 	for (u32 tIndex = 0; tIndex < globalConfig->numTriggers; tIndex++)
 	{

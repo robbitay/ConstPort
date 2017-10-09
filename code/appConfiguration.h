@@ -43,7 +43,8 @@ struct GlobalConfig_t
 		#include "appConfigOptions.h"
 	} colors;
 	
-	const char* comPortNames[NumComPorts];
+	BoundedStrList_t comNameKeys;
+	BoundedStrList_t comNameValues;
 	
 	u32 numTriggers;
 	RegexTrigger_t* triggers;

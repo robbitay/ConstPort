@@ -101,7 +101,7 @@
 	{
 		"COM1":  "System 1",
 		// "COM2":  "Name",
-		// "COM3":  "Name",
+		"COM3":  "Loopback Test",
 		// "COM4":  "Name",
 		// "COM5":  "Name",
 		// "COM6":  "Name",

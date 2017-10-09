@@ -81,12 +81,21 @@ Description:
 	}                                                                                             \
 } while(0)
 
-#define DuplicateString(assignVariable, valuePntr, memArenaPntr) do           \
-{                                                                             \
-	assignVariable = PushArray(memArenaPntr, char, (u32)strlen(valuePntr)+1); \
-	strncpy(assignVariable, valuePntr, strlen(valuePntr));                    \
-	assignVariable[strlen(valuePntr)] = '\0';                                 \
-} while(0)
+char* DupStrN(const char* str, u32 strLength, MemoryArena_t* memoryArenaPntr)
+{
+	char* result;
+	
+	result = PushArray(memoryArenaPntr, char, (u32)strLength+1);
+	strncpy(result, str, strLength);
+	result[strLength] = '\0';
+	
+	return result;
+}
+char* DupStr(const char* str, MemoryArena_t* memoryArenaPntr)
+{
+	u32 strLength = (u32)strlen(str);
+	return DupStrN(str, strLength, memoryArenaPntr);
+}
 
 char* FormattedSizeStr(u32 numBytes)
 {
