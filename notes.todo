@@ -1,6 +1,5 @@
 # Application TODO List
 	[!] Implement the rest of the python configuration options
-	[!] Add an info window
 	
 	[ ] Change the status message layout so it pops up as an overlay with formatted text rendering so the whole message always fits nicely
 	[ ] Add a string data stack for all input lines to get added to
@@ -31,6 +30,7 @@
 	[ ] Keep old configuration options if new configuration file is unparsable (only on reload)
 	[ ] Add an option to enable commands that can be sent from the python script and interpreted by ConstPort to provide extra functionality
 	
+	[X] Add an info window
 	[X] Open a COM port, print the text to the command line
 	[X] Make a function to get a list of available COM ports
 	[X] Add a window with a list of COM ports that can be selected
