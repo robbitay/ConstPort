@@ -1,4 +1,35 @@
 # Application TODO List
+	[!] Change the status message layout so it pops up as an overlay with formatted text rendering so the whole message always fits nicely
+	[!] Implement the rest of the python configuration options
+	
+	[ ] Add a string data stack for all input lines to get added to
+	[ ] Get rid of the UI Handler since we probably won't ever need movable/modular windows. Also function pointer remapping is stupid looking
+	[ ] Add checking for COM port errors and whether or not we are still connected
+	[ ] Paste from clipboard
+	[ ] Option to enable timestamps and line color characters when saving to file
+	[ ] Fade out the status message during the last second. (Requires more accurate timing information)
+	[ ] Circular RX and TX LEDs
+	[ ] Add a way to close the COM port
+	[ ] Open saved file when saving text to file
+	[ ] Custom regular expression effects, variable number of regular expressions
+	[ ] Text cursor maintains when dragging out of text area
+	[?] Cursor at end of file to indicate where typing will happen?
+	[ ] Option to enable/disable auto-loading of output file dump
+	[ ] Rewrite the way the configuration options are defined using the multiple #include technique
+	[ ] Add better support for default configuration options that are simply overwritten by the user defined ones. Can we provide an example file or something? Maybe leave everything commented out and let them uncomment things?
+	[?] Combine the configuration files into one file?
+	[ ] Add a function that writes to a single option in the configuration file so we can have program written configuration options?
+	[ ] Create the configuration files again if they are found to be missing on startup?
+	[ ] Close running program instances when the application is exiting
+	[ ] Save window position and size when closing to configuration options. Pass these to windows when we create the window at startup
+	[ ] Rename LaunchFile to EditFile
+	[ ] Fix the rendering of the assigned port name in the ComPortMenu. Possibly add the actual COM# below the assigned name?
+	[ ] Fix rendering of hover line with new backgroundColor functionality
+	[ ] Fix console window opening with python 2?
+	[ ] Auto-reload configuration files when saved
+	[ ] Keep old configuration options if new configuration file is unparsable (only on reload)
+	[ ] Add an option to enable commands that can be sent from the python script and interpreted by ConstPort to provide extra functionality
+	
 	[X] Open a COM port, print the text to the command line
 	[X] Make a function to get a list of available COM ports
 	[X] Add a window with a list of COM ports that can be selected
@@ -49,37 +80,6 @@
 	[-] Add a platform layer function to set the TempArena so we can add functions that push onto Temporary Memory when we call them NOTE: Probably will just pass memory arenas when arenas are needed, we can pass TempArena really easily if we want the function to allocate it on the temporary arena)
 	[-] String manipulation functions using the TemporaryArena NOTE: Not many that I actually want :P Now a mylib file that has helpful string manipulation function might be nice
 	[X] Ability to draw circles with the simpleShader
-	
-	[!] Change the status message layout so it pops up as an overlay with formatted text rendering so the whole message always fits nicely
-	[!] Implement the rest of the python configuration options
-	
-	[ ] Add a string data stack for all input lines to get added to
-	[ ] Get rid of the UI Handler since we probably won't ever need movable/modular windows. Also function pointer remapping is stupid looking
-	[ ] Add checking for COM port errors and whether or not we are still connected
-	[ ] Paste from clipboard
-	[ ] Option to enable timestamps and line color characters when saving to file
-	[ ] Fade out the status message during the last second. (Requires more accurate timing information)
-	[ ] Circular RX and TX LEDs
-	[ ] Add a way to close the COM port
-	[ ] Open saved file when saving text to file
-	[ ] Custom regular expression effects, variable number of regular expressions
-	[ ] Text cursor maintains when dragging out of text area
-	[?] Cursor at end of file to indicate where typing will happen?
-	[ ] Option to enable/disable auto-loading of output file dump
-	[ ] Rewrite the way the configuration options are defined using the multiple #include technique
-	[ ] Add better support for default configuration options that are simply overwritten by the user defined ones. Can we provide an example file or something? Maybe leave everything commented out and let them uncomment things?
-	[?] Combine the configuration files into one file?
-	[ ] Add a function that writes to a single option in the configuration file so we can have program written configuration options?
-	[ ] Create the configuration files again if they are found to be missing on startup?
-	[ ] Close running program instances when the application is exiting
-	[ ] Save window position and size when closing to configuration options. Pass these to windows when we create the window at startup
-	[ ] Rename LaunchFile to EditFile
-	[ ] Fix the rendering of the assigned port name in the ComPortMenu. Possibly add the actual COM# below the assigned name?
-	[ ] Fix rendering of hover line with new backgroundColor functionality
-	[ ] Fix console window opening with python 2?
-	[ ] Auto-reload configuration files when saved
-	[ ] Keep old configuration options if new configuration file is unparsable (only on reload)
-	[ ] Add an option to enable commands that can be sent from the python script and interpreted by ConstPort to provide extra functionality
 
 # Application Wish List
 	[ ] Selection of spaces between markers

@@ -24,7 +24,7 @@ Date:   06\08\2017
 #define COM_MENU_INNER_PADDING     10 //px
 #define CONNECT_BUTTON_WIDTH       80 //px
 #define CONNECT_BUTTON_HEIGHT      25 //px
-#define RX_TX_LED_SIZE             8  //px
+#define RX_TX_LED_SIZE             8 //px
 #define CLEAR_BUTTON_WIDTH         60 //px
 #define CLEAR_BUTTON_HEIGHT        20 //px
 #define SAVE_BUTTON_WIDTH          120 //px

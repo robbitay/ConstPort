@@ -405,7 +405,7 @@ void RenderState_t::DrawDonut(v2 center, r32 radius, r32 innerRadius, Color_t co
 	r32 realInnerRadius = Clamp32(innerRadius / radius, 0.0f, 1.0f);
 	this->SetCircleRadius(1.0f, realInnerRadius);
 	this->DrawRectangle(NewRectangle(center.x - radius, center.y - radius, radius*2, radius*2), color);
-	this->SetCircleRadius(0.0f, realInnerRadius);
+	this->SetCircleRadius(0.0f, 0.0f);
 }
 
 // +==============================+

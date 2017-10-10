@@ -40,17 +40,14 @@ void main()
 		float distFromCenter = length(fTexCoord - vec2(0.5, 0.5)) * 2;
 		// frag_colour.rgb = 1 - vec3(distFromCenter);
 		float smoothDelta = fwidth(distFromCenter);
-		frag_colour.a = smoothstep(1, 1-smoothDelta, distFromCenter);
-		if (distFromCenter <= CircleRadius)
+		frag_colour.a *= smoothstep(1, 1-smoothDelta, distFromCenter);
+		// if (distFromCenter < CircleInnerRadius)
+		// {
+		// 	frag_colour.a = 0;
+		// }
+		if (CircleInnerRadius != 0)
 		{
-			if (distFromCenter < CircleInnerRadius)
-			{
-				frag_colour.a = 0;
-			}
-		}
-		else
-		{
-			frag_colour.a = 0;
+			frag_colour.a *= smoothstep(CircleInnerRadius, CircleInnerRadius+smoothDelta, distFromCenter);
 		}
 	}
 }

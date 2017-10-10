@@ -861,6 +861,7 @@
 			"void DrawButton(rec rectangle, Color_t backgroundColor, Color_t borderColor, r32 borderWidth = 1.0f);",
 			"void DrawCharacter(u32 charIndex, v2 bottomLeft, Color_t color, r32 scale = 1.0f);",
 			"void DrawCircle(v2 center, r32 radius, Color_t color);",
+			"void DrawDonut(v2 center, r32 radius, r32 innerRadius, Color_t color);",
 			"void DrawFormattedString(const char* nullTermString, v2 position, r32 maxWidth, Color_t color, Alignment_t alignment = Alignment_Left, bool preserveWords = true);",
 			"void DrawFormattedString(const char* string, u32 numCharacters, v2 position, r32 maxWidth, Color_t color, Alignment_t alignment = Alignment_Left, bool preserveWords = true);",
 			"void DrawGradient(rec rectangle, Color_t color1, Color_t color2, Direction2D_t direction);",

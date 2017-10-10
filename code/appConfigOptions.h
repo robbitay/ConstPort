@@ -32,6 +32,9 @@ Date:   09\26\2017
 	ConfigurationBool  ("show_hover_cursor",           showHoverCursor,        false);
 	ConfigurationBool  ("highlight_hover_line",        highlightHoverLine,     true);
 	ConfigurationInt32 ("rx_tx_led_delay",             rxTxLedDelay,           4);
+	ConfigurationInt32 ("rx_tx_led_ring_size",         rxTxLedRingSize,        2);
+	ConfigurationBool  ("circular_rx_led",             circularRxLed,          true);
+	ConfigurationBool  ("circular_tx_led",             circularTxLed,          false);
 	ConfigurationBool  ("auto_echo_input",             autoEchoInput,          true);
 	
 	//Python Related Options

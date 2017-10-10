@@ -33,6 +33,31 @@ void RecalculateUiElements(UiElements_t* ui, bool resetFollowingEndOfFile)
 		RenderScreenSize.x, 
 		MAIN_MENU_HEIGHT
 	);
+	r32 ledExtend = (r32)GC->rxTxLedRingSize * 9;
+	ui->rxLedRec = NewRectangle(
+		ui->mainMenuRec.x + ui->mainMenuRec.width - RX_TX_LED_SIZE - ledExtend - 4,
+		ui->mainMenuRec.y + ledExtend + 4,
+		RX_TX_LED_SIZE, RX_TX_LED_SIZE
+	);
+	ui->txLedRec = NewRectangle(
+		ui->rxLedRec.x - RX_TX_LED_SIZE - ledExtend*2 - 4,
+		ui->rxLedRec.y,
+		RX_TX_LED_SIZE, RX_TX_LED_SIZE
+	);
+	v2 clearStringSize = MeasureString(&app->uiFont, "Clear");
+	ui->clearButtonRec = NewRectangle(
+		ui->rxLedRec.x + ui->rxLedRec.width + ledExtend,
+		ui->rxLedRec.y + ui->rxLedRec.height + ledExtend,
+		clearStringSize.x + 4, clearStringSize.y + 4
+	);
+	if (ledExtend*4 + ui->rxLedRec.width + ui->txLedRec.width > ui->clearButtonRec.width)
+	{ ui->clearButtonRec.width = ledExtend*4 + ui->rxLedRec.width + ui->txLedRec.width; }
+	ui->clearButtonRec.x -= ui->clearButtonRec.width;
+	r32 clearExtendsDown = (ui->clearButtonRec.y + ui->clearButtonRec.height + 4) - ui->mainMenuRec.y;
+	if (clearExtendsDown > ui->mainMenuRec.height)
+	{
+		ui->mainMenuRec.height = clearExtendsDown;
+	}
 	for (u32 bIndex = 0; bIndex < NumMainMenuButtons; bIndex++)
 	{
 		r32 buttonSize = ui->mainMenuRec.height - MAIN_MENU_BUTTON_PADDING*2;
@@ -42,21 +67,6 @@ void RecalculateUiElements(UiElements_t* ui, bool resetFollowingEndOfFile)
 			buttonSize, buttonSize
 		);
 	}
-	ui->rxLedRec = NewRectangle(
-		ui->mainMenuRec.x + ui->mainMenuRec.width - RX_TX_LED_SIZE - 16,
-		ui->mainMenuRec.y + 10,
-		RX_TX_LED_SIZE, RX_TX_LED_SIZE
-	);
-	ui->txLedRec = NewRectangle(
-		ui->rxLedRec.x - RX_TX_LED_SIZE - 16 - 4,
-		ui->rxLedRec.y,
-		RX_TX_LED_SIZE, RX_TX_LED_SIZE
-	);
-	ui->clearButtonRec = NewRectangle(
-		ui->mainMenuRec.x + ui->mainMenuRec.width - CLEAR_BUTTON_WIDTH - MAIN_MENU_BUTTON_PADDING,
-		ui->rxLedRec.y + ui->rxLedRec.height + 8,
-		CLEAR_BUTTON_WIDTH, CLEAR_BUTTON_HEIGHT
-	);
 	ui->saveButtonRec = NewRectangle(
 		ui->clearButtonRec.x - SAVE_BUTTON_WIDTH - MAIN_MENU_BUTTON_PADDING,
 		ui->clearButtonRec.y,

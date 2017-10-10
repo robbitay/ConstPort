@@ -2330,32 +2330,60 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 			app->rxTxShiftCountdown--;
 		}
 		
+		v2 rxLedCenter = ui->rxLedRec.topLeft + ui->rxLedRec.size/2;
+		r32 rxLedRadius = ui->rxLedRec.width/4 * 3;
 		Color_t centerColor = GC->colors.uiGray4;
 		if ((app->rxShiftRegister&0x80) > 0 ||
 			(app->rxShiftRegister&0x40) > 0)
 		{
 			centerColor = GC->colors.receiveLed;
 		}
-		rs->DrawRectangle(ui->rxLedRec, centerColor);
+		if (!GC->circularRxLed) { rs->DrawRectangle(ui->rxLedRec, centerColor); }
+		else                    { rs->DrawCircle(rxLedCenter, rxLedRadius, centerColor); }
+		
+		v2 txLedCenter = ui->txLedRec.topLeft + ui->txLedRec.size/2;
+		r32 txLedRadius = ui->txLedRec.width/4 * 3;
 		centerColor = GC->colors.uiGray4;
 		if ((app->txShiftRegister&0x80) > 0 ||
 			(app->txShiftRegister&0x40) > 0)
 		{
 			centerColor = GC->colors.transmitLed;
 		}
-		rs->DrawRectangle(ui->txLedRec, centerColor);
+		if (!GC->circularTxLed) { rs->DrawRectangle(ui->txLedRec, centerColor); }
+		else                    { rs->DrawCircle(txLedCenter, txLedRadius, centerColor); }
+		
 		for (u32 shift = 0; shift < sizeof(u8)*8; shift++)
 		{
+			u32 ringNumber = (7 - shift);
+			
 			if (IsFlagSet(app->rxShiftRegister, (1<<shift)))
 			{
-				rec deflatedRec = RectangleInflate(ui->rxLedRec, (r32)(8-shift) * 1);
-				rs->DrawButton(deflatedRec, {Color_TransparentBlack}, GC->colors.receiveLed, 1);
+				if (GC->circularRxLed == false)
+				{
+					rec deflatedRec = RectangleInflate(ui->rxLedRec, (r32)(ringNumber+1) * GC->rxTxLedRingSize);
+					rs->DrawButton(deflatedRec, {Color_TransparentBlack}, GC->colors.receiveLed, (r32)GC->rxTxLedRingSize);
+				}
+				else
+				{
+					r32 radius = rxLedRadius -0.2f + (ringNumber+1) * GC->rxTxLedRingSize;
+					r32 innerRadius = rxLedRadius -0.2f + ringNumber * GC->rxTxLedRingSize - 1.8f;
+					rs->DrawDonut(rxLedCenter, radius, innerRadius, GC->colors.receiveLed);
+				}
 			}
 			
 			if (IsFlagSet(app->txShiftRegister, (1<<shift)))
 			{
-				rec deflatedRec = RectangleInflate(ui->txLedRec, (r32)(8-shift) * 1);
-				rs->DrawButton(deflatedRec, {Color_TransparentBlack}, GC->colors.transmitLed, 1);
+				if (GC->circularTxLed == false)
+				{
+					rec deflatedRec = RectangleInflate(ui->txLedRec, (r32)(ringNumber+1) * GC->rxTxLedRingSize);
+					rs->DrawButton(deflatedRec, {Color_TransparentBlack}, GC->colors.transmitLed, (r32)GC->rxTxLedRingSize);
+				}
+				else
+				{
+					r32 radius = txLedRadius -0.2f + (ringNumber+1) * GC->rxTxLedRingSize;
+					r32 innerRadius = txLedRadius -0.2f + ringNumber * GC->rxTxLedRingSize - 1.8f;
+					rs->DrawDonut(txLedCenter, radius, innerRadius, GC->colors.transmitLed);
+				}
 			}
 		}
 	}
@@ -2472,9 +2500,9 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	}
 	#endif
 	
-	rs->DrawCircle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, input->mouseMaxDist[MouseButton_Left]/GUI_SCALE, {Color_Red});
-	rs->DrawCircle(input->mouseStartPos[MouseButton_Right]/GUI_SCALE, input->mouseMaxDist[MouseButton_Right]/GUI_SCALE, {Color_Blue});
-	rs->DrawCircle(input->mouseStartPos[MouseButton_Middle]/GUI_SCALE, input->mouseMaxDist[MouseButton_Middle]/GUI_SCALE, {Color_Green});
+	// rs->DrawCircle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, input->mouseMaxDist[MouseButton_Left]/GUI_SCALE, {Color_Red});
+	// rs->DrawCircle(input->mouseStartPos[MouseButton_Right]/GUI_SCALE, input->mouseMaxDist[MouseButton_Right]/GUI_SCALE, {Color_Blue});
+	// rs->DrawCircle(input->mouseStartPos[MouseButton_Middle]/GUI_SCALE, input->mouseMaxDist[MouseButton_Middle]/GUI_SCALE, {Color_Green});
 	
 	// rs->DrawRectangle(ui->statusBarRec, {Color_Yellow});
 	// rs->DrawRectangle(ui->scrollBarGutterRec, {Color_Red});

@@ -29,7 +29,10 @@
 	"show_hover_cursor": false,
 	"highlight_hover_line": false,
 	
-	"rx_tx_led_delay": 4, //frames
+	"rx_tx_led_delay":     4, //frames
+	"rx_tx_led_ring_size": 1, //frames
+	"circular_rx_led":     true,
+	"circular_tx_led":     true,
 	
 	"auto_echo_input": false,
 	
