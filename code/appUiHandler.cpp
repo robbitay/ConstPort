@@ -17,9 +17,9 @@ void InitializeUiElements(UiElements_t* ui)
 	ui->buttonDarkenTexture =                    LoadTexture("Resources/Sprites/buttonDarken.png");
 	ui->buttonHighlightTexture =                 LoadTexture("Resources/Sprites/buttonLighten.png");
 	ui->buttonTextures[Button_ComPort] =         LoadTexture("Resources/Sprites/buttonIcon4.png");
-	ui->buttonTextures[Button_ConsoleSettings] = LoadTexture("Resources/Sprites/buttonIcon1.png");
+	// ui->buttonTextures[Button_ConsoleSettings] = LoadTexture("Resources/Sprites/buttonIcon1.png");
 	ui->buttonTextures[Button_Settings] =        LoadTexture("Resources/Sprites/buttonIcon5.png");
-	ui->buttonTextures[Button_Help] =            LoadTexture("Resources/Sprites/buttonIcon2.png");
+	ui->buttonTextures[Button_About] =           LoadTexture("Resources/Sprites/buttonIcon2.png");
 }
 
 void RecalculateUiElements(UiElements_t* ui, bool resetFollowingEndOfFile)

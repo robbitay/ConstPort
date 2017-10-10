@@ -638,6 +638,53 @@ void ContextMenuRender(RenderState_t* renderState, MenuHandler_t* menuHandler, M
 	app->renderState.DrawString(ui->contextStringBuffer, textPos, GC->colors.foreground);
 }
 
+#define REAL_LOGO_HEIGHT 75
+#define ABOUT_INFO_TEXT_PADDING 20
+#define ABOUT_INFO_FORMAT_STRING "Const Port is an application written by me, Taylor Robbins. "                      \
+	"It's primarily been developed for my own purposes at work while developing embedded firmware applications.\n\n" \
+	"I release it under an open source license in the hope that others might also find it useful.\n\n"               \
+	"If you find any bugs or have any suggestions you can email me at robbitay@gmail.com.\n\n"                       \
+	"Latest releases can be found on the development blog:\nhttps://www.SilTutorials.com/blog\n\n"                   \
+	"more info on the HMN project page:\nhttps://ConstPort.Handmade.Network/\n\n"                                    \
+	"Application Version %u.%u (build %u)\nPlatform Version %u.%u (build %u)\n"
+
+void AboutMenuUpdate(MenuHandler_t* menuHandler, Menu_t* menu)
+{
+	const char* aboutInfoString = TempPrint(ABOUT_INFO_FORMAT_STRING,
+		APP_VERSION_MAJOR, APP_VERSION_MINOR, APP_VERSION_BUILD,
+		platform->version.major, platform->version.minor, platform->version.build);
+	v2 textSize = MeasureFormattedString(&app->uiFont, aboutInfoString, menu->usableRec.width - ABOUT_INFO_TEXT_PADDING*2, true);
+	
+	r32 mustContainY = (menu->usableRec.y + REAL_LOGO_HEIGHT + ABOUT_INFO_TEXT_PADDING*2 + textSize.y) - menu->drawRec.y;
+	
+	menu->drawRec.height = mustContainY;
+}
+void AboutMenuRender(RenderState_t* renderState, MenuHandler_t* menuHandler, Menu_t* menu)
+{
+	const char* aboutInfoString = TempPrint(ABOUT_INFO_FORMAT_STRING,
+		APP_VERSION_MAJOR, APP_VERSION_MINOR, APP_VERSION_BUILD,
+		platform->version.major, platform->version.minor, platform->version.build);
+	r32 logoScale = MinReal32(
+		(r32)menu->usableRec.width / app->crappyLogo.width,
+		(r32)menu->usableRec.height / REAL_LOGO_HEIGHT);
+	rec logoRec = NewRectangle(
+		menu->usableRec.x, menu->usableRec.y,
+		app->crappyLogo.width * logoScale,
+		REAL_LOGO_HEIGHT * logoScale
+	);
+	renderState->BindTexture(&app->crappyLogo);
+	renderState->DrawTexturedRec(logoRec, {Color_White}, NewRectangle(0, 0, (r32)app->crappyLogo.width, REAL_LOGO_HEIGHT));
+	
+	
+	renderState->BindFont(&app->uiFont);
+	renderState->DrawFormattedString(aboutInfoString,
+		NewVec2(menu->usableRec.width/2, REAL_LOGO_HEIGHT + ABOUT_INFO_TEXT_PADDING + app->uiFont.maxExtendUp) + menu->usableRec.topLeft,
+		menu->usableRec.width - ABOUT_INFO_TEXT_PADDING*2,
+		{Color_White}, Alignment_Center, true
+	);
+	renderState->BindFont(&app->mainFont);
+}
+
 u32 SanatizeString(const char* charPntr, u32 numChars, char* outputBuffer = nullptr)
 {
 	u32 result = 0;
@@ -1100,7 +1147,10 @@ EXPORT AppInitialize_DEFINITION(App_Initialize)
 	Menu_t* contextMenu = AddMenu(&app->menuHandler, "Context Menu", NewRectangle(0, 0, 100, 100),
 		ContextMenuUpdate, ContextMenuRender);
 	contextMenu->titleBarSize = 0;
-	contextMenu->show = true;
+	contextMenu->show = false;
+	Menu_t* aboutMenu = AddMenu(&app->menuHandler, "About Menu", NewRectangle(0, 0, 400, 400),
+		AboutMenuUpdate, AboutMenuRender);
+	aboutMenu->show = false;
 	
 	// +================================+
 	// |          Load Content          |
@@ -1115,6 +1165,7 @@ EXPORT AppInitialize_DEFINITION(App_Initialize)
 	
 	app->testTexture = LoadTexture("Resources/Sprites/buttonIcon3.png");
 	app->scrollBarEndcapTexture = LoadTexture("Resources/Sprites/scrollBarEndcap.png", false, false);
+	app->crappyLogo = LoadTexture("Resources/Sprites/crappyLogo.png", false, false);
 	
 	LoadApplicationFonts();
 	
@@ -1169,6 +1220,10 @@ EXPORT AppReloaded_DEFINITION(App_Reloaded)
 	menuPntr->specialPntr = nullptr;
 	menuPntr->updateFunctionPntr = (void*)ContextMenuUpdate;
 	menuPntr->renderFunctionPntr = (void*)ContextMenuRender;
+	menuPntr = GetMenuByName(&app->menuHandler, "About Menu");
+	menuPntr->specialPntr = nullptr;
+	menuPntr->updateFunctionPntr = (void*)AboutMenuUpdate;
+	menuPntr->renderFunctionPntr = (void*)AboutMenuRender;
 }
 
 //+================================================================+
@@ -1189,6 +1244,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	RenderState_t* rs = &app->renderState;
 	Menu_t* comMenu = GetMenuByName(&app->menuHandler, "COM Menu");
 	Menu_t* contextMenu = GetMenuByName(&app->menuHandler, "Context Menu");
+	Menu_t* aboutMenu = GetMenuByName(&app->menuHandler, "About Menu");
 	Menu_t* hoverMenu = GetMenuAtPoint(&app->menuHandler, RenderMousePos);
 	Color_t color1 = ColorFromHSV((i32)(platform->programTime*180) % 360, 1.0f, 1.0f);
 	Color_t color2 = ColorFromHSV((i32)(platform->programTime*180 + 125) % 360, 1.0f, 1.0f);
@@ -1722,6 +1778,16 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 						else
 						{
 							platform->LaunchFilePntr("Resources\\Configuration\\GlobalConfig.json");
+						}
+					} break;
+					
+					case Button_About:
+					{
+						aboutMenu->show = !aboutMenu->show;
+						if (aboutMenu->show)
+						{
+							aboutMenu->drawRec.x = RenderScreenSize.x / 2 - aboutMenu->drawRec.width/2;
+							aboutMenu->drawRec.y = RenderScreenSize.y / 2 - aboutMenu->drawRec.height/2;
 						}
 					} break;
 					

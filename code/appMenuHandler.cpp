@@ -153,12 +153,12 @@ void MenuHandlerUpdate(MenuHandler_t* menuHandler)
 			
 			if (menuPntr->drawRec.x < 0)
 				menuPntr->drawRec.x = 0;
-			if (menuPntr->drawRec.y < 0)
-				menuPntr->drawRec.y = 0;
 			if (menuPntr->drawRec.x > RenderScreenSize.x - menuPntr->drawRec.width)
 				menuPntr->drawRec.x = RenderScreenSize.x - menuPntr->drawRec.width;
 			if (menuPntr->drawRec.y > RenderScreenSize.y - menuPntr->drawRec.height)
 				menuPntr->drawRec.y = RenderScreenSize.y - menuPntr->drawRec.height;
+			if (menuPntr->drawRec.y < 0)
+				menuPntr->drawRec.y = 0;
 			
 			UpdateMenuRecs(menuPntr);
 			

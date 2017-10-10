@@ -139,6 +139,7 @@ typedef enum
 struct PlatformInfo_t
 {
 	PlatformType_t platformType;
+	Version_t version;
 	
 	v2i screenSize;
 	bool windowResized;

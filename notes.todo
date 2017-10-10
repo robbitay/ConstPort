@@ -1,7 +1,8 @@
 # Application TODO List
-	[!] Change the status message layout so it pops up as an overlay with formatted text rendering so the whole message always fits nicely
 	[!] Implement the rest of the python configuration options
+	[!] Add an info window
 	
+	[ ] Change the status message layout so it pops up as an overlay with formatted text rendering so the whole message always fits nicely
 	[ ] Add a string data stack for all input lines to get added to
 	[ ] Get rid of the UI Handler since we probably won't ever need movable/modular windows. Also function pointer remapping is stupid looking
 	[ ] Add checking for COM port errors and whether or not we are still connected

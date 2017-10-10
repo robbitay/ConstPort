@@ -243,6 +243,9 @@ int WINAPI WinMain(HINSTANCE hInstance,
 	//|        Fill Platform Info            |
 	//+--------------------------------------+
 	platformInfo.platformType             = Platform_Windows;
+	platformInfo.version.major            = PLATFORM_VERSION_MAJOR;
+	platformInfo.version.minor            = PLATFORM_VERSION_MINOR;
+	platformInfo.version.build            = PLATFORM_VERSION_BUILD;
 	platformInfo.screenSize               = NewVec2i(screenWidth, screenHeight);
 	platformInfo.windowHasFocus           = true;
 	platformInfo.DebugWritePntr           = Win32_Write;
@@ -268,7 +271,7 @@ int WINAPI WinMain(HINSTANCE hInstance,
 	platformInfo.ReadProgramOutputPntr    = Win32_ReadProgramOutput;
 	platformInfo.WriteProgramInputPntr    = Win32_WriteProgramInput;
 	platformInfo.CloseProgramInstancePntr = Win32_CloseProgramInstance;
-	platformInfo.window                = window;
+	platformInfo.window                   = window;
 	
 	//+--------------------------------------+
 	//|         Application Memory           |

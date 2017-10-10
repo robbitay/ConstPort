@@ -4,9 +4,9 @@
 enum
 {
 	Button_ComPort = 0,
-	Button_ConsoleSettings,
+	// Button_ConsoleSettings,
 	Button_Settings,	
-	Button_Help,
+	Button_About,
 	
 	NumMainMenuButtons,
 	
