@@ -24,6 +24,8 @@ Description:
 #include <cerrno>
 #include <time.h> //needed for gmtime
 #include <sys/stat.h> //needed for stat
+#include <sys/types.h>
+#include <sys/time.h>
 
 #include "platformInterface.h"
 #include "osx_version.h"
@@ -280,6 +282,17 @@ int main(int argc, char** argv)
 		// +==============================+
 		glfwPollEvents();
 		
+		// +==============================+
+		// |        Get Timestamp         |
+		// +==============================+
+		timeval osTime = {};
+		int getTimeResult = gettimeofday(&osTime, NULL);
+		PlatformInfo.systemTime = RealTimeAt((u64)osTime.tv_sec);
+		PlatformInfo.localTime = PlatformInfo.systemTime;
+		
+		// +===============================+
+		// | Application Update and Render |
+		// +===============================+
 		application.Update(&PlatformInfo, &appMemory, currentInput, &appOutput);
 		
 		glfwSwapBuffers(window);

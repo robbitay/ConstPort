@@ -11,20 +11,11 @@ Description:
 // +==============================+
 GetComPortList_DEFINITION(OSX_GetComPortList)
 {
-	u32 result = 0;
+	BoundedStrList_t result = {};
+	BoundedStrListCreate(&result, MAX_COM_PORT_NUM, MAX_COM_PORT_NAME_LENGTH, memArena);
 	
-	for (u32 bIndex = 0; bIndex < arrayOutSize; bIndex++)
-	{
-		bool comExists = false;
-		
-		if (bIndex == 0 || bIndex == 1)
-		{
-			comExists = true;
-			result++;
-		}
-		
-		arrayOut[bIndex] = comExists;
-	}
+	BoundedStrListAdd(&result, "tty.usbserial-A506KDE9");
+	BoundedStrListAdd(&result, "ttys000");
 	
 	return result;
 }
@@ -36,16 +27,13 @@ OpenComPort_DEFINITION(OSX_OpenComPort)
 {
 	ComPort_t result = {};
 	result.handle = -1;
-	result.index = portIndex;
 	result.settings = settings;
 	
-	const char* portFileName = GetComPortFileName(portIndex);
-	// char portFilePath[256] = {};
-	// snprintf(portFilePath, sizeof(portFilePath), "/dev/%s", portFileName);
-	// printf("ComPortPath: \"%s\"\n", portFilePath);
+	char filePathBuffer[32];
+	int printfResult = snprintf(filePathBuffer, ArrayCount(filePathBuffer), "/dev/%s", comPortName);
 	
-	printf("Attempting to open \"%s\"\n", portFileName);
-	int fileHandle = open(portFileName, O_RDWR | O_NDELAY | O_NOCTTY);
+	printf("Attempting to open \"%s\"\n", filePathBuffer);
+	int fileHandle = open(filePathBuffer, O_RDWR | O_NDELAY | O_NOCTTY);
 	
 	if (fileHandle != -1)
 	{
@@ -94,6 +82,10 @@ OpenComPort_DEFINITION(OSX_OpenComPort)
 			return result;
 		}
 		
+		u32 comPortNameLength = (u32)strlen(comPortName);
+		result.name = PushArray(memArena, char, comPortNameLength+1);
+		strncpy(result.name, comPortName, comPortNameLength);
+		result.name[comPortNameLength] = '\0';
 		result.isOpen = true;
 		result.handle = fileHandle;
 		printf("Port opened successfully!\n");
@@ -112,6 +104,11 @@ CloseComPort_DEFINITION(OSX_CloseComPort)
 	if (comPortPntr->handle == -1) { return; }
 	
 	close(comPortPntr->handle);
+	
+	if (comPortPntr->name != nullptr)
+	{
+		ArenaPop(memArena, comPortPntr->name);
+	}
 	
 	ClearPointer(comPortPntr);
 	comPortPntr->handle = -1;

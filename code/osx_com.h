@@ -9,38 +9,9 @@ Date:   10\05\2017
 
 #include <termios.h>
 
-#define MAX_COM_PORT_NUM   12
-
-//TODO: Is there ever a COM0?
-typedef enum
-{
-	ComPort_1 = 0,
-	ComPort_2,
-	ComPort_3,
-	ComPort_4,
-	ComPort_5,
-	ComPort_6,
-	ComPort_7,
-	ComPort_8,
-	ComPort_9,
-	ComPort_10,
-	ComPort_11,
-	ComPort_12,
-	ComPort_13,
-	ComPort_14,
-	ComPort_15,
-	ComPort_16,
-	ComPort_17,
-	ComPort_18,
-	ComPort_19,
-	ComPort_20,
-	ComPort_21,
-	ComPort_22,
-	ComPort_23,
-	ComPort_24,
-	
-	NumComPorts,
-} ComPortIndex_t;
+#define MAX_COM_PORT_NUM   24
+#define MAX_COM_PORT_NAME_LENGTH 32
+#define NumComPorts MAX_COM_PORT_NUM
 
 typedef enum
 {
@@ -121,78 +92,12 @@ bool operator != (ComSettings_t left, ComSettings_t right)
 struct ComPort_t
 {
 	bool isOpen;
-	ComPortIndex_t index;
+	char* name;
 	
 	ComSettings_t settings;
 	
 	int handle;
 };
-
-const char* GetComPortFileName(ComPortIndex_t comIndex)
-{
-	switch (comIndex)
-	{
-		case ComPort_1:  return "/dev/tty.usbserial-A506KDE9";
-		case ComPort_2:  return "/dev/ttys000";
-		case ComPort_3:  return "COM3";
-		case ComPort_4:  return "COM4";
-		case ComPort_5:  return "COM5";
-		case ComPort_6:  return "COM6";
-		case ComPort_7:  return "COM7";
-		case ComPort_8:  return "COM8";
-		case ComPort_9:  return "COM9";
-		case ComPort_10: return "\\\\.\\COM10";
-		case ComPort_11: return "\\\\.\\COM11";
-		case ComPort_12: return "\\\\.\\COM12";
-		case ComPort_13: return "\\\\.\\COM13";
-		case ComPort_14: return "\\\\.\\COM14";
-		case ComPort_15: return "\\\\.\\COM15";
-		case ComPort_16: return "\\\\.\\COM16";
-		case ComPort_17: return "\\\\.\\COM17";
-		case ComPort_18: return "\\\\.\\COM18";
-		case ComPort_19: return "\\\\.\\COM19";
-		case ComPort_20: return "\\\\.\\COM20";
-		case ComPort_21: return "\\\\.\\COM21";
-		case ComPort_22: return "\\\\.\\COM22";
-		case ComPort_23: return "\\\\.\\COM23";
-		case ComPort_24: return "\\\\.\\COM24";
-		
-		default:         return "Unkwn";
-	};
-}
-
-const char* GetComPortReadableName(ComPortIndex_t comIndex)
-{
-	switch (comIndex)
-	{
-		case ComPort_1:  return "USB Serial A506KDE9";
-		case ComPort_2:  return "ttys000";
-		case ComPort_3:  return "COM3";
-		case ComPort_4:  return "COM4";
-		case ComPort_5:  return "COM5";
-		case ComPort_6:  return "COM6";
-		case ComPort_7:  return "COM7";
-		case ComPort_8:  return "COM8";
-		case ComPort_9:  return "COM9";
-		case ComPort_10: return "COM10";
-		case ComPort_11: return "COM11";
-		case ComPort_12: return "COM12";
-		case ComPort_13: return "COM13";
-		case ComPort_14: return "COM14";
-		case ComPort_15: return "COM15";
-		case ComPort_16: return "COM16";
-		case ComPort_17: return "COM17";
-		case ComPort_18: return "COM18";
-		case ComPort_19: return "COM19";
-		case ComPort_20: return "COM20";
-		case ComPort_21: return "COM21";
-		case ComPort_22: return "COM22";
-		case ComPort_23: return "COM23";
-		case ComPort_24: return "COM24";
-		
-		default:         return "Unkwn";
-	};
-}
 
 const char* GetBaudRateString(BaudRate_t baudRate)
 {

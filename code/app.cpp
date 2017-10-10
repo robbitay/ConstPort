@@ -287,7 +287,7 @@ void ComMenuUpdate(MenuHandler_t* menuHandler, Menu_t* menuPntr)
 		// |   Calculate The Tab Height   |
 		// +==============================+
 		r32 tabHeight = COM_MENU_TAB_HEIGHT;
-		for (u32 tabIndex = ComPort_1; tabIndex < numTabs; tabIndex++)
+		for (u32 tabIndex = 0; tabIndex < numTabs; tabIndex++)
 		{
 			char* portName = nullptr;
 			if (tabIndex < app->availablePorts.count) { portName = app->availablePorts[tabIndex]; }
@@ -437,7 +437,7 @@ void ComMenuRender(RenderState_t* renderState, MenuHandler_t* menuHandler, Menu_
 		// |   Calculate The Tab Height   |
 		// +==============================+
 		r32 tabHeight = COM_MENU_TAB_HEIGHT;
-		for (u32 tabIndex = ComPort_1; tabIndex < numTabs; tabIndex++)
+		for (u32 tabIndex = 0; tabIndex < numTabs; tabIndex++)
 		{
 			char* portName = nullptr;
 			if (tabIndex < app->availablePorts.count) { portName = app->availablePorts[tabIndex]; }
