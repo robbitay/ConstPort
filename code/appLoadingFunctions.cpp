@@ -41,6 +41,15 @@ Texture_t CreateTexture(const u8* bitmapData, i32 width, i32 height, bool pixela
 	return result;
 }
 
+void DestroyTexture(Texture_t* texturePntr)
+{
+	Assert(texturePntr != nullptr);
+	
+	glDeleteTextures(1, &texturePntr->id);
+	
+	ClearPointer(texturePntr);
+}
+
 VertexBuffer_t CreateVertexBuffer(const Vertex_t* vertices, u32 numVertices)
 {
 	VertexBuffer_t result = {};

@@ -250,28 +250,28 @@ void ComMenuUpdate(MenuHandler_t* menuHandler, Menu_t* menuPntr)
 		u32 numTabs = app->availablePorts.count + (app->comPort.isOpen ? 1 : 0);
 		r32 tabWidth = menuPntr->usableRec.width / numTabs;
 		{
-			r32 tabMinimumWidth = MeasureString(&app->testFont, "1234567890").x + COM_MENU_TAB_PADDING*2;
+			r32 tabMinimumWidth = MeasureString(&app->uiFont, "1234567890").x + COM_MENU_TAB_PADDING*2;
 			if (tabWidth < tabMinimumWidth) { tabWidth = tabMinimumWidth; }
 		}
 		rec baudRateRec = NewRectangle(
 			menuPntr->usableRec.x + COM_MENU_OUTER_PADDING,
-			menuPntr->usableRec.y + app->testFont.lineHeight + COM_MENU_OUTER_PADDING,
-			78, app->testFont.lineHeight * NumBaudRates
+			menuPntr->usableRec.y + app->uiFont.lineHeight + COM_MENU_OUTER_PADDING,
+			78, app->uiFont.lineHeight * NumBaudRates
 		);
 		rec numBitsRec = NewRectangle(
 			baudRateRec.x + baudRateRec.width + COM_MENU_INNER_PADDING,
-			menuPntr->usableRec.y + app->testFont.lineHeight + COM_MENU_OUTER_PADDING,
-			55, app->testFont.lineHeight * 8
+			menuPntr->usableRec.y + app->uiFont.lineHeight + COM_MENU_OUTER_PADDING,
+			55, app->uiFont.lineHeight * 8
 		);
 		rec parityTypesRec = NewRectangle(
 			numBitsRec.x + numBitsRec.width + COM_MENU_INNER_PADDING,
-			menuPntr->usableRec.y + app->testFont.lineHeight + COM_MENU_OUTER_PADDING,
-			60, app->testFont.lineHeight * NumParityTypes
+			menuPntr->usableRec.y + app->uiFont.lineHeight + COM_MENU_OUTER_PADDING,
+			60, app->uiFont.lineHeight * NumParityTypes
 		);
 		rec stopBitsRec = NewRectangle(
 			parityTypesRec.x + parityTypesRec.width + COM_MENU_INNER_PADDING,
-			menuPntr->usableRec.y + app->testFont.lineHeight + COM_MENU_OUTER_PADDING,
-			80, app->testFont.lineHeight * NumStopBitTypes
+			menuPntr->usableRec.y + app->uiFont.lineHeight + COM_MENU_OUTER_PADDING,
+			80, app->uiFont.lineHeight * NumStopBitTypes
 		);
 		
 		// +==============================+
@@ -295,7 +295,7 @@ void ComMenuUpdate(MenuHandler_t* menuHandler, Menu_t* menuPntr)
 			
 			const char* portUserName = GetPortUserName(portName);
 			
-			v2 givenNameSize = MeasureFormattedString(&app->testFont, portUserName, tabWidth - COM_MENU_TAB_PADDING*2, true);
+			v2 givenNameSize = MeasureFormattedString(&app->uiFont, portUserName, tabWidth - COM_MENU_TAB_PADDING*2, true);
 			if (givenNameSize.y + COM_MENU_TAB_PADDING*2 > tabHeight)
 			{
 				tabHeight = givenNameSize.y + COM_MENU_TAB_PADDING*2;
@@ -326,8 +326,8 @@ void ComMenuUpdate(MenuHandler_t* menuHandler, Menu_t* menuPntr)
 		for (i32 baudIndex = 0; baudIndex < NumBaudRates; baudIndex++)
 		{
 			rec currentRec = NewRectangle(baudRateRec.x,
-				baudRateRec.y + baudIndex*app->testFont.lineHeight,
-				baudRateRec.width, app->testFont.lineHeight
+				baudRateRec.y + baudIndex*app->uiFont.lineHeight,
+				baudRateRec.width, app->uiFont.lineHeight
 			);
 			if (IsInsideRectangle(RenderMousePos, currentRec) && IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, currentRec) &&
 				ButtonReleased(MouseButton_Left))
@@ -339,8 +339,8 @@ void ComMenuUpdate(MenuHandler_t* menuHandler, Menu_t* menuPntr)
 		for (i32 bitIndex = 0; bitIndex < 8; bitIndex++)
 		{
 			rec currentRec = NewRectangle(numBitsRec.x,
-				numBitsRec.y + bitIndex*app->testFont.lineHeight,
-				numBitsRec.width, app->testFont.lineHeight
+				numBitsRec.y + bitIndex*app->uiFont.lineHeight,
+				numBitsRec.width, app->uiFont.lineHeight
 			);
 			if (IsInsideRectangle(RenderMousePos, currentRec) && IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, currentRec) &&
 				ButtonReleased(MouseButton_Left))
@@ -352,8 +352,8 @@ void ComMenuUpdate(MenuHandler_t* menuHandler, Menu_t* menuPntr)
 		for (i32 parityIndex = 0; parityIndex < NumParityTypes; parityIndex++)
 		{
 			rec currentRec = NewRectangle(parityTypesRec.x,
-				parityTypesRec.y + parityIndex*app->testFont.lineHeight,
-				parityTypesRec.width, app->testFont.lineHeight
+				parityTypesRec.y + parityIndex*app->uiFont.lineHeight,
+				parityTypesRec.width, app->uiFont.lineHeight
 			);
 			if (IsInsideRectangle(RenderMousePos, currentRec) && IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, currentRec) &&
 				ButtonReleased(MouseButton_Left))
@@ -365,8 +365,8 @@ void ComMenuUpdate(MenuHandler_t* menuHandler, Menu_t* menuPntr)
 		for (i32 stopBitIndex = 0; stopBitIndex < NumStopBitTypes; stopBitIndex++)
 		{
 			rec currentRec = NewRectangle(stopBitsRec.x,
-				stopBitsRec.y + stopBitIndex*app->testFont.lineHeight,
-				stopBitsRec.width, app->testFont.lineHeight
+				stopBitsRec.y + stopBitIndex*app->uiFont.lineHeight,
+				stopBitsRec.width, app->uiFont.lineHeight
 			);
 			if (IsInsideRectangle(RenderMousePos, currentRec) && IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, currentRec) &&
 				ButtonReleased(MouseButton_Left))
@@ -414,23 +414,23 @@ void ComMenuRender(RenderState_t* renderState, MenuHandler_t* menuHandler, Menu_
 		r32 tabWidth = menuPntr->usableRec.width / numTabs;
 		rec baudRateRec = NewRectangle(
 			menuPntr->usableRec.x + COM_MENU_OUTER_PADDING,
-			menuPntr->usableRec.y + app->testFont.lineHeight + COM_MENU_OUTER_PADDING,
-			78, app->testFont.lineHeight * NumBaudRates
+			menuPntr->usableRec.y + app->uiFont.lineHeight + COM_MENU_OUTER_PADDING,
+			78, app->uiFont.lineHeight * NumBaudRates
 		);
 		rec numBitsRec = NewRectangle(
 			baudRateRec.x + baudRateRec.width + COM_MENU_INNER_PADDING,
-			menuPntr->usableRec.y + app->testFont.lineHeight + COM_MENU_OUTER_PADDING,
-			55, app->testFont.lineHeight * 8
+			menuPntr->usableRec.y + app->uiFont.lineHeight + COM_MENU_OUTER_PADDING,
+			55, app->uiFont.lineHeight * 8
 		);
 		rec parityTypesRec = NewRectangle(
 			numBitsRec.x + numBitsRec.width + COM_MENU_INNER_PADDING,
-			menuPntr->usableRec.y + app->testFont.lineHeight + COM_MENU_OUTER_PADDING,
-			60, app->testFont.lineHeight * NumParityTypes
+			menuPntr->usableRec.y + app->uiFont.lineHeight + COM_MENU_OUTER_PADDING,
+			60, app->uiFont.lineHeight * NumParityTypes
 		);
 		rec stopBitsRec = NewRectangle(
 			parityTypesRec.x + parityTypesRec.width + COM_MENU_INNER_PADDING,
-			menuPntr->usableRec.y + app->testFont.lineHeight + COM_MENU_OUTER_PADDING,
-			80, app->testFont.lineHeight * NumStopBitTypes
+			menuPntr->usableRec.y + app->uiFont.lineHeight + COM_MENU_OUTER_PADDING,
+			80, app->uiFont.lineHeight * NumStopBitTypes
 		);
 		
 		// +==============================+
@@ -445,7 +445,7 @@ void ComMenuRender(RenderState_t* renderState, MenuHandler_t* menuHandler, Menu_
 			
 			const char* portUserName = GetPortUserName(portName);
 			
-			v2 givenNameSize = MeasureFormattedString(&app->testFont, portUserName, tabWidth - COM_MENU_TAB_PADDING*2, true);
+			v2 givenNameSize = MeasureFormattedString(&app->uiFont, portUserName, tabWidth - COM_MENU_TAB_PADDING*2, true);
 			if (givenNameSize.y + COM_MENU_TAB_PADDING*2 > tabHeight)
 			{
 				tabHeight = givenNameSize.y + COM_MENU_TAB_PADDING*2;
@@ -462,21 +462,22 @@ void ComMenuRender(RenderState_t* renderState, MenuHandler_t* menuHandler, Menu_
 			CONNECT_BUTTON_WIDTH, CONNECT_BUTTON_HEIGHT
 		);
 		
+		renderState->BindFont(&app->uiFont);
 		// +==============================+
 		// |  Draw the Baud Rate Options  |
 		// +==============================+
-		renderState->DrawString("Baud Rate", NewVec2(baudRateRec.x, baudRateRec.y - app->testFont.maxExtendDown), GC->colors.foreground);
+		renderState->DrawString("Baud Rate", NewVec2(baudRateRec.x, baudRateRec.y - app->uiFont.maxExtendDown), GC->colors.foreground);
 		renderState->DrawRectangle(baudRateRec, GC->colors.foreground);
 		for (i32 baudIndex = 0; baudIndex < NumBaudRates; baudIndex++)
 		{
 			const char* baudString = GetBaudRateString((BaudRate_t)baudIndex);
 			rec currentRec = NewRectangle(baudRateRec.x,
-				baudRateRec.y + baudIndex*app->testFont.lineHeight,
-				baudRateRec.width, app->testFont.lineHeight
+				baudRateRec.y + baudIndex*app->uiFont.lineHeight,
+				baudRateRec.width, app->uiFont.lineHeight
 			);
 			v2 textPos = baudRateRec.topLeft + NewVec2(
-				baudRateRec.width/2 - MeasureString(&app->testFont, baudString).x/2,
-				app->testFont.maxExtendUp + baudIndex*app->testFont.lineHeight);
+				baudRateRec.width/2 - MeasureString(&app->uiFont, baudString).x/2,
+				app->uiFont.maxExtendUp + baudIndex*app->uiFont.lineHeight);
 			
 			Color_t backColor, textColor, borderColor;
 			ButtonColorChoice(backColor, textColor, borderColor, currentRec,
@@ -489,19 +490,19 @@ void ComMenuRender(RenderState_t* renderState, MenuHandler_t* menuHandler, Menu_
 		// +==============================+
 		// |   Draw the # Bits Options    |
 		// +==============================+
-		renderState->DrawString("# Bits", NewVec2(numBitsRec.x, numBitsRec.y - app->testFont.maxExtendDown), {GC->colors.foreground});
+		renderState->DrawString("# Bits", NewVec2(numBitsRec.x, numBitsRec.y - app->uiFont.maxExtendDown), {GC->colors.foreground});
 		renderState->DrawRectangle(numBitsRec, GC->colors.foreground);
 		for (i32 bitIndex = 0; bitIndex < 8; bitIndex++)
 		{
 			char numBitsString[4] = {};
 			snprintf(numBitsString, ArrayCount(numBitsString)-1, "%d", bitIndex+1);
 			rec currentRec = NewRectangle(numBitsRec.x,
-				numBitsRec.y + bitIndex*app->testFont.lineHeight,
-				numBitsRec.width, app->testFont.lineHeight
+				numBitsRec.y + bitIndex*app->uiFont.lineHeight,
+				numBitsRec.width, app->uiFont.lineHeight
 			);
 			v2 textPos = numBitsRec.topLeft + NewVec2(
-				numBitsRec.width/2 - MeasureString(&app->testFont, numBitsString).x/2,
-				app->testFont.maxExtendUp + bitIndex*app->testFont.lineHeight);
+				numBitsRec.width/2 - MeasureString(&app->uiFont, numBitsString).x/2,
+				app->uiFont.maxExtendUp + bitIndex*app->uiFont.lineHeight);
 			
 			Color_t backColor, textColor, borderColor;
 			ButtonColorChoice(backColor, textColor, borderColor, currentRec,
@@ -514,18 +515,18 @@ void ComMenuRender(RenderState_t* renderState, MenuHandler_t* menuHandler, Menu_
 		// +==============================+
 		// |   Draw the Parity Options    |
 		// +==============================+
-		renderState->DrawString("Parity", NewVec2(parityTypesRec.x, parityTypesRec.y - app->testFont.maxExtendDown), {GC->colors.foreground});
+		renderState->DrawString("Parity", NewVec2(parityTypesRec.x, parityTypesRec.y - app->uiFont.maxExtendDown), {GC->colors.foreground});
 		renderState->DrawRectangle(parityTypesRec, GC->colors.foreground);
 		for (i32 parityIndex = 0; parityIndex < NumParityTypes; parityIndex++)
 		{
 			const char* parityString = GetParityString((Parity_t)parityIndex);
 			rec currentRec = NewRectangle(parityTypesRec.x,
-				parityTypesRec.y + parityIndex*app->testFont.lineHeight,
-				parityTypesRec.width, app->testFont.lineHeight
+				parityTypesRec.y + parityIndex*app->uiFont.lineHeight,
+				parityTypesRec.width, app->uiFont.lineHeight
 			);
 			v2 textPos = parityTypesRec.topLeft + NewVec2(
-				parityTypesRec.width/2 - MeasureString(&app->testFont, parityString).x/2,
-				app->testFont.maxExtendUp + parityIndex*app->testFont.lineHeight);
+				parityTypesRec.width/2 - MeasureString(&app->uiFont, parityString).x/2,
+				app->uiFont.maxExtendUp + parityIndex*app->uiFont.lineHeight);
 			
 			Color_t backColor, textColor, borderColor;
 			ButtonColorChoice(backColor, textColor, borderColor, currentRec,
@@ -538,18 +539,18 @@ void ComMenuRender(RenderState_t* renderState, MenuHandler_t* menuHandler, Menu_
 		// +==============================+
 		// |  Draw the Stop Bits Options  |
 		// +==============================+
-		renderState->DrawString("Stop Bits", NewVec2(stopBitsRec.x, stopBitsRec.y - app->testFont.maxExtendDown), {GC->colors.foreground});
+		renderState->DrawString("Stop Bits", NewVec2(stopBitsRec.x, stopBitsRec.y - app->uiFont.maxExtendDown), {GC->colors.foreground});
 		renderState->DrawRectangle(stopBitsRec, GC->colors.foreground);
 		for (i32 stopBitIndex = 0; stopBitIndex < NumStopBitTypes; stopBitIndex++)
 		{
 			const char* stopBitsString = GetStopBitsString((StopBits_t)stopBitIndex);
 			rec currentRec = NewRectangle(stopBitsRec.x,
-				stopBitsRec.y + stopBitIndex*app->testFont.lineHeight,
-				stopBitsRec.width, app->testFont.lineHeight
+				stopBitsRec.y + stopBitIndex*app->uiFont.lineHeight,
+				stopBitsRec.width, app->uiFont.lineHeight
 			);
 			v2 textPos = stopBitsRec.topLeft + NewVec2(
-				stopBitsRec.width/2 - MeasureString(&app->testFont, stopBitsString).x/2,
-				app->testFont.maxExtendUp + stopBitIndex*app->testFont.lineHeight);
+				stopBitsRec.width/2 - MeasureString(&app->uiFont, stopBitsString).x/2,
+				app->uiFont.maxExtendUp + stopBitIndex*app->uiFont.lineHeight);
 			
 			Color_t buttonColor, textColor, borderColor;
 			ButtonColorChoice(buttonColor, textColor, borderColor, currentRec,
@@ -571,8 +572,8 @@ void ComMenuRender(RenderState_t* renderState, MenuHandler_t* menuHandler, Menu_
 			const char* portUserName = GetPortUserName(portName);
 			rec tabRec = NewRectangle(tabIndex * tabWidth, 0, tabWidth, tabHeight);
 			tabRec.topLeft += menuPntr->usableRec.topLeft;
-			v2 stringSize = MeasureFormattedString(&app->testFont, portUserName, tabWidth - COM_MENU_TAB_PADDING*2, true);
-			v2 stringPosition = tabRec.topLeft + NewVec2(tabRec.width/2, tabRec.height/2 - stringSize.y/2 + app->testFont.maxExtendUp);
+			v2 stringSize = MeasureFormattedString(&app->uiFont, portUserName, tabWidth - COM_MENU_TAB_PADDING*2, true);
+			v2 stringPosition = tabRec.topLeft + NewVec2(tabRec.width/2, tabRec.height/2 - stringSize.y/2 + app->uiFont.maxExtendUp);
 			
 			Color_t buttonColor, textColor, borderColor;
 			ButtonColorChoice(buttonColor, textColor, borderColor, tabRec,
@@ -580,17 +581,17 @@ void ComMenuRender(RenderState_t* renderState, MenuHandler_t* menuHandler, Menu_
 				(app->comMenuOptions.isOpen == true && strcmp(app->comMenuOptions.name, portName) == 0));
 			
 			renderState->DrawButton(tabRec, buttonColor, borderColor);
-			// renderState->DrawRectangle(NewRectangle(stringPosition.x - stringSize.x/2, stringPosition.y - app->testFont.maxExtendUp, stringSize.x, stringSize.y), {Color_Red});
+			// renderState->DrawRectangle(NewRectangle(stringPosition.x - stringSize.x/2, stringPosition.y - app->uiFont.maxExtendUp, stringSize.x, stringSize.y), {Color_Red});
 			renderState->DrawFormattedString(portUserName, stringPosition, tabWidth - COM_MENU_TAB_PADDING*2, textColor, Alignment_Center, true);
 		}
 		
 		//Draw the connect button
 		{
 			const char* connectButtonText = "Connect";
-			v2 textSize = MeasureString(&app->testFont, connectButtonText);
+			v2 textSize = MeasureString(&app->uiFont, connectButtonText);
 			v2 stringPosition = NewVec2(
 				connectButtonRec.x + connectButtonRec.width/2 - textSize.x/2,
-				connectButtonRec.y + connectButtonRec.height/2 + app->testFont.lineHeight/2 - app->testFont.maxExtendDown
+				connectButtonRec.y + connectButtonRec.height/2 + app->uiFont.lineHeight/2 - app->uiFont.maxExtendDown
 			);
 			bool settingsHaveChanged = ((!app->comPort.isOpen && app->comMenuOptions.isOpen) || app->comMenuOptions.settings != app->comPort.settings);
 			if (app->comMenuOptions.name == nullptr && app->comPort.name != nullptr) { settingsHaveChanged = true; }
@@ -615,6 +616,7 @@ void ComMenuRender(RenderState_t* renderState, MenuHandler_t* menuHandler, Menu_
 			renderState->DrawButton(connectButtonRec, buttonColor, borderColor);
 			renderState->DrawString(connectButtonText, stringPosition, textColor);
 		}
+		renderState->BindFont(&app->mainFont);
 	}
 }
 
@@ -622,7 +624,7 @@ void ContextMenuUpdate(MenuHandler_t* menuHandler, Menu_t* menu)
 {
 	UiElements_t* ui = &app->uiElements;
 	
-	v2 textSize = MeasureString(&app->testFont, ui->contextStringBuffer);
+	v2 textSize = MeasureString(&app->uiFont, ui->contextStringBuffer);
 	
 	menu->drawRec.size = textSize;
 	menu->drawRec = RectangleInflate(menu->drawRec, CONTEXT_MENU_PADDING);
@@ -632,7 +634,7 @@ void ContextMenuRender(RenderState_t* renderState, MenuHandler_t* menuHandler, M
 {
 	UiElements_t* ui = &app->uiElements;
 	
-	v2 textPos = menu->usableRec.topLeft + NewVec2(CONTEXT_MENU_PADDING, CONTEXT_MENU_PADDING + app->testFont.maxExtendUp);
+	v2 textPos = menu->usableRec.topLeft + NewVec2(CONTEXT_MENU_PADDING, CONTEXT_MENU_PADDING + app->uiFont.maxExtendUp);
 	app->renderState.DrawString(ui->contextStringBuffer, textPos, GC->colors.foreground);
 }
 
@@ -1013,9 +1015,21 @@ u32 GetSelection(char* bufferOutput = nullptr)
 	return bufferLength;
 }
 
+void LoadApplicationFonts()
+{
+	if (app->mainFont.numChars != 0) { DestroyTexture(&app->mainFont.bitmap); }
+	if (app->uiFont.numChars != 0)   { DestroyTexture(&app->uiFont.bitmap);   }
+	
+	app->mainFont = LoadFont("Resources/Fonts/consola.ttf",
+		(r32)GC->mainFontSize, 1024, 1024, ' ', 96);
+	app->uiFont = LoadFont("Resources/Fonts/consola.ttf",
+		(r32)GC->uiFontSize, 1024, 1024, ' ', 96);
+}
+
 //+================================================================+
 //|                       App Get Version                          |
 //+================================================================+
+// Version_t App_GetVersion(bool* resetApplication)
 EXPORT AppGetVersion_DEFINITION(App_GetVersion)
 {
 	Version_t version = {
@@ -1035,6 +1049,7 @@ EXPORT AppGetVersion_DEFINITION(App_GetVersion)
 //+================================================================+
 //|                       App Initialize                           |
 //+================================================================+
+// void App_Initialize(const PlatformInfo_t* PlatformInfo, const AppMemory_t* AppMemory)
 EXPORT AppInitialize_DEFINITION(App_Initialize)
 {
 	platform = PlatformInfo;
@@ -1101,8 +1116,7 @@ EXPORT AppInitialize_DEFINITION(App_Initialize)
 	app->testTexture = LoadTexture("Resources/Sprites/buttonIcon3.png");
 	app->scrollBarEndcapTexture = LoadTexture("Resources/Sprites/scrollBarEndcap.png", false, false);
 	
-	app->testFont = LoadFont("Resources/Fonts/consola.ttf",
-		(r32)GC->fontSize, 1024, 1024, ' ', 96);
+	LoadApplicationFonts();
 	
 	// +================================+
 	// |          Frame Buffer          |
@@ -1135,6 +1149,7 @@ EXPORT AppInitialize_DEFINITION(App_Initialize)
 //+================================================================+
 //|                        App Reloaded                            |
 //+================================================================+
+// void App_Reloaded(const PlatformInfo_t* PlatformInfo, const AppMemory_t* AppMemory)
 EXPORT AppReloaded_DEFINITION(App_Reloaded)
 {
 	platform = PlatformInfo;
@@ -1159,6 +1174,7 @@ EXPORT AppReloaded_DEFINITION(App_Reloaded)
 //+================================================================+
 //|                         App Update                             |
 //+================================================================+
+// void App_Update(const PlatformInfo_t* PlatformInfo, const AppMemory_t* AppMemory, const AppInput_t* AppInput, AppOutput_t* AppOutput)
 EXPORT AppUpdate_DEFINITION(App_Update)
 {
 	platform = PlatformInfo;
@@ -1439,6 +1455,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		LoadGlobalConfiguration(platform, &app->globalConfig, &app->mainHeap);
 		DisposeRegexFile(&app->regexList);
 		LoadRegexFile(&app->regexList, "Resources/Configuration/RegularExpressions.rgx", &app->mainHeap);
+		LoadApplicationFonts();
 	}
 	
 	//+==================================+
@@ -1817,7 +1834,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 				ui->scrollOffset.y = (newPixelLocation / (ui->scrollBarGutterRec.height - ui->scrollBarRec.height)) * ui->maxScrollOffset.y;
 				ui->scrollOffsetGoto.y = ui->scrollOffset.y;
 				
-				if (ui->scrollOffsetGoto.y < ui->maxScrollOffset.y - app->testFont.lineHeight)
+				if (ui->scrollOffsetGoto.y < ui->maxScrollOffset.y - app->mainFont.lineHeight)
 				{
 					ui->followingEndOfFile = false;
 				}
@@ -1934,7 +1951,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	
 	rs->BindFrameBuffer(nullptr);
 	rs->BindShader(&app->simpleShader);
-	rs->BindFont(&app->testFont);
+	rs->BindFont(&app->mainFont);
 	rs->SetGradientEnabled(false);
 	
 	Matrix4_t worldMatrix, viewMatrix, projMatrix;
@@ -1955,7 +1972,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		rs->SetViewMatrix(Matrix4Translate(NewVec3(ui->viewRec.x - ui->scrollOffset.x, ui->viewRec.y - ui->scrollOffset.y, 0)));
 		{//Items drawn relative to view
 			
-			v2 currentPos = NewVec2((r32)GC->lineSpacing, ui->scrollOffset.y - ui->firstRenderLineOffset + app->testFont.maxExtendUp);
+			v2 currentPos = NewVec2((r32)GC->lineSpacing, ui->scrollOffset.y - ui->firstRenderLineOffset + app->mainFont.maxExtendUp);
 			for (i32 lineIndex = firstLine; lineIndex < app->lineList.numLines; lineIndex++)
 			{
 				Line_t* linePntr = GetLineAt(&app->lineList, lineIndex);
@@ -1969,7 +1986,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 				{
 					rec backRec = NewRectangle(
 						currentPos.x + ui->scrollOffset.x,
-						currentPos.y - app->testFont.maxExtendUp,
+						currentPos.y - app->mainFont.maxExtendUp,
 						ui->viewRec.width, lineHeight
 					);
 					rs->DrawRectangle(backRec, GC->colors.hoverLine);
@@ -1982,17 +1999,17 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 					IsInsideRectangle(RenderMousePos, ui->viewRec) &&
 					!ui->mouseInMenu)
 				{
-					v2 skipSize = MeasureString(&app->testFont, linePntr->chars, ui->hoverLocation.charIndex);
+					v2 skipSize = MeasureString(&app->mainFont, linePntr->chars, ui->hoverLocation.charIndex);
 					rec cursorRec = NewRectangle(
 						currentPos.x + skipSize.x,
-						currentPos.y - app->testFont.maxExtendUp,
-						1, app->testFont.lineHeight
+						currentPos.y - app->mainFont.maxExtendUp,
+						1, app->mainFont.lineHeight
 					);
 					rs->DrawRectangle(cursorRec, hoverLocColor);
 				}
 				
 				currentPos.y += lineHeight + GC->lineSpacing;
-				if (currentPos.y - app->testFont.maxExtendUp >= ui->scrollOffset.y + ui->viewRec.height)
+				if (currentPos.y - app->mainFont.maxExtendUp >= ui->scrollOffset.y + ui->viewRec.height)
 				{
 					//We've reached the bottom of the view
 					break;
@@ -2020,7 +2037,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		rs->SetViewMatrix(Matrix4Translate(NewVec3(ui->viewRec.x - ui->scrollOffset.x, ui->viewRec.y - ui->scrollOffset.y, 0)));
 		{//Items drawn relative to view
 			
-			v2 currentPos = NewVec2(0, ui->scrollOffset.y - ui->firstRenderLineOffset + app->testFont.maxExtendUp);
+			v2 currentPos = NewVec2(0, ui->scrollOffset.y - ui->firstRenderLineOffset + app->mainFont.maxExtendUp);
 			for (i32 lineIndex = firstLine;
 				lineIndex < app->lineList.numLines && lineIndex <= maxLocation.lineNum;
 				lineIndex++)
@@ -2035,30 +2052,30 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 					if (lineIndex == minLocation.lineNum &&
 						lineIndex == maxLocation.lineNum)
 					{
-						skipSize = MeasureString(&app->testFont, linePntr->chars, minLocation.charIndex);
-						selectionSize = MeasureString(&app->testFont, &linePntr->chars[minLocation.charIndex], maxLocation.charIndex - minLocation.charIndex);
+						skipSize = MeasureString(&app->mainFont, linePntr->chars, minLocation.charIndex);
+						selectionSize = MeasureString(&app->mainFont, &linePntr->chars[minLocation.charIndex], maxLocation.charIndex - minLocation.charIndex);
 					}
 					else if (lineIndex == minLocation.lineNum)
 					{
-						skipSize = MeasureString(&app->testFont, linePntr->chars, minLocation.charIndex);
-						selectionSize = MeasureString(&app->testFont, &linePntr->chars[minLocation.charIndex]);
-						// selectionSize.x += MeasureString(&app->testFont, " ", 1).x;
+						skipSize = MeasureString(&app->mainFont, linePntr->chars, minLocation.charIndex);
+						selectionSize = MeasureString(&app->mainFont, &linePntr->chars[minLocation.charIndex]);
+						// selectionSize.x += MeasureString(&app->mainFont, " ", 1).x;
 					}
 					else if (lineIndex == maxLocation.lineNum)
 					{
-						selectionSize = MeasureString(&app->testFont, linePntr->chars, maxLocation.charIndex);
+						selectionSize = MeasureString(&app->mainFont, linePntr->chars, maxLocation.charIndex);
 					}
 					else
 					{
-						selectionSize = MeasureString(&app->testFont, linePntr->chars);
-						// selectionSize.x += MeasureString(&app->testFont, " ", 1).x;
+						selectionSize = MeasureString(&app->mainFont, linePntr->chars);
+						// selectionSize.x += MeasureString(&app->mainFont, " ", 1).x;
 					}
 					
-					rec backRec = NewRectangle(GC->lineSpacing + currentPos.x + skipSize.x, currentPos.y - app->testFont.maxExtendUp, selectionSize.x, app->testFont.lineHeight);//linePntr->lineHeight);
+					rec backRec = NewRectangle(GC->lineSpacing + currentPos.x + skipSize.x, currentPos.y - app->mainFont.maxExtendUp, selectionSize.x, app->mainFont.lineHeight);//linePntr->lineHeight);
 					backRec = RectangleInflate(backRec, (r32)GC->lineSpacing/2);
 					rs->DrawRectangle(backRec, selectionColor);
 					
-					if (currentPos.y - app->testFont.maxExtendUp >= ui->scrollOffset.y + ui->viewRec.height)
+					if (currentPos.y - app->mainFont.maxExtendUp >= ui->scrollOffset.y + ui->viewRec.height)
 					{
 						//We've reached the bottom of the view
 						break;
@@ -2096,7 +2113,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		rs->SetViewMatrix(Matrix4Translate(NewVec3(ui->gutterRec.x, ui->gutterRec.y - ui->scrollOffset.y, 0)));
 		{//Items drawn relative to view
 			
-			v2 currentPos = NewVec2(0, ui->scrollOffset.y - ui->firstRenderLineOffset + app->testFont.maxExtendUp);
+			v2 currentPos = NewVec2(0, ui->scrollOffset.y - ui->firstRenderLineOffset + app->mainFont.maxExtendUp);
 			for (i32 lineIndex = firstLine; lineIndex < app->lineList.numLines; lineIndex++)
 			{
 				Line_t* linePntr = GetLineAt(&app->lineList, lineIndex);
@@ -2104,7 +2121,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 				RenderLineGutter(linePntr, currentPos, lineIndex, linePntr->lineHeight);
 				
 				currentPos.y += linePntr->lineHeight + GC->lineSpacing;
-				if (currentPos.y - app->testFont.maxExtendUp >= ui->scrollOffset.y + ui->viewRec.height)
+				if (currentPos.y - app->mainFont.maxExtendUp >= ui->scrollOffset.y + ui->viewRec.height)
 				{
 					//We've reached the bottom of the view
 					break;
@@ -2213,11 +2230,15 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 					messageColor = GC->colors.highlight3;
 				}
 				
-				rs->DrawString(app->statusMessage, NewVec2(5, RenderScreenSize.y-app->testFont.maxExtendDown), messageColor, 1.0f);
+				rs->BindFont(&app->uiFont);
+				rs->DrawString(app->statusMessage, NewVec2(5, RenderScreenSize.y-app->uiFont.maxExtendDown), messageColor, 1.0f);
+				rs->BindFont(&app->mainFont);
 			}
 		}
 		
-		//Draw Goto End Button
+		// +==============================+
+		// |     Draw Goto End Button     |
+		// +==============================+
 		{
 			Color_t buttonColor = GC->colors.uiGray1;
 			Color_t outlineColor = GC->colors.background;
@@ -2239,13 +2260,18 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 			rs->DrawButton(ui->gotoEndButtonRec, buttonColor, outlineColor);
 		}
 		
+		// +==============================+
+		// |    Com Name in Status Bar    |
+		// +==============================+
 		if (app->comPort.isOpen && GC->showComNameInStatusBar)
 		{
 			const char* comPortUserName = GetPortUserName(app->comPort.name);
-			v2 comNameSize = MeasureString(&app->testFont, comPortUserName);
+			v2 comNameSize = MeasureString(&app->uiFont, comPortUserName);
+			rs->BindFont(&app->uiFont);
 			rs->DrawString(comPortUserName,
-				NewVec2(ui->gotoEndButtonRec.x - comNameSize.x - 5, RenderScreenSize.y-app->testFont.maxExtendDown),
+				NewVec2(ui->gotoEndButtonRec.x - comNameSize.x - 5, RenderScreenSize.y-app->uiFont.maxExtendDown),
 				GC->colors.foreground, 1.0f);
+			rs->BindFont(&app->mainFont);
 		}
 	}
 	
@@ -2338,17 +2364,19 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	// +================================+
 	{
 		const char* clearStr = "Clear";
-		v2 textSize = MeasureString(&app->testFont, clearStr);
+		v2 textSize = MeasureString(&app->uiFont, clearStr);
 		v2 textPos = NewVec2(
 			ui->clearButtonRec.x + ui->clearButtonRec.width/2 - textSize.x/2,
-			ui->clearButtonRec.y + ui->clearButtonRec.height/2 + app->testFont.lineHeight/2 - app->testFont.maxExtendDown
+			ui->clearButtonRec.y + ui->clearButtonRec.height/2 + app->uiFont.lineHeight/2 - app->uiFont.maxExtendDown
 		);
 		
 		Color_t buttonColor, textColor, borderColor;
 		ButtonColorChoice(buttonColor, textColor, borderColor, ui->clearButtonRec, false, false);
 		
 		rs->DrawButton(ui->clearButtonRec, buttonColor, borderColor);
+		rs->BindFont(&app->uiFont);
 		rs->DrawString(clearStr, textPos, textColor);
+		rs->BindFont(&app->mainFont);
 	}
 	
 	// +==============================+
@@ -2357,13 +2385,15 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	if (app->programInstance.isOpen)
 	{
 		const char* runningStr = "Py";
-		v2 strSize = MeasureString(&app->testFont, runningStr);
+		v2 strSize = MeasureString(&app->uiFont, runningStr);
 		v2 textPos = NewVec2(
 			ui->clearButtonRec.x - strSize.x - 5,
-			ui->mainMenuRec.y + app->testFont.maxExtendUp
+			ui->mainMenuRec.y + app->uiFont.maxExtendUp
 		);
 		
+		rs->BindFont(&app->uiFont);
 		rs->DrawString(runningStr, textPos, GC->colors.foreground);
+		rs->BindFont(&app->mainFont);
 	}
 	
 	// +==================================+
@@ -2382,17 +2412,19 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		app->selectionStart.charIndex != app->selectionEnd.charIndex)
 	{
 		const char* clearStr = "Save To File";
-		v2 textSize = MeasureString(&app->testFont, clearStr);
+		v2 textSize = MeasureString(&app->uiFont, clearStr);
 		v2 textPos = NewVec2(
 			ui->saveButtonRec.x + ui->saveButtonRec.width/2 - textSize.x/2,
-			ui->saveButtonRec.y + ui->saveButtonRec.height/2 + app->testFont.lineHeight/2 - app->testFont.maxExtendDown
+			ui->saveButtonRec.y + ui->saveButtonRec.height/2 + app->uiFont.lineHeight/2 - app->uiFont.maxExtendDown
 		);
 		
 		Color_t buttonColor, textColor, borderColor;
 		ButtonColorChoice(buttonColor, textColor, borderColor, ui->saveButtonRec, false, false);
 		
 		rs->DrawButton(ui->saveButtonRec, buttonColor, borderColor);
+		rs->BindFont(&app->uiFont);
 		rs->DrawString(clearStr, textPos, textColor);
+		rs->BindFont(&app->mainFont);
 	}
 	
 	MenuHandlerDrawMenus(&app->renderState, &app->menuHandler);
@@ -2407,32 +2439,35 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		
 		rs->DrawButton(overlayRec, ColorTransparent({Color_Black}, 0.5f), ColorTransparent({Color_White}, 0.5f));
 		
-		v2 textPos = NewVec2(overlayRec.x + 5, overlayRec.y + 5 + app->testFont.maxExtendUp);
+		v2 textPos = NewVec2(overlayRec.x + 5, overlayRec.y + 5 + app->uiFont.maxExtendUp);
+		rs->BindFont(&app->uiFont);
 		
 		rs->PrintString(textPos, {Color_White}, 1.0f, "AppData Size: %u/%u (%.3f%%)",
 			sizeof(AppData_t), AppMemory->permanantSize,
 			(r32)sizeof(AppData_t) / (r32)AppMemory->permanantSize * 100.0f);
-		textPos.y += app->testFont.lineHeight;
+		textPos.y += app->uiFont.lineHeight;
 		
 		rs->PrintString(textPos, {Color_White}, 1.0f, "Input Arena: %u/%u (%.3f%%)",
 			app->inputArena.used, app->inputArena.size,
 			(r32)app->inputArena.used / (r32)app->inputArena.size * 100.0f);
-		textPos.y += app->testFont.lineHeight;
+		textPos.y += app->uiFont.lineHeight;
 		
 		rs->PrintString(textPos, {Color_White}, 1.0f, "Main Heap: %u/%u (%.3f%%)",
 			app->mainHeap.used, app->mainHeap.size,
 			(r32)app->mainHeap.used / (r32)app->mainHeap.size * 100.0f);
-		textPos.y += app->testFont.lineHeight;
+		textPos.y += app->uiFont.lineHeight;
 		
 		rs->PrintString(textPos, {Color_White}, 1.0f, "Temp Init: %u/%u (%.3f%%)",
 			app->appInitTempHighWaterMark, TempArena->size,
 			(r32)app->appInitTempHighWaterMark / (r32)TempArena->size * 100.0f);
-		textPos.y += app->testFont.lineHeight;
+		textPos.y += app->uiFont.lineHeight;
 		
 		rs->PrintString(textPos, {Color_White}, 1.0f, "Temp Update: %u/%u (%.3f%%)",
 			ArenaGetHighWaterMark(TempArena), TempArena->size,
 			(r32)ArenaGetHighWaterMark(TempArena) / (r32)TempArena->size * 100.0f);
-		textPos.y += app->testFont.lineHeight;
+		textPos.y += app->uiFont.lineHeight;
+		
+		rs->BindFont(&app->mainFont);
 	}
 	#endif
 	
@@ -2456,6 +2491,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 //+================================================================+
 //|                   App Get Sound Samples                        |
 //+================================================================+
+// void App_GetSoundSamples(const PlatformInfo_t* PlatformInfo, const AppMemory_t* AppMemory, const AppInput_t* AppInput)
 EXPORT AppGetSoundSamples_DEFINITION(App_GetSoundSamples)
 {
 	platform = PlatformInfo;
@@ -2470,6 +2506,7 @@ EXPORT AppGetSoundSamples_DEFINITION(App_GetSoundSamples)
 //+================================================================+
 //|                        App Closing                             |
 //+================================================================+
+// void App_Closing(const PlatformInfo_t* PlatformInfo, const AppMemory_t* AppMemory)
 EXPORT AppClosing_DEFINITION(App_Closing)
 {
 	platform = PlatformInfo;

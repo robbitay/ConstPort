@@ -22,14 +22,14 @@ r32 RenderLine(Line_t* linePntr, v2 position, bool sizeOnly = false)
 		//TODO: Draw this non-relative to the camera?
 		rec backgroundRec = NewRectangle(
 			0,
-			position.y - app->testFont.maxExtendUp - GC->lineSpacing/2,
+			position.y - app->mainFont.maxExtendUp - GC->lineSpacing/2,
 			10000,
-			app->testFont.lineHeight + GC->lineSpacing
+			app->mainFont.lineHeight + GC->lineSpacing
 		);
 		app->renderState.DrawRectangle(backgroundRec, backgroundColor);
 		app->renderState.DrawString(linePntr->chars, position, color, 1.0f);
 	}
-	result += app->testFont.lineHeight;
+	result += app->mainFont.lineHeight;
 	
 	if (GC->elapsedBannerEnabled)
 	{
@@ -114,7 +114,7 @@ void RenderLineGutter(const Line_t* linePntr, v2 position, i32 lineIndex, r32 li
 						r32 bannerWidth = ui->viewRec.width * EaseCubicOut(halfAnimProgress);
 						rec bannerRec = NewRectangle(
 							ui->viewRec.x + ui->viewRec.width/2 - bannerWidth/2,
-							position.y + app->testFont.maxExtendDown,
+							position.y + app->mainFont.maxExtendDown,
 							bannerWidth,
 							2
 						);
@@ -127,7 +127,7 @@ void RenderLineGutter(const Line_t* linePntr, v2 position, i32 lineIndex, r32 li
 						bannerHeight = MaxReal32(MIN_BANNER_HEIGHT, GC->elapsedBannerHeight * EaseCubicOut(halfAnimProgress));
 						rec bannerRec = NewRectangle(
 							ui->viewRec.x,
-							position.y + app->testFont.maxExtendDown + GC->lineSpacing/2, 
+							position.y + app->mainFont.maxExtendDown + GC->lineSpacing/2, 
 							ui->viewRec.width,
 							bannerHeight
 						);
@@ -138,16 +138,18 @@ void RenderLineGutter(const Line_t* linePntr, v2 position, i32 lineIndex, r32 li
 							char timespanStrBuffer[32] = {};
 							u32 timespanStrLength = GetElapsedString(difference, timespanStrBuffer, ArrayCount(timespanStrBuffer));
 							strncpy(&timespanStrBuffer[timespanStrLength], " Passed", ArrayCount(timespanStrBuffer)-1 - timespanStrLength);
-							v2 stringSize = MeasureString(&app->testFont, timespanStrBuffer);
+							v2 stringSize = MeasureString(&app->uiFont, timespanStrBuffer);
 							v2 stringDrawPos = NewVec2(
 								bannerRec.x + bannerRec.width/2 - stringSize.x/2,
-								bannerRec.y + bannerRec.height/2 - stringSize.y/2 + app->testFont.maxExtendUp
+								bannerRec.y + bannerRec.height/2 - stringSize.y/2 + app->uiFont.maxExtendUp
 							);
 							r32 stringOpacity = (linePntr->animProgress-0.8f) / 0.2f;
 							Color_t stringColor = GC->colors.foreground;
 							stringColor.a = (u8)(stringOpacity*255);
 							
+							rs->BindFont(&app->uiFont);
 							rs->DrawString(timespanStrBuffer, stringDrawPos, stringColor);
+							rs->BindFont(&app->mainFont);
 						}
 					}
 				}
@@ -161,7 +163,7 @@ void RenderLineGutter(const Line_t* linePntr, v2 position, i32 lineIndex, r32 li
 		if (bannerHeight > 0) bannerHeight += 2;
 		rec markRec = NewRectangle(
 			ui->gutterRec.x, 
-			position.y + app->testFont.maxExtendDown + bannerHeight, 
+			position.y + app->mainFont.maxExtendDown + bannerHeight, 
 			ui->gutterRec.width + ui->viewRec.width,
 			(r32)GC->markHeight
 		);
@@ -283,7 +285,7 @@ v2 MeasureLines(LineList_t* lineList, const Font_t* font)
 		{
 			ui->hoverLocation.lineNum = lineIndex;
 			ui->hoverMouseLineOffset = relMousePos - NewVec2(0, beforeHeight);
-			ui->hoverLocation.charIndex = GetStringIndexForLocation(&app->testFont, linePntr->chars, ui->hoverMouseLineOffset);
+			ui->hoverLocation.charIndex = GetStringIndexForLocation(font, linePntr->chars, ui->hoverMouseLineOffset);
 			ui->markIndex = lineIndex;
 			if (ui->markIndex > 0 && ui->hoverMouseLineOffset.y < (lineHeight+GC->lineSpacing) / 2.0f)
 			{

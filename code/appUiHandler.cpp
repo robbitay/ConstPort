@@ -25,7 +25,7 @@ void InitializeUiElements(UiElements_t* ui)
 void RecalculateUiElements(UiElements_t* ui, bool resetFollowingEndOfFile)
 {
 	//Static sizing helpers
-	ui->lineHeight = app->testFont.lineHeight + GC->lineSpacing;
+	ui->lineHeight = app->mainFont.lineHeight + GC->lineSpacing;
 	
 	//Static Rectangles
 	ui->mainMenuRec = NewRectangle(
@@ -64,9 +64,9 @@ void RecalculateUiElements(UiElements_t* ui, bool resetFollowingEndOfFile)
 	);
 	ui->statusBarRec = NewRectangle(
 		0, 
-		RenderScreenSize.y - app->testFont.lineHeight, 
+		RenderScreenSize.y - app->uiFont.lineHeight, 
 		RenderScreenSize.x, 
-		app->testFont.lineHeight
+		app->uiFont.lineHeight
 	);
 	ui->scrollBarGutterRec = NewRectangle(
 		RenderScreenSize.x - (r32)GC->scrollbarWidth - (r32)GC->scrollbarPadding*2, 
@@ -88,7 +88,7 @@ void RecalculateUiElements(UiElements_t* ui, bool resetFollowingEndOfFile)
 	);
 	if (GC->showLineNumbers)
 	{
-		ui->gutterRec.width = NumDecimalDigits(app->lineList.numLines) * MeasureString(&app->testFont, " ", 1).x + 2;
+		ui->gutterRec.width = NumDecimalDigits(app->lineList.numLines) * MeasureString(&app->mainFont, " ", 1).x + 2;
 		if (ui->gutterRec.width < (r32)GC->minGutterWidth) ui->gutterRec.width = (r32)GC->minGutterWidth;
 	}
 	ui->viewRec = NewRectangle(
@@ -99,7 +99,7 @@ void RecalculateUiElements(UiElements_t* ui, bool resetFollowingEndOfFile)
 	);
 	
 	//Dynamic helpers
-	ui->fileSize = MeasureLines(&app->lineList, &app->testFont);
+	ui->fileSize = MeasureLines(&app->lineList, &app->mainFont);
 	ui->fileSize.x += 10;
 	// DEBUG_PrintLine("FileSize = (%f, %f)", ui->fileSize.x, ui->fileSize.y);
 	ui->maxScrollOffset = NewVec2(
@@ -136,7 +136,7 @@ void RecalculateUiElements(UiElements_t* ui, bool resetFollowingEndOfFile)
 	//NOTE: Since MeasureLines also captures the position of the hoverLocation and scrollOffset of the first line that
 	//		needs to be rendered it is dependant on the scrollOffset to be in it's proper position for these calculations
 	//		Therefore we have to run it once more to update those locations correctly after min and max offset have been accounted for
-	MeasureLines(&app->lineList, &app->testFont);
+	MeasureLines(&app->lineList, &app->mainFont);
 	
 	// DEBUG_PrintLine("scrollOffset = (%f, %f)", ui->scrollOffset.x, ui->scrollOffset.y);
 	// DEBUG_PrintLine("MaxScrollOffset = (%f, %f)", ui->maxScrollOffset.x, ui->maxScrollOffset.y);

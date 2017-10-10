@@ -8,7 +8,8 @@ Date:   09\26\2017
 	
 	#if defined(ConfigurationBool) && defined(ConfigurationInt32) && defined(ConfigurationColor) && defined(ConfigurationString)
 	
-	ConfigurationInt32 ("font_size",                   fontSize,               16);
+	ConfigurationInt32 ("main_font_size",              mainFontSize,           16);
+	ConfigurationInt32 ("ui_font_size",                uiFontSize,             12);
 	ConfigurationInt32 ("line_spacing",                lineSpacing,            2);
 	ConfigurationInt32 ("tab_width",                   tabWidth,               4);
 	ConfigurationBool  ("elapsed_banner_enabled",      elapsedBannerEnabled,   true);

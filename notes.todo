@@ -43,9 +43,11 @@
 	[X] Route input text to python script
 	[X] Add configuration options to define what python script gets run by ConstPort
 	[X] Handle escaped characters in JSON strings correctly
+	[X] Seperate font for drawing data and font for drawing UI elements
+	[!] Add a function to re-create the fonts. Recreate the fonts if the fontSizes change when reloading configuration options
+	
 	[!] Add a string data stack for all input lines to get added to
 	[!] Implement the rest of the python configuration options
-	[!] Seperate font for drawing data and font for drawing UI elements
 	[!] Change the status message layout so it pops up as an overlay with formatted text rendering so the whole message always fits nicely
 	[!] Add a platform layer function to set the TempArena so we can add functions that push onto Temporary Memory when we call them
 	[!] Rename the global AppData_t* to app. Rename global PlatformInfo_t* to platform. Rename global AppInput_t* to input. Add global MemoryArena_t* called mainHeap.

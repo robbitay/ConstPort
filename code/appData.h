@@ -22,7 +22,8 @@ struct AppData_t
 	Shader_t outlineShader;
 	Texture_t testTexture;
 	Texture_t scrollBarEndcapTexture;
-	Font_t testFont;
+	Font_t mainFont;
+	Font_t uiFont;
 	FrameBuffer_t frameBuffer;
 	Texture_t frameTexture;
 	
