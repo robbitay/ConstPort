@@ -247,7 +247,7 @@ void ComMenuUpdate(MenuHandler_t* menuHandler, Menu_t* menuPntr)
 	
 	if (menuPntr->show)
 	{
-		u32 numTabs = app->availablePorts.count + (app->comPort.isOpen ? 1 : 0);
+		u32 numTabs = app->availablePorts.count + ((app->comPort.isOpen && !IsComAvailable(app->comPort.name)) ? 1 : 0);
 		r32 tabWidth = menuPntr->usableRec.width / numTabs;
 		{
 			r32 tabMinimumWidth = MeasureString(&app->uiFont, "1234567890").x + COM_MENU_TAB_PADDING*2;
@@ -410,7 +410,7 @@ void ComMenuRender(RenderState_t* renderState, MenuHandler_t* menuHandler, Menu_
 {
 	if (menuPntr->show)
 	{
-		u32 numTabs = app->availablePorts.count + (app->comPort.isOpen ? 1 : 0);
+		u32 numTabs = app->availablePorts.count + ((app->comPort.isOpen && !IsComAvailable(app->comPort.name)) ? 1 : 0);
 		r32 tabWidth = menuPntr->usableRec.width / numTabs;
 		rec baudRateRec = NewRectangle(
 			menuPntr->usableRec.x + COM_MENU_OUTER_PADDING,
@@ -1415,7 +1415,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		
 		if (comMenu->show == false && ButtonPressed(Button_Enter))
 		{
-			DEBUG_WriteLine("Writing New Line");
+			// DEBUG_WriteLine("Writing New Line");
 			
 			char newChar = '\n';
 			if (echoInput) { DataReceived("\n", 1); }

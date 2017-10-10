@@ -63,6 +63,7 @@ Description:
 #include "timeStructs.h"
 #include "memoryArena.h"
 #include "boundedStrList.h"
+#include "charClasses.h"
 
 // +--------------------------------------------------------------+
 // |                   Platform Layer Functions                   |

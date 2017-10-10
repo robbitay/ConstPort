@@ -6,6 +6,8 @@ Description:
 	** Holds the functions that handle interfacing with OSX enumerated COM ports 
 */
 
+#include <dirent.h>
+
 // +==============================+
 // |      OSX_GetComPortList      |
 // +==============================+
@@ -14,8 +16,42 @@ GetComPortList_DEFINITION(OSX_GetComPortList)
 	BoundedStrList_t result = {};
 	BoundedStrListCreate(&result, MAX_COM_PORT_NUM, MAX_COM_PORT_NAME_LENGTH, memArena);
 	
+	DIR* devDir = opendir("/dev/");
+	if (devDir != nullptr)
+	{
+		dirent* deviceName = readdir(devDir);
+		while (deviceName != nullptr)
+		{
+			const char* nameStr = deviceName->d_name;
+			u32 nameStrLength = (u32)strlen(nameStr);
+			if (strncmp(&nameStr[0], "tty", 3) == 0)
+			{
+				if (nameStrLength >= 4 && nameStr[3] == '.')
+				{
+					OSX_PrintLine("Found device \"%s\"", nameStr);
+					BoundedStrListAdd(&result, nameStr);
+				}
+				else if (nameStrLength == 7 && nameStr[3] == 's' &&
+					IsCharClassNumeric(nameStr[4]) && IsCharClassNumeric(nameStr[7]) && IsCharClassNumeric(nameStr[6]))
+				{
+					OSX_PrintLine("Found device \"%s\"", nameStr);
+					BoundedStrListAdd(&result, nameStr);
+				}
+			}
+			else
+			{
+				// OSX_PrintLine("Ignoring device \"%s\"", nameStr);
+			}
+			deviceName = readdir(devDir);
+		}
+	}
+	
+	#if 0
+	#if DEBUG
 	BoundedStrListAdd(&result, "tty.usbserial-A506KDE9");
 	BoundedStrListAdd(&result, "ttys000");
+	#endif
+	#endif
 	
 	return result;
 }
