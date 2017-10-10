@@ -9,14 +9,15 @@ in vec3 inPosition;
 in vec4 inColor;
 in vec2 inTexCoord;
 
-out vec3 fPosition;
 out vec4 fColor;
 out vec2 fTexCoord;
+out vec2 fSampleCoord;
 
 void main()
 {
 	fColor = inColor;
-	fTexCoord = SourceRectangle.xy + (inTexCoord * SourceRectangle.zw);
+	fTexCoord = inTexCoord;
+	fSampleCoord = SourceRectangle.xy + (inTexCoord * SourceRectangle.zw);
 	mat4 transformMatrix = ProjectionMatrix * (ViewMatrix * WorldMatrix);
 	gl_Position = transformMatrix * vec4(inPosition, 1.0);
 }

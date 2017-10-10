@@ -72,6 +72,8 @@ struct Shader_t
 	GLint useAlphaTextureLocation;
 	GLint sourceRectangleLocation;
 	GLint textureSizeLocation;
+	GLint circleRadiusLocation;
+	GLint circleInnerRadiusLocation;
 };
 
 struct VertexBuffer_t

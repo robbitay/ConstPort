@@ -257,6 +257,14 @@ void RenderState_t::SetGradientEnabled(bool doGradient)
 	glUniform1i(this->boundShader->doGrayscaleGradientLocation, doGradient ? 1 : 0);
 }
 
+// +==============================+
+// |       SetCircleRadius        |
+// +==============================+
+void RenderState_t::SetCircleRadius(float radius, float innerRadius)
+{
+	glUniform1f(this->boundShader->circleRadiusLocation, radius);
+	glUniform1f(this->boundShader->circleInnerRadiusLocation, innerRadius);
+}
 
 //+================================================================+
 //|                       Drawing Functions                        |
@@ -384,9 +392,20 @@ void RenderState_t::DrawGradient(rec rectangle, Color_t color1, Color_t color2, 
 // +==============================+
 void RenderState_t::DrawCircle(v2 center, r32 radius, Color_t color)
 {
-	this->BindAlphaTexture(&this->circleTexture);
+	this->SetCircleRadius(1.0f, 0.0f);
 	this->DrawRectangle(NewRectangle(center.x - radius, center.y - radius, radius*2, radius*2), color);
-	this->DisableAlphaTexture();
+	this->SetCircleRadius(0.0f, 0.0f);
+}
+
+// +==============================+
+// |           DrawDonut          |
+// +==============================+
+void RenderState_t::DrawDonut(v2 center, r32 radius, r32 innerRadius, Color_t color)
+{
+	r32 realInnerRadius = Clamp32(innerRadius / radius, 0.0f, 1.0f);
+	this->SetCircleRadius(1.0f, realInnerRadius);
+	this->DrawRectangle(NewRectangle(center.x - radius, center.y - radius, radius*2, radius*2), color);
+	this->SetCircleRadius(0.0f, realInnerRadius);
 }
 
 // +==============================+

@@ -19,7 +19,7 @@ Description:
 #endif
 
 #include "platformInterface.h"
-#include "app_version.h"
+#include "appVersion.h"
 #include "colors.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -1953,6 +1953,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	rs->BindShader(&app->simpleShader);
 	rs->BindFont(&app->mainFont);
 	rs->SetGradientEnabled(false);
+	rs->SetCircleRadius(0.0f, 0.0f);
 	
 	Matrix4_t worldMatrix, viewMatrix, projMatrix;
 	viewMatrix = Matrix4_Identity;
@@ -2471,9 +2472,9 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	}
 	#endif
 	
-	// rs->DrawCircle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, input->mouseMaxDist[MouseButton_Left]/GUI_SCALE, {Color_Red});
-	// rs->DrawCircle(input->mouseStartPos[MouseButton_Right]/GUI_SCALE, input->mouseMaxDist[MouseButton_Right]/GUI_SCALE, {Color_Blue});
-	// rs->DrawCircle(input->mouseStartPos[MouseButton_Middle]/GUI_SCALE, input->mouseMaxDist[MouseButton_Middle]/GUI_SCALE, {Color_Green});
+	rs->DrawCircle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, input->mouseMaxDist[MouseButton_Left]/GUI_SCALE, {Color_Red});
+	rs->DrawCircle(input->mouseStartPos[MouseButton_Right]/GUI_SCALE, input->mouseMaxDist[MouseButton_Right]/GUI_SCALE, {Color_Blue});
+	rs->DrawCircle(input->mouseStartPos[MouseButton_Middle]/GUI_SCALE, input->mouseMaxDist[MouseButton_Middle]/GUI_SCALE, {Color_Green});
 	
 	// rs->DrawRectangle(ui->statusBarRec, {Color_Yellow});
 	// rs->DrawRectangle(ui->scrollBarGutterRec, {Color_Red});

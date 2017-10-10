@@ -59,7 +59,7 @@ if "%CompilePlatform%"=="1" (
 if "%CompileApplication%"=="1" (
 	echo[
 	
-	python ..\IncrementVersionNumber.py ..\code\app_version.h
+	python ..\IncrementVersionNumber.py ..\code\appVersion.h
 	
 	cl /Fe%ProjectName%.dll %CompilerFlags% %IncludeDirectories% ..\code\app.cpp /link %LibraryDirectories% %LinkerFlags% %Libraries% %AppExports% /DLL /PDB:"%ProjectName%_%TimeString%.pdb"
 

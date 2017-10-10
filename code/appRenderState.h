@@ -47,6 +47,7 @@ struct RenderState_t
 	void SetSecondaryColor(Color_t color);
 	void SetSourceRectangle(rec sourceRectangle);
 	void SetGradientEnabled(bool doGradient);
+	void SetCircleRadius(float radius, float innerRadius = 0.0f);
 	
 	//+--------------------------------------+
 	//|          Drawing Functions           |
@@ -57,6 +58,7 @@ struct RenderState_t
 	void DrawButton(rec rectangle, Color_t backgroundColor, Color_t borderColor, r32 borderWidth = 1.0f);
 	void DrawGradient(rec rectangle, Color_t color1, Color_t color2, Direction2D_t direction);
 	void DrawCircle(v2 center, r32 radius, Color_t color);
+	void DrawDonut(v2 center, r32 radius, r32 innerRadius, Color_t color);
 	void DrawCharacter(u32 charIndex, v2 bottomLeft, Color_t color, r32 scale = 1.0f);
 	void DrawString(const char* string, u32 numCharacters, v2 position, Color_t color, r32 scale = 1.0f, Alignment_t alignment = Alignment_Left);
 	void DrawString(const char* nullTermString, v2 position, Color_t color, r32 scale = 1.0f, Alignment_t alignment = Alignment_Left);

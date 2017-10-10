@@ -44,19 +44,19 @@
 	[X] Add configuration options to define what python script gets run by ConstPort
 	[X] Handle escaped characters in JSON strings correctly
 	[X] Seperate font for drawing data and font for drawing UI elements
-	[!] Add a function to re-create the fonts. Recreate the fonts if the fontSizes change when reloading configuration options
+	[X] Add a function to re-create the fonts. Recreate the fonts if the fontSizes change when reloading configuration options
+	[X] Rename the global AppData_t* to app. Rename global PlatformInfo_t* to platform. Rename global AppInput_t* to input. Add global MemoryArena_t* called mainHeap.
+	[-] Add a platform layer function to set the TempArena so we can add functions that push onto Temporary Memory when we call them NOTE: Probably will just pass memory arenas when arenas are needed, we can pass TempArena really easily if we want the function to allocate it on the temporary arena)
+	[-] String manipulation functions using the TemporaryArena NOTE: Not many that I actually want :P Now a mylib file that has helpful string manipulation function might be nice
+	[X] Ability to draw circles with the simpleShader
 	
-	[!] Add a string data stack for all input lines to get added to
-	[!] Implement the rest of the python configuration options
 	[!] Change the status message layout so it pops up as an overlay with formatted text rendering so the whole message always fits nicely
-	[!] Add a platform layer function to set the TempArena so we can add functions that push onto Temporary Memory when we call them
-	[!] Rename the global AppData_t* to app. Rename global PlatformInfo_t* to platform. Rename global AppInput_t* to input. Add global MemoryArena_t* called mainHeap.
-	[ ] String manipulation functions using the TemporaryArena
+	[!] Implement the rest of the python configuration options
+	
+	[ ] Add a string data stack for all input lines to get added to
+	[ ] Get rid of the UI Handler since we probably won't ever need movable/modular windows. Also function pointer remapping is stupid looking
 	[ ] Add checking for COM port errors and whether or not we are still connected
 	[ ] Paste from clipboard
-	[ ] Ability to set Flow Control mode
-	[ ] Horizontal Scrollbar (only shows up if needed)
-	[ ] Selection of spaces between markers
 	[ ] Option to enable timestamps and line color characters when saving to file
 	[ ] Fade out the status message during the last second. (Requires more accurate timing information)
 	[ ] Circular RX and TX LEDs
@@ -82,6 +82,9 @@
 	[ ] Add an option to enable commands that can be sent from the python script and interpreted by ConstPort to provide extra functionality
 
 # Application Wish List
+	[ ] Selection of spaces between markers
+	[ ] Horizontal Scrollbar (only shows up if needed)
+	[ ] Ability to set Flow Control mode
 	[ ] Read multiple COM ports side by side.
 	[ ] Little software LEDs to show flow control.
 	[ ] Click on flow control to toggle CTS

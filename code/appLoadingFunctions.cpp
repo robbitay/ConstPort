@@ -163,6 +163,8 @@ Shader_t LoadShader(const char* vertShaderFileName, const char* fragShaderFileNa
 	result.sourceRectangleLocation     = glGetUniformLocation(result.programId, "SourceRectangle");
 	result.useAlphaTextureLocation     = glGetUniformLocation(result.programId, "UseAlphaTexture");
 	result.textureSizeLocation         = glGetUniformLocation(result.programId, "TextureSize");
+	result.circleRadiusLocation        = glGetUniformLocation(result.programId, "CircleRadius");
+	result.circleInnerRadiusLocation   = glGetUniformLocation(result.programId, "CircleInnerRadius");
 	
 	glGenVertexArrays(1, &result.vertexArray);
 	glBindVertexArray(result.vertexArray);

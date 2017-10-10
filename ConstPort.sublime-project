@@ -6,15 +6,6 @@
 		},
 		{
 			"path": "W:\\lib\\mylib"
-		},
-		{
-			"path": "W:\\lib\\boost_1_65_0\\boost\\regex"
-		},
-		{
-			"path": "/MyStuff/Personal/lib/mylib"
-		},
-		{
-			"path": "/usr/include"
 		}
 	],
 	"settings":
@@ -796,6 +787,19 @@
 			"inline bool IsCharClassPrintable(char c)",
 			"inline bool IsCharClassWhitespace(char c)",
 			"inline i32 GetStringIndexForLocation(const Font_t* font, const char* nullTermString, v2 relativePos)",
+			"inline i32 Sign32(r32 value)",
+			"inline int32 Floor32(real32 r32)",
+			"inline int32 MinInt32(int32 value1, int32 value2)",
+			"inline int32 Round32(real32 r32)",
+			"inline int64 Abs64i(int64 value)",
+			"inline real32 Abs32(real32 value)",
+			"inline real32 Clamp32(real32 r32, real32 min, real32 max)",
+			"inline real32 Cos32(real32 angle)",
+			"inline real32 Lerp32(real32 v1, real32 v2, real32 amount)",
+			"inline real32 MaxReal32(real32 value1, real32 value2)",
+			"inline real32 MinReal32(real32 value1, real32 value2)",
+			"inline real32 Sin32(real32 angle)",
+			"inline real32 Tan32(real32 angle)",
 			"inline u32 GetFontCharIndex(const Font_t* font, char character)",
 			"inline v2 MeasureLine(const Font_t* font, const Line_t* line)",
 			"inline v2 MeasureString(const Font_t* font, const char* nullTermString)",
@@ -883,6 +887,7 @@
 			"void RefreshComPortList()",
 			"void RenderLineGutter(const AppInput_t* AppInput, const Line_t* linePntr, v2 position, i32 lineIndex, r32 lineHeight)",
 			"void SanatizeFileComments(char* fileData, u32 fileSize)",
+			"void SetCircleRadius(float radius, float innerRadius)",
 			"void SetColor(Color_t color);",
 			"void SetGradientEnabled(bool doGradient);",
 			"void SetProjectionMatrix(const Matrix4_t& projectionMatrix);",

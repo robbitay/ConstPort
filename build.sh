@@ -42,7 +42,7 @@ fi
 
 if [ $CompileApplication -gt 0 ]
 then
-	python ../IncrementVersionNumber.py ../code/app_version.h
+	python ../IncrementVersionNumber.py ../code/appVersion.h
 	
 	# echo [Building OSX Application]
 	g++ -shared -fvisibility=hidden $CompilerFlags $DebugDepCompilerFlags $ApplicationMainFile -o $ProjectName.dll $IncludeDirectories $LibraryDirectories $Libraries $Frameworks $LinkerFlags $DebugDepLibDirs
