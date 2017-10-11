@@ -1,6 +1,5 @@
 
 import sys, os, re
-import msvcrt
 
 print("asciiHex.py started!")
 sys.stdout.flush()
@@ -18,22 +17,22 @@ while(True):
 	#
 	elif (newCharacter == ' '):
 	#
-		print("   ", end="")
+		sys.stdout.write("   ")
 		justWroteNewLine = True
 	#
 	else:
 	#
-		if (justWroteNewLine == False): print(" ", end="")
+		if (justWroteNewLine == False): sys.stdout.write(" ")
 		if (justWroteNewLine and ord(newCharacter) <= 0x05):
 		#
-			print("%c" % (newCharacter), end="")
+			sys.stdout.write("%c" % (newCharacter))
 		#
 		else:
 		#
-			print("%02X" % (ord(newCharacter)), end="")
+			sys.stdout.write("%02X" % (ord(newCharacter)))
 			justWroteNewLine = False
 		#
-		# print("%02X" % (ord(newCharacter)), end="")
+		# sys.stdout.write("%02X" % (ord(newCharacter)))
 		# justWroteNewLine = False
 	#
 	sys.stdout.flush()

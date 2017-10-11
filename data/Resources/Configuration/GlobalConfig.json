@@ -41,10 +41,10 @@
 	"auto_run_python":         false,
 	"send_com_data_to_python": true,
 	"also_show_com_data":      false,
-	"send_input_to_python":    false,
+	"send_input_to_python":    true,
 	"also_send_input_to_com":  false,
 	"show_python_output":      true,
-	"python_script":           "Resources/Scripts/testScript.py",
+	"python_script":           "Resources/Scripts/asciiHex.py",
 	
 	"generic_count_regex_name":    "Has Exclamation",
 	"mark_line_regex_name":        "",

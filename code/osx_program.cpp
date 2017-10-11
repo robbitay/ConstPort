@@ -100,15 +100,21 @@ GetProgramStatus_DEFINITION(OSX_GetProgramStatus)
 	
 	//TODO: Ask the OS about it's status
 	
-	if (program->isOpen)
+	if (program->isOpen || program->pid <= 0)
 	{
-		return ProgramStatus_Running;
+		if (kill(program->pid, 0) != 0)
+		{
+			return ProgramStatus_Finished;
+		}
+		else
+		{
+			return ProgramStatus_Running;
+		}
 	}
 	else
 	{
 		return ProgramStatus_Finished;
 	}
-	
 }
 
 // +==============================+
@@ -144,6 +150,17 @@ ReadProgramOutput_DEFINITION(OSX_ReadProgramOutput)
 // u32 WriteProgramInputPntr(const ProgramInstance_t* program, const char* dataPntr, u32 numBytes)
 WriteProgramInput_DEFINITION(OSX_WriteProgramInput)
 {
-	//TODO: Write the data to the stdin of the program
-	return numBytes;
+	Assert(program != nullptr);
+	Assert(program->isOpen);
+	Assert(program->pid > 0);
+	Assert(program->stdInHandle != -1);
+	
+	i64 writeResult = write(program->stdInHandle, dataPntr, numBytes);
+	
+	if (writeResult == -1)
+	{
+		printf("write call failed %s\n", GetErrnoName(errno));
+	}
+	
+	return (u32)writeResult;
 }
