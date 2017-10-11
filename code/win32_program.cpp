@@ -8,6 +8,10 @@ Description:
 #included from win32_main.cpp
 */
 
+// +==============================+
+// |  Win32_StartProgramInstance  |
+// +==============================+
+// ProgramInstance_t StartProgramInstancePntr(const char* commandStr)
 StartProgramInstance_DEFINITION(Win32_StartProgramInstance)
 {
 	ProgramInstance_t result = {};
@@ -74,6 +78,10 @@ StartProgramInstance_DEFINITION(Win32_StartProgramInstance)
 	}
 }
 
+// +==============================+
+// |    Win32_GetProgramStatus    |
+// +==============================+
+// ProgramStatus_t GetProgramStatusPntr(const ProgramInstance_t* program)
 GetProgramStatus_DEFINITION(Win32_GetProgramStatus)
 {
 	DWORD exitCode;
@@ -96,6 +104,10 @@ GetProgramStatus_DEFINITION(Win32_GetProgramStatus)
 	}
 }
 
+// +==============================+
+// |   Win32_ReadProgramOutput    |
+// +==============================+
+// u32 ReadProgramOutputPntr(const ProgramInstance_t* program, char* outputBuffer, u32 outputBufferSize)
 ReadProgramOutput_DEFINITION(Win32_ReadProgramOutput)
 {
 	Assert(program != nullptr);
@@ -118,6 +130,10 @@ ReadProgramOutput_DEFINITION(Win32_ReadProgramOutput)
 	return 0;
 }
 
+// +==============================+
+// |   Win32_WriteProgramInput    |
+// +==============================+
+// u32 WriteProgramInputPntr(const ProgramInstance_t* program, const char* dataPntr, u32 numBytes)
 WriteProgramInput_DEFINITION(Win32_WriteProgramInput)
 {
 	Assert(program != nullptr);
@@ -135,6 +151,10 @@ WriteProgramInput_DEFINITION(Win32_WriteProgramInput)
 	}
 }
 
+// +==============================+
+// |  Win32_CloseProgramInstance  |
+// +==============================+
+// void CloseProgramInstancePntr(ProgramInstance_t* program)
 CloseProgramInstance_DEFINITION(Win32_CloseProgramInstance)
 {
 	if (program == nullptr) return;

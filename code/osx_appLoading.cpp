@@ -9,6 +9,7 @@ Description:
 struct LoadedApp_t
 {
 	bool isValid;
+	bool reinitializeApp;
 	Version_t version;
 	void* handle;
 	time_t lastWriteTime;
@@ -101,7 +102,7 @@ bool LoadDllCode(const char* appDllPath, const char* tempDllPath, LoadedApp_t* l
 		loadedApp->Closing =         AppClosing_Stub;
 	}
 	
-	loadedApp->version = loadedApp->GetVersion(nullptr);
+	loadedApp->version = loadedApp->GetVersion(&loadedApp->reinitializeApp);
 	
 	return loadedApp->isValid;
 }

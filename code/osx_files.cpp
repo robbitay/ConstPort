@@ -95,5 +95,20 @@ LaunchFile_DEFINITION(OSX_LaunchFile)
 {
 	//TODO: Launch the file
 	
+	// char programStr[32]; strncpy(programStr, "/usr/bin/open", sizeof(programStr));
+	// char arg1Str[32]; strncpy(arg1Str, "/usr/bin", sizeof(arg1Str));
+	
+	// char* args[] = {programStr, arg1Str};
+	// OSX_PrintLine("Launching \"%s\" with args [\"%s\", \"%s\"]", "open", programStr, arg1Str);
+	
+	// int result = execl("/usr/bin/open", "/usr/bin/open");
+	// if (result == -1)
+	// {
+	// 	OSX_PrintLine("execvp failed with errno: %s", GetErrnoName(errno));
+	// }
+	
+	// FILE* result = popen("/usr/bin/python", "r+");
+	// OSX_PrintLine("open returned %p", result);
+	
 	return false;
 }

@@ -5,7 +5,7 @@
 			"path": "."
 		},
 		{
-			"path": "W:\\lib\\mylib"
+			"path": "../../lib/mylib"
 		}
 	],
 	"settings":

@@ -74,9 +74,9 @@ Buttons_t AppButtonForKey(i32 glfwKeyCode)
 		case GLFW_KEY_CAPS_LOCK:     return Button_CapsLock;
 		
 		case GLFW_KEY_LEFT_CONTROL:
-		case GLFW_KEY_RIGHT_CONTROL: return Button_Control;
-		case GLFW_KEY_LEFT_ALT:
-		case GLFW_KEY_RIGHT_ALT:     return Button_Alt;
+		case GLFW_KEY_RIGHT_CONTROL: return Button_Alt;
+		case GLFW_KEY_LEFT_SUPER:
+		case GLFW_KEY_RIGHT_SUPER:   return Button_Control;
 		case GLFW_KEY_LEFT_SHIFT:
 		case GLFW_KEY_RIGHT_SHIFT:   return Button_Shift;
 		

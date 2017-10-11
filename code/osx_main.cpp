@@ -40,6 +40,7 @@ PlatformInfo_t PlatformInfo;
 #include "osx_keymap.cpp"
 #include "osx_callbacks.cpp"
 #include "osx_appLoading.cpp"
+#include "osx_program.cpp"
 
 // +--------------------------------------------------------------+
 // |                    Platform Layer Defines                    |
@@ -155,6 +156,9 @@ int main(int argc, char** argv)
 	PlatformInfo.screenSize = NewVec2i(screenWidth, screenHeight);
 	PlatformInfo.windowHasFocus = true;
 	PlatformInfo.window = window;
+	PlatformInfo.version.major = PLATFORM_VERSION_MAJOR;
+	PlatformInfo.version.minor = PLATFORM_VERSION_MINOR;
+	PlatformInfo.version.build = PLATFORM_VERSION_BUILD;
 	
 	PlatformInfo.FreeFileMemoryPntr    = OSX_FreeFileMemory;
 	PlatformInfo.ReadEntireFilePntr    = OSX_ReadEntireFile;
@@ -174,6 +178,11 @@ int main(int argc, char** argv)
 	PlatformInfo.WriteComPortPntr      = OSX_WriteComPort;
 	PlatformInfo.CopyToClipboardPntr   = OSX_CopyToClipboard;
 	PlatformInfo.CopyFromClipboardPntr = OSX_CopyFromClipboard;
+	PlatformInfo.StartProgramInstancePntr = OSX_StartProgramInstance;
+	PlatformInfo.GetProgramStatusPntr     = OSX_GetProgramStatus;
+	PlatformInfo.ReadProgramOutputPntr    = OSX_ReadProgramOutput;
+	PlatformInfo.WriteProgramInputPntr    = OSX_WriteProgramInput;
+	PlatformInfo.CloseProgramInstancePntr = OSX_CloseProgramInstance;
 	
 	StartProgramInstance_f* StartProgramInstancePntr;
 	GetProgramStatus_f*     GetProgramStatusPntr;
@@ -255,6 +264,12 @@ int main(int argc, char** argv)
 				printf("Loaded new application version %u.%u(%u)\n",
 					application.version.major, application.version.minor, application.version.build);
 			}
+			if (application.reinitializeApp)
+			{
+				memset(appMemory.permanantPntr, 0x00, appMemory.permanantSize);
+				memset(appMemory.transientPntr, 0x00, appMemory.transientSize);
+				application.Initialize(&PlatformInfo, &appMemory);
+			}
 			application.Reloaded(&PlatformInfo, &appMemory);
 		}
 		#endif
@@ -297,6 +312,8 @@ int main(int argc, char** argv)
 		
 		glfwSwapBuffers(window);
 	}
+	
+	application.Closing(&PlatformInfo, &appMemory);
 	
 	glfwDestroyWindow(window);
 	glfwTerminate();

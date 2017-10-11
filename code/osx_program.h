@@ -7,10 +7,15 @@ Date:   10\05\2017
 #ifndef _OSX_PROGRAM_H
 #define _OSX_PROGRAM_H
 
+#include <signal.h>
+
 struct ProgramInstance_t
 {
 	bool isOpen;
-	//TODO: Fill this with stuff
+	
+	pid_t pid;
+	int stdInHandle;
+	int stdOutHandle;
 };
 
 typedef enum

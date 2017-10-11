@@ -645,7 +645,7 @@ void ContextMenuRender(RenderState_t* renderState, MenuHandler_t* menuHandler, M
 	"I release it under an open source license in the hope that others might also find it useful.\n\n"               \
 	"If you find any bugs or have any suggestions you can email me at robbitay@gmail.com.\n\n"                       \
 	"Latest releases can be found on the development blog:\nhttps://www.SilTutorials.com/blog\n\n"                   \
-	"more info on the HMN project page:\nhttps://ConstPort.Handmade.Network/\n\n"                                    \
+	"More info on the HMN project page:\nhttps://ConstPort.Handmade.Network/\n\n"                                    \
 	"Application Version %u.%u (build %u)\nPlatform Version %u.%u (build %u)\n"
 
 void AboutMenuUpdate(MenuHandler_t* menuHandler, Menu_t* menu)
@@ -2612,7 +2612,10 @@ EXPORT AppClosing_DEFINITION(App_Closing)
 	
 	DEBUG_WriteLine("Application closing!");
 	
-	
+	if (app->programInstance.isOpen)
+	{
+		platform->CloseProgramInstancePntr(&app->programInstance);
+	}
 }
 
 #if (DEBUG && USE_ASSERT_FAILURE_FUNCTION)

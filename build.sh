@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ProjectName="ConstPort"
-CompilePlatform=1
+CompilePlatform=0
 CompileApplication=1
 DebugBuild=1
 
