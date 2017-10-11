@@ -398,9 +398,9 @@ int WINAPI WinMain(HINSTANCE hInstance,
 		glViewport(0, 0, screenWidth, screenHeight);
 		platformInfo.screenSize = NewVec2i(screenWidth, screenHeight);
 		
-		r64 lastTime = platformInfo.programTime;
-		platformInfo.programTime = glfwGetTime();
-		platformInfo.timeDelta = platformInfo.programTime - lastTime;
+		u64 lastTime = platformInfo.programTime;
+		platformInfo.programTime = (u64)(glfwGetTime() * 1000);
+		platformInfo.timeDelta = (r64)(platformInfo.programTime - lastTime) / (1000 / glfwModePntr->refreshRate);
 		
 		SYSTEMTIME systemTime = {};
 		SYSTEMTIME localTime = {};
