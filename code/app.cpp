@@ -2562,6 +2562,18 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 			(r32)ArenaGetHighWaterMark(TempArena) / (r32)TempArena->size * 100.0f);
 		textPos.y += app->uiFont.lineHeight;
 		
+		rs->PrintString(textPos, {Color_White}, 1.0f, "Program Time: %lu", platform->programTime);
+		textPos.y += app->uiFont.lineHeight;
+		
+		rs->PrintString(textPos, {Color_White}, 1.0f, "Time Delta: %.2f", platform->timeDelta);
+		textPos.y += app->uiFont.lineHeight;
+		
+		rs->PrintString(textPos, {Color_White}, 1.0f, "System Timestamp: %ld", GetTimestamp(platform->systemTime));
+		textPos.y += app->uiFont.lineHeight;
+		
+		rs->PrintString(textPos, {Color_White}, 1.0f, "Local Timestamp: %ld", GetTimestamp(platform->localTime));
+		textPos.y += app->uiFont.lineHeight;
+		
 		rs->BindFont(&app->mainFont);
 	}
 	#endif

@@ -55,6 +55,7 @@ PlatformInfo_t PlatformInfo;
 #define BACKBUFFER_DEPTH_BITS   8
 #define BACKBUFFER_STENCIL_BITS 8
 #define ANTIALISING_NUM_SAMPLES 4
+#define MONITOR_REFRESH_RATE    60
 
 const char* GetExecutableDirectory(int argc, char** argv)
 {
@@ -250,6 +251,9 @@ int main(int argc, char** argv)
 	// +==============================+
 	// |       Main Update Loop       |
 	// +==============================+
+	timeval programStartTime;
+	gettimeofday(&programStartTime, NULL);
+	timeval lastTime = programStartTime;
 	while (!glfwWindowShouldClose(window))
 	{
 		#if DEBUG
@@ -300,10 +304,15 @@ int main(int argc, char** argv)
 		// +==============================+
 		// |        Get Timestamp         |
 		// +==============================+
-		timeval osTime = {};
-		int getTimeResult = gettimeofday(&osTime, NULL);
-		PlatformInfo.systemTime = RealTimeAt((u64)osTime.tv_sec);
+		timeval currentTime = {};
+		int getTimeResult = gettimeofday(&currentTime, NULL);
+		PlatformInfo.systemTime = RealTimeAt((u64)currentTime.tv_sec);
 		PlatformInfo.localTime = PlatformInfo.systemTime;
+		i64 difference = ((i64)currentTime.tv_sec - (i64)lastTime.tv_sec)*1000 + ((i64)currentTime.tv_usec - (i64)lastTime.tv_usec)/1000;
+		PlatformInfo.timeDelta = (difference > 0) ? ((r64)difference / (1000.0/MONITOR_REFRESH_RATE)) : 0.0;
+		i64 differenceBeginning = ((i64)currentTime.tv_sec - (i64)programStartTime.tv_sec)*1000 + ((i64)currentTime.tv_usec - (i64)programStartTime.tv_usec)/1000;
+		PlatformInfo.programTime = (differenceBeginning > 0) ? (u64)(differenceBeginning) : 0;
+		lastTime = currentTime;
 		
 		// +===============================+
 		// | Application Update and Render |

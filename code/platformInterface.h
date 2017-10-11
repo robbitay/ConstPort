@@ -176,7 +176,7 @@ struct PlatformInfo_t
 	CloseProgramInstance_f* CloseProgramInstancePntr;
 	
 	r64 timeDelta;
-	r64 programTime;
+	u64 programTime;
 	RealTime_t systemTime;
 	RealTime_t localTime;
 	
