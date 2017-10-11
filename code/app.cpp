@@ -1764,21 +1764,21 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 						//TODO: Create file if it doesn't exist
 						if (ButtonDown(Button_Shift) && ButtonDown(Button_Control))
 						{
-							platform->LaunchFilePntr("Resources\\Configuration\\PlatformConfig.json");
-							platform->LaunchFilePntr("Resources\\Configuration\\RegularExpressions.rgx");
-							platform->LaunchFilePntr("Resources\\Configuration\\GlobalConfig.json");
+							platform->LaunchFilePntr("Resources/Configuration/PlatformConfig.json");
+							platform->LaunchFilePntr("Resources/Configuration/RegularExpressions.rgx");
+							platform->LaunchFilePntr("Resources/Configuration/GlobalConfig.json");
 						}
 						else if (ButtonDown(Button_Shift))
 						{
-							platform->LaunchFilePntr("Resources\\Configuration\\PlatformConfig.json");
+							platform->LaunchFilePntr("Resources/Configuration/PlatformConfig.json");
 						}
 						else if (ButtonDown(Button_Control))
 						{
-							platform->LaunchFilePntr("Resources\\Configuration\\RegularExpressions.rgx");
+							platform->LaunchFilePntr("Resources/Configuration/RegularExpressions.rgx");
 						}
 						else
 						{
-							platform->LaunchFilePntr("Resources\\Configuration\\GlobalConfig.json");
+							platform->LaunchFilePntr("Resources/Configuration/GlobalConfig.json");
 						}
 					} break;
 					

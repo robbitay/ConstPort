@@ -1,6 +1,8 @@
 # Application TODO List
-	[!] Implement the rest of the python configuration options
+	[!] Implement OSX_OpenFile, OSX_AppendFile, and OSX_CloseFile
+	[?] Implement the rest of the python configuration options
 	
+	[ ] Add support for cursor setting on OSX platform layer
 	[ ] Change the status message layout so it pops up as an overlay with formatted text rendering so the whole message always fits nicely
 	[ ] Add a string data stack for all input lines to get added to
 	[ ] Get rid of the UI Handler since we probably won't ever need movable/modular windows. Also function pointer remapping is stupid looking
@@ -30,6 +32,7 @@
 	[ ] Keep old configuration options if new configuration file is unparsable (only on reload)
 	[ ] Add an option to enable commands that can be sent from the python script and interpreted by ConstPort to provide extra functionality
 	
+	[X] Implement OSX_LaunchFile
 	[X] Change the "Py" label to be the Python logo icon
 	[X] Add an info window
 	[X] Open a COM port, print the text to the command line

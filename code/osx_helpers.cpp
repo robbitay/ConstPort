@@ -137,3 +137,34 @@ void UpdateWindowTitle(GLFWwindow* window, const char* baseName, Version_t* plat
 	
 	glfwSetWindowTitle(window, windowTitle);
 }
+
+pid_t popen2(const char* command, int* stdInHandleOut, int* stdOutHandleOut)
+{
+    int p_stdin[2], p_stdout[2];
+    pid_t pid;
+
+    if (pipe(p_stdin) != 0 || pipe(p_stdout) != 0) { return -1; }
+
+    pid = fork();
+
+    if (pid < 0) { return pid; }
+    else if (pid == 0)
+    {
+        close(p_stdin[1]);
+        dup2(p_stdin[0], 0);
+        close(p_stdout[0]);
+        dup2(p_stdout[1], 1);
+
+        execl("/bin/sh", "sh", "-c", command, NULL);
+        perror("execl");
+        exit(1);
+    }
+
+    if (stdInHandleOut == NULL) { close(p_stdin[1]); }
+    else { *stdInHandleOut = p_stdin[1]; }
+
+    if (stdOutHandleOut == NULL) { close(p_stdout[0]); }
+    else { *stdOutHandleOut = p_stdout[0]; }
+
+    return pid;
+}

@@ -6,9 +6,25 @@ Description:
 	** Holds the functions responsible for reading and writing to and from files on the operating system 
 */
 
+#define FreeFileMemory_DEFINITION(functionName)  void functionName(FileInfo_t* fileInfo)
+
+#define ReadEntireFile_DEFINITION(functionName)  FileInfo_t functionName(const char* filename)
+
+#define WriteEntireFile_DEFINITION(functionName) bool32 functionName(const char* filename, void* memory, uint32 memorySize)
+
+#define OpenFile_DEFINITION(functionName) bool32 functionName(const char* fileName, OpenFile_t* openFileOut)
+
+#define AppendFile_DEFINITION(functionName) bool32 functionName(OpenFile_t* filePntr, const void* newData, u32 newDataSize)
+
+#define CloseFile_DEFINITION(functionName) void functionName(OpenFile_t* filePntr)
+
+#define LaunchFile_DEFINITION(functionName) bool32 functionName(const char* filename)
+
+
 // +==============================+
 // |      OSX_FreeFileMemory      |
 // +==============================+
+//  void OSX_FreeFileMemory(FileInfo_t* fileInfo)
 FreeFileMemory_DEFINITION(OSX_FreeFileMemory)
 {
 	if (fileInfo == nullptr) { return; }
@@ -22,6 +38,7 @@ FreeFileMemory_DEFINITION(OSX_FreeFileMemory)
 // +==============================+
 // |      OSX_ReadEntireFile      |
 // +==============================+
+//  FileInfo_t OSX_ReadEntireFile(const char* filename)
 ReadEntireFile_DEFINITION(OSX_ReadEntireFile)
 {
 	FileInfo_t result = {};
@@ -49,6 +66,7 @@ ReadEntireFile_DEFINITION(OSX_ReadEntireFile)
 // +==============================+
 // |     OSX_WriteEntireFile      |
 // +==============================+
+// bool32 OSX_WriteEntireFile(const char* filename, void* memory, uint32 memorySize)
 WriteEntireFile_DEFINITION(OSX_WriteEntireFile)
 {
 	//TODO: Write the file
@@ -59,6 +77,7 @@ WriteEntireFile_DEFINITION(OSX_WriteEntireFile)
 // +==============================+
 // |         OSX_OpenFile         |
 // +==============================+
+// bool32 OSX_OpenFile(const char* fileName, OpenFile_t* openFileOut)
 OpenFile_DEFINITION(OSX_OpenFile)
 {
 	ClearPointer(openFileOut);
@@ -71,6 +90,7 @@ OpenFile_DEFINITION(OSX_OpenFile)
 // +==============================+
 // |        OSX_AppendFile        |
 // +==============================+
+// bool32 OSX_AppendFile(OpenFile_t* filePntr, const void* newData, u32 newDataSize)
 AppendFile_DEFINITION(OSX_AppendFile)
 {
 	//TODO: Append the file
@@ -81,6 +101,7 @@ AppendFile_DEFINITION(OSX_AppendFile)
 // +==============================+
 // |        OSX_CloseFile         |
 // +==============================+
+// void OSX_CloseFile(OpenFile_t* filePntr)
 CloseFile_DEFINITION(OSX_CloseFile)
 {
 	//TODO: Close the file handle
@@ -91,24 +112,21 @@ CloseFile_DEFINITION(OSX_CloseFile)
 // +==============================+
 // |        OSX_LaunchFile        |
 // +==============================+
+// bool32 OSX_LaunchFile(const char* filename)
 LaunchFile_DEFINITION(OSX_LaunchFile)
 {
-	//TODO: Launch the file
+	char printBuffer[256];
+	snprintf(printBuffer, sizeof(printBuffer), "open \"%s\"", filename);
 	
-	// char programStr[32]; strncpy(programStr, "/usr/bin/open", sizeof(programStr));
-	// char arg1Str[32]; strncpy(arg1Str, "/usr/bin", sizeof(arg1Str));
+	pid_t launchPid = popen2(printBuffer, nullptr, nullptr);
 	
-	// char* args[] = {programStr, arg1Str};
-	// OSX_PrintLine("Launching \"%s\" with args [\"%s\", \"%s\"]", "open", programStr, arg1Str);
-	
-	// int result = execl("/usr/bin/open", "/usr/bin/open");
-	// if (result == -1)
-	// {
-	// 	OSX_PrintLine("execvp failed with errno: %s", GetErrnoName(errno));
-	// }
-	
-	// FILE* result = popen("/usr/bin/python", "r+");
-	// OSX_PrintLine("open returned %p", result);
-	
-	return false;
+	if (launchPid > 0)
+	{
+		return true;
+	}
+	else
+	{
+		OSX_PrintLine("popen2 failed, errno = %s", GetErrnoName(errno));
+		return false;
+	}
 }
