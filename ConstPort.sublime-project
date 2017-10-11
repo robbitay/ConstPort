@@ -597,6 +597,7 @@
 			"PLATFORM_VERSION_MINOR",
 			"PROT_READ",
 			"PROT_WRITE",
+			"PYTHON_ICON_SIZE",
 			"Parity_Even",
 			"Parity_Mark",
 			"Parity_None",

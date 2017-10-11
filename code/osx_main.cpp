@@ -320,6 +320,13 @@ int main(int argc, char** argv)
 		application.Update(&PlatformInfo, &appMemory, currentInput, &appOutput);
 		
 		glfwSwapBuffers(window);
+		
+		UpdateWindowTitle(window, appOutput.windowTitle, &PlatformInfo.version, &application.version);
+		
+		if (appOutput.closeWindow)
+		{
+			glfwSetWindowShouldClose(window, true);
+		}
 	}
 	
 	application.Closing(&PlatformInfo, &appMemory);

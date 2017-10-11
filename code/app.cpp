@@ -1166,6 +1166,7 @@ EXPORT AppInitialize_DEFINITION(App_Initialize)
 	app->testTexture = LoadTexture("Resources/Sprites/buttonIcon3.png");
 	app->scrollBarEndcapTexture = LoadTexture("Resources/Sprites/scrollBarEndcap.png", false, false);
 	app->crappyLogo = LoadTexture("Resources/Sprites/crappyLogo.png", false, false);
+	app->pythonIcon = LoadTexture("Resources/Sprites/python.png", false, false);
 	
 	LoadApplicationFonts();
 	
@@ -2004,9 +2005,17 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		AppOutput->cursorType = Cursor_Default;
 	}
 	
-	//+--------------------------------------+
-	//|           Rendering Setup            |
-	//+--------------------------------------+
+	// +==============================+
+	// |    Close Window Shortcut     |
+	// +==============================+
+	if (ButtonPressed(Button_W) && ButtonDown(Button_Shift) && ButtonDown(Button_Control))
+	{
+		AppOutput->closeWindow = true;
+	}
+	
+	// +--------------------------------------------------------------+
+	// |                       Rendering Setup                        |
+	// +--------------------------------------------------------------+
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_BLEND);
 	rs->SetViewport(NewRectangle(0, 0, (r32)platform->screenSize.x, (r32)platform->screenSize.y));
@@ -2479,16 +2488,14 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	// +==============================+
 	if (app->programInstance.isOpen)
 	{
-		const char* runningStr = "Py";
-		v2 strSize = MeasureString(&app->uiFont, runningStr);
-		v2 textPos = NewVec2(
-			ui->clearButtonRec.x - strSize.x - 5,
-			ui->mainMenuRec.y + app->uiFont.maxExtendUp
+		rec pythonIconRec = NewRectangle(
+			ui->txLedRec.x - GC->rxTxLedRingSize*8 - PYTHON_ICON_SIZE - 5,
+			ui->txLedRec.y,
+			PYTHON_ICON_SIZE,
+			PYTHON_ICON_SIZE
 		);
-		
-		rs->BindFont(&app->uiFont);
-		rs->DrawString(runningStr, textPos, GC->colors.foreground);
-		rs->BindFont(&app->mainFont);
+		rs->BindTexture(&app->pythonIcon);
+		rs->DrawTexturedRec(pythonIconRec, {Color_White});
 	}
 	
 	// +==================================+

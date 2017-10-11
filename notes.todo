@@ -30,6 +30,7 @@
 	[ ] Keep old configuration options if new configuration file is unparsable (only on reload)
 	[ ] Add an option to enable commands that can be sent from the python script and interpreted by ConstPort to provide extra functionality
 	
+	[X] Change the "Py" label to be the Python logo icon
 	[X] Add an info window
 	[X] Open a COM port, print the text to the command line
 	[X] Make a function to get a list of available COM ports

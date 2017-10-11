@@ -120,3 +120,20 @@ const char* GetErrnoName(i32 errorNo)
 	};
 }
 
+void UpdateWindowTitle(GLFWwindow* window, const char* baseName, Version_t* platformVersion, Version_t* appVersion)
+{
+	char windowTitle[128] = {};
+	
+	#if DEBUG
+		snprintf(windowTitle, ArrayCount(windowTitle),
+			"%s (Platform %u.%u:%03u App %u.%u:%03u)", baseName,
+			platformVersion->major, platformVersion->minor, platformVersion->build,
+			appVersion->major, appVersion->minor, appVersion->build);
+	#else
+		snprintf(windowTitle, ArrayCount(windowTitle),
+			"%s (v%u.%u)", baseName,
+			appVersion->major, appVersion->minor);
+	#endif
+	
+	glfwSetWindowTitle(window, windowTitle);
+}

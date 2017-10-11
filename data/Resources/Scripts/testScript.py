@@ -12,4 +12,6 @@ while (1):
 	print("Value = %u" % value)
 	value += 1
 	sys.stdout.flush()
+	
+	if (value >= 4): break
 #

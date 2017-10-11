@@ -32,6 +32,7 @@ Date:   06\08\2017
 #define MIN_BANNER_HEIGHT          2  //px
 #define BANNER_EXPAND_SPEED        0.003f //percentage
 #define STATUS_MESSAGE_BUFFER_SIZE 128//bytes
+#define PYTHON_ICON_SIZE           16
 
 #define TRANSIENT_MAX_NUMBER_MARKS 16
 #define INPUT_ARENA_SIZE           1024*1024

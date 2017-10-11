@@ -102,7 +102,7 @@ GetProgramStatus_DEFINITION(OSX_GetProgramStatus)
 	
 	if (program->isOpen || program->pid <= 0)
 	{
-		if (kill(program->pid, 0) != 0)
+		if (kill(program->pid, 0) != 0) //TODO: Fix me?
 		{
 			return ProgramStatus_Finished;
 		}
