@@ -173,10 +173,21 @@ CloseFile_DEFINITION(Win32_CloseFile)
 
 LaunchFile_DEFINITION(Win32_LaunchFile)
 {
+	char realPath[256] = {};
+	strncpy(realPath, filename, sizeof(realPath));
+	//Replace '/' with '\' for windows compatibility
+	for (u32 cIndex = 0; realPath[cIndex] != '\0' && cIndex < sizeof(realPath); cIndex++)
+	{
+		if (realPath[cIndex] == '/')
+		{
+			realPath[cIndex] = '\\';
+		}
+	}
+	
 	u64 executeResult = (u64)ShellExecute(
 		NULL,   //No parent window
 		"open", //The action verb
-		filename, //The target file
+		realPath, //The target file
 		NULL, //No parameters
 		NULL, //Use default working directory
 		SW_SHOWNORMAL //Show command is normal
