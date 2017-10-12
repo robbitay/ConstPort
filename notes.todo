@@ -1,6 +1,11 @@
 # Application TODO List
+	[!] Fix the selection flashing speed
+	[!] Implement OSX_WriteEntireFile
 	[!] Implement OSX_OpenFile, OSX_AppendFile, and OSX_CloseFile
+	[!] Implement OSX_CopyToClipboard and OSX_CopyFromClipboard
+	[!] Implement PlatformConfig in OSX platform layer
 	[?] Implement the rest of the python configuration options
+	[ ] Create a packaging script in OSX to build the application bundle
 	
 	[ ] Add support for cursor setting on OSX platform layer
 	[ ] Change the status message layout so it pops up as an overlay with formatted text rendering so the whole message always fits nicely

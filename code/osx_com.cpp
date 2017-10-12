@@ -160,7 +160,7 @@ ReadComPort_DEFINITION(OSX_ReadComPort)
 	Assert(comPortPntr->handle != -1);
 	
 	// printf("Reading %u bytes from file %d\n", 1, comPortPntr->handle);
-	i64 readResult = read(comPortPntr->handle, outputBuffer, 1);
+	i64 readResult = read(comPortPntr->handle, outputBuffer, outputBufferLength);
 	
 	if (readResult == -1)
 	{

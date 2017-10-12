@@ -934,6 +934,7 @@
 			"TempArena",
 			"WindowOpen",
 			"WindowResized",
+			"WorkingDirectory",
 			"app",
 			"input",
 			"platform"
