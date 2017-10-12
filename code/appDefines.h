@@ -8,7 +8,11 @@ Date:   06\08\2017
 #define _APP_DEFINES_H
 
 #if OSX_COMPILATION
-#define GUI_SCALE 2.0f
+	#if DOUBLE_RESOLUTION
+	#define GUI_SCALE 2.0f
+	#else
+	#define GUI_SCALE 1.0f
+	#endif
 #else
 #define GUI_SCALE 1.0f
 #endif

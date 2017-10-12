@@ -42,8 +42,22 @@ FreeFileMemory_DEFINITION(OSX_FreeFileMemory)
 ReadEntireFile_DEFINITION(OSX_ReadEntireFile)
 {
 	FileInfo_t result = {};
+	FILE* fileHandle;
 	
-	FILE* fileHandle = fopen(filename, "rb");
+	if (filename[0] != '/')
+	{
+		char absolutePath[256] = {};
+		snprintf(absolutePath, sizeof(absolutePath), "%s/%s", WorkingDirectory, filename);
+		printf("Attempting to open \"%s\"\n", absolutePath);
+		fileHandle = fopen(absolutePath, "rb");
+	}
+	else
+	{
+		printf("Attempting to open \"%s\"\n", filename);
+		fileHandle = fopen(filename, "rb");
+		
+	}
+	
 	
 	if (fileHandle != nullptr)
 	{
@@ -58,8 +72,12 @@ ReadEntireFile_DEFINITION(OSX_ReadEntireFile)
 		
 		fclose(fileHandle);
 	}
+	else
+	{
+		printf("Failed to open file, errno = %s\n", GetErrnoName(errno));
+	}
 	
-	printf("ReadEntireFile(\"%s\") result: %u bytes %p\n", filename, result.size, result.content);
+	// printf("ReadEntireFile(\"%s\") result: %u bytes %p\n", filename, result.size, result.content);
 	return result;
 }
 
@@ -116,7 +134,14 @@ CloseFile_DEFINITION(OSX_CloseFile)
 LaunchFile_DEFINITION(OSX_LaunchFile)
 {
 	char printBuffer[256];
-	snprintf(printBuffer, sizeof(printBuffer), "open \"%s\"", filename);
+	if (filename[0] != '/')
+	{
+		snprintf(printBuffer, sizeof(printBuffer), "open \"%s/%s\"", WorkingDirectory, filename);
+	}
+	else
+	{
+		snprintf(printBuffer, sizeof(printBuffer), "open \"%s\"", filename);
+	}
 	
 	pid_t launchPid = popen2(printBuffer, nullptr, nullptr);
 	

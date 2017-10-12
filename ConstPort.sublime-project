@@ -857,7 +857,14 @@
 			"TempArena",
 			"WindowOpen",
 			"WindowResized",
+<<<<<<< HEAD
+			"WorkingDirectory",
+			"app",
+			"input",
+			"platform"
+=======
 			"appData"
+>>>>>>> 33d1a91000f037b23644e129ed892bfd4da19032
 		],
 		"custom_types":
 		[

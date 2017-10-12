@@ -31,6 +31,7 @@ Description:
 #include "osx_version.h"
 
 PlatformInfo_t PlatformInfo;
+const char* WorkingDirectory = nullptr;
 
 #include "osx_helpers.cpp"
 #include "osx_debug.cpp"
@@ -79,7 +80,7 @@ int main(int argc, char** argv)
 	// +==================================+
 	// | Print the command line arguments |
 	// +==================================+
-	#if 0
+	#if 1
 	printf("Command Line Arguments: %d\n", argc);
 	for (i32 aIndex = 0; aIndex < argc; aIndex++)
 	{
@@ -88,6 +89,14 @@ int main(int argc, char** argv)
 	printf("Current Directory: \"%s\"\n", realpath("./", 0));
 	printf("Executable Directory: \"%s\"\n", exeDirectory);
 	#endif
+	
+	OSX_PrintLine("Changing current working directory to \"%s\"", exeDirectory);
+	if (chdir(exeDirectory) != 0)
+	{
+		OSX_PrintLine("chdir failed, errno = %s", GetErrnoName(errno));
+	}
+	printf("Current Directory: \"%s\"\n", realpath("./", 0));
+	WorkingDirectory = realpath("./", 0);
 	
 	// +==============================+
 	// |       Initialize GLFW        |

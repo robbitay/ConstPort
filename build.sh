@@ -3,7 +3,7 @@
 ProjectName="ConstPort"
 CompilePlatform=1
 CompileApplication=1
-DebugBuild=1
+DebugBuild=0
 
 if [ $DebugBuild -gt 0 ]
 then
@@ -16,7 +16,7 @@ fi
 
 PlatformMainFile="../code/osx_main.cpp"
 ApplicationMainFile="../code/app.cpp"
-CompilerFlags="-g -DOSX_COMPILATION=1"
+CompilerFlags="-g -DOSX_COMPILATION=1 -DDOUBLE_RESOLUTION=0"
 LinkerFlags="-std=gnu++0x"
 IncludeDirectories="-I../../../lib/mylib -I../../../lib/glfw/include -I../../../lib/glew/include -I../../../lib/stb -I../../../lib/jsmn -I../../../lib/boost_1_65_1/"
 LibraryDirectories=" -L../../../lib/glew/lib"
