@@ -10,7 +10,7 @@ rem echo Time is %TimeString%
 
 set CompilePlatform=1
 set CompileApplication=1
-set DebugBuild=0
+set DebugBuild=1
 set ProjectName=ConstPort
 
 REM The boost regex library should be built using the b2 tool that comes
@@ -47,7 +47,7 @@ del *.pdb > NUL 2> NUL
 if "%CompilePlatform%"=="1" (
 	echo[
 	
-	rem python ..\IncrementVersionNumber.py ..\code\win32_version.h
+	python ..\IncrementVersionNumber.py ..\code\win32_version.h
 	
 	cl /Fe%ProjectName%.exe %CompilerFlags% %IncludeDirectories% ..\code\win32_main.cpp /link %LibraryDirectories% %LinkerFlags% %Libraries% kernel32.lib ..\code\resources.res
 
@@ -61,7 +61,7 @@ if "%CompilePlatform%"=="1" (
 if "%CompileApplication%"=="1" (
 	echo[
 	
-	rem python ..\IncrementVersionNumber.py ..\code\appVersion.h
+	python ..\IncrementVersionNumber.py ..\code\appVersion.h
 	
 	cl /Fe%ProjectName%.dll %CompilerFlags% %IncludeDirectories% ..\code\app.cpp /link %LibraryDirectories% %LinkerFlags% %Libraries% %AppExports% /DLL /PDB:"%ProjectName%_%TimeString%.pdb"
 
