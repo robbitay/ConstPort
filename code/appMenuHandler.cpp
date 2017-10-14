@@ -197,15 +197,27 @@ void MenuHandlerDrawMenus(RenderState_t* renderState, MenuHandler_t* menuHandler
 					menuPntr->titleBarRec.height);
 				closeRec = RectangleInflate(closeRec, -5);
 				
-				renderState->BindTexture(&menuHandler->closeTexture);
+				Color_t exitButtonColor = GC->colors.windowExit;
 				if (IsInsideRectangle(RenderMousePos, closeRec))
 				{
-					renderState->DrawTexturedRec(closeRec, {Color_Gray});
+					exitButtonColor = ColorMultiply(exitButtonColor, {Color_LightGrey});
 				}
-				else
-				{
-					renderState->DrawTexturedRec(closeRec, {Color_White});
-				}
+				
+				renderState->DrawRectangle(closeRec, exitButtonColor);
+				
+				rec shrunkRec = RectangleInflate(closeRec, -2);
+				renderState->DrawLine(
+					NewVec2(shrunkRec.x, shrunkRec.y + shrunkRec.height),
+					NewVec2(shrunkRec.x + shrunkRec.width, shrunkRec.y),
+					2,
+					GC->colors.windowExitIcon
+				);
+				renderState->DrawLine(
+					NewVec2(shrunkRec.x, shrunkRec.y),
+					NewVec2(shrunkRec.x + shrunkRec.width, shrunkRec.y + shrunkRec.height),
+					2,
+					GC->colors.windowExitIcon
+				);
 			}
 			
 			renderState->DrawRectangle(NewRectangle(

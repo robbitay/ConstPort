@@ -1,7 +1,6 @@
 # Application TODO List
-	[?] Implement the rest of the python configuration options
-	[ ] Make a neon color scheme
-	[ ] Make the window exit button rendering dynamic
+	[!] Make a neon color scheme
+	[ ] Implement "auto_run_python" configuration option
 	
 	[ ] Fix the format string functions to choose to split open and close symbols differently
 	[ ] Paste from clipboard
@@ -23,6 +22,7 @@
 	[ ] Keep old configuration options if new configuration file is unparsable (only on reload)
 	[ ] Add an option to enable commands that can be sent from the python script and interpreted by ConstPort to provide extra functionality
 	
+	[X] Make the window exit button rendering dynamic
 	[X] Fix the ComMenu animation thing
 	[X] Option to enable/disable auto-loading of output file dump
 	[X] Close running program instances when the application is exiting

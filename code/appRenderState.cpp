@@ -387,6 +387,23 @@ void RenderState_t::DrawGradient(rec rectangle, Color_t color1, Color_t color2, 
 	this->SetGradientEnabled(false);
 }
 
+void RenderState_t::DrawLine(v2 p1, v2 p2, r32 thickness, Color_t color)
+{
+	this->BindTexture(&this->dotTexture);
+	this->SetSourceRectangle(NewRectangle(0, 0, 1, 1));
+	this->SetColor(color);
+	r32 length = Vec2Length(p2 - p1);
+	r32 rotation = Atan32(p2.y - p1.y, p2.x - p1.x); 
+	m4 worldMatrix = Matrix4_Identity;
+	worldMatrix = Mat4Mult(Matrix4Translate(NewVec3(0.0f, -0.5f, 0.0f)),   worldMatrix); //Centering
+	worldMatrix = Mat4Mult(Matrix4Scale(NewVec3(length, thickness, 1.0f)), worldMatrix); //Scale
+	worldMatrix = Mat4Mult(Matrix4RotateZ(rotation),                       worldMatrix); //Rotation
+	worldMatrix = Mat4Mult(Matrix4Translate(NewVec3(p1.x, p1.y, 0.0f)),    worldMatrix); //Position
+	this->SetWorldMatrix(worldMatrix);
+	this->BindBuffer(&this->squareBuffer);
+	glDrawArrays(GL_TRIANGLES, 0, this->squareBuffer.numVertices);
+}
+
 // +==============================+
 // |          DrawCircle          |
 // +==============================+

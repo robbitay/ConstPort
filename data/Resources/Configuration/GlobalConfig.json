@@ -199,7 +199,7 @@
 		"window_titlebar":     "303030",
 		"window_background_1": "494949",
 		"window_background_2": "303030",
-		"window_exit_back":    "FF0000",
+		"window_exit":         "FF0000",
 		"window_exit_icon":    "FFFFFF",
 		"context_menu_text":   "F8F8F2",
 		

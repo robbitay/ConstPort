@@ -123,7 +123,7 @@ Date:   09\26\2017
 	ConfigurationColor("window_titlebar",               windowTitlebar,            {0xFF303030});
 	ConfigurationColor("window_background_1",           windowBackground1,         {0xFF494949});
 	ConfigurationColor("window_background_2",           windowBackground2,         {0xFF303030});
-	ConfigurationColor("window_exit_back",              windowExitBack,            {0xFFFF0000});
+	ConfigurationColor("window_exit",                   windowExit,                {0xFFFF0000});
 	ConfigurationColor("window_exit_icon",              windowExitIcon,            {0xFFFFFFFF});
 	ConfigurationColor("context_menu_text",             contextMenuText,           {0xFFF8F8F2});
 	

@@ -821,6 +821,7 @@
 			"void RecalculateUiElements(const AppInput_t* AppInput, UiElements_t* ui, bool resetFollowingEndOfFile)",
 			"void RefreshComPortList()",
 			"void RenderLineGutter(const AppInput_t* AppInput, const Line_t* linePntr, v2 position, i32 lineIndex, r32 lineHeight)",
+			"void RenderState_t::DrawLine(v2 p1, v2 p2, r32 thickness, Color_t color)",
 			"void SanatizeFileComments(char* fileData, u32 fileSize)",
 			"void SetColor(Color_t color);",
 			"void SetGradientEnabled(bool doGradient);",

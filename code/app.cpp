@@ -418,12 +418,23 @@ void ComMenuUpdate(MenuHandler_t* menuHandler, Menu_t* menuPntr)
 		// +====================================+
 		if (app->comPort.isOpen)
 		{
-			if (app->comMenuOptions.isOpen && IsInsideRectangle(RenderMousePos, disconnectButtonRec) &&
-				ButtonReleased(MouseButton_Left) && IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, disconnectButtonRec))
+			bool currentPortIsSelected = true;
+			if (app->comMenuOptions.name == nullptr && app->comPort.name != nullptr) { currentPortIsSelected = false; }
+			else if (app->comMenuOptions.name != nullptr && app->comPort.name == nullptr) { currentPortIsSelected = false; }
+			else if (app->comMenuOptions.name != nullptr && app->comPort.name != nullptr)
 			{
-				StatusError("Closed \"%s\"", app->comPort.name);
-				platform->CloseComPortPntr(&app->mainHeap, &app->comPort);
-				menuPntr->show = false;
+				if (strcmp(app->comMenuOptions.name, app->comPort.name) != 0) { currentPortIsSelected = false; }
+			}
+			
+			if (currentPortIsSelected)
+			{
+				if (app->comMenuOptions.isOpen && IsInsideRectangle(RenderMousePos, disconnectButtonRec) &&
+					ButtonReleased(MouseButton_Left) && IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, disconnectButtonRec))
+				{
+					StatusError("Closed \"%s\"", app->comPort.name);
+					platform->CloseComPortPntr(&app->mainHeap, &app->comPort);
+					menuPntr->show = false;
+				}
 			}
 		}
 	}
@@ -669,14 +680,24 @@ void ComMenuRender(RenderState_t* renderState, MenuHandler_t* menuHandler, Menu_
 				disconnectButtonRec.x + disconnectButtonRec.width/2 - disconnectStrSize.x/2,
 				disconnectButtonRec.y + disconnectButtonRec.height/2 + app->uiFont.lineHeight/2 - app->uiFont.maxExtendDown
 			);
+			bool currentPortIsSelected = true;
+			if (app->comMenuOptions.name == nullptr && app->comPort.name != nullptr) { currentPortIsSelected = false; }
+			else if (app->comMenuOptions.name != nullptr && app->comPort.name == nullptr) { currentPortIsSelected = false; }
+			else if (app->comMenuOptions.name != nullptr && app->comPort.name != nullptr)
+			{
+				if (strcmp(app->comMenuOptions.name, app->comPort.name) != 0) { currentPortIsSelected = false; }
+			}
 			
-			Color_t buttonColor = GC->colors.button;
-			Color_t textColor   = GC->colors.buttonText;
-			Color_t borderColor = GC->colors.buttonBorder;
-			ButtonColorChoice(buttonColor, textColor, borderColor, disconnectButtonRec, false, false);
-			
-			renderState->DrawButton(disconnectButtonRec, buttonColor, borderColor);
-			renderState->DrawString(disconnectStr, stringPosition, textColor);
+			if (currentPortIsSelected)
+			{
+				Color_t buttonColor = GC->colors.button;
+				Color_t textColor   = GC->colors.buttonText;
+				Color_t borderColor = GC->colors.buttonBorder;
+				ButtonColorChoice(buttonColor, textColor, borderColor, disconnectButtonRec, true, false);
+				
+				renderState->DrawButton(disconnectButtonRec, buttonColor, borderColor);
+				renderState->DrawString(disconnectStr, stringPosition, textColor);
+			}
 		}
 		
 		renderState->BindFont(&app->mainFont);
