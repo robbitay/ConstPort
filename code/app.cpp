@@ -1919,13 +1919,16 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 			
 			TempPopMark();
 			
-			if (platform->LaunchFilePntr(fileName))
+			if (GC->showFileAfterSaving)
 			{
-				DEBUG_WriteLine("Opened output file for viewing");
-			}
-			else
-			{
-				DEBUG_WriteLine("Could not open output file");
+				if (platform->LaunchFilePntr(fileName))
+				{
+					DEBUG_WriteLine("Opened output file for viewing");
+				}
+				else
+				{
+					DEBUG_WriteLine("Could not open output file");
+				}
 			}
 			
 			StatusSuccess("Saved to %s", fileName);

@@ -1,5 +1,5 @@
 {
-	"main_font_size": 24,
+	"main_font_size": 14,
 	"ui_font_size":   14,
 	"line_spacing":   2,  //px
 	"tab_width":      4,  //spaces
@@ -36,6 +36,7 @@
 	"circular_tx_led":     false,
 	
 	"auto_echo_input": false,
+	"show_file_after_saving": false,
 	
 	//Python related options
 	"python_script_enabled":   true,

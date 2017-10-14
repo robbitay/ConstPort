@@ -37,6 +37,7 @@ Date:   09\26\2017
 	ConfigurationBool  ("circular_rx_led",             circularRxLed,          true);
 	ConfigurationBool  ("circular_tx_led",             circularTxLed,          false);
 	ConfigurationBool  ("auto_echo_input",             autoEchoInput,          true);
+	ConfigurationBool  ("show_file_after_saving",      showFileAfterSaving,    true);
 	
 	//Python Related Options
 	ConfigurationBool  ("python_script_enabled",   pythonScriptEnabled, false);
