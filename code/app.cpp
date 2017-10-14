@@ -245,10 +245,8 @@ void ComMenuUpdate(MenuHandler_t* menuHandler, Menu_t* menuPntr)
 	{
 		u32 numTabs = app->availablePorts.count + ((app->comPort.isOpen && !IsComAvailable(app->comPort.name)) ? 1 : 0);
 		r32 tabWidth = menuPntr->usableRec.width / numTabs;
-		{
-			r32 tabMinimumWidth = MeasureString(&app->uiFont, "1234567890").x + COM_MENU_TAB_PADDING*2;
-			if (tabWidth < tabMinimumWidth) { tabWidth = tabMinimumWidth; }
-		}
+		r32 tabMinimumWidth = MeasureString(&app->uiFont, "1234567890").x + COM_MENU_TAB_PADDING*2;
+		if (tabWidth < tabMinimumWidth) { tabWidth = tabMinimumWidth; }
 		rec baudRateRec = NewRectangle(
 			menuPntr->usableRec.x + COM_MENU_OUTER_PADDING,
 			menuPntr->usableRec.y + app->uiFont.lineHeight + COM_MENU_OUTER_PADDING,
@@ -274,9 +272,9 @@ void ComMenuUpdate(MenuHandler_t* menuHandler, Menu_t* menuPntr)
 		// |   Calculate the Menu Width   |
 		// +==============================+
 		r32 menuWidth = (stopBitsRec.x + stopBitsRec.width + COM_MENU_OUTER_PADDING) - menuPntr->drawRec.x;
-		if (menuWidth < tabWidth * numTabs)
+		if (menuWidth < tabMinimumWidth * numTabs)
 		{
-			menuWidth = tabWidth * numTabs;
+			menuWidth = tabMinimumWidth * numTabs;
 		}
 		
 		// +==============================+
