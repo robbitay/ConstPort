@@ -635,7 +635,9 @@ void ContextMenuRender(RenderState_t* renderState, MenuHandler_t* menuHandler, M
 	UiElements_t* ui = &app->uiElements;
 	
 	v2 textPos = menu->usableRec.topLeft + NewVec2(CONTEXT_MENU_PADDING, CONTEXT_MENU_PADDING + app->uiFont.maxExtendUp);
+	app->renderState.BindFont(&app->uiFont);
 	app->renderState.DrawString(ui->contextStringBuffer, textPos, GC->colors.foreground);
+	app->renderState.BindFont(&app->mainFont);
 }
 
 #define REAL_LOGO_HEIGHT 75
@@ -1249,8 +1251,8 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	Menu_t* hoverMenu = GetMenuAtPoint(&app->menuHandler, RenderMousePos);
 	Color_t color1 = ColorFromHSV((i32)(platform->programTime*180) % 360, 1.0f, 1.0f);
 	Color_t color2 = ColorFromHSV((i32)(platform->programTime*180 + 125) % 360, 1.0f, 1.0f);
-	Color_t selectionColor = ColorLerp(GC->colors.selection1, GC->colors.selection2, (Sin32((r32)platform->programTime*6.0f) + 1.0f) / 2.0f);
-	Color_t hoverLocColor  = ColorLerp(GC->colors.foreground, GC->colors.background, (Sin32((r32)platform->programTime*8.0f) + 1.0f) / 2.0f);
+	Color_t selectionColor = ColorLerp(GC->colors.selection1, GC->colors.selection2, (Sin32((platform->programTime/1000.0f)*6.0f) + 1.0f) / 2.0f);
+	Color_t hoverLocColor  = ColorLerp(GC->colors.foreground, GC->colors.background, (Sin32((platform->programTime/1000.0f)*8.0f) + 1.0f) / 2.0f);
 	// Color_t selectionColor = ColorFromHSV(180, 1.0f, (r32)(Sin32((r32)platform->programTime*5) + 1.0f) / 2.0f);
 	
 	// +==============================+
@@ -2214,7 +2216,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	{
 		rs->DrawGradient(NewRectangle(ui->scrollBarGutterRec.x - 8, ui->scrollBarGutterRec.y, 8, ui->scrollBarGutterRec.height),
 			{Color_TransparentBlack}, {Color_HalfTransparentBlack}, Direction2D_Right);
-		rs->DrawGradient(ui->scrollBarGutterRec, GC->colors.background, GC->colors.uiGray3, Direction2D_Right);
+		rs->DrawGradient(ui->scrollBarGutterRec, GC->colors.uiGray3, GC->colors.uiGray2, Direction2D_Right);
 		
 		rec centerScrollBarRec = ui->scrollBarRec;
 		centerScrollBarRec.y += ui->scrollBarRec.width;
@@ -2291,7 +2293,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 				
 				if (app->statusMessageType == StatusMessage_Debug)
 				{
-					messageColor = GC->colors.uiLightGray1;
+					messageColor = GC->colors.uiGray4;
 				}
 				else if (app->statusMessageType == StatusMessage_Info)
 				{
@@ -2361,28 +2363,55 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	for (u32 bIndex = 0; bIndex < NumMainMenuButtons; bIndex++)
 	{
 		rec buttonRec = ui->buttonRecs[bIndex];
-		Color_t baseColor = {Color_White};
-		Color_t highlightColor = {Color_Red};
-		Color_t iconColor = {Color_White};
+		// Color_t baseColor = {Color_White};
+		// Color_t highlightColor = {Color_Red};
+		// Color_t iconColor = {Color_White};
 		
-		if (IsInsideRectangle(RenderMousePos, buttonRec) && !ui->mouseInMenu)
-		{
-			if (ButtonDown(MouseButton_Left) && IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, buttonRec))
-			{
-				// iconColor = Color_Highlight2;
-				highlightColor = {Color_Black};//Color_Highlight4;
-			}
-		}
-		highlightColor.a = 200;
+		// if (IsInsideRectangle(RenderMousePos, buttonRec) && !ui->mouseInMenu)
+		// {
+		// 	if (ButtonDown(MouseButton_Left) && IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, buttonRec))
+		// 	{
+		// 		// iconColor = Color_Highlight2;
+		// 		highlightColor = {Color_Black};//Color_Highlight4;
+		// 	}
+		// }
+		// highlightColor.a = 200;
 		
-		rs->BindTexture(&ui->buttonBaseTexture);
-		rs->DrawTexturedRec(buttonRec, baseColor);
+		// rs->BindTexture(&ui->buttonBaseTexture);
+		// rs->DrawTexturedRec(buttonRec, baseColor);
 		
-		if (IsInsideRectangle(RenderMousePos, buttonRec) && !ui->mouseInMenu)
-		{
-			rs->BindTexture(&ui->buttonHighlightTexture);
-			rs->DrawTexturedRec(buttonRec, highlightColor);
-		}
+		// if (IsInsideRectangle(RenderMousePos, buttonRec) && !ui->mouseInMenu)
+		// if (Vec2Length(RenderMousePos - buttonCenter) < buttonRadius)
+		// {
+		// 	rs->BindTexture(&ui->buttonHighlightTexture);
+		// 	rs->DrawTexturedRec(buttonRec, highlightColor);
+		// }
+		
+		v2 buttonCenter = buttonRec.topLeft + buttonRec.size/2;
+		r32 buttonRadius = buttonRec.width/2;
+		Color_t centerColor = GC->colors.uiGray2;
+		Color_t outlineColor = GC->colors.uiLightGray1;
+		Color_t iconColor = GC->colors.foreground;
+		
+		Color_t nothing;
+		ButtonColorChoice(iconColor, nothing, nothing, buttonRec, false, false);
+		outlineColor = iconColor;
+		
+		// if (Vec2Length(RenderMousePos - buttonCenter) < buttonRadius)
+		// {
+		// 	outlineColor = GC->colors.uiLightGray1;
+		// 	iconColor = GC->colors.uiLightGray1;
+			
+		// 	v2 mouseStartPos = input->mouseStartPos[MouseButton_Left]/GUI_SCALE;
+		// 	if (ButtonDown(MouseButton_Left) && Vec2Length(mouseStartPos - buttonCenter) < buttonRadius)
+		// 	{
+		// 		outlineColor = GC->colors.highlight3;
+		// 		iconColor = GC->colors.highlight3;
+		// 	}
+		// }
+		
+		rs->DrawCircle(buttonCenter, buttonRadius, outlineColor);
+		rs->DrawCircle(buttonCenter, buttonRadius-1, centerColor);
 		
 		rs->BindTexture(&ui->buttonTextures[bIndex]);
 		rs->DrawTexturedRec(buttonRec, iconColor);

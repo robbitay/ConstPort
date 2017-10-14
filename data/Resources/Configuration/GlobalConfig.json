@@ -38,7 +38,7 @@
 	
 	//Python related options
 	"python_script_enabled":   true,
-	"auto_run_python":         false,
+	"auto_run_python":         false, //TODO: Implement me
 	"send_com_data_to_python": true,
 	"also_show_com_data":      false,
 	"send_input_to_python":    false,
@@ -58,26 +58,53 @@
 	
 	"regex_triggers":
 	[
+		//Monokai Color Scheme
 		{
 			"expression_name": "Has Hex 01",
-			"effects": ["foreground_color = 75715E"],
+			"effects": ["foreground_color = 7F817E"], //Gray
 		},
 		{
 			"expression_name": "Has Hex 02",
-			"effects": ["foreground_color = A6E22E"],
+			"effects": ["foreground_color = 02AEFF"], //Turquoise
 		},
 		{
 			"expression_name": "Has Hex 03",
-			"effects": ["foreground_color = F92665"],
+			"effects": ["foreground_color = FF0604"], //Red
 		},
 		{
 			"expression_name": "Has Hex 04",
-			"effects": ["foreground_color = AE81FF"],
+			"effects": ["foreground_color = FF6803"], //Orange
 		},
 		{
 			"expression_name": "Has Hex 05",
-			"effects": ["foreground_color = 66D9EF"],
+			"effects": ["foreground_color = CFFF01", "clear_line"], //Yellow
 		},
+		
+		//Neon Color Scheme
+		// {
+		// 	"expression": ".*",
+		// 	"effects": ["foreground_color = FFFFFF"], 
+		// },
+		// {
+		// 	"expression_name": "Has Hex 01",
+		// 	"effects": ["foreground_color = 7F817E"], //Gray
+		// },
+		// {
+		// 	"expression_name": "Has Hex 02",
+		// 	"effects": ["foreground_color = 02AEFF"], //Turquoise
+		// },
+		// {
+		// 	"expression_name": "Has Hex 03",
+		// 	"effects": ["foreground_color = FF0604"], //Red
+		// },
+		// {
+		// 	"expression_name": "Has Hex 04",
+		// 	"effects": ["foreground_color = FF6803"], //Orange
+		// },
+		// {
+		// 	"expression_name": "Has Hex 05",
+		// 	"effects": ["foreground_color = CFFF01", "clear_line"], //Yellow
+		// },
 		
 		//Example Trigger
 		// {
@@ -138,6 +165,7 @@
 	//Various Colors Used in UI drawing
 	"colors":
 	{
+		//Monokai Color Scheme
 		"background":             "212121",
 		"foreground":             "F8F8F2",
 		"selection_1":            "White",
@@ -164,6 +192,33 @@
 		"highlight_4":            [174, 129, 255, 255], //AE81FF Purple
 		"highlight_5":            [102, 217, 239, 255], //66D9EF Light Blue
 		
+		//Neon Color Scheme
+		// "background":             "000000",
+		// "foreground":             "202020",
+		// "selection_1":            "0205FF",
+		// "selection_2":            "06FF05",
+		// "regex_match_background": "Black",
+		// "ui_gray_1":              "6F6F6F",
+		// "ui_gray_2":              "6F6F6F",
+		// "ui_gray_3":              "6F6F6F",
+		// "ui_gray_4":              "Black",
+		// "ui_light_gray_1":        "6F6F6F",
+		// "receive_led":            "CFFF01", //Yellow
+		// "transmit_led":           "02AEFF", //Turquoise
+		// "hover_line":             "2D2D2D", //UiGray3
+		// "banner_color_1":         "6F6F6F",
+		// "banner_color_2":         "6F6F6F",
+		// "window_title_bar":       "303030", //UiGray3
+		// "window_background":      "494949", //UiGray1
+		// "window_border":          "B4B4B4", //UiLightGray1
+		// "mark_color_1":           "6F6F6F",
+		// "mark_color_2":           "6F6F6F",
+		// "highlight_1":            "7F817E", //Gray
+		// "highlight_2":            "FF6803", //Orange
+		// "highlight_3":            "FF0604", //Red
+		// "highlight_4":            "02AEFF", //Turquoise
+		// "highlight_5":            "CFFF01", //Yellow
+		
 		"button":                 "White",
 		"button_text":            "Black",
 		"button_border":          "Black",
@@ -174,15 +229,15 @@
 		"button_hover_text":      "White",
 		"button_hover_border":    "White",
 		
-		"button_press":           [249,  38, 101, 255], //Red/Magenta
+		"button_press":           "FF0604", //Red
 		"button_press_text":      "White",
 		"button_press_border":    "White",
 		
-		"button_selected":        [174, 129, 255, 255], //Purple
+		"button_selected":        "02AEFF", //Turquoise
 		"button_selected_text":   "Black",
 		"button_selected_border": "Black",
 		
-		"button_ready":           [166, 226,  46, 255], //Green Color
+		"button_ready":           "CFFF01", //Yellow
 		"button_ready_text":      "Black",
 		"button_ready_border":    "Black",
 	},

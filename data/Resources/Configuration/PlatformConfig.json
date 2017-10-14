@@ -1,7 +1,7 @@
 {
 	"WindowWidth": 450,
 	"WindowHeight": 900,
-	"MinWindowWidth": 400,
+	"MinWindowWidth": 200,
 	"MinWindowHeight": 180,
 	"ForceAspectRatio": false,
 	"AspectRatio": [16, 9],

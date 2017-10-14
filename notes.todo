@@ -1,42 +1,37 @@
 # Application TODO List
-	[!] Fix the selection flashing speed
-	[!] Implement OSX_WriteEntireFile
-	[!] Implement OSX_OpenFile, OSX_AppendFile, and OSX_CloseFile
-	[!] Implement OSX_CopyToClipboard and OSX_CopyFromClipboard
-	[!] Implement PlatformConfig in OSX platform layer
 	[?] Implement the rest of the python configuration options
-	[ ] Create a packaging script in OSX to build the application bundle
+	[!] Finish refining color scheme options to support a good Monokai and Neon theme
+	[ ] Open saved file when saving text to file
+	[ ] Add a way to close the COM port
+	[ ] Cursor at end of file to indicate where typing will happen?
+	[ ] Option to enable/disable auto-loading of output file dump
+	[ ] Close running program instances when the application is exiting
+	[ ] Fix rendering of hover line with new backgroundColor functionality
 	
-	[ ] Add support for cursor setting on OSX platform layer
+	[ ] Paste from clipboard
 	[ ] Change the status message layout so it pops up as an overlay with formatted text rendering so the whole message always fits nicely
 	[ ] Add a string data stack for all input lines to get added to
 	[ ] Get rid of the UI Handler since we probably won't ever need movable/modular windows. Also function pointer remapping is stupid looking
 	[ ] Add checking for COM port errors and whether or not we are still connected
-	[ ] Paste from clipboard
 	[ ] Option to enable timestamps and line color characters when saving to file
 	[ ] Fade out the status message during the last second. (Requires more accurate timing information)
-	[ ] Circular RX and TX LEDs
-	[ ] Add a way to close the COM port
-	[ ] Open saved file when saving text to file
 	[ ] Custom regular expression effects, variable number of regular expressions
 	[ ] Text cursor maintains when dragging out of text area
-	[?] Cursor at end of file to indicate where typing will happen?
-	[ ] Option to enable/disable auto-loading of output file dump
-	[ ] Rewrite the way the configuration options are defined using the multiple #include technique
 	[ ] Add better support for default configuration options that are simply overwritten by the user defined ones. Can we provide an example file or something? Maybe leave everything commented out and let them uncomment things?
 	[?] Combine the configuration files into one file?
 	[ ] Add a function that writes to a single option in the configuration file so we can have program written configuration options?
 	[ ] Create the configuration files again if they are found to be missing on startup?
-	[ ] Close running program instances when the application is exiting
 	[ ] Save window position and size when closing to configuration options. Pass these to windows when we create the window at startup
-	[ ] Rename LaunchFile to EditFile
-	[ ] Fix the rendering of the assigned port name in the ComPortMenu. Possibly add the actual COM# below the assigned name?
-	[ ] Fix rendering of hover line with new backgroundColor functionality
+	[ ] Add the actual COM# below the assigned name in the COM port menu
 	[ ] Fix console window opening with python 2?
-	[ ] Auto-reload configuration files when saved
 	[ ] Keep old configuration options if new configuration file is unparsable (only on reload)
 	[ ] Add an option to enable commands that can be sent from the python script and interpreted by ConstPort to provide extra functionality
 	
+	[X] Fix the rendering of the assigned port name in the ComPortMenu. 
+	[-] Rename LaunchFile to EditFile
+	[X] Rewrite the way the configuration options are defined using the multiple #include technique
+	[X] Circular RX and TX LEDs
+	[X] Fix the selection flashing speed
 	[X] Implement OSX_LaunchFile
 	[X] Change the "Py" label to be the Python logo icon
 	[X] Add an info window
@@ -92,6 +87,8 @@
 	[X] Ability to draw circles with the simpleShader
 
 # Application Wish List
+	[ ] Auto-reload configuration files when saved
+	[ ] Add support for multiple configuration files that you can switch between
 	[ ] Selection of spaces between markers
 	[ ] Horizontal Scrollbar (only shows up if needed)
 	[ ] Ability to set Flow Control mode
@@ -118,15 +115,26 @@
 	[X] Add output of python script to buffer
 	[ ] Changeable key mappings
 
-# Platform Layer TODO List
+# Win32 Platform Layer TODO List
+	[!] Fix app loading when the compilation takes longer. We need to detect whether the file is locked for reading I guess?
+	[ ] Delete all OpenGL objects when we reset the application
+	[ ] Close open COM ports when resetting application
+	[ ] Move recent changes and reusable functions into a starter project for later use
+	[ ] Save to file using Windows File Dialog
+	[ ] Fix the WIN32_LaunchFile and WIN32_StartProgramInstance support for non-relative paths
+	[ ] Make sure the program can run when started from any current directory
+	
 	[X] Add a mouse start press and max distance since pressed to AppInput
 	[X] Get the real time
 	[X] Support older versions of OpenGL
 	[X] Show a dialog box for startup errors
 	[X] Load icon and use it in window creation
-	[ ] Delete all OpenGL objects when we reset the application
-	[ ] Close open COM ports when resetting application
-	[ ] Move recent changes and reusable functions into a starter project for later use
-	[ ] Save to file using Windows File Dialog
-	[!] Fix app loading when the compilation takes longer. We need to detect whether the file is locked for reading I guess?
-	[ ] 
+
+# OSX Platform Layer TODO List
+	[ ] Make an application bundle that can be run from anywhere
+	[ ] Write a script to make the application bundle.
+	[!] Implement OSX_WriteEntireFile
+	[!] Implement OSX_OpenFile, OSX_AppendFile, and OSX_CloseFile
+	[!] Implement OSX_CopyToClipboard and OSX_CopyFromClipboard
+	[!] Implement PlatformConfig in OSX platform layer
+	[ ] Add support for cursor setting on OSX platform layer

@@ -90,7 +90,7 @@ void RenderLineGutter(const Line_t* linePntr, v2 position, i32 lineIndex, r32 li
 	
 	if (GC->showLineNumbers)
 	{
-		rs->PrintString(NewVec2(position.x, position.y), {Color_White}, 1.0f, "%u", lineIndex+1);
+		rs->PrintString(NewVec2(position.x, position.y), GC->colors.foreground, 1.0f, "%u", lineIndex+1);
 	}
 	
 	r32 bannerHeight = 0;
