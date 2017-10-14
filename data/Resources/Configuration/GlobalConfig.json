@@ -40,7 +40,7 @@
 	
 	//Python related options
 	"python_script_enabled":   true,
-	"auto_run_python":         false, //TODO: Implement me
+	"auto_run_python":         false,
 	"send_com_data_to_python": true,
 	"also_show_com_data":      false,
 	"send_input_to_python":    false,

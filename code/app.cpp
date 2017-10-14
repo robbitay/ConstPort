@@ -1291,6 +1291,20 @@ EXPORT AppInitialize_DEFINITION(App_Initialize)
 	
 	RefreshComPortList();
 	
+	// +==============================+
+	// |   Auto-Start Python Script   |
+	// +==============================+
+	if (GC->autoRunPython && GC->pythonScriptEnabled && GC->pythonScript != nullptr)
+	{
+		char* commandStr = TempPrint("python %s", GC->pythonScript);
+		StatusInfo("Running System Command: \"%s\"", commandStr);
+		app->programInstance = platform->StartProgramInstancePntr(commandStr);
+		if (app->programInstance.isOpen == false)
+		{
+			StatusError("Python exec failed: \"%s\"", commandStr);
+		}
+	}
+	
 	TempPopMark();
 	DEBUG_WriteLine("Initialization Done!");
 	app->appInitTempHighWaterMark = ArenaGetHighWaterMark(TempArena);
@@ -1771,11 +1785,10 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		ui->scrollOffsetGoto.y += ui->viewRec.height;
 	}
 	
-	// +==================================+
-	// | Start/Stop Test Program Instance |
-	// +==================================+
-	if (ButtonPressed(Button_P) && ButtonDown(Button_Control) &&
-		GC->pythonScriptEnabled)
+	// +==============================+
+	// |    Start Python Shortcut     |
+	// +==============================+
+	if (GC->pythonScriptEnabled && ButtonPressed(Button_P) && ButtonDown(Button_Control))
 	{
 		if (app->programInstance.isOpen)
 		{
