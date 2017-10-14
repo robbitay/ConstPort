@@ -61,48 +61,48 @@
 	"regex_triggers":
 	[
 		//Monokai Color Scheme
-		{
-			"expression_name": "Has Hex 01",
-			"effects": ["foreground_color = 75715E"], //Comment
-		},
-		{
-			"expression_name": "Has Hex 02",
-			"effects": ["foreground_color = A6E22E"], //Green
-		},
-		{
-			"expression_name": "Has Hex 03",
-			"effects": ["foreground_color = F92665"], //Red/Magenta
-		},
-		{
-			"expression_name": "Has Hex 04",
-			"effects": ["foreground_color = AE81FF"], //Purple
-		},
-		{
-			"expression_name": "Has Hex 05",
-			"effects": ["foreground_color = 66D9EF"], //Light Blue
-		},
-		
-		//Neon Color Scheme
 		// {
 		// 	"expression_name": "Has Hex 01",
-		// 	"effects": ["foreground_color = 7F817E"], //Gray
+		// 	"effects": ["foreground_color = 75715E"], //Comment
 		// },
 		// {
 		// 	"expression_name": "Has Hex 02",
-		// 	"effects": ["foreground_color = 02AEFF"], //Turquoise
+		// 	"effects": ["foreground_color = A6E22E"], //Green
 		// },
 		// {
 		// 	"expression_name": "Has Hex 03",
-		// 	"effects": ["foreground_color = FF0604"], //Red
+		// 	"effects": ["foreground_color = F92665"], //Red/Magenta
 		// },
 		// {
 		// 	"expression_name": "Has Hex 04",
-		// 	"effects": ["foreground_color = FF6803"], //Orange
+		// 	"effects": ["foreground_color = AE81FF"], //Purple
 		// },
 		// {
 		// 	"expression_name": "Has Hex 05",
-		// 	"effects": ["foreground_color = CFFF01"], //Yellow
+		// 	"effects": ["foreground_color = 66D9EF"], //Light Blue
 		// },
+		
+		//Neon Color Scheme
+		{
+			"expression_name": "Has Hex 01",
+			"effects": ["foreground_color = 7F817E"], //Gray
+		},
+		{
+			"expression_name": "Has Hex 02",
+			"effects": ["foreground_color = 02AEFF"], //Turquoise
+		},
+		{
+			"expression_name": "Has Hex 03",
+			"effects": ["foreground_color = FF0604"], //Red
+		},
+		{
+			"expression_name": "Has Hex 04",
+			"effects": ["foreground_color = FF6803"], //Orange
+		},
+		{
+			"expression_name": "Has Hex 05",
+			"effects": ["foreground_color = CFFF01"], //Yellow
+		},
 		
 		//Example Trigger
 		// {
@@ -137,10 +137,10 @@
 		"COM9":  "PIC32MZ",
 		"COM12": "System 2",
 		
-		"tty.lpss-serial1": "Lpss Serial1",
-		"tty.lpss-serial2": "Lpss Serial2",
-		"tty.Bluetooth-Incoming-Port": "Bluetooth Incoming",
-		"tty.usbserial-A506KDE9": "Test Loopback",
+		// "tty.lpss-serial1": "Lpss Serial1",
+		// "tty.lpss-serial2": "Lpss Serial2",
+		// "tty.Bluetooth-Incoming-Port": "Bluetooth Incoming",
+		// "tty.usbserial-A506KDE9": "Test Loopback",
 	},
 	
 	//Various Colors Used in UI drawing
@@ -160,101 +160,188 @@
 		// 303030 - Ui Gray 3
 		// 101010 - Ui Gray 4
 		// B4B4B4 - Ui Light Gray 1
-
-		"text_default":     "F8F8F2",
-		"text_background":  "212121",
-		"hover_background": "000000",
-		"selection_1":      "FFFFFF",
-		"selection_2":      "808080",
-		"banner_1":         "494949",
-		"banner_2":         "303030",
-		"banner_text":      "F8F8F2",
-		"line_mark_hover":  "A6E22E", //Green
-		"line_mark_1":      "FFFFFFFF",
-		"line_mark_2":      "FFFFFF80",
-		"hover_cursor_1":   "FFFFFFFF",
-		"hover_cursor_2":   "FFFFFF80",
-		"file_cursor_1":    "FFFFFFFF",
-		"file_cursor_2":    "FFFFFF80",
 		
-		"ui_text":           "F8F8F2",
-		"debug_message":     "75715E", //Comment
-		"success_message":   "A6E22E", //Green
-		"info_message":      "66D9EF", //Light Blue
-		"error_message":     "F92665", //Red/Magenta
-		"line_numbers":      "F8F8F2",
-		"scrollbar_outline": "000000",
-		"scrollbar_1":       "494949",
-		"scrollbar_2":       "303030",
-		"scrollbar_back_1":  "202020",
-		"scrollbar_back_2":  "303030",
-		"gutter_1":          "494949",
-		"gutter_2":          "303030",
-		"status_bar_1":      "303030",
-		"status_bar_2":      "303030",
-		"main_menu_1":       "494949",
-		"main_menu_2":       "303030",
+		// "text_default":     "F8F8F2",
+		// "text_background":  "212121",
+		// "hover_background": "000000",
+		// "selection_1":      "FFFFFF",
+		// "selection_2":      "808080",
+		// "banner_1":         "494949",
+		// "banner_2":         "303030",
+		// "banner_text":      "F8F8F2",
+		// "line_mark_hover":  "A6E22E", //Green
+		// "line_mark_1":      "FFFFFFFF",
+		// "line_mark_2":      "FFFFFF80",
+		// "hover_cursor_1":   "FFFFFFFF",
+		// "hover_cursor_2":   "FFFFFF00",
+		// "file_cursor_1":    "FFFFFFFF",
+		// "file_cursor_2":    "FFFFFF00",
 		
-		"window_outline":      "B4B4B4",
-		"window_titlebar":     "303030",
-		"window_background_1": "494949",
-		"window_background_2": "303030",
-		"window_exit":         "FF0000",
-		"window_exit_icon":    "FFFFFF",
-		"context_menu_text":   "F8F8F2",
+		// "ui_text":           "F8F8F2",
+		// "debug_message":     "75715E", //Comment
+		// "success_message":   "A6E22E", //Green
+		// "info_message":      "66D9EF", //Light Blue
+		// "error_message":     "F92665", //Red/Magenta
+		// "line_numbers":      "F8F8F2",
+		// "scrollbar_outline": "000000",
+		// "scrollbar_1":       "494949",
+		// "scrollbar_2":       "303030",
+		// "scrollbar_back_1":  "202020",
+		// "scrollbar_back_2":  "303030",
+		// "gutter_1":          "494949",
+		// "gutter_2":          "303030",
+		// "status_bar_1":      "303030",
+		// "status_bar_2":      "303030",
+		// "main_menu_1":       "494949",
+		// "main_menu_2":       "303030",
 		
-		"receive_led":       "000000",
-		"receive_led_idle":  "F92665", //Red/Magenta
-		"receive_led_ring":  "F92665", //Red/Magenta
-		"transmit_led":      "000000",
-		"transmit_led_idle": "AE81FF", //Purple
-		"transmit_led_ring": "AE81FF", //Purple
+		// "window_outline":      "B4B4B4",
+		// "window_titlebar":     "303030",
+		// "window_background_1": "494949",
+		// "window_background_2": "303030",
+		// "window_exit":         "FF0000",
+		// "window_exit_icon":    "FFFFFF",
+		// "context_menu_text":   "F8F8F2",
 		
-		"button":                 "FFFFFF",
-		"button_text":            "000000",
-		"button_border":          "000000",
+		// "receive_led":       "000000",
+		// "receive_led_idle":  "F92665", //Red/Magenta
+		// "receive_led_ring":  "F92665", //Red/Magenta
+		// "transmit_led":      "000000",
+		// "transmit_led_idle": "AE81FF", //Purple
+		// "transmit_led_ring": "AE81FF", //Purple
 		
-		"button_hover":           "B4B4B4", //UiLightGray1
-		"button_hover_text":      "FFFFFF",
-		"button_hover_border":    "FFFFFF",
+		// "button":                 "FFFFFF",
+		// "button_text":            "000000",
+		// "button_border":          "000000",
 		
-		"button_press":           "F92665", //Red/Magenta
-		"button_press_text":      "FFFFFF",
-		"button_press_border":    "FFFFFF",
+		// "button_hover":           "B4B4B4", //UiLightGray1
+		// "button_hover_text":      "FFFFFF",
+		// "button_hover_border":    "FFFFFF",
 		
-		"button_selected":        "AE81FF", //Purple
-		"button_selected_text":   "000000",
-		"button_selected_border": "000000",
+		// "button_press":           "F92665", //Red/Magenta
+		// "button_press_text":      "FFFFFF",
+		// "button_press_border":    "FFFFFF",
 		
-		"button_ready":           "A6E22E", //Green
-		"button_ready_text":      "000000",
-		"button_ready_border":    "000000",
+		// "button_selected":        "AE81FF", //Purple
+		// "button_selected_text":   "000000",
+		// "button_selected_border": "000000",
 		
-		"button_disabled":        "494949",
-		"button_disabled_text":   "000000",
-		"button_disabled_border": "000000",
+		// "button_ready":           "A6E22E", //Green
+		// "button_ready_text":      "000000",
+		// "button_ready_border":    "000000",
 		
-		"main_menu_button":              "303030",
-		"main_menu_button_icon":         "F8F8F2",
-		"main_menu_button_border":       "F8F8F2",
+		// "button_disabled":        "494949",
+		// "button_disabled_text":   "000000",
+		// "button_disabled_border": "000000",
 		
-		"main_menu_button_hover":        "303030",
-		"main_menu_button_hover_icon":   "B4B4B4",
-		"main_menu_button_hover_border": "B4B4B4",
+		// "main_menu_button":              "303030",
+		// "main_menu_button_icon":         "F8F8F2",
+		// "main_menu_button_border":       "F8F8F2",
 		
-		"main_menu_button_press":        "303030",
-		"main_menu_button_press_icon":   "66D9EF", //Light Blue
-		"main_menu_button_press_border": "66D9EF", //Light Blue
+		// "main_menu_button_hover":        "303030",
+		// "main_menu_button_hover_icon":   "B4B4B4",
+		// "main_menu_button_hover_border": "B4B4B4",
+		
+		// "main_menu_button_press":        "303030",
+		// "main_menu_button_press_icon":   "66D9EF", //Light Blue
+		// "main_menu_button_press_border": "66D9EF", //Light Blue
 		
 		// +==============================+
 		// |      Neon Color Scheme       |
 		// +==============================+
-		// 7F817E - Gray
+		// 1F1F1F - Dark Gray
+		// 474747 - Gray
+		// 7F817E - Light Gray
 		// 02AEFF - Turquoise
 		// FF0604 - Red
 		// FF6803 - Orange
 		// CFFF01 - Yellow
 		// 6F6F6F - Ui Gray
+		
+		"text_default":     "FFFFFF",
+		"text_background":  "000000",
+		"hover_background": "2D2D2D",
+		"selection_1":      "0205FF",
+		"selection_2":      "0205FF",
+		"banner_1":         "1F1F1F",
+		"banner_2":         "1F1F1F",
+		"banner_text":      "7F817E",
+		"line_mark_hover":  "CFFF01", //Yellow
+		"line_mark_1":      "02AEFF", //Turquoise
+		"line_mark_2":      "02AEFF", //Turquoise
+		"hover_cursor_1":   "FFFFFFFF",
+		"hover_cursor_2":   "FFFFFF00",
+		"file_cursor_1":    "FFFFFFFF",
+		"file_cursor_2":    "FFFFFF00",
+		
+		"ui_text":           "000000",
+		"debug_message":     "7F817E", //Gray
+		"success_message":   "02AEFF", //Turquoise
+		"info_message":      "CFFF01", //Yellow
+		"error_message":     "FF0604", //Red
+		"line_numbers":      "7F817E",
+		"scrollbar_outline": "000000",
+		"scrollbar_1":       "474747",
+		"scrollbar_2":       "474747",
+		"scrollbar_back_1":  "1F1F1F",
+		"scrollbar_back_2":  "1F1F1F",
+		"gutter_1":          "1F1F1F",
+		"gutter_2":          "1F1F1F",
+		"status_bar_1":      "474747",
+		"status_bar_2":      "474747",
+		"main_menu_1":       "474747",
+		"main_menu_2":       "474747",
+		
+		"window_outline":      "47474700",
+		"window_titlebar":     "474747",
+		"window_background_1": "7F817E",
+		"window_background_2": "7F817E",
+		"window_exit":         "CFFF01", //Yellow
+		"window_exit_icon":    "02AEFF", //Turquoise
+		"context_menu_text":   "000000",
+		
+		"receive_led":         "000000",
+		"receive_led_active":  "CFFF01", //Yellow
+		"receive_led_ring":    "CFFF01", //Yellow
+		"transmit_led":        "000000",
+		"transmit_led_active": "02AEFF", //Turquoise
+		"transmit_led_ring":   "02AEFF", //Turquoise
+		
+		"button":                 "FFFFFF",
+		"button_text":            "000000",
+		"button_border":          "000000",
+		
+		"button_hover":           "7F817E",
+		"button_hover_text":      "FFFFFF",
+		"button_hover_border":    "FFFFFF",
+		
+		"button_press":           "FF0604", //Red
+		"button_press_text":      "FFFFFF",
+		"button_press_border":    "FFFFFF",
+		
+		"button_selected":        "02AEFF", //Turquoise
+		"button_selected_text":   "000000",
+		"button_selected_border": "000000",
+		
+		"button_ready":           "CFFF01", //Yellow
+		"button_ready_text":      "000000",
+		"button_ready_border":    "000000",
+		
+		"button_disabled":        "7F817E",
+		"button_disabled_text":   "000000",
+		"button_disabled_border": "000000",
+		
+		"main_menu_button":              "000000",
+		"main_menu_button_icon":         "FFFFFF",
+		"main_menu_button_border":       "FFFFFF",
+		
+		"main_menu_button_hover":        "000000",
+		"main_menu_button_hover_icon":   "02AEFF",
+		"main_menu_button_hover_border": "02AEFF",
+		
+		"main_menu_button_press":        "000000",
+		"main_menu_button_press_icon":   "FF0604",
+		"main_menu_button_press_border": "FF0604",
 		
 	},
 }

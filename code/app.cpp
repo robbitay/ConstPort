@@ -779,7 +779,7 @@ void AboutMenuRender(RenderState_t* renderState, MenuHandler_t* menuHandler, Men
 	renderState->DrawFormattedString(aboutInfoString,
 		NewVec2(menu->usableRec.width/2, REAL_LOGO_HEIGHT + ABOUT_INFO_TEXT_PADDING + app->uiFont.maxExtendUp) + menu->usableRec.topLeft,
 		menu->usableRec.width - ABOUT_INFO_TEXT_PADDING*2,
-		{Color_White}, Alignment_Center, true
+		GC->colors.uiText, Alignment_Center, true
 	);
 	renderState->BindFont(&app->mainFont);
 }
@@ -2508,8 +2508,8 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		v2 buttonCenter = buttonRec.topLeft + buttonRec.size/2;
 		r32 buttonRadius = buttonRec.width/2;
 		Color_t centerColor = GC->colors.mainMenuButton;
-		Color_t borderColor = GC->colors.mainMenuButtonIcon;
-		Color_t iconColor   = GC->colors.mainMenuButtonBorder;
+		Color_t borderColor = GC->colors.mainMenuButtonBorder;
+		Color_t iconColor   = GC->colors.mainMenuButtonIcon;
 		
 		if (Vec2Length(RenderMousePos - buttonCenter) < buttonRadius)
 		{
