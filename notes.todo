@@ -3,7 +3,6 @@
 	[ ] Make a neon color scheme
 	[ ] Make the window exit button rendering dynamic
 	[ ] Open saved file when saving text to file
-	[!] Add a way to close the COM port
 	[ ] Cursor at end of file to indicate where typing will happen?
 	[ ] Option to enable/disable auto-loading of output file dump
 	[ ] Close running program instances when the application is exiting
@@ -29,6 +28,7 @@
 	[ ] Keep old configuration options if new configuration file is unparsable (only on reload)
 	[ ] Add an option to enable commands that can be sent from the python script and interpreted by ConstPort to provide extra functionality
 	
+	[X] Add a way to close the COM port
 	[X] Finish refining color scheme options to support a good Monokai and Neon theme
 	[X] Fix the rendering of the assigned port name in the ComPortMenu. 
 	[-] Rename LaunchFile to EditFile

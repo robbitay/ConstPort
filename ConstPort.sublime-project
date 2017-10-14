@@ -148,8 +148,6 @@
 			"COM_MENU_OUTER_PADDING",
 			"COM_MENU_TAB_HEIGHT",
 			"COM_MENU_TAB_PADDING",
-			"CONNECT_BUTTON_HEIGHT",
-			"CONNECT_BUTTON_WIDTH",
 			"CONTEXT_MENU_PADDING",
 			"CREATE_ALWAYS",
 			"CS_HREDRAW",
@@ -857,14 +855,7 @@
 			"TempArena",
 			"WindowOpen",
 			"WindowResized",
-<<<<<<< HEAD
-			"WorkingDirectory",
-			"app",
-			"input",
-			"platform"
-=======
 			"appData"
->>>>>>> 33d1a91000f037b23644e129ed892bfd4da19032
 		],
 		"custom_types":
 		[

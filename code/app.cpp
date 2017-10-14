@@ -313,10 +313,19 @@ void ComMenuUpdate(MenuHandler_t* menuHandler, Menu_t* menuPntr)
 		menuPntr->drawRec.size = NewVec2(menuWidth, menuHeight);
 		UpdateMenuRecs(menuPntr);
 		
+		const char* connectStr = "Connect";
+		v2 connectStrSize = MeasureString(&app->uiFont, connectStr);
 		rec connectButtonRec = NewRectangle(
-			menuPntr->usableRec.x + menuPntr->usableRec.width - CONNECT_BUTTON_WIDTH - COM_MENU_OUTER_PADDING,
-			menuPntr->usableRec.y + menuPntr->usableRec.height - CONNECT_BUTTON_HEIGHT - COM_MENU_OUTER_PADDING,
-			CONNECT_BUTTON_WIDTH, CONNECT_BUTTON_HEIGHT
+			menuPntr->usableRec.x + menuPntr->usableRec.width - (connectStrSize.x + 10) - COM_MENU_OUTER_PADDING,
+			menuPntr->usableRec.y + menuPntr->usableRec.height - (connectStrSize.y + 10) - COM_MENU_OUTER_PADDING,
+			(connectStrSize.x + 10), (connectStrSize.y + 10)
+		);
+		const char* disconnectStr = "Disconnect";
+		v2 disconnectStrSize = MeasureString(&app->uiFont, disconnectStr);
+		rec disconnectButtonRec = NewRectangle(
+			connectButtonRec.x - (disconnectStrSize.x + 10) - COM_MENU_OUTER_PADDING,
+			connectButtonRec.y,
+			(disconnectStrSize.x + 10), (connectStrSize.y + 10)
 		);
 		
 		for (i32 baudIndex = 0; baudIndex < NumBaudRates; baudIndex++)
@@ -405,6 +414,20 @@ void ComMenuUpdate(MenuHandler_t* menuHandler, Menu_t* menuPntr)
 				menuPntr->show = false;
 			}
 		}
+		
+		// +====================================+
+		// | Check for Disconnect Button Press  |
+		// +====================================+
+		if (app->comPort.isOpen)
+		{
+			if (app->comMenuOptions.isOpen && IsInsideRectangle(RenderMousePos, disconnectButtonRec) &&
+				ButtonReleased(MouseButton_Left) && IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, disconnectButtonRec))
+			{
+				StatusError("Closed \"%s\"", app->comPort.name);
+				platform->CloseComPortPntr(&app->mainHeap, &app->comPort);
+				menuPntr->show = false;
+			}
+		}
 	}
 }
 void ComMenuRender(RenderState_t* renderState, MenuHandler_t* menuHandler, Menu_t* menuPntr)
@@ -457,10 +480,19 @@ void ComMenuRender(RenderState_t* renderState, MenuHandler_t* menuHandler, Menu_
 		parityTypesRec.y += tabHeight;
 		stopBitsRec.y    += tabHeight;
 		
+		const char* connectStr = "Connect";
+		v2 connectStrSize = MeasureString(&app->uiFont, connectStr);
 		rec connectButtonRec = NewRectangle(
-			menuPntr->usableRec.x + menuPntr->usableRec.width - CONNECT_BUTTON_WIDTH - COM_MENU_OUTER_PADDING,
-			menuPntr->usableRec.y + menuPntr->usableRec.height - CONNECT_BUTTON_HEIGHT - COM_MENU_OUTER_PADDING,
-			CONNECT_BUTTON_WIDTH, CONNECT_BUTTON_HEIGHT
+			menuPntr->usableRec.x + menuPntr->usableRec.width - (connectStrSize.x + 10) - COM_MENU_OUTER_PADDING,
+			menuPntr->usableRec.y + menuPntr->usableRec.height - (connectStrSize.y + 10) - COM_MENU_OUTER_PADDING,
+			(connectStrSize.x + 10), (connectStrSize.y + 10)
+		);
+		const char* disconnectStr = "Disconnect";
+		v2 disconnectStrSize = MeasureString(&app->uiFont, disconnectStr);
+		rec disconnectButtonRec = NewRectangle(
+			connectButtonRec.x - (disconnectStrSize.x + 10) - COM_MENU_OUTER_PADDING,
+			connectButtonRec.y,
+			(disconnectStrSize.x + 10), (connectStrSize.y + 10)
 		);
 		
 		renderState->BindFont(&app->uiFont);
@@ -600,10 +632,8 @@ void ComMenuRender(RenderState_t* renderState, MenuHandler_t* menuHandler, Menu_
 		// |   Draw the Connect Button    |
 		// +==============================+
 		{
-			const char* connectButtonText = "Connect";
-			v2 textSize = MeasureString(&app->uiFont, connectButtonText);
 			v2 stringPosition = NewVec2(
-				connectButtonRec.x + connectButtonRec.width/2 - textSize.x/2,
+				connectButtonRec.x + connectButtonRec.width/2 - connectStrSize.x/2,
 				connectButtonRec.y + connectButtonRec.height/2 + app->uiFont.lineHeight/2 - app->uiFont.maxExtendDown
 			);
 			bool settingsHaveChanged = ((!app->comPort.isOpen && app->comMenuOptions.isOpen) || app->comMenuOptions.settings != app->comPort.settings);
@@ -629,8 +659,28 @@ void ComMenuRender(RenderState_t* renderState, MenuHandler_t* menuHandler, Menu_
 			}
 			
 			renderState->DrawButton(connectButtonRec, buttonColor, borderColor);
-			renderState->DrawString(connectButtonText, stringPosition, textColor);
+			renderState->DrawString(connectStr, stringPosition, textColor);
 		}
+		
+		// +==============================+
+		// |  Draw the Disconnect Button  |
+		// +==============================+
+		if (app->comPort.isOpen)
+		{
+			v2 stringPosition = NewVec2(
+				disconnectButtonRec.x + disconnectButtonRec.width/2 - disconnectStrSize.x/2,
+				disconnectButtonRec.y + disconnectButtonRec.height/2 + app->uiFont.lineHeight/2 - app->uiFont.maxExtendDown
+			);
+			
+			Color_t buttonColor = GC->colors.button;
+			Color_t textColor   = GC->colors.buttonText;
+			Color_t borderColor = GC->colors.buttonBorder;
+			ButtonColorChoice(buttonColor, textColor, borderColor, disconnectButtonRec, false, false);
+			
+			renderState->DrawButton(disconnectButtonRec, buttonColor, borderColor);
+			renderState->DrawString(disconnectStr, stringPosition, textColor);
+		}
+		
 		renderState->BindFont(&app->mainFont);
 	}
 }

@@ -26,8 +26,6 @@ Date:   06\08\2017
 #define COM_MENU_TAB_HEIGHT        35 //px
 #define COM_MENU_OUTER_PADDING     5  //px
 #define COM_MENU_INNER_PADDING     10 //px
-#define CONNECT_BUTTON_WIDTH       80 //px
-#define CONNECT_BUTTON_HEIGHT      25 //px
 #define RX_TX_LED_SIZE             8 //px
 #define CLEAR_BUTTON_WIDTH         60 //px
 #define CLEAR_BUTTON_HEIGHT        20 //px
