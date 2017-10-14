@@ -4,7 +4,6 @@
 	[ ] Make the window exit button rendering dynamic
 	[ ] Option to enable/disable auto-loading of output file dump
 	[ ] Close running program instances when the application is exiting
-	[ ] Fix rendering of hover line with new backgroundColor functionality
 	
 	[ ] Fix the format string functions to choose to split open and close symbols differently
 	[ ] Paste from clipboard
@@ -26,6 +25,7 @@
 	[ ] Keep old configuration options if new configuration file is unparsable (only on reload)
 	[ ] Add an option to enable commands that can be sent from the python script and interpreted by ConstPort to provide extra functionality
 	
+	[X] Fix rendering of hover line with new backgroundColor functionality
 	[X] Cursor at end of file to indicate where typing will happen?
 	[X] Open saved file when saving text to file
 	[X] Add a way to close the COM port

@@ -13,6 +13,7 @@ r32 RenderLine(Line_t* linePntr, v2 position, bool sizeOnly = false)
 {
 	UiElements_t* ui = &app->uiElements;
 	r32 result = 0;
+	v2 relMousePos = RenderMousePos - ui->viewRec.topLeft + ui->scrollOffset;
 	
 	Color_t color = linePntr->matchColor;
 	Color_t backgroundColor = linePntr->backgroundColor;
@@ -26,11 +27,18 @@ r32 RenderLine(Line_t* linePntr, v2 position, bool sizeOnly = false)
 			10000,
 			app->mainFont.lineHeight + GC->lineSpacing
 		);
+		if (GC->highlightHoverLine && IsInsideRectangle(relMousePos, backgroundRec))
+		{
+			backgroundColor = GC->colors.hoverBackground;
+		}
 		app->renderState.DrawRectangle(backgroundRec, backgroundColor);
 		app->renderState.DrawString(linePntr->chars, position, color, 1.0f);
 	}
 	result += app->mainFont.lineHeight;
 	
+	// +==============================+
+	// |  Measure the Elapsed Banner  |
+	// +==============================+
 	if (GC->elapsedBannerEnabled)
 	{
 		Line_t* nextLine = (Line_t*)linePntr->header.nextItem;
@@ -161,6 +169,9 @@ void RenderLineGutter(const Line_t* linePntr, v2 position, i32 lineIndex, r32 li
 		}
 	}
 	
+	// +==============================+
+	// |        Draw Line Mark        |
+	// +==============================+
 	if (IsFlagSet(linePntr->flags, LineFlag_MarkBelow) ||
 		(ButtonDown(MouseButton_Left) && IsInsideRectangle(input->mouseStartPos[MouseButton_Left] / GUI_SCALE, ui->gutterRec) && ui->markIndex != -1 && ui->markIndex == lineIndex))
 	{
