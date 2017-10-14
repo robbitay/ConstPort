@@ -1,5 +1,4 @@
 # Application TODO List
-	
 	[ ] Fix the format string functions to choose to split open and close symbols differently
 	[ ] Paste from clipboard
 	[ ] Change the status message layout so it pops up as an overlay with formatted text rendering so the whole message always fits nicely
@@ -19,7 +18,63 @@
 	[ ] Fix console window opening with python 2?
 	[ ] Keep old configuration options if new configuration file is unparsable (only on reload)
 	[ ] Add an option to enable commands that can be sent from the python script and interpreted by ConstPort to provide extra functionality
+
+# Application Wish List
+	[ ] Auto-reload configuration files when saved
+	[ ] Add support for multiple configuration files that you can switch between
+	[ ] Selection of spaces between markers
+	[ ] Horizontal Scrollbar (only shows up if needed)
+	[ ] Ability to set Flow Control mode
+	[ ] Read multiple COM ports side by side.
+	[ ] Little software LEDs to show flow control.
+	[ ] Click on flow control to toggle CTS
+	[ ] Set up regular expressions to define color of each line
+	[ ] Special characters for invalid ANSI characters
+	[ ] Hex string mode
+	[ ] Add an option to freeze output (read the COM port and throw away data)
+	[ ] New Line Type option for input and output
+	[ ] Option to enable an input line that sends messages all at once (Hex or string)
+	[ ] Command board with configurable command buttons
+	[ ] Save configurations to a file and load on startup
+	[ ] Try to auto-connect to last opened COM port on startup
+	[ ] Automatically add marks to lines when a certain amount of time has passed between characters receives
+	[?] Fix scrollbar so that it doesn't keep sliding when we have grabbed it
+	[ ] Better way to detect open COM ports
+	[ ] Search functionality
+	[ ] Changeable key mappings
+
+# Win32 Platform Layer TODO List
+	[!] Fix app loading when the compilation takes longer. We need to detect whether the file is locked for reading I guess?
+	[ ] Delete all OpenGL objects when we reset the application
+	[ ] Close open COM ports when resetting application
+	[ ] Move recent changes and reusable functions into a starter project for later use
+	[ ] Save to file using Windows File Dialog
+	[ ] Fix the WIN32_LaunchFile and WIN32_StartProgramInstance support for non-relative paths
+	[ ] Make sure the program can run when started from any current directory
 	
+
+# OSX Platform Layer TODO List
+	[ ] Make an application bundle that can be run from anywhere
+	[ ] Write a script to make the application bundle.
+	[!] Implement OSX_WriteEntireFile
+	[!] Implement OSX_OpenFile, OSX_AppendFile, and OSX_CloseFile
+	[!] Implement OSX_CopyToClipboard and OSX_CopyFromClipboard
+	[!] Implement PlatformConfig in OSX platform layer
+	[ ] Add support for cursor setting on OSX platform layer
+
+
+# Old TODO List Items
+	@ 1.5
+	[X] Add a mouse start press and max distance since pressed to AppInput
+	[X] Get the real time
+	[X] Support older versions of OpenGL
+	[X] Show a dialog box for startup errors
+	[X] Load icon and use it in window creation
+	[X] Timestamps on each line. Hover over line number to show timestamp (Preferably with times difference formatting)
+	[X] Capture to file. 
+	[X] Option to enable auto output echo
+	[X] Call a python script when line is received or regular expression is matched
+	[X] Add output of python script to buffer
 	[X] Make a neon color scheme
 	[X] Implement "auto_run_python" configuration option
 	[X] Make the window exit button rendering dynamic
@@ -89,56 +144,3 @@
 	[-] Add a platform layer function to set the TempArena so we can add functions that push onto Temporary Memory when we call them NOTE: Probably will just pass memory arenas when arenas are needed, we can pass TempArena really easily if we want the function to allocate it on the temporary arena)
 	[-] String manipulation functions using the TemporaryArena NOTE: Not many that I actually want :P Now a mylib file that has helpful string manipulation function might be nice
 	[X] Ability to draw circles with the simpleShader
-
-# Application Wish List
-	[ ] Auto-reload configuration files when saved
-	[ ] Add support for multiple configuration files that you can switch between
-	[ ] Selection of spaces between markers
-	[ ] Horizontal Scrollbar (only shows up if needed)
-	[ ] Ability to set Flow Control mode
-	[ ] Read multiple COM ports side by side.
-	[ ] Little software LEDs to show flow control.
-	[ ] Click on flow control to toggle CTS
-	[X] Timestamps on each line. Hover over line number to show timestamp (Preferably with times difference formatting)
-	[ ] Set up regular expressions to define color of each line
-	[ ] Special characters for invalid ANSI characters
-	[ ] Hex string mode
-	[X] Capture to file. 
-	[ ] Add an option to freeze output (read the COM port and throw away data)
-	[ ] New Line Type option for input and output
-	[X] Option to enable auto output echo
-	[ ] Option to enable an input line that sends messages all at once (Hex or string)
-	[ ] Command board with configurable command buttons
-	[ ] Save configurations to a file and load on startup
-	[ ] Try to auto-connect to last opened COM port on startup
-	[ ] Automatically add marks to lines when a certain amount of time has passed between characters receives
-	[?] Fix scrollbar so that it doesn't keep sliding when we have grabbed it
-	[ ] Better way to detect open COM ports
-	[ ] Search functionality
-	[X] Call a python script when line is received or regular expression is matched
-	[X] Add output of python script to buffer
-	[ ] Changeable key mappings
-
-# Win32 Platform Layer TODO List
-	[!] Fix app loading when the compilation takes longer. We need to detect whether the file is locked for reading I guess?
-	[ ] Delete all OpenGL objects when we reset the application
-	[ ] Close open COM ports when resetting application
-	[ ] Move recent changes and reusable functions into a starter project for later use
-	[ ] Save to file using Windows File Dialog
-	[ ] Fix the WIN32_LaunchFile and WIN32_StartProgramInstance support for non-relative paths
-	[ ] Make sure the program can run when started from any current directory
-	
-	[X] Add a mouse start press and max distance since pressed to AppInput
-	[X] Get the real time
-	[X] Support older versions of OpenGL
-	[X] Show a dialog box for startup errors
-	[X] Load icon and use it in window creation
-
-# OSX Platform Layer TODO List
-	[ ] Make an application bundle that can be run from anywhere
-	[ ] Write a script to make the application bundle.
-	[!] Implement OSX_WriteEntireFile
-	[!] Implement OSX_OpenFile, OSX_AppendFile, and OSX_CloseFile
-	[!] Implement OSX_CopyToClipboard and OSX_CopyFromClipboard
-	[!] Implement PlatformConfig in OSX platform layer
-	[ ] Add support for cursor setting on OSX platform layer
