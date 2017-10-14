@@ -31,6 +31,7 @@ Date:   09\26\2017
 	ConfigurationBool  ("show_line_numbers",           showLineNumbers,        true);
 	ConfigurationBool  ("show_hover_cursor",           showHoverCursor,        false);
 	ConfigurationBool  ("highlight_hover_line",        highlightHoverLine,     true);
+	ConfigurationBool  ("show_file_cursor",            showFileCursor,         true);
 	ConfigurationInt32 ("rx_tx_led_delay",             rxTxLedDelay,           4);
 	ConfigurationInt32 ("rx_tx_led_ring_size",         rxTxLedRingSize,        2);
 	ConfigurationBool  ("circular_rx_led",             circularRxLed,          true);
@@ -96,8 +97,8 @@ Date:   09\26\2017
 	ConfigurationColor("line_mark_2",                   lineMark2,                 {0x80FFFFFF});
 	ConfigurationColor("hover_cursor_1",                hoverCursor1,              {0xFFFFFFFF});
 	ConfigurationColor("hover_cursor_2",                hoverCursor2,              {0x80FFFFFF});
-	ConfigurationColor("end_cursor_1",                  endCursor1,                {0xFFFFFFFF});
-	ConfigurationColor("end_cursor_2",                  endCursor2,                {0x80FFFFFF});
+	ConfigurationColor("file_cursor_1",                 fileCursor1,               {0xFFFFFFFF});
+	ConfigurationColor("file_cursor_2",                 fileCursor2,               {0x80FFFFFF});
 	
 	ConfigurationColor("ui_text",                       uiText,                    {0xFFF8F8F2});
 	ConfigurationColor("debug_message",                 debugMessage,              {0xFF75715E}); //Comment

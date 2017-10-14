@@ -1899,11 +1899,10 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	if (saveButtonPressed ||
 		(ButtonDown(Button_Control) && ButtonPressed(Button_S)))
 	{
-		char fileNameBuffer[256] = {};
-		u32 fileNameLength = snprintf(&fileNameBuffer[0], sizeof(fileNameBuffer),
-			"ConstPortSave_%02u-%02u-%u_%u-%02u-%02u.txt",
+		char* fileName = TempPrint("ConstPortSave_%02u-%02u-%u_%u-%02u-%02u.txt",
 			platform->localTime.year, platform->localTime.month, platform->localTime.day,
-			platform->localTime.hour, platform->localTime.minute, platform->localTime.second);
+			platform->localTime.hour, platform->localTime.minute, platform->localTime.second
+		);
 		
 		u32 selectionSize = GetSelection(nullptr);
 		if (selectionSize > 0)
@@ -1914,13 +1913,13 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 			GetSelection(fileBuffer);
 			
 			//NOTE: GetSelection adds a \0 on the end so need to remove it
-			DEBUG_PrintLine("Saving %u bytes to %s", selectionSize-1, fileNameBuffer);
-			platform->WriteEntireFilePntr(fileNameBuffer, fileBuffer, selectionSize-1);
+			DEBUG_PrintLine("Saving %u bytes to %s", selectionSize-1, fileName);
+			platform->WriteEntireFilePntr(fileName, fileBuffer, selectionSize-1);
 			DEBUG_WriteLine("Done!");
 			
 			TempPopMark();
 			
-			if (platform->LaunchFilePntr(fileNameBuffer))
+			if (platform->LaunchFilePntr(fileName))
 			{
 				DEBUG_WriteLine("Opened output file for viewing");
 			}
@@ -1929,7 +1928,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 				DEBUG_WriteLine("Could not open output file");
 			}
 			
-			StatusSuccess("Saved to %s", fileNameBuffer);
+			StatusSuccess("Saved to %s", fileName);
 		}
 	}
 	
@@ -2148,6 +2147,9 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 				
 				RenderLine(linePntr, currentPos, false);
 				
+				// +==============================+
+				// |    Draw the Hover Cursor     |
+				// +==============================+
 				if (GC->showHoverCursor &&
 					lineIndex == ui->hoverLocation.lineNum &&
 					IsInsideRectangle(RenderMousePos, ui->viewRec) &&
@@ -2161,6 +2163,21 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 						1, app->mainFont.lineHeight
 					);
 					rs->DrawRectangle(cursorRec, hoverCursorColor);
+				}
+			
+				// +==============================+
+				// |     Draw the File Cursor     |
+				// +==============================+
+				if (GC->showFileCursor && lineIndex == app->lineList.numLines-1)
+				{
+					Color_t fileCursorColor  = ColorLerp(GC->colors.fileCursor1, GC->colors.fileCursor2, (Sin32((platform->programTime/1000.0f)*8.0f) + 1.0f) / 2.0f);
+					v2 skipSize = MeasureString(&app->mainFont, linePntr->chars, linePntr->numChars);
+					rec cursorRec = NewRectangle(
+						currentPos.x + skipSize.x,
+						currentPos.y - app->mainFont.maxExtendUp,
+						1, app->mainFont.lineHeight
+					);
+					rs->DrawRectangle(cursorRec, fileCursorColor);
 				}
 				
 				currentPos.y += lineHeight + GC->lineSpacing;

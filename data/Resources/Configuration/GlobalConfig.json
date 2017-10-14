@@ -28,6 +28,7 @@
 	"show_line_numbers": true,
 	"show_hover_cursor": false,
 	"highlight_hover_line": false,
+	"show_file_cursor": true,
 	
 	"rx_tx_led_delay":     4, //frames
 	"rx_tx_led_ring_size": 1, //frames
@@ -81,10 +82,6 @@
 		},
 		
 		//Neon Color Scheme
-		// {
-		// 	"expression": ".*",
-		// 	"effects": ["foreground_color = FFFFFF"], 
-		// },
 		// {
 		// 	"expression_name": "Has Hex 01",
 		// 	"effects": ["foreground_color = 7F817E"], //Gray
@@ -176,8 +173,8 @@
 		"line_mark_2":      "FFFFFF80",
 		"hover_cursor_1":   "FFFFFFFF",
 		"hover_cursor_2":   "FFFFFF80",
-		"end_cursor_1":     "FFFFFFFF",
-		"end_cursor_2":     "FFFFFF80",
+		"file_cursor_1":    "FFFFFFFF",
+		"file_cursor_2":    "FFFFFF80",
 		
 		"ui_text":           "F8F8F2",
 		"debug_message":     "75715E", //Comment
@@ -228,7 +225,7 @@
 		"button_selected_text":   "000000",
 		"button_selected_border": "000000",
 		
-		"button_ready":           "A6E22E", //Yellow
+		"button_ready":           "A6E22E", //Green
 		"button_ready_text":      "000000",
 		"button_ready_border":    "000000",
 		
@@ -257,32 +254,6 @@
 		// FF6803 - Orange
 		// CFFF01 - Yellow
 		// 6F6F6F - Ui Gray
-		
-		// "background":             "000000",
-		// "foreground":             "202020",
-		// "selection_1":            "0205FF",
-		// "selection_2":            "06FF05",
-		// "regex_match_background": "Black",
-		// "ui_gray_1":              "6F6F6F",
-		// "ui_gray_2":              "6F6F6F",
-		// "ui_gray_3":              "6F6F6F",
-		// "ui_gray_4":              "Black",
-		// "ui_light_gray_1":        "6F6F6F",
-		// "receive_led":            "CFFF01", //Yellow
-		// "transmit_led":           "02AEFF", //Turquoise
-		// "hover_line":             "2D2D2D", //UiGray3
-		// "banner_color_1":         "6F6F6F",
-		// "banner_color_2":         "6F6F6F",
-		// "window_title_bar":       "303030", //UiGray3
-		// "window_background":      "494949", //UiGray1
-		// "window_border":          "B4B4B4", //UiLightGray1
-		// "mark_color_1":           "6F6F6F",
-		// "mark_color_2":           "6F6F6F",
-		// "highlight_1":            "7F817E", //Gray
-		// "highlight_2":            "FF6803", //Orange
-		// "highlight_3":            "FF0604", //Red
-		// "highlight_4":            "02AEFF", //Turquoise
-		// "highlight_5":            "CFFF01", //Yellow
 		
 	},
 }
