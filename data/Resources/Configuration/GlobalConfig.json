@@ -8,15 +8,15 @@
 	"elapsed_banner_time":    15, //secs
 	"elapsed_banner_height":  25, //px
 	
-	"mark_height":      1, //px
+	"mark_height":       1, //px
 	"thick_mark_height": 5, //px
 	
 	"status_message_time": 3, //secs
 	
 	"mouse_click_tolerance":  10, //px
 	"menu_border_thickness":  1,  //px
-	"scrollbar_width":       12, //px
-	"scrollbar_padding":     3,  //px
+	"scrollbar_width":        13, //px
+	"scrollbar_padding":      3,  //px
 	"min_scrollbar_height":   32, //px
 	"min_gutter_width":       30, //px
 	
@@ -220,15 +220,15 @@
 		"button_hover_text":      "FFFFFF",
 		"button_hover_border":    "FFFFFF",
 		
-		"button_press":           "FF0604", //Red
+		"button_press":           "F92665", //Red/Magenta
 		"button_press_text":      "FFFFFF",
 		"button_press_border":    "FFFFFF",
 		
-		"button_selected":        "02AEFF", //Turquoise
+		"button_selected":        "AE81FF", //Purple
 		"button_selected_text":   "000000",
 		"button_selected_border": "000000",
 		
-		"button_ready":           "CFFF01", //Yellow
+		"button_ready":           "A6E22E", //Yellow
 		"button_ready_text":      "000000",
 		"button_ready_border":    "000000",
 		
@@ -241,12 +241,12 @@
 		"main_menu_button_border":       "F8F8F2",
 		
 		"main_menu_button_hover":        "303030",
-		"main_menu_button_hover_icon":   "66D9EF", //Light Blue
-		"main_menu_button_hover_border": "66D9EF", //Light Blue
+		"main_menu_button_hover_icon":   "B4B4B4",
+		"main_menu_button_hover_border": "B4B4B4",
 		
 		"main_menu_button_press":        "303030",
-		"main_menu_button_press_icon":   "F92665", //Red/Magenta
-		"main_menu_button_press_border": "F92665", //Red/Magenta
+		"main_menu_button_press_icon":   "66D9EF", //Light Blue
+		"main_menu_button_press_border": "66D9EF", //Light Blue
 		
 		// +==============================+
 		// |      Neon Color Scheme       |

@@ -1,6 +1,7 @@
 # Application TODO List
 	[?] Implement the rest of the python configuration options
 	[ ] Make a neon color scheme
+	[ ] Make the window exit button rendering dynamic
 	[ ] Open saved file when saving text to file
 	[!] Add a way to close the COM port
 	[ ] Cursor at end of file to indicate where typing will happen?

@@ -2324,11 +2324,11 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 				}
 				else if (app->statusMessageType == StatusMessage_Info)
 				{
-					messageColor = GC->colors.successMessage;
+					messageColor = GC->colors.infoMessage;
 				}
 				else if (app->statusMessageType == StatusMessage_Success)
 				{
-					messageColor = GC->colors.infoMessage;
+					messageColor = GC->colors.successMessage;
 				}
 				else if (app->statusMessageType == StatusMessage_Error)
 				{
