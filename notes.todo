@@ -1,4 +1,5 @@
 # Application TODO List
+	[!] Rename platform function pointers to get rid of Pntr suffix
 	[ ] Fix the format string functions to choose to split open and close symbols differently
 	[ ] Paste from clipboard
 	[ ] Change the status message layout so it pops up as an overlay with formatted text rendering so the whole message always fits nicely

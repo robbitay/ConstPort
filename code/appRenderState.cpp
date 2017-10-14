@@ -387,6 +387,9 @@ void RenderState_t::DrawGradient(rec rectangle, Color_t color1, Color_t color2, 
 	this->SetGradientEnabled(false);
 }
 
+// +==============================+
+// |           DrawLine           |
+// +==============================+
 void RenderState_t::DrawLine(v2 p1, v2 p2, r32 thickness, Color_t color)
 {
 	this->BindTexture(&this->dotTexture);
