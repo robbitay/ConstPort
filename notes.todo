@@ -1,13 +1,14 @@
 # Application TODO List
 	[?] Implement the rest of the python configuration options
-	[!] Finish refining color scheme options to support a good Monokai and Neon theme
+	[ ] Make a neon color scheme
 	[ ] Open saved file when saving text to file
-	[ ] Add a way to close the COM port
+	[!] Add a way to close the COM port
 	[ ] Cursor at end of file to indicate where typing will happen?
 	[ ] Option to enable/disable auto-loading of output file dump
 	[ ] Close running program instances when the application is exiting
 	[ ] Fix rendering of hover line with new backgroundColor functionality
 	
+	[ ] Fix the format string functions to choose to split open and close symbols differently
 	[ ] Paste from clipboard
 	[ ] Change the status message layout so it pops up as an overlay with formatted text rendering so the whole message always fits nicely
 	[ ] Add a string data stack for all input lines to get added to
@@ -27,6 +28,7 @@
 	[ ] Keep old configuration options if new configuration file is unparsable (only on reload)
 	[ ] Add an option to enable commands that can be sent from the python script and interpreted by ConstPort to provide extra functionality
 	
+	[X] Finish refining color scheme options to support a good Monokai and Neon theme
 	[X] Fix the rendering of the assigned port name in the ComPortMenu. 
 	[-] Rename LaunchFile to EditFile
 	[X] Rewrite the way the configuration options are defined using the multiple #include technique

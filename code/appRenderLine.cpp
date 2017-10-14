@@ -88,11 +88,17 @@ void RenderLineGutter(const Line_t* linePntr, v2 position, i32 lineIndex, r32 li
 	UiElements_t* ui = &app->uiElements;
 	RenderState_t* rs = &app->renderState;
 	
+	// +==============================+
+	// |       Draw Line Number       |
+	// +==============================+
 	if (GC->showLineNumbers)
 	{
-		rs->PrintString(NewVec2(position.x, position.y), GC->colors.foreground, 1.0f, "%u", lineIndex+1);
+		rs->PrintString(NewVec2(position.x, position.y), GC->colors.lineNumbers, 1.0f, "%u", lineIndex+1);
 	}
 	
+	// +==============================+
+	// |     Draw Elapsed Banner      |
+	// +==============================+
 	r32 bannerHeight = 0;
 	if (GC->elapsedBannerEnabled)
 	{
@@ -119,7 +125,7 @@ void RenderLineGutter(const Line_t* linePntr, v2 position, i32 lineIndex, r32 li
 							2
 						);
 						bannerHeight = bannerRec.height;
-						rs->DrawRectangle(bannerRec, GC->colors.bannerColor1);
+						rs->DrawRectangle(bannerRec, GC->colors.banner1);
 					}
 					else
 					{
@@ -131,24 +137,22 @@ void RenderLineGutter(const Line_t* linePntr, v2 position, i32 lineIndex, r32 li
 							ui->viewRec.width,
 							bannerHeight
 						);
-						rs->DrawGradient(bannerRec, GC->colors.bannerColor1, GC->colors.bannerColor2, Direction2D_Down);
+						rs->DrawGradient(bannerRec, GC->colors.banner1, GC->colors.banner2, Direction2D_Down);
 						
 						if (linePntr->animProgress > 0.8f)
 						{
-							char timespanStrBuffer[32] = {};
-							u32 timespanStrLength = GetElapsedString(difference, timespanStrBuffer, ArrayCount(timespanStrBuffer));
-							strncpy(&timespanStrBuffer[timespanStrLength], " Passed", ArrayCount(timespanStrBuffer)-1 - timespanStrLength);
-							v2 stringSize = MeasureString(&app->uiFont, timespanStrBuffer);
+							char* timespanStr = TempPrint("%s Passed", GetElapsedString(difference));
+							v2 stringSize = MeasureString(&app->uiFont, timespanStr);
 							v2 stringDrawPos = NewVec2(
 								bannerRec.x + bannerRec.width/2 - stringSize.x/2,
 								bannerRec.y + bannerRec.height/2 - stringSize.y/2 + app->uiFont.maxExtendUp
 							);
 							r32 stringOpacity = (linePntr->animProgress-0.8f) / 0.2f;
-							Color_t stringColor = GC->colors.foreground;
+							Color_t stringColor = GC->colors.bannerText;
 							stringColor.a = (u8)(stringOpacity*255);
 							
 							rs->BindFont(&app->uiFont);
-							rs->DrawString(timespanStrBuffer, stringDrawPos, stringColor);
+							rs->DrawString(timespanStr, stringDrawPos, stringColor);
 							rs->BindFont(&app->mainFont);
 						}
 					}
@@ -216,14 +220,14 @@ void RenderLineGutter(const Line_t* linePntr, v2 position, i32 lineIndex, r32 li
 		}
 		#endif
 		
-		Color_t markColor1 = GC->colors.markColor1;
-		Color_t markColor2 = GC->colors.markColor2;
+		Color_t markColor1 = GC->colors.lineMark1;
+		Color_t markColor2 = GC->colors.lineMark2;
 		if (ui->markIndex == lineIndex &&
 			// IsInsideRectangle(input->mouseStartPos[MouseButton_Left] / GUI_SCALE, ui->gutterRec) &&
 			IsInsideRectangle(RenderMousePos, ui->gutterRec))
 		{
-			markColor1 = GC->colors.highlight2;
-			markColor2 = GC->colors.highlight2;
+			markColor1 = GC->colors.lineMarkHover;
+			markColor2 = GC->colors.lineMarkHover;
 		}
 		
 		if (drawButtonAbove)

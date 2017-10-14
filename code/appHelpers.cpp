@@ -72,12 +72,6 @@ Description:
 		textColor   = GC->colors.buttonReadyText;                                                 \
 		borderColor = GC->colors.buttonReadyBorder;                                               \
 	}                                                                                             \
-	else                                                                                          \
-	{                                                                                             \
-		buttonColor = GC->colors.button;                                                          \
-		textColor   = GC->colors.buttonText;                                                      \
-		borderColor = GC->colors.buttonBorder;                                                    \
-	}                                                                                             \
 	if (IsInsideRectangle(RenderMousePos, rectangle) && !ButtonDown(MouseButton_Left))            \
 	{                                                                                             \
 		buttonColor = ColorMultiply(buttonColor, GC->colors.buttonHover);                         \

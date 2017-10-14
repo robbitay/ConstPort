@@ -45,7 +45,7 @@ struct UiElements_t
 	rec saveButtonRec;
 	rec gotoEndButtonRec;
 	
-	char contextStringBuffer[256];
+	const char* contextString;
 	Texture_t buttonBaseTexture;
 	Texture_t buttonDarkenTexture;
 	Texture_t buttonHighlightTexture;

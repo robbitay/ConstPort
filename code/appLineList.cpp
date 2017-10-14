@@ -31,8 +31,8 @@ Line_t* AddLineToList(LineList_t* lineList, const char* string, u32 stringLength
 	newLine->lineHeight = 0;
 	newLine->timestamp = 0;
 	newLine->flags = 0;
-	newLine->matchColor = GC->colors.foreground;
-	newLine->backgroundColor = GC->colors.background;
+	newLine->matchColor = GC->colors.textDefault;
+	newLine->backgroundColor = GC->colors.textBackground;
 	
 	lineList->numLines++;
 	
@@ -95,7 +95,7 @@ inline void LineReset(LineList_t* lineList, Line_t* line)
 	line->lineHeight = 0;
 	line->timestamp = 0;
 	line->flags = 0;
-	line->matchColor = GC->colors.foreground;
+	line->matchColor = GC->colors.textDefault;
 }
 
 void CreateLineList(LineList_t* lineList, MemoryArena_t* arenaPntr, const char* contents)

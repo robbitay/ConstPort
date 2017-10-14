@@ -18,9 +18,6 @@ struct Menu_t
 	bool allowResize;
 	rec drawRec;
 	r32 titleBarSize;
-	Color_t backgroundColor;
-	Color_t borderColor;
-	Color_t titleBarColor;
 	
 	//NOTE: This can be a pointer to anything the update and render functions require
 	void* specialPntr;

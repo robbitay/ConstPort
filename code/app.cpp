@@ -60,9 +60,9 @@ GlobalConfig_t* GC = nullptr;
 v2 RenderScreenSize = {};
 v2 RenderMousePos = {};
 
-u32 GetElapsedString(u64 timespan, char* outputBuffer, u32 outputBufferSize)
+char* GetElapsedString(u64 timespan)
 {
-	u32 result = 0;
+	char* result = nullptr;
 	
 	u32 numDays = (u32)(timespan/(60*60*24));
 	u32 numHours = (u32)(timespan/(60*60)) - (numDays*24);
@@ -70,23 +70,19 @@ u32 GetElapsedString(u64 timespan, char* outputBuffer, u32 outputBufferSize)
 	u32 numSeconds = (u32)(timespan) - (numDays*60*60*24) - (numHours*60*60) - (numMinutes*60);
 	if (numDays > 0)
 	{
-		result = snprintf(outputBuffer, outputBufferSize-1,
-			"%ud %uh %um %us", numDays, numHours, numMinutes, numSeconds);
+		result = TempPrint("%ud %uh %um %us", numDays, numHours, numMinutes, numSeconds);
 	}
 	else if (numHours > 0)
 	{
-		result = snprintf(outputBuffer, outputBufferSize-1,
-			"%uh %um %us", numHours, numMinutes, numSeconds);
+		result = TempPrint("%uh %um %us", numHours, numMinutes, numSeconds);
 	}
 	else if (numMinutes > 0)
 	{
-		result = snprintf(outputBuffer, outputBufferSize-1,
-			"%um %us", numMinutes, numSeconds);
+		result = TempPrint("%um %us", numMinutes, numSeconds);
 	}
 	else
 	{
-		result = snprintf(outputBuffer, outputBufferSize-1,
-			"%us", numSeconds);
+		result = TempPrint("%us", numSeconds);
 	}
 	
 	return result;
@@ -375,7 +371,9 @@ void ComMenuUpdate(MenuHandler_t* menuHandler, Menu_t* menuPntr)
 			}
 		}
 		
-		//Check for tab Presses
+		// +==============================+
+		// |    Check for tab Presses     |
+		// +==============================+
 		for (u32 tabIndex = 0; tabIndex < numTabs; tabIndex++)
 		{
 			char* tabName = nullptr;
@@ -385,7 +383,8 @@ void ComMenuUpdate(MenuHandler_t* menuHandler, Menu_t* menuPntr)
 			rec tabRec = NewRectangle(tabIndex * tabWidth, 0, tabWidth, tabHeight);
 			tabRec.topLeft += menuPntr->usableRec.topLeft;
 			
-			if (ButtonReleased(MouseButton_Left) && IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, tabRec))
+			if (ButtonReleased(MouseButton_Left) && IsInsideRectangle(RenderMousePos, tabRec) &&
+				IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, tabRec))
 			{
 				if (app->comMenuOptions.name != nullptr) { ArenaPop(&app->mainHeap, app->comMenuOptions.name); }
 				app->comMenuOptions.name = DupStr(tabName, &app->mainHeap);
@@ -393,7 +392,9 @@ void ComMenuUpdate(MenuHandler_t* menuHandler, Menu_t* menuPntr)
 			}
 		}
 		
-		//Check for connect button press
+		// +================================+
+		// | Check for Connect Button Press |
+		// +================================+
 		bool connectButtonPressed = (IsInsideRectangle(RenderMousePos, connectButtonRec) &&
 			ButtonReleased(MouseButton_Left) && IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, connectButtonRec));
 		if (app->comMenuOptions.isOpen &&
@@ -466,8 +467,8 @@ void ComMenuRender(RenderState_t* renderState, MenuHandler_t* menuHandler, Menu_
 		// +==============================+
 		// |  Draw the Baud Rate Options  |
 		// +==============================+
-		renderState->DrawString("Baud Rate", NewVec2(baudRateRec.x, baudRateRec.y - app->uiFont.maxExtendDown), GC->colors.foreground);
-		renderState->DrawRectangle(baudRateRec, GC->colors.foreground);
+		renderState->DrawString("Baud Rate", NewVec2(baudRateRec.x, baudRateRec.y - app->uiFont.maxExtendDown), GC->colors.uiText);
+		renderState->DrawRectangle(baudRateRec, GC->colors.button);
 		for (i32 baudIndex = 0; baudIndex < NumBaudRates; baudIndex++)
 		{
 			const char* baudString = GetBaudRateString((BaudRate_t)baudIndex);
@@ -479,7 +480,9 @@ void ComMenuRender(RenderState_t* renderState, MenuHandler_t* menuHandler, Menu_
 				baudRateRec.width/2 - MeasureString(&app->uiFont, baudString).x/2,
 				app->uiFont.maxExtendUp + baudIndex*app->uiFont.lineHeight);
 			
-			Color_t backColor, textColor, borderColor;
+			Color_t backColor   = GC->colors.button;
+			Color_t textColor   = GC->colors.buttonText;
+			Color_t borderColor = GC->colors.buttonBorder;
 			ButtonColorChoice(backColor, textColor, borderColor, currentRec,
 				((BaudRate_t)baudIndex == app->comMenuOptions.settings.baudRate), false);
 			
@@ -490,8 +493,8 @@ void ComMenuRender(RenderState_t* renderState, MenuHandler_t* menuHandler, Menu_
 		// +==============================+
 		// |   Draw the # Bits Options    |
 		// +==============================+
-		renderState->DrawString("# Bits", NewVec2(numBitsRec.x, numBitsRec.y - app->uiFont.maxExtendDown), {GC->colors.foreground});
-		renderState->DrawRectangle(numBitsRec, GC->colors.foreground);
+		renderState->DrawString("# Bits", NewVec2(numBitsRec.x, numBitsRec.y - app->uiFont.maxExtendDown), GC->colors.uiText);
+		renderState->DrawRectangle(numBitsRec, GC->colors.button);
 		for (i32 bitIndex = 0; bitIndex < 8; bitIndex++)
 		{
 			char numBitsString[4] = {};
@@ -504,7 +507,9 @@ void ComMenuRender(RenderState_t* renderState, MenuHandler_t* menuHandler, Menu_
 				numBitsRec.width/2 - MeasureString(&app->uiFont, numBitsString).x/2,
 				app->uiFont.maxExtendUp + bitIndex*app->uiFont.lineHeight);
 			
-			Color_t backColor, textColor, borderColor;
+			Color_t backColor   = GC->colors.button;
+			Color_t textColor   = GC->colors.buttonText;
+			Color_t borderColor = GC->colors.buttonBorder;
 			ButtonColorChoice(backColor, textColor, borderColor, currentRec,
 				((u8)(bitIndex+1) == app->comMenuOptions.settings.numBits), false);
 			
@@ -515,8 +520,8 @@ void ComMenuRender(RenderState_t* renderState, MenuHandler_t* menuHandler, Menu_
 		// +==============================+
 		// |   Draw the Parity Options    |
 		// +==============================+
-		renderState->DrawString("Parity", NewVec2(parityTypesRec.x, parityTypesRec.y - app->uiFont.maxExtendDown), {GC->colors.foreground});
-		renderState->DrawRectangle(parityTypesRec, GC->colors.foreground);
+		renderState->DrawString("Parity", NewVec2(parityTypesRec.x, parityTypesRec.y - app->uiFont.maxExtendDown), GC->colors.uiText);
+		renderState->DrawRectangle(parityTypesRec, GC->colors.button);
 		for (i32 parityIndex = 0; parityIndex < NumParityTypes; parityIndex++)
 		{
 			const char* parityString = GetParityString((Parity_t)parityIndex);
@@ -528,7 +533,9 @@ void ComMenuRender(RenderState_t* renderState, MenuHandler_t* menuHandler, Menu_
 				parityTypesRec.width/2 - MeasureString(&app->uiFont, parityString).x/2,
 				app->uiFont.maxExtendUp + parityIndex*app->uiFont.lineHeight);
 			
-			Color_t backColor, textColor, borderColor;
+			Color_t backColor   = GC->colors.button;
+			Color_t textColor   = GC->colors.buttonText;
+			Color_t borderColor = GC->colors.buttonBorder;
 			ButtonColorChoice(backColor, textColor, borderColor, currentRec,
 				((Parity_t)parityIndex == app->comMenuOptions.settings.parity), false);
 			
@@ -539,8 +546,8 @@ void ComMenuRender(RenderState_t* renderState, MenuHandler_t* menuHandler, Menu_
 		// +==============================+
 		// |  Draw the Stop Bits Options  |
 		// +==============================+
-		renderState->DrawString("Stop Bits", NewVec2(stopBitsRec.x, stopBitsRec.y - app->uiFont.maxExtendDown), {GC->colors.foreground});
-		renderState->DrawRectangle(stopBitsRec, GC->colors.foreground);
+		renderState->DrawString("Stop Bits", NewVec2(stopBitsRec.x, stopBitsRec.y - app->uiFont.maxExtendDown), GC->colors.uiText);
+		renderState->DrawRectangle(stopBitsRec, GC->colors.button);
 		for (i32 stopBitIndex = 0; stopBitIndex < NumStopBitTypes; stopBitIndex++)
 		{
 			const char* stopBitsString = GetStopBitsString((StopBits_t)stopBitIndex);
@@ -552,7 +559,9 @@ void ComMenuRender(RenderState_t* renderState, MenuHandler_t* menuHandler, Menu_
 				stopBitsRec.width/2 - MeasureString(&app->uiFont, stopBitsString).x/2,
 				app->uiFont.maxExtendUp + stopBitIndex*app->uiFont.lineHeight);
 			
-			Color_t buttonColor, textColor, borderColor;
+			Color_t buttonColor = GC->colors.button;
+			Color_t textColor   = GC->colors.buttonText;
+			Color_t borderColor = GC->colors.buttonBorder;
 			ButtonColorChoice(buttonColor, textColor, borderColor, currentRec,
 				((StopBits_t)stopBitIndex == app->comMenuOptions.settings.stopBits), false);
 			
@@ -575,7 +584,9 @@ void ComMenuRender(RenderState_t* renderState, MenuHandler_t* menuHandler, Menu_
 			v2 stringSize = MeasureFormattedString(&app->uiFont, portUserName, tabWidth - COM_MENU_TAB_PADDING*2, true);
 			v2 stringPosition = tabRec.topLeft + NewVec2(tabRec.width/2, tabRec.height/2 - stringSize.y/2 + app->uiFont.maxExtendUp);
 			
-			Color_t buttonColor, textColor, borderColor;
+			Color_t buttonColor = GC->colors.button;
+			Color_t textColor   = GC->colors.buttonText;
+			Color_t borderColor = GC->colors.buttonBorder;
 			ButtonColorChoice(buttonColor, textColor, borderColor, tabRec,
 				app->comPort.isOpen && strcmp(app->comPort.name, portName) == 0,
 				(app->comMenuOptions.isOpen == true && strcmp(app->comMenuOptions.name, portName) == 0));
@@ -585,7 +596,9 @@ void ComMenuRender(RenderState_t* renderState, MenuHandler_t* menuHandler, Menu_
 			renderState->DrawFormattedString(portUserName, stringPosition, tabWidth - COM_MENU_TAB_PADDING*2, textColor, Alignment_Center, true);
 		}
 		
-		//Draw the connect button
+		// +==============================+
+		// |   Draw the Connect Button    |
+		// +==============================+
 		{
 			const char* connectButtonText = "Connect";
 			v2 textSize = MeasureString(&app->uiFont, connectButtonText);
@@ -601,12 +614,14 @@ void ComMenuRender(RenderState_t* renderState, MenuHandler_t* menuHandler, Menu_
 				if (strcmp(app->comMenuOptions.name, app->comPort.name) != 0) { settingsHaveChanged = true; }
 			}
 			
-			Color_t buttonColor, borderColor, textColor;
+			Color_t buttonColor = GC->colors.button;
+			Color_t textColor   = GC->colors.buttonText;
+			Color_t borderColor = GC->colors.buttonBorder;
 			if (!app->comMenuOptions.isOpen)
 			{
-				buttonColor = GC->colors.uiGray1;
-				textColor   = {Color_Black};
-				borderColor = {Color_Black};
+				buttonColor = GC->colors.buttonDisabled;
+				textColor   = GC->colors.buttonDisabledText;
+				borderColor = GC->colors.buttonDisabledBorder;
 			}
 			else
 			{
@@ -624,20 +639,25 @@ void ContextMenuUpdate(MenuHandler_t* menuHandler, Menu_t* menu)
 {
 	UiElements_t* ui = &app->uiElements;
 	
-	v2 textSize = MeasureString(&app->uiFont, ui->contextStringBuffer);
-	
-	menu->drawRec.size = textSize;
-	menu->drawRec = RectangleInflate(menu->drawRec, CONTEXT_MENU_PADDING);
-	menu->drawRec.topLeft = RenderMousePos + NewVec2(0, -3 - menu->drawRec.height);
+	if (ui->contextString != nullptr)
+	{
+		v2 textSize = MeasureString(&app->uiFont, ui->contextString);
+		menu->drawRec.size = textSize;
+		menu->drawRec = RectangleInflate(menu->drawRec, CONTEXT_MENU_PADDING);
+		menu->drawRec.topLeft = RenderMousePos + NewVec2(0, -3 - menu->drawRec.height);
+	}
 }
 void ContextMenuRender(RenderState_t* renderState, MenuHandler_t* menuHandler, Menu_t* menu)
 {
 	UiElements_t* ui = &app->uiElements;
 	
-	v2 textPos = menu->usableRec.topLeft + NewVec2(CONTEXT_MENU_PADDING, CONTEXT_MENU_PADDING + app->uiFont.maxExtendUp);
-	app->renderState.BindFont(&app->uiFont);
-	app->renderState.DrawString(ui->contextStringBuffer, textPos, GC->colors.foreground);
-	app->renderState.BindFont(&app->mainFont);
+	if (ui->contextString != nullptr)
+	{
+		v2 textPos = menu->usableRec.topLeft + NewVec2(CONTEXT_MENU_PADDING, CONTEXT_MENU_PADDING + app->uiFont.maxExtendUp);
+		app->renderState.BindFont(&app->uiFont);
+		app->renderState.DrawString(ui->contextString, textPos, GC->colors.contextMenuText);
+		app->renderState.BindFont(&app->mainFont);
+	}
 }
 
 #define REAL_LOGO_HEIGHT 75
@@ -652,6 +672,14 @@ void ContextMenuRender(RenderState_t* renderState, MenuHandler_t* menuHandler, M
 
 void AboutMenuUpdate(MenuHandler_t* menuHandler, Menu_t* menu)
 {
+	menu->drawRec.width = 350;
+	if (menu->drawRec.width > RenderScreenSize.x)
+	{
+		menu->drawRec.width = RenderScreenSize.x;
+	}
+	
+	UpdateMenuRecs(menu);
+	
 	const char* aboutInfoString = TempPrint(ABOUT_INFO_FORMAT_STRING,
 		APP_VERSION_MAJOR, APP_VERSION_MINOR, APP_VERSION_BUILD,
 		platform->version.major, platform->version.minor, platform->version.build);
@@ -1252,8 +1280,6 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	Color_t color1 = ColorFromHSV((i32)(platform->programTime*180) % 360, 1.0f, 1.0f);
 	Color_t color2 = ColorFromHSV((i32)(platform->programTime*180 + 125) % 360, 1.0f, 1.0f);
 	Color_t selectionColor = ColorLerp(GC->colors.selection1, GC->colors.selection2, (Sin32((platform->programTime/1000.0f)*6.0f) + 1.0f) / 2.0f);
-	Color_t hoverLocColor  = ColorLerp(GC->colors.foreground, GC->colors.background, (Sin32((platform->programTime/1000.0f)*8.0f) + 1.0f) / 2.0f);
-	// Color_t selectionColor = ColorFromHSV(180, 1.0f, (r32)(Sin32((r32)platform->programTime*5) + 1.0f) / 2.0f);
 	
 	// +==============================+
 	// |  Clear Button Handled Array  |
@@ -1302,19 +1328,18 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 			
 			if (ButtonDown(Button_Shift))
 			{
-				snprintf(ui->contextStringBuffer, sizeof(ui->contextStringBuffer)-1,
-					"%s %u:%02u:%02u%s (%s %s, %u)",
+				ui->contextString = TempPrint("%s %u:%02u:%02u%s (%s %s, %u)",
 					GetDayOfWeekStr(GetDayOfWeek(lineTime)),
 					Convert24HourTo12Hour(lineTime.hour), lineTime.minute, lineTime.second,
 					IsPostMeridian(lineTime.hour) ? "pm" : "am",
-					GetMonthStr((Month_t)lineTime.month), GetDayOfMonthString(lineTime.day), lineTime.year);
+					GetMonthStr((Month_t)lineTime.month), GetDayOfMonthString(lineTime.day), lineTime.year
+				);
 			}
 			else
 			{
 				i64 secondsDifference = SubtractTimes(platform->localTime, lineTime, TimeUnit_Seconds);
 				i64 absDifference = Abs64i(secondsDifference);
-				u32 numCharacters = GetElapsedString((u64)absDifference, &ui->contextStringBuffer[0], ArrayCount(ui->contextStringBuffer));
-				strncpy(&ui->contextStringBuffer[numCharacters], " Ago", sizeof(ui->contextStringBuffer) - numCharacters - 1);
+				ui->contextString = TempPrint("%s Ago", GetElapsedString((u64)absDifference));
 			}
 			
 			contextMenu->show = true;
@@ -2022,8 +2047,9 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	glEnable(GL_BLEND);
 	rs->SetViewport(NewRectangle(0, 0, (r32)platform->screenSize.x, (r32)platform->screenSize.y));
 	
-	glClearColor((GC->colors.background.r/255.f), (GC->colors.background.g/255.f), (GC->colors.background.b/255.f), 1.0f);
-	// glClearColor((200/255.f), (200/255.f), (200/255.f), 1.0f);
+	v4 backgroundColorVec = ColorToVec4(GC->colors.textBackground);
+	glClearColor(backgroundColorVec.x, backgroundColorVec.y, backgroundColorVec.z, backgroundColorVec.w);
+	// glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	
 	rs->BindFrameBuffer(nullptr);
@@ -2067,7 +2093,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 						currentPos.y - app->mainFont.maxExtendUp,
 						ui->viewRec.width, lineHeight
 					);
-					rs->DrawRectangle(backRec, GC->colors.hoverLine);
+					rs->DrawRectangle(backRec, GC->colors.hoverBackground);
 				}
 				
 				RenderLine(linePntr, currentPos, false);
@@ -2077,13 +2103,14 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 					IsInsideRectangle(RenderMousePos, ui->viewRec) &&
 					!ui->mouseInMenu)
 				{
+					Color_t hoverCursorColor  = ColorLerp(GC->colors.hoverCursor1, GC->colors.hoverCursor2, (Sin32((platform->programTime/1000.0f)*8.0f) + 1.0f) / 2.0f);
 					v2 skipSize = MeasureString(&app->mainFont, linePntr->chars, ui->hoverLocation.charIndex);
 					rec cursorRec = NewRectangle(
 						currentPos.x + skipSize.x,
 						currentPos.y - app->mainFont.maxExtendUp,
 						1, app->mainFont.lineHeight
 					);
-					rs->DrawRectangle(cursorRec, hoverLocColor);
+					rs->DrawRectangle(cursorRec, hoverCursorColor);
 				}
 				
 				currentPos.y += lineHeight + GC->lineSpacing;
@@ -2184,7 +2211,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	//+--------------------------------------+
 	//|    Render Line Gutter Elements       |
 	//+--------------------------------------+
-	rs->DrawGradient(ui->gutterRec, GC->colors.uiGray1, GC->colors.uiGray3, Direction2D_Right);
+	rs->DrawGradient(ui->gutterRec, GC->colors.gutter1, GC->colors.gutter2, Direction2D_Right);
 	{
 		i32 firstLine = max(0, ui->firstRenderLine);
 		
@@ -2216,7 +2243,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	{
 		rs->DrawGradient(NewRectangle(ui->scrollBarGutterRec.x - 8, ui->scrollBarGutterRec.y, 8, ui->scrollBarGutterRec.height),
 			{Color_TransparentBlack}, {Color_HalfTransparentBlack}, Direction2D_Right);
-		rs->DrawGradient(ui->scrollBarGutterRec, GC->colors.uiGray3, GC->colors.uiGray2, Direction2D_Right);
+		rs->DrawGradient(ui->scrollBarGutterRec, GC->colors.scrollbarBack1, GC->colors.scrollbarBack2, Direction2D_Right);
 		
 		rec centerScrollBarRec = ui->scrollBarRec;
 		centerScrollBarRec.y += ui->scrollBarRec.width;
@@ -2225,34 +2252,34 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		rec endCapRec = NewRectangle(ui->scrollBarRec.x, ui->scrollBarRec.y + ui->scrollBarRec.height - ui->scrollBarRec.width, ui->scrollBarRec.width, ui->scrollBarRec.width);
 		endCapRec.y += endCapRec.height;
 		endCapRec.height = -endCapRec.height;
-		rs->DrawRectangle(RectangleInflate(centerScrollBarRec, 1), GC->colors.uiGray4);
+		rs->DrawRectangle(RectangleInflate(centerScrollBarRec, 1), GC->colors.scrollbarOutline);
 		rs->BindAlphaTexture(&app->scrollBarEndcapTexture);
-		rs->DrawRectangle(RectangleInflate(startCapRec, 1), GC->colors.uiGray4);
-		rs->DrawRectangle(RectangleInflate(endCapRec, 1), GC->colors.uiGray4);
+		rs->DrawRectangle(RectangleInflate(startCapRec, 1), GC->colors.scrollbarOutline);
+		rs->DrawRectangle(RectangleInflate(endCapRec, 1), GC->colors.scrollbarOutline);
 		
-		rs->DrawGradient(startCapRec, GC->colors.uiGray1, GC->colors.uiGray3, Direction2D_Right);
-		rs->DrawGradient(endCapRec, GC->colors.uiGray1, GC->colors.uiGray3, Direction2D_Right);
+		rs->DrawGradient(startCapRec, GC->colors.scrollbar1, GC->colors.scrollbar2, Direction2D_Right);
+		rs->DrawGradient(endCapRec, GC->colors.scrollbar1, GC->colors.scrollbar2, Direction2D_Right);
 		rs->DisableAlphaTexture();
-		rs->DrawGradient(centerScrollBarRec, GC->colors.uiGray1, GC->colors.uiGray3, Direction2D_Right);
+		rs->DrawGradient(centerScrollBarRec, GC->colors.scrollbar1, GC->colors.scrollbar2, Direction2D_Right);
 	}
 	
 	//+--------------------------------------+
 	//|          Render Status Bar           |
 	//+--------------------------------------+
 	{
-		rs->DrawGradient(ui->statusBarRec, GC->colors.uiGray1, GC->colors.uiGray3, Direction2D_Right);
+		rs->DrawGradient(ui->statusBarRec, GC->colors.statusBar1, GC->colors.statusBar2, Direction2D_Right);
 		// rs->DrawGradient(NewRectangle(10, 10, 300, 300), color1, color2, Direction2D_Right);
 		// rs->PrintString(
-		// 	NewVec2(0, RenderScreenSize.y-app->testFont.maxExtendDown), GC->colors.foreground, 1.0f,
+		// 	NewVec2(0, RenderScreenSize.y-app->testFont.maxExtendDown), GC->colors.uiText, 1.0f,
 		// 	"Heap: %u/%u used", app->mainHeap.used, app->mainHeap.size);
 		// rs->PrintString(
-		// 	NewVec2(0, RenderScreenSize.y-app->testFont.maxExtendDown), GC->colors.foreground, 1.0f,
+		// 	NewVec2(0, RenderScreenSize.y-app->testFont.maxExtendDown), GC->colors.uiText, 1.0f,
 		// 	"Line %d Char %d", ui->hoverLocation.lineNum+1, ui->hoverLocation.charIndex);
 		// rs->PrintString(
-		// 	NewVec2(0, RenderScreenSize.y-app->testFont.maxExtendDown), GC->colors.foreground, 1.0f,
+		// 	NewVec2(0, RenderScreenSize.y-app->testFont.maxExtendDown), GC->colors.uiText, 1.0f,
 		// 	"Offset: %f", ui->firstRenderLineOffset);
 		// rs->PrintString(
-		// 	NewVec2(0, RenderScreenSize.y-app->testFont.maxExtendDown), GC->colors.foreground, 1.0f,
+		// 	NewVec2(0, RenderScreenSize.y-app->testFont.maxExtendDown), GC->colors.uiText, 1.0f,
 		// 	"%s %u:%02u%s (%s %s, %u) [%u]",
 		// 	GetDayOfWeekStr(GetDayOfWeek(platform->localTime)),
 		// 	Convert24HourTo12Hour(platform->localTime.hour), platform->localTime.minute,
@@ -2260,10 +2287,10 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		// 	GetMonthStr((Month_t)platform->localTime.month), GetDayOfMonthString(platform->localTime.day), platform->localTime.year,
 		// 	GetTimestamp(platform->localTime));
 		// rs->PrintString(
-		// 	NewVec2(0, RenderScreenSize.y-app->testFont.maxExtendDown), GC->colors.foreground, 1.0f,
+		// 	NewVec2(0, RenderScreenSize.y-app->testFont.maxExtendDown), GC->colors.uiText, 1.0f,
 		// 	"First: %d Last: %d", firstLine, lastLine);
 		// PrintString(app, app->testFont,
-		// 	NewVec2(0, RenderScreenSize.y-app->testFont.maxExtendDown), GC->colors.foreground, 1.0f,
+		// 	NewVec2(0, RenderScreenSize.y-app->testFont.maxExtendDown), GC->colors.uiText, 1.0f,
 		// 	"%u Lines Offset: %f (%fpx long)", app->lineList.numLines, ui->scrollOffset, ui->fileHeight);
 		// Line_t* linePntr = GetLineAt(&app->lineList, ui->hoverLocation.lineNum);
 		// if (linePntr != nullptr)
@@ -2272,7 +2299,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		// 	Line_t* lineAfter = (Line_t*)linePntr->header.nextItem;
 		
 		// 	rs->PrintString(
-		// 		NewVec2(0, RenderScreenSize.y-app->testFont.maxExtendDown), GC->colors.foreground, 1.0f,
+		// 		NewVec2(0, RenderScreenSize.y-app->testFont.maxExtendDown), GC->colors.uiText, 1.0f,
 		// 		"%08X <- #%u %08X -> %08X", lineBefore, ui->hoverLocation.lineNum, linePntr, lineAfter);
 		// }
 		
@@ -2289,23 +2316,23 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 			i64 secondsDifference = SubtractTimes(platform->localTime, app->statusMessageTime, TimeUnit_Seconds);
 			if (secondsDifference >= 0 && secondsDifference < GC->statusMessageTime)
 			{
-				Color_t messageColor = GC->colors.foreground;
+				Color_t messageColor = GC->colors.uiText;
 				
 				if (app->statusMessageType == StatusMessage_Debug)
 				{
-					messageColor = GC->colors.uiGray4;
+					messageColor = GC->colors.debugMessage;
 				}
 				else if (app->statusMessageType == StatusMessage_Info)
 				{
-					messageColor = GC->colors.foreground;
+					messageColor = GC->colors.successMessage;
 				}
 				else if (app->statusMessageType == StatusMessage_Success)
 				{
-					messageColor = GC->colors.highlight2;
+					messageColor = GC->colors.infoMessage;
 				}
 				else if (app->statusMessageType == StatusMessage_Error)
 				{
-					messageColor = GC->colors.highlight3;
+					messageColor = GC->colors.errorMessage;
 				}
 				
 				rs->BindFont(&app->uiFont);
@@ -2318,24 +2345,13 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		// |     Draw Goto End Button     |
 		// +==============================+
 		{
-			Color_t buttonColor = GC->colors.uiGray1;
-			Color_t outlineColor = GC->colors.background;
+			Color_t buttonColor = GC->colors.buttonDisabled;
+			Color_t borderColor = GC->colors.buttonDisabledBorder;
+			Color_t textColor   = GC->colors.buttonDisabledText;
 			
-			if (IsInsideRectangle(RenderMousePos, ui->gotoEndButtonRec))
-			{
-				if (ButtonDown(MouseButton_Left) &&
-					IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, ui->gotoEndButtonRec))
-				{
-					buttonColor = GC->colors.highlight3;
-					outlineColor = GC->colors.foreground;
-				}
-				else
-				{
-					buttonColor = GC->colors.uiLightGray1;
-				}
-			}
+			ButtonColorChoice(buttonColor, textColor, borderColor, ui->gotoEndButtonRec, false, false);
 			
-			rs->DrawButton(ui->gotoEndButtonRec, buttonColor, outlineColor);
+			rs->DrawButton(ui->gotoEndButtonRec, buttonColor, borderColor);
 		}
 		
 		// +==============================+
@@ -2348,7 +2364,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 			rs->BindFont(&app->uiFont);
 			rs->DrawString(comPortUserName,
 				NewVec2(ui->gotoEndButtonRec.x - comNameSize.x - 5, RenderScreenSize.y-app->uiFont.maxExtendDown),
-				GC->colors.foreground, 1.0f);
+				GC->colors.uiText, 1.0f);
 			rs->BindFont(&app->mainFont);
 		}
 	}
@@ -2356,8 +2372,8 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	//+--------------------------------------+
 	//|           Render Main Menu           |
 	//+--------------------------------------+
-	rs->DrawGradient(ui->mainMenuRec, GC->colors.uiGray1, GC->colors.uiGray3, Direction2D_Down);
-	rs->DrawRectangle(NewRectangle(0, ui->mainMenuRec.height-1, ui->mainMenuRec.width, 1), GC->colors.uiGray4);
+	rs->DrawGradient(ui->mainMenuRec, GC->colors.mainMenu1, GC->colors.mainMenu2, Direction2D_Down);
+	// rs->DrawRectangle(NewRectangle(0, ui->mainMenuRec.height-1, ui->mainMenuRec.width, 1), GC->colors.uiGray4); //TODO: Reimplement line at bottom of menu?
 	
 	r32 mainMenuButtonsRight = 0;
 	for (u32 bIndex = 0; bIndex < NumMainMenuButtons; bIndex++)
@@ -2389,28 +2405,26 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		
 		v2 buttonCenter = buttonRec.topLeft + buttonRec.size/2;
 		r32 buttonRadius = buttonRec.width/2;
-		Color_t centerColor = GC->colors.uiGray2;
-		Color_t outlineColor = GC->colors.uiLightGray1;
-		Color_t iconColor = GC->colors.foreground;
+		Color_t centerColor = GC->colors.mainMenuButton;
+		Color_t borderColor = GC->colors.mainMenuButtonIcon;
+		Color_t iconColor   = GC->colors.mainMenuButtonBorder;
 		
-		Color_t nothing;
-		ButtonColorChoice(iconColor, nothing, nothing, buttonRec, false, false);
-		outlineColor = iconColor;
-		
-		// if (Vec2Length(RenderMousePos - buttonCenter) < buttonRadius)
-		// {
-		// 	outlineColor = GC->colors.uiLightGray1;
-		// 	iconColor = GC->colors.uiLightGray1;
+		if (Vec2Length(RenderMousePos - buttonCenter) < buttonRadius)
+		{
+			centerColor = GC->colors.mainMenuButtonHover;
+			borderColor = GC->colors.mainMenuButtonHoverBorder;
+			iconColor   = GC->colors.mainMenuButtonHoverIcon;
 			
-		// 	v2 mouseStartPos = input->mouseStartPos[MouseButton_Left]/GUI_SCALE;
-		// 	if (ButtonDown(MouseButton_Left) && Vec2Length(mouseStartPos - buttonCenter) < buttonRadius)
-		// 	{
-		// 		outlineColor = GC->colors.highlight3;
-		// 		iconColor = GC->colors.highlight3;
-		// 	}
-		// }
+			v2 mouseStartPos = input->mouseStartPos[MouseButton_Left]/GUI_SCALE;
+			if (ButtonDown(MouseButton_Left) && Vec2Length(mouseStartPos - buttonCenter) < buttonRadius)
+			{
+				centerColor = GC->colors.mainMenuButtonPress;
+				borderColor = GC->colors.mainMenuButtonPressBorder;
+				iconColor   = GC->colors.mainMenuButtonPressIcon;
+			}
+		}
 		
-		rs->DrawCircle(buttonCenter, buttonRadius, outlineColor);
+		rs->DrawCircle(buttonCenter, buttonRadius, borderColor);
 		rs->DrawCircle(buttonCenter, buttonRadius-1, centerColor);
 		
 		rs->BindTexture(&ui->buttonTextures[bIndex]);
@@ -2436,22 +2450,22 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		
 		v2 rxLedCenter = ui->rxLedRec.topLeft + ui->rxLedRec.size/2;
 		r32 rxLedRadius = ui->rxLedRec.width/4 * 3;
-		Color_t centerColor = GC->colors.uiGray4;
+		Color_t centerColor = GC->colors.receiveLed;
 		if ((app->rxShiftRegister&0x80) > 0 ||
 			(app->rxShiftRegister&0x40) > 0)
 		{
-			centerColor = GC->colors.receiveLed;
+			centerColor = GC->colors.receiveLedActive;
 		}
 		if (!GC->circularRxLed) { rs->DrawRectangle(ui->rxLedRec, centerColor); }
 		else                    { rs->DrawCircle(rxLedCenter, rxLedRadius, centerColor); }
 		
 		v2 txLedCenter = ui->txLedRec.topLeft + ui->txLedRec.size/2;
 		r32 txLedRadius = ui->txLedRec.width/4 * 3;
-		centerColor = GC->colors.uiGray4;
+		centerColor = GC->colors.transmitLed;
 		if ((app->txShiftRegister&0x80) > 0 ||
 			(app->txShiftRegister&0x40) > 0)
 		{
-			centerColor = GC->colors.transmitLed;
+			centerColor = GC->colors.transmitLedActive;
 		}
 		if (!GC->circularTxLed) { rs->DrawRectangle(ui->txLedRec, centerColor); }
 		else                    { rs->DrawCircle(txLedCenter, txLedRadius, centerColor); }
@@ -2465,13 +2479,13 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 				if (GC->circularRxLed == false)
 				{
 					rec deflatedRec = RectangleInflate(ui->rxLedRec, (r32)(ringNumber+1) * GC->rxTxLedRingSize);
-					rs->DrawButton(deflatedRec, {Color_TransparentBlack}, GC->colors.receiveLed, (r32)GC->rxTxLedRingSize);
+					rs->DrawButton(deflatedRec, {Color_TransparentBlack}, GC->colors.receiveLedRing, (r32)GC->rxTxLedRingSize);
 				}
 				else
 				{
 					r32 radius = rxLedRadius -0.2f + (ringNumber+1) * GC->rxTxLedRingSize;
 					r32 innerRadius = rxLedRadius -0.2f + ringNumber * GC->rxTxLedRingSize - 1.8f;
-					rs->DrawDonut(rxLedCenter, radius, innerRadius, GC->colors.receiveLed);
+					rs->DrawDonut(rxLedCenter, radius, innerRadius, GC->colors.receiveLedRing);
 				}
 			}
 			
@@ -2480,13 +2494,13 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 				if (GC->circularTxLed == false)
 				{
 					rec deflatedRec = RectangleInflate(ui->txLedRec, (r32)(ringNumber+1) * GC->rxTxLedRingSize);
-					rs->DrawButton(deflatedRec, {Color_TransparentBlack}, GC->colors.transmitLed, (r32)GC->rxTxLedRingSize);
+					rs->DrawButton(deflatedRec, {Color_TransparentBlack}, GC->colors.transmitLedRing, (r32)GC->rxTxLedRingSize);
 				}
 				else
 				{
 					r32 radius = txLedRadius -0.2f + (ringNumber+1) * GC->rxTxLedRingSize;
 					r32 innerRadius = txLedRadius -0.2f + ringNumber * GC->rxTxLedRingSize - 1.8f;
-					rs->DrawDonut(txLedCenter, radius, innerRadius, GC->colors.transmitLed);
+					rs->DrawDonut(txLedCenter, radius, innerRadius, GC->colors.transmitLedRing);
 				}
 			}
 		}
@@ -2503,7 +2517,9 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 			ui->clearButtonRec.y + ui->clearButtonRec.height/2 + app->uiFont.lineHeight/2 - app->uiFont.maxExtendDown
 		);
 		
-		Color_t buttonColor, textColor, borderColor;
+		Color_t buttonColor = GC->colors.button;
+		Color_t textColor   = GC->colors.buttonText;
+		Color_t borderColor = GC->colors.buttonBorder;
 		ButtonColorChoice(buttonColor, textColor, borderColor, ui->clearButtonRec, false, false);
 		
 		rs->DrawButton(ui->clearButtonRec, buttonColor, borderColor);
@@ -2549,7 +2565,9 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 			ui->saveButtonRec.y + ui->saveButtonRec.height/2 + app->uiFont.lineHeight/2 - app->uiFont.maxExtendDown
 		);
 		
-		Color_t buttonColor, textColor, borderColor;
+		Color_t buttonColor = GC->colors.button;
+		Color_t textColor   = GC->colors.buttonText;
+		Color_t borderColor = GC->colors.buttonBorder;
 		ButtonColorChoice(buttonColor, textColor, borderColor, ui->saveButtonRec, false, false);
 		
 		rs->DrawButton(ui->saveButtonRec, buttonColor, borderColor);

@@ -69,46 +69,98 @@ Date:   09\26\2017
 	
 	#if defined(ConfigurationColor)
 	
-	ConfigurationColor("background",             background,           NewColor(33, 33, 33, 255));
-	ConfigurationColor("foreground",             foreground,           {0xFFF8F8F2});
-	ConfigurationColor("highlight_1",            highlight1,           NewColor(117, 113, 94, 255));  //Comment Color
-	ConfigurationColor("highlight_2",            highlight2,           NewColor(166, 226, 46, 255));  //Green Color
-	ConfigurationColor("highlight_3",            highlight3,           NewColor(249, 38, 101, 255));  //Red/Magenta
-	ConfigurationColor("highlight_4",            highlight4,           NewColor(174, 129, 255, 255)); //Purple
-	ConfigurationColor("highlight_5",            highlight5,           NewColor(102, 217, 239, 255)); //Light Blue
-	ConfigurationColor("selection_1",            selection1,           {Color_White});
-	ConfigurationColor("selection_2",            selection2,           {Color_White});
-	ConfigurationColor("regex_match_background", regexMatchBackground, {Color_Black});
-	ConfigurationColor("ui_gray_1",              uiGray1,              {0xFF494949});
-	ConfigurationColor("ui_gray_2",              uiGray2,              {0xFF404040});
-	ConfigurationColor("ui_gray_3",              uiGray3,              {0xFF303030});
-	ConfigurationColor("ui_gray_4",              uiGray4,              {0xFF101010});
-	ConfigurationColor("ui_light_gray_1",        uiLightGray1,         NewColor(180, 180, 180, 255));
-	ConfigurationColor("receive_led",            receiveLed,           globalConfig->colors.highlight3);
-	ConfigurationColor("transmit_led",           transmitLed,          globalConfig->colors.highlight4);
-	ConfigurationColor("window_title_bar",       windowTitleBar,       globalConfig->colors.uiGray3);
-	ConfigurationColor("window_background",      windowBackground,     globalConfig->colors.uiGray1);
-	ConfigurationColor("window_border",          windowBorder,         globalConfig->colors.uiLightGray1);
-	ConfigurationColor("hover_line",             hoverLine,            globalConfig->colors.uiGray3);
-	ConfigurationColor("mark_color_1",           markColor1,           NewColor(255, 255, 255, 128));
-	ConfigurationColor("mark_color_2",           markColor2,           NewColor(255, 255, 255, 0));
-	ConfigurationColor("banner_color_1",         bannerColor1,         globalConfig->colors.uiGray1);
-	ConfigurationColor("banner_color_2",         bannerColor2,         globalConfig->colors.uiGray3);
-	ConfigurationColor("button",                 button,               {Color_White});
-	ConfigurationColor("button_text",            buttonText,           {Color_Black});
-	ConfigurationColor("button_border",          buttonBorder,         {Color_Black});
-	ConfigurationColor("button_hover",           buttonHover,          globalConfig->colors.uiLightGray1);
-	ConfigurationColor("button_hover_text",      buttonHoverText,      {Color_Black});
-	ConfigurationColor("button_hover_border",    buttonHoverBorder,    {Color_Black});
-	ConfigurationColor("button_press",           buttonPress,          globalConfig->colors.highlight3);
-	ConfigurationColor("button_press_text",      buttonPressText,      {Color_White});
-	ConfigurationColor("button_press_border",    buttonPressBorder,    {Color_White});
-	ConfigurationColor("button_selected",        buttonSelected,       globalConfig->colors.highlight4);
-	ConfigurationColor("button_selected_text",   buttonSelectedText,   {Color_White});
-	ConfigurationColor("button_selected_border", buttonSelectedBorder, {Color_White});
-	ConfigurationColor("button_ready",           buttonReady,          globalConfig->colors.highlight2);
-	ConfigurationColor("button_ready_text",      buttonReadyText,      {Color_White});
-	ConfigurationColor("button_ready_border",    buttonReadyBorder,    {Color_White});
+	// 0x75715EFF - Comment
+	// 0xA6E22EFF - Green
+	// 0xF92665FF - Red/Magenta
+	// 0xAE81FFFF - Purple
+	// 0x66D9EFFF - Light Blue
+	// 0x494949FF - Ui Gray 1
+	// 0x404040FF - Ui Gray 2
+	// 0x303030FF - Ui Gray 3
+	// 0x101010FF - Ui Gray 4
+	// 0xB4B4B4FF - Ui Light Gray 1
+	ConfigurationColor("text_default",           textDefault,          {0xF8F8F2FF});
+	ConfigurationColor("text_background",        textBackground,       {0x212121FF});
+	ConfigurationColor("hover_background",       hoverBackground,      {0x000000FF});
+	ConfigurationColor("selection_1",            selection1,           {0xFFFFFFFF});
+	ConfigurationColor("selection_2",            selection2,           {0x808080FF});
+	ConfigurationColor("banner_1",               banner1,              {0x494949FF});
+	ConfigurationColor("banner_2",               banner2,              {0x303030FF});
+	ConfigurationColor("banner_text",            bannerText,           {0xF8F8F2FF});
+	ConfigurationColor("line_mark_hover",        lineMarkHover,        {0xA6E22EFF}); //Green
+	ConfigurationColor("line_mark_1",            lineMark1,            {0xFFFFFFFF});
+	ConfigurationColor("line_mark_2",            lineMark2,            {0xFFFFFF80});
+	ConfigurationColor("hover_cursor_1",         hoverCursor1,         {0xFFFFFFFF});
+	ConfigurationColor("hover_cursor_2",         hoverCursor2,         {0xFFFFFF80});
+	ConfigurationColor("end_cursor_1",           endCursor1,           {0xFFFFFFFF});
+	ConfigurationColor("end_cursor_2",           endCursor2,           {0xFFFFFF80});
+	
+	ConfigurationColor("ui_text",                uiText,               {0xF8F8F2FF});
+	ConfigurationColor("debug_message",          debugMessage,         {0x75715EFF}); //Comment
+	ConfigurationColor("success_message",        successMessage,       {0xA6E22EFF}); //Green
+	ConfigurationColor("info_message",           infoMessage,          {0x66D9EFFF}); //Light Blue
+	ConfigurationColor("error_message",          errorMessage,         {0xF92665FF}); //Red/Magenta
+	ConfigurationColor("line_numbers",           lineNumbers,          {0xF8F8F2FF});
+	ConfigurationColor("scrollbar_outline",      scrollbarOutline,     {0x000000FF});
+	ConfigurationColor("scrollbar_1",            scrollbar1,           {0x494949FF});
+	ConfigurationColor("scrollbar_2",            scrollbar2,           {0x303030FF});
+	ConfigurationColor("scrollbar_back_1",       scrollbarBack1,       {0x101010FF});
+	ConfigurationColor("scrollbar_back_2",       scrollbarBack2,       {0x101010FF});
+	ConfigurationColor("gutter_1",               gutter1,              {0x494949FF});
+	ConfigurationColor("gutter_2",               gutter2,              {0x303030FF});
+	ConfigurationColor("status_bar_1",           statusBar1,           {0x303030FF});
+	ConfigurationColor("status_bar_2",           statusBar2,           {0x303030FF});
+	ConfigurationColor("main_menu_1",            mainMenu1,            {0x494949FF});
+	ConfigurationColor("main_menu_2",            mainMenu2,            {0x303030FF});
+	
+	ConfigurationColor("window_outline",         windowOutline,        {0xFFFFFFFF});
+	ConfigurationColor("window_titlebar",        windowTitlebar,       {0x101010FF});
+	ConfigurationColor("window_background_1",    windowBackground1,    {0x494949FF});
+	ConfigurationColor("window_background_2",    windowBackground2,    {0x303030FF});
+	ConfigurationColor("window_exit_back",       windowExitBack,       {0xFF0000FF});
+	ConfigurationColor("window_exit_icon",       windowExitIcon,       {0xFFFFFFFF});
+	ConfigurationColor("context_menu_text",      contextMenuText,      {0xF8F8F2FF});
+	
+	ConfigurationColor("receive_led",            receiveLed,           {0x000000FF});
+	ConfigurationColor("receive_led_active",     receiveLedActive,     {0xF92665FF}); //Red/Magenta
+	ConfigurationColor("receive_led_ring",       receiveLedRing,       {0xF92665FF}); //Red/Magenta
+	ConfigurationColor("transmit_led",           transmitLed,          {0x000000FF});
+	ConfigurationColor("transmit_led_active",    transmitLedActive,    {0xAE81FFFF}); //Purple
+	ConfigurationColor("transmit_led_ring",      transmitLedRing,      {0xAE81FFFF}); //Purple
+	
+	ConfigurationColor("button",                 button,               {0xFFFFFFFF});
+	ConfigurationColor("button_text",            buttonText,           {0x000000FF});
+	ConfigurationColor("button_border",          buttonBorder,         {0x000000FF});
+	
+	ConfigurationColor("button_hover",           buttonHover,          {0xB4B4B4FF}); //UiLightGray1
+	ConfigurationColor("button_hover_text",      buttonHoverText,      {0xFFFFFFFF});
+	ConfigurationColor("button_hover_border",    buttonHoverBorder,    {0xFFFFFFFF});
+	
+	ConfigurationColor("button_press",           buttonPress,          {0xFF0604FF}); //Red
+	ConfigurationColor("button_press_text",      buttonPressText,      {0xFFFFFFFF});
+	ConfigurationColor("button_press_border",    buttonPressBorder,    {0xFFFFFFFF});
+	
+	ConfigurationColor("button_selected",        buttonSelected,       {0x02AEFFFF}); //Turquoise
+	ConfigurationColor("button_selected_text",   buttonSelectedText,   {0x000000FF});
+	ConfigurationColor("button_selected_border", buttonSelectedBorder, {0x000000FF});
+	
+	ConfigurationColor("button_ready",           buttonReady,          {0xCFFF01FF}); //Yellow
+	ConfigurationColor("button_ready_text",      buttonReadyText,      {0x000000FF});
+	ConfigurationColor("button_ready_border",    buttonReadyBorder,    {0x000000FF});
+	
+	ConfigurationColor("button_disabled",        buttonDisabled,       {0x494949FF});
+	ConfigurationColor("button_disabled_text",   buttonDisabledText,   {0x000000FF});
+	ConfigurationColor("button_disabled_border", buttonDisabledBorder, {0x000000FF});
+	
+	ConfigurationColor("main_menu_button",              mainMenuButton,            {0x494949FF});
+	ConfigurationColor("main_menu_button_icon",         mainMenuButtonIcon,        {0xB4B4B4FF});
+	ConfigurationColor("main_menu_button_border",       mainMenuButtonBorder,      {0xB4B4B4FF});
+	ConfigurationColor("main_menu_button_hover",        mainMenuButtonHover,       {0x494949FF});
+	ConfigurationColor("main_menu_button_hover_icon",   mainMenuButtonHoverIcon,   {0x66D9EFFF}); //Light Blue
+	ConfigurationColor("main_menu_button_hover_border", mainMenuButtonHoverBorder, {0x66D9EFFF}); //Light Blue
+	ConfigurationColor("main_menu_button_press",        mainMenuButtonPress,       {0x494949FF});
+	ConfigurationColor("main_menu_button_press_icon",   mainMenuButtonPressIcon,   {0xF92665FF}); //Red/Magenta
+	ConfigurationColor("main_menu_button_press_border", mainMenuButtonPressBorder, {0xF92665FF}); //Red/Magenta
 	
 	#else
 	#error ConfigurationColor macro must be defined before every inclusion of appConfigOptions.h \

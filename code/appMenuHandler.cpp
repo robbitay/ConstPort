@@ -49,9 +49,6 @@ Menu_t* AddMenu(MenuHandler_t* menuHandlerPntr, const char* name, rec drawRec,
 	newMenu->allowMovement = true;
 	newMenu->allowResize = false;
 	newMenu->titleBarSize = MENU_DEFAULT_TITLEBAR_SIZE;
-	newMenu->backgroundColor = GC->colors.windowBackground;
-	newMenu->borderColor     = GC->colors.windowBorder;
-	newMenu->titleBarColor   = GC->colors.windowTitleBar;
 	
 	newMenu->specialPntr = specialPntr;
 	newMenu->updateFunctionPntr = (void*)updateFunctionPntr;
@@ -186,13 +183,10 @@ void MenuHandlerDrawMenus(RenderState_t* renderState, MenuHandler_t* menuHandler
 		{
 			UpdateMenuRecs(menuPntr);
 			
-			menuPntr->titleBarColor = GC->colors.uiGray3;
-			menuPntr->backgroundColor = GC->colors.uiGray1;
-			menuPntr->borderColor = GC->colors.uiLightGray1;
 			
-			renderState->DrawGradient(menuPntr->drawRec, menuPntr->backgroundColor, GC->colors.uiGray2, Direction2D_Down);
+			renderState->DrawGradient(menuPntr->drawRec, GC->colors.windowBackground1, GC->colors.windowBackground2, Direction2D_Down);
 			
-			renderState->DrawRectangle(menuPntr->titleBarRec, menuPntr->titleBarColor);
+			renderState->DrawRectangle(menuPntr->titleBarRec, GC->colors.windowTitlebar);
 			
 			if (menuPntr->titleBarSize > 0)
 			{
@@ -219,32 +213,32 @@ void MenuHandlerDrawMenus(RenderState_t* renderState, MenuHandler_t* menuHandler
 				menuPntr->drawRec.y + menuPntr->titleBarRec.height - GC->menuBorderThickness,
 				menuPntr->drawRec.width,
 				(r32)GC->menuBorderThickness),
-				GC->colors.uiGray4);
+				GC->colors.windowTitlebar);
 			
 			renderState->DrawRectangle(NewRectangle(
 				menuPntr->drawRec.x,
 				menuPntr->drawRec.y,
 				menuPntr->drawRec.width,
 				(r32)GC->menuBorderThickness),
-				menuPntr->borderColor);
+				GC->colors.windowOutline);
 			renderState->DrawRectangle(NewRectangle(
 				menuPntr->drawRec.x,
 				menuPntr->drawRec.y,
 				(r32)GC->menuBorderThickness,
 				menuPntr->drawRec.height),
-				menuPntr->borderColor);
+				GC->colors.windowOutline);
 			renderState->DrawRectangle(NewRectangle(
 				menuPntr->drawRec.x,
 				menuPntr->drawRec.y + menuPntr->drawRec.height - GC->menuBorderThickness,
 				menuPntr->drawRec.width,
 				(r32)GC->menuBorderThickness),
-				menuPntr->borderColor);
+				GC->colors.windowOutline);
 			renderState->DrawRectangle(NewRectangle(
 				menuPntr->drawRec.x + menuPntr->drawRec.width - GC->menuBorderThickness,
 				menuPntr->drawRec.y,
 				(r32)GC->menuBorderThickness,
 				menuPntr->drawRec.height),
-				menuPntr->borderColor);
+				GC->colors.windowOutline);
 			
 			if (menuPntr->renderFunctionPntr != nullptr)
 			{
