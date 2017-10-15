@@ -111,14 +111,6 @@ struct FrameBuffer_t
 
 typedef enum
 {
-	StatusMessage_Debug,
-	StatusMessage_Info,
-	StatusMessage_Success,
-	StatusMessage_Error,
-} StatusMessage_t;
-
-typedef enum
-{
 	Alignment_Left,
 	Alignment_Center,
 	Alignment_Right,

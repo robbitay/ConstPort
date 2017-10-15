@@ -52,4 +52,29 @@ struct UiElements_t
 	Texture_t buttonTextures[NumMainMenuButtons];
 };
 
+struct Checkbox_t
+{
+	rec drawRec;
+	char label[256];
+	Color_t activeColor;
+	
+	bool enabled;
+	bool checked;
+	u64  changeTime;
+	bool mouseHasLeft;
+};
+
+Checkbox_t NewCheckbox(rec drawRec, const char* label, Color_t activeColor)
+{
+	Checkbox_t result = {};
+	
+	result.enabled = true;
+	result.mouseHasLeft = true;
+	result.drawRec = drawRec;
+	result.activeColor = activeColor;
+	BufferPrint(result.label, label);
+	
+	return result;
+}
+
 #endif // _APP_UI_HANDLER_H

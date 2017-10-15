@@ -8,7 +8,6 @@ Description:
 */
 
 
-#include <stdarg.h>
 #define USE_ASSERT_FAILURE_FUNCTION true
 #if WINDOWS_COMPILATION
 #include "win32_assert.h"
@@ -88,24 +87,40 @@ char* GetElapsedString(u64 timespan)
 	return result;
 }
 
-void StatusMessage(const char* functionName, StatusMessage_t messageType, const char* formatString, ...)
-{
-	ClearArray(app->statusMessage);
-	va_list args;
-	va_start(args, formatString);
-	size_t length = vsnprintf(app->statusMessage, ArrayCount(app->statusMessage), formatString, args);
-	app->statusMessage[ArrayCount(app->statusMessage)-1] = '\0';
-	va_end(args);
-	app->statusMessageType = messageType;
-	app->statusMessageTime = platform->localTime;
-	
-	DEBUG_PrintLine("[%s]: %s", functionName, app->statusMessage);
-}
+#define StatusMessage(functionName, messageColor, duration, formatString, ...) do \
+{                                                                                 \
+	ClearArray(app->statusMessage);                                               \
+	BufferPrint(app->statusMessage, formatString, ##__VA_ARGS__);                 \
+	app->statusColor = messageColor;                                              \
+	app->statusDuration = duration;                                               \
+	app->statusTime = platform->programTime;                                      \
+	DEBUG_PrintLine("[%s] Status: %s", functionName, app->statusMessage);         \
+} while(0)
 
-#define StatusDebug(formatString, ...)   StatusMessage(__func__, StatusMessage_Debug,   formatString, ##__VA_ARGS__)
-#define StatusInfo(formatString, ...)    StatusMessage(__func__, StatusMessage_Info,    formatString, ##__VA_ARGS__)
-#define StatusSuccess(formatString, ...) StatusMessage(__func__, StatusMessage_Success, formatString, ##__VA_ARGS__)
-#define StatusError(formatString, ...)   StatusMessage(__func__, StatusMessage_Error,   formatString, ##__VA_ARGS__)
+#define PopupMessage(functionName, messageColor, duration, formatString, ...) do \
+{                                                                                \
+	ClearArray(app->popupMessage);                                               \
+	BufferPrint(app->popupMessage, formatString, ##__VA_ARGS__);                 \
+	app->popupColor = messageColor;                                              \
+	app->popupDuration = duration;                                               \
+	app->popupTime = platform->programTime;                                      \
+	DEBUG_PrintLine("[%s] Popup: %s", functionName, app->popupMessage);          \
+} while(0)
+
+#define StatusDebug(formatString, ...)   StatusMessage(__func__, GC->colors.debugMessage,   STATUS_MESSAGE_DURATION, formatString, ##__VA_ARGS__)
+#define StatusInfo(formatString, ...)    StatusMessage(__func__, GC->colors.infoMessage,    STATUS_MESSAGE_DURATION, formatString, ##__VA_ARGS__)
+#define StatusSuccess(formatString, ...) StatusMessage(__func__, GC->colors.successMessage, STATUS_MESSAGE_DURATION, formatString, ##__VA_ARGS__)
+#define StatusError(formatString, ...)   StatusMessage(__func__, GC->colors.errorMessage,   STATUS_MESSAGE_DURATION, formatString, ##__VA_ARGS__)
+
+#define PopupDebug(formatString, ...)   PopupMessage(__func__, GC->colors.debugMessage,   POPUP_MESSAGE_DURATION, formatString, ##__VA_ARGS__)
+#define PopupInfo(formatString, ...)    PopupMessage(__func__, GC->colors.infoMessage,    POPUP_MESSAGE_DURATION, formatString, ##__VA_ARGS__)
+#define PopupSuccess(formatString, ...) PopupMessage(__func__, GC->colors.successMessage, POPUP_MESSAGE_DURATION, formatString, ##__VA_ARGS__)
+#define PopupError(formatString, ...)   PopupMessage(__func__, GC->colors.errorMessage,   POPUP_MESSAGE_DURATION, formatString, ##__VA_ARGS__)
+
+#define PopupDebugTimed(duration, formatString, ...)   PopupMessage(__func__, GC->colors.debugMessage,   duration, formatString, ##__VA_ARGS__)
+#define PopupInfoTimed(duration, formatString, ...)    PopupMessage(__func__, GC->colors.infoMessage,    duration, formatString, ##__VA_ARGS__)
+#define PopupSuccessTimed(duration, formatString, ...) PopupMessage(__func__, GC->colors.successMessage, duration, formatString, ##__VA_ARGS__)
+#define PopupErrorTimed(duration, formatString, ...)   PopupMessage(__func__, GC->colors.errorMessage,   duration, formatString, ##__VA_ARGS__)
 
 // +--------------------------------------------------------------+
 // |                   Application Source Files                   |
@@ -219,12 +234,12 @@ bool OpenComPort(const char* comPortName, ComSettings_t settings)
 		ClearConsole();
 		app->comPort = newComPort;
 		
-		StatusSuccess("\"%s\" Opened Successfully", comPortName);
+		PopupSuccess("\"%s\" Opened Successfully", comPortName);
 		return true;
 	}
 	else
 	{
-		StatusError("Couldn't open \"%s\"!", comPortName);
+		PopupError("Couldn't open \"%s\"!", comPortName);
 		return false;
 	}
 }
@@ -431,7 +446,7 @@ void ComMenuUpdate(MenuHandler_t* menuHandler, Menu_t* menuPntr)
 				if (app->comMenuOptions.isOpen && IsInsideRectangle(RenderMousePos, disconnectButtonRec) &&
 					ButtonReleased(MouseButton_Left) && IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, disconnectButtonRec))
 				{
-					StatusError("Closed \"%s\"", app->comPort.name);
+					PopupError("Closed \"%s\"", app->comPort.name);
 					platform->CloseComPortPntr(&app->mainHeap, &app->comPort);
 					menuPntr->show = false;
 				}
@@ -915,10 +930,45 @@ bool ApplyTriggerEffects(Line_t* newLine, RegexTrigger_t* trigger)
 						DEBUG_PrintLine("Could not parse color in effect: %s = \"%s\"", nameStr, valueStr);
 					}
 				}
-				
 				else if (strcmp(nameStr, "status") == 0)
 				{
 					StatusInfo(valueStr);
+				}
+				else if (strcmp(nameStr, "status_debug") == 0)
+				{
+					StatusDebug(valueStr);
+				}
+				else if (strcmp(nameStr, "status_info") == 0)
+				{
+					StatusInfo(valueStr);
+				}
+				else if (strcmp(nameStr, "status_success") == 0)
+				{
+					StatusSuccess(valueStr);
+				}
+				else if (strcmp(nameStr, "status_error") == 0)
+				{
+					StatusError(valueStr);
+				}
+				else if (strcmp(nameStr, "popup") == 0)
+				{
+					PopupInfo(valueStr);
+				}
+				else if (strcmp(nameStr, "popup_debug") == 0)
+				{
+					PopupDebug(valueStr);
+				}
+				else if (strcmp(nameStr, "popup_info") == 0)
+				{
+					PopupInfo(valueStr);
+				}
+				else if (strcmp(nameStr, "popup_success") == 0)
+				{
+					PopupSuccess(valueStr);
+				}
+				else if (strcmp(nameStr, "popup_error") == 0)
+				{
+					PopupError(valueStr);
 				}
 				else
 				{
@@ -1172,6 +1222,119 @@ void LoadApplicationFonts()
 		(r32)GC->uiFontSize, 1024, 1024, ' ', 96);
 }
 
+void DrawPopupOverlay(RenderState_t* rs)
+{
+	if (app->popupMessage[0] != '\0' && platform->programTime - app->popupTime < app->popupDuration)
+	{
+		rec overlayRec = NewRectangle(
+			RenderScreenSize.x,
+			app->uiElements.mainMenuRec.y + app->uiElements.mainMenuRec.height + 5,
+			POPUP_MAX_WIDTH, 0
+		);
+		
+		if (overlayRec.width > (RenderScreenSize.x))
+		{
+			overlayRec.width = (RenderScreenSize.x);
+		}
+		
+		r32 textAreaWidth = overlayRec.width - POPUP_MESSAGE_PADDING*2;
+		v2 textSize = MeasureFormattedString(&app->uiFont, app->popupMessage, textAreaWidth, true);
+		if (textSize.x < textAreaWidth)
+		{
+			overlayRec.width = textSize.x + POPUP_MESSAGE_PADDING*2;
+		}
+		
+		u64 timeSinceMessage = platform->programTime - app->popupTime;
+		u64 timeTillEnd = app->popupDuration - timeSinceMessage;
+		r32 tMessage = (r32)timeSinceMessage / (r32)app->popupDuration;
+		
+		r32 animAmount = 1.0f;
+		if (tMessage >= 0.5f)
+		{
+			if (timeTillEnd < POPUP_ANIM_OUT_TIME)
+			{
+				animAmount = Ease(EasingStyle_CubicOut, (r32)timeTillEnd / POPUP_ANIM_OUT_TIME);
+			}
+		}
+		else
+		{
+			if (timeSinceMessage < POPUP_ANIM_IN_TIME)
+			{
+				animAmount = Ease(EasingStyle_CubicOut, (r32)timeSinceMessage / POPUP_ANIM_IN_TIME);
+			}
+		}
+		
+		overlayRec.x -= overlayRec.width * animAmount;
+		
+		
+		overlayRec.height = textSize.y + POPUP_MESSAGE_PADDING*2;
+		
+		// rs->DrawRectangle(RectangleInflate(overlayRec, (r32)GC->menuBorderThickness), GC->colors.windowOutline);
+		// rs->DrawGradient(overlayRec, GC->colors.statusBar1, GC->colors.statusBar2, Direction2D_Right);
+		
+		r32 cornerRadius = 5.0f;
+		r32 innerRingThickness = 1.0f;
+		Color_t outerBorderColor = GC->colors.windowOutline;
+		Color_t innerRingColor = {0xFF606060};
+		Color_t innerBorderColor = GC->colors.windowOutline;
+		Color_t innerColor = GC->colors.statusBar1;
+		
+		rec innerRec = NewRectangle(
+			overlayRec.x,
+			overlayRec.y + cornerRadius,
+			overlayRec.width,
+			overlayRec.height - cornerRadius*2
+		);
+		rec outerRec = NewRectangle(
+			overlayRec.x + cornerRadius,
+			overlayRec.y,
+			overlayRec.width,
+			overlayRec.height
+		);
+		v2 ulCircleCenter = NewVec2(
+			overlayRec.x + cornerRadius,
+			overlayRec.y + cornerRadius
+		);
+		r32 ulCIrcleRadius = cornerRadius;
+		v2 blCircleCenter = NewVec2(
+			overlayRec.x + cornerRadius,
+			overlayRec.y + overlayRec.height - cornerRadius
+		);
+		r32 blCIrcleRadius = cornerRadius;
+		
+		rs->DrawRectangle(RectangleInflateX(innerRec, 1.0f), outerBorderColor);
+		rs->DrawRectangle(RectangleInflateY(outerRec, 1.0f), outerBorderColor);
+		rs->DrawCircle(ulCircleCenter, ulCIrcleRadius + 1.0f, outerBorderColor);
+		rs->DrawCircle(blCircleCenter, blCIrcleRadius + 1.0f, outerBorderColor);
+		
+		rs->DrawRectangle(innerRec, innerRingColor);
+		rs->DrawRectangle(outerRec, innerRingColor);
+		rs->DrawCircle(ulCircleCenter, ulCIrcleRadius, innerRingColor);
+		rs->DrawCircle(blCircleCenter, blCIrcleRadius, innerRingColor);
+		
+		innerRec = RectangleInflateX(innerRec, -innerRingThickness);
+		outerRec = RectangleInflateY(outerRec, -innerRingThickness);
+		ulCIrcleRadius -= innerRingThickness;
+		blCIrcleRadius -= innerRingThickness;
+		
+		rs->DrawRectangle(innerRec, innerBorderColor);
+		rs->DrawRectangle(outerRec, innerBorderColor);
+		rs->DrawCircle(ulCircleCenter, ulCIrcleRadius, innerBorderColor);
+		rs->DrawCircle(blCircleCenter, blCIrcleRadius, innerBorderColor);
+		
+		rs->DrawRectangle(RectangleInflate(innerRec, -1.0f), innerColor);
+		rs->DrawRectangle(RectangleInflate(outerRec, -1.0f), innerColor);
+		rs->DrawCircle(ulCircleCenter, ulCIrcleRadius - 1.0f, innerColor);
+		rs->DrawCircle(blCircleCenter, blCIrcleRadius - 1.0f, innerColor);
+		
+		v2 textPos = overlayRec.topLeft + NewVec2(overlayRec.width/2, POPUP_MESSAGE_PADDING + app->uiFont.maxExtendUp);
+		
+		rs->BindFont(&app->uiFont);
+		rs->DrawFormattedString(app->popupMessage, textPos, textAreaWidth, app->popupColor, Alignment_Center, true);
+		rs->BindFont(&app->mainFont);
+	}
+}
+
 //+================================================================+
 //|                       App Get Version                          |
 //+================================================================+
@@ -1323,7 +1486,7 @@ EXPORT AppReloaded_DEFINITION(App_Reloaded)
 	TempArena = &app->tempArena;
 	RenderScreenSize = NewVec2((r32)platform->screenSize.x / GUI_SCALE, (r32)platform->screenSize.y / GUI_SCALE);
 	
-	StatusDebug("App Reloaded");
+	PopupSuccess("App Reloaded");
 	
 	//Make sure our callbacks still match the location of the functions in the new DLL
 	Menu_t* menuPntr = GetMenuByName(&app->menuHandler, "COM Menu");
@@ -1618,11 +1781,20 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	if (ButtonPressed(Button_R) &&
 		ButtonDown(Button_Control))
 	{
-		DisposeGlobalConfig(&app->globalConfig);
-		LoadGlobalConfiguration(platform, &app->globalConfig, &app->mainHeap);
-		DisposeRegexFile(&app->regexList);
-		LoadRegexFile(&app->regexList, "Resources/Configuration/RegularExpressions.rgx", &app->mainHeap);
-		LoadApplicationFonts();
+		if (ButtonDown(Button_Shift))
+		{
+			//Reload shaders
+			app->simpleShader = LoadShader("Resources/Shaders/simple-vertex.glsl", "Resources/Shaders/simple-fragment.glsl");
+			StatusSuccess("Reloaded simple shader");
+		}
+		else
+		{
+			DisposeGlobalConfig(&app->globalConfig);
+			LoadGlobalConfiguration(platform, &app->globalConfig, &app->mainHeap);
+			DisposeRegexFile(&app->regexList);
+			LoadRegexFile(&app->regexList, "Resources/Configuration/RegularExpressions.rgx", &app->mainHeap);
+			LoadApplicationFonts();
+		}
 	}
 	
 	//+==================================+
@@ -1722,6 +1894,32 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	{
 		app->showDebugMenu = !app->showDebugMenu;
 	}
+	
+	// +==============================+
+	// |         Debug Popups         |
+	// +==============================+
+	#if 1
+	if (ButtonPressed(Button_1))
+	{
+		PopupDebug("Something interesting is happening behind the scenes");
+	}
+	if (ButtonPressed(Button_2))
+	{
+		PopupInfo("We are working :)");
+	}
+	if (ButtonPressed(Button_3))
+	{
+		PopupSuccess("That was awesome! Do it again.");
+	}
+	if (ButtonPressed(Button_4))
+	{
+		PopupError("An error has occurred. The world might be ending...");
+	}
+	if (ButtonPressed(Button_5))
+	{
+		PopupErrorTimed(100000, "This is a really long message for the user to read. Because it is so long we are going to give you 10 seconds to read it.");
+	}
+	#endif
 	
 	RecalculateUiElements(ui, false);
 	
@@ -2412,33 +2610,61 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 			lastLine = GetLineAt(&app->lineList, app->lineList.numLines-1 - 1);
 		}
 		
-		//Print the status message
-		if (GetTimestamp(app->statusMessageTime) != 0)
+		// +==============================+
+		// |  Render the Status Message   |
+		// +==============================+
 		{
-			i64 secondsDifference = SubtractTimes(platform->localTime, app->statusMessageTime, TimeUnit_Seconds);
-			if (secondsDifference >= 0 && secondsDifference < GC->statusMessageTime)
+			u32 stringLength = (u32)strlen(app->statusMessage);
+			u32 animInTime = stringLength * STATUS_ANIM_IN_CHAR_TIME;
+			u32 actualDuration = animInTime + app->statusDuration;
+			v2 stringPos = NewVec2(5, RenderScreenSize.y-app->uiFont.maxExtendDown);
+			r32 availableWidth = ui->statusBarRec.width - stringPos.x - 5;
+			
+			// +==============================+
+			// |    Com Name in Status Bar    |
+			// +==============================+
+			if (app->comPort.isOpen && GC->showComNameInStatusBar)
 			{
-				Color_t messageColor = GC->colors.uiText;
+				const char* comPortUserName = GetPortUserName(app->comPort.name);
+				v2 comNameSize = MeasureString(&app->uiFont, comPortUserName);
+				v2 renderPos = NewVec2(ui->gotoEndButtonRec.x - comNameSize.x - 5, RenderScreenSize.y-app->uiFont.maxExtendDown);
+				rs->BindFont(&app->uiFont);
+				rs->DrawString(comPortUserName, renderPos, GC->colors.uiText, 1.0f);
+				rs->BindFont(&app->mainFont);
 				
-				if (app->statusMessageType == StatusMessage_Debug)
+				availableWidth = renderPos.x - stringPos.x - 5;
+			}
+			
+			if (app->statusMessage[0] != '\0' && platform->programTime - app->statusTime < actualDuration)
+			{
+				u64 timeSinceMessage = platform->programTime - app->statusTime;
+				u64 timeTillEnd = actualDuration - timeSinceMessage;
+				
+				u32 numCharacters = stringLength;
+				if (timeSinceMessage < animInTime)
 				{
-					messageColor = GC->colors.debugMessage;
+					numCharacters = (u32)(stringLength * ((r32)timeSinceMessage / (r32)animInTime));
 				}
-				else if (app->statusMessageType == StatusMessage_Info)
+				
+				r32 alphaAmount = 1.0f;
+				if (timeTillEnd < STATUS_ANIM_OUT_TIME)
 				{
-					messageColor = GC->colors.infoMessage;
+					alphaAmount = Ease(EasingStyle_CubicOut, (r32)timeTillEnd / STATUS_ANIM_OUT_TIME);
 				}
-				else if (app->statusMessageType == StatusMessage_Success)
-				{
-					messageColor = GC->colors.successMessage;
-				}
-				else if (app->statusMessageType == StatusMessage_Error)
-				{
-					messageColor = GC->colors.errorMessage;
-				}
+				
+				v2 stringSize = MeasureString(&app->uiFont, app->statusMessage, numCharacters);
+				Color_t textColor = ColorTransparent(app->statusColor, alphaAmount);
 				
 				rs->BindFont(&app->uiFont);
-				rs->DrawString(app->statusMessage, NewVec2(5, RenderScreenSize.y-app->uiFont.maxExtendDown), messageColor, 1.0f);
+				rs->DrawFormattedString(app->statusMessage, numCharacters, stringPos, availableWidth, textColor, Alignment_Left, false);
+				if (numCharacters < stringLength)
+				{
+					v2 charPos = NewVec2(stringSize.x, 0);
+					if (charPos.x < availableWidth)
+					{
+						rs->DrawString("|", 1, stringPos + charPos, textColor, 1.0f, Alignment_Left);
+					}
+				}
 				rs->BindFont(&app->mainFont);
 			}
 		}
@@ -2456,19 +2682,6 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 			rs->DrawButton(ui->gotoEndButtonRec, buttonColor, borderColor);
 		}
 		
-		// +==============================+
-		// |    Com Name in Status Bar    |
-		// +==============================+
-		if (app->comPort.isOpen && GC->showComNameInStatusBar)
-		{
-			const char* comPortUserName = GetPortUserName(app->comPort.name);
-			v2 comNameSize = MeasureString(&app->uiFont, comPortUserName);
-			rs->BindFont(&app->uiFont);
-			rs->DrawString(comPortUserName,
-				NewVec2(ui->gotoEndButtonRec.x - comNameSize.x - 5, RenderScreenSize.y-app->uiFont.maxExtendDown),
-				GC->colors.uiText, 1.0f);
-			rs->BindFont(&app->mainFont);
-		}
 	}
 	
 	//+--------------------------------------+
@@ -2679,6 +2892,8 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	}
 	
 	MenuHandlerDrawMenus(&app->renderState, &app->menuHandler);
+	
+	DrawPopupOverlay(&app->renderState);
 	
 	// +================================+
 	// |       Draw Debug Overlay       |

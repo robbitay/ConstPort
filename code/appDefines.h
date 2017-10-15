@@ -33,16 +33,28 @@ Date:   06\08\2017
 #define SAVE_BUTTON_HEIGHT         20 //px
 #define MIN_BANNER_HEIGHT          2  //px
 #define BANNER_EXPAND_SPEED        0.003f //percentage
+#define PYTHON_ICON_SIZE           16 //px
+#define DEFAULT_MESSAGE_WIDTH      200 //px
+#define POPUP_MESSAGE_PADDING      10 //px
+#define POPUP_MAX_WIDTH            200 //px
+
 #define STATUS_MESSAGE_BUFFER_SIZE 128//bytes
-#define PYTHON_ICON_SIZE           16
-
+#define POPUP_MESSAGE_BUFFER_SIZE  512//bytes
+#define INPUT_ARENA_SIZE           1024*1024 //bytes
 #define TRANSIENT_MAX_NUMBER_MARKS 16
-#define INPUT_ARENA_SIZE           1024*1024
-
 #define MAX_JSON_TOKENS            2048
+#define MAX_USER_PORT_NAMES        24
+#define MAX_USER_PORT_NAME_LENGTH  40 //bytes
+
+#define CHECKBOX_ANIM_TIME         500 //ms
+#define POPUP_ANIM_OUT_TIME        500 //ms
+#define POPUP_ANIM_IN_TIME         500 //ms
+#define POPUP_MESSAGE_DURATION     (1000+POPUP_ANIM_OUT_TIME+POPUP_ANIM_IN_TIME) //ms
+#define STATUS_ANIM_IN_CHAR_TIME   30 //ms
+#define STATUS_ANIM_OUT_TIME       500 //ms
+#define STATUS_MESSAGE_DURATION    (3000+STATUS_ANIM_OUT_TIME) //ms
+
 #define GLOBAL_CONFIG_FILEPATH     "Resources/Configuration/GlobalConfig.json"
 #define OUTPUT_FILE_NAME           "Output.txt"
-#define MAX_USER_PORT_NAMES        24
-#define MAX_USER_PORT_NAME_LENGTH  40
 
 #endif // _APP_DEFINES_H

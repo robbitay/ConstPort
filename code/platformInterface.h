@@ -34,6 +34,7 @@ Description:
 #include "win32_com.h"
 #include "win32_program.h"
 #include "win32_clipboard.h"
+
 #define EXPORT __declspec(dllexport)
 #define IMPORT __declspec(dllimport)
 #endif
@@ -47,11 +48,14 @@ Description:
 #include "osx_com.h"
 #include "osx_program.h"
 #include "osx_clipboard.h"
+
 #define EXPORT extern "C" __attribute__((visibility("default")))
 #define IMPORT
 #endif
 
 #if LINUX_COMPILATION
+//TODO: Work on Linux platform layer
+
 #define EXPORT extern "C" __attribute__((visibility("default")))
 #define IMPORT
 #endif

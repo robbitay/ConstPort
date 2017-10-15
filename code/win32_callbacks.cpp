@@ -37,7 +37,10 @@ void GlfwWindowMinimizeCallback(GLFWwindow* window, i32 isMinimized)
 }
 void GlfwKeyPressedCallback(GLFWwindow* window, i32 key, i32 scanCode, i32 action, i32 modifiers)
 {
-	// Win32_WriteLine("Received GlfwKeyPressedCallback");
+	// const char* actionStr = "Pressed";
+	// if (action == GLFW_REPEAT) actionStr = "Repeated";
+	// if (action == GLFW_RELEASE) actionStr = "Released";
+	// Win32_PrintLine("KeyPress %d %d %s (%d)", key, scanCode, actionStr, modifiers);
 	AppInput_t* currentInput = (AppInput_t*)glfwGetWindowUserPointer(window);
 	
 	//TODO: Handle repeated keys?
@@ -91,7 +94,10 @@ void GlfwCursorPosCallback(GLFWwindow* window, real64 mouseX, real64 mouseY)
 }
 void GlfwMousePressCallback(GLFWwindow* window, i32 button, i32 action, i32 modifiers)
 {
-	// Win32_WriteLine("Received GlfwMousePressCallback");
+	// const char* actionStr = "Pressed";
+	// if (action == GLFW_REPEAT) actionStr = "Repeated";
+	// if (action == GLFW_RELEASE) actionStr = "Released";
+	// Win32_PrintLine("MousePress %d %s (%d)", button, actionStr, modifiers);
 	AppInput_t* currentInput = (AppInput_t*)glfwGetWindowUserPointer(window);
 	
 	//TODO: Handle repeated keys?

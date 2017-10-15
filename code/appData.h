@@ -54,9 +54,15 @@ struct AppData_t
 	u8 rxShiftRegister;
 	u8 txShiftRegister;
 	
-	RealTime_t statusMessageTime;
-	StatusMessage_t statusMessageType;
+	u64 statusTime;
+	u32 statusDuration;
+	Color_t statusColor;
 	char statusMessage[STATUS_MESSAGE_BUFFER_SIZE];
+	
+	u64 popupTime;
+	u32 popupDuration;
+	Color_t popupColor;
+	char popupMessage[POPUP_MESSAGE_BUFFER_SIZE];
 	
 	RegexList_t regexList;
 	

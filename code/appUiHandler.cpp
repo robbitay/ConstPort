@@ -174,3 +174,126 @@ void UpdateUiElements(UiElements_t* ui)
 		ui->scrollOffset.y += gotoOffset.y / (r32)GC->viewSpeedDivider;
 	}
 }
+
+void SetCheckbox(Checkbox_t* checkboxPntr, bool checked)
+{
+	Assert(checkboxPntr != nullptr);
+	
+	if (checkboxPntr->checked != checked)
+	{
+		checkboxPntr->checked = checked;
+		checkboxPntr->changeTime = platform->programTime;
+		checkboxPntr->mouseHasLeft = false;
+	}
+}
+
+void ToggleCheckbox(Checkbox_t* checkboxPntr)
+{
+	Assert(checkboxPntr != nullptr);
+	
+	SetCheckbox(checkboxPntr, !checkboxPntr->checked);
+}
+
+void UpdateCheckbox(Checkbox_t* checkboxPntr)
+{
+	Assert(checkboxPntr != nullptr);
+	
+	bool mouseInside = IsInsideRectangle(RenderMousePos, checkboxPntr->drawRec);
+	bool mouseStartedInside = IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, checkboxPntr->drawRec);
+	
+	if (!mouseInside) { checkboxPntr->mouseHasLeft = true; }
+	
+	if (checkboxPntr->enabled)
+	{
+		if (mouseInside && mouseStartedInside && ButtonReleased(MouseButton_Left))
+		{
+			ToggleCheckbox(checkboxPntr);
+		}
+	}
+	
+}
+
+void DrawCheckbox(Checkbox_t* checkboxPntr, RenderState_t* rs, Font_t* labelFont)
+{
+	Assert(checkboxPntr != nullptr);
+	Assert(rs != nullptr);
+	
+	bool mouseInside = IsInsideRectangle(RenderMousePos, checkboxPntr->drawRec);
+	bool mouseStartedInside = IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, checkboxPntr->drawRec);
+	
+	Assert(platform->programTime >= checkboxPntr->changeTime);
+	u64 timeSinceClick = platform->programTime - checkboxPntr->changeTime;
+	float animAmount = Clamp32((r32)timeSinceClick / CHECKBOX_ANIM_TIME, 0.0f, 1.0f);
+	if (!checkboxPntr->checked)
+	{
+		animAmount = Ease(EasingStyle_CubicOut, animAmount);
+		animAmount = 1.0f - animAmount;
+	}
+	else
+	{
+		animAmount = Ease(EasingStyle_BounceOut, animAmount);
+	}
+	
+	Color_t outlineColor = GC->colors.debugMessage;
+	Color_t unselectedColor = GC->colors.debugMessage;
+	Color_t selectedColor = checkboxPntr->activeColor;
+	Color_t currentColor = unselectedColor;
+	Color_t textColor = unselectedColor;
+	if (checkboxPntr->enabled)
+	{
+		if (mouseInside)
+		{
+			outlineColor = checkboxPntr->activeColor;
+			// if (ButtonDown(MouseButton_Left) && IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, checkboxPntr->drawRec))
+			// {
+			// 	outlineColor = GC->colors.buttonPress;
+			// }
+		}
+		currentColor = ColorLerp(unselectedColor, selectedColor, animAmount);
+		
+		textColor = currentColor;
+		if (mouseInside && (checkboxPntr->mouseHasLeft || checkboxPntr->checked))
+		{
+			textColor = checkboxPntr->activeColor;
+		}
+		if (checkboxPntr->mouseHasLeft == false && checkboxPntr->checked == false)
+		{
+			outlineColor = currentColor;
+		}
+		if (animAmount != 1.0f && checkboxPntr->checked == true)
+		{
+			outlineColor = checkboxPntr->activeColor;
+		}
+	}
+	
+	if (animAmount > 0)
+	{
+		rs->SetCircleRadius(animAmount*1.1f, 0.0f);
+		rs->DrawRectangle(checkboxPntr->drawRec, currentColor);
+		rs->SetCircleRadius(0.0f, 0.0f);
+	}
+	if (checkboxPntr->enabled)
+	{
+		rs->DrawButton(checkboxPntr->drawRec, {Color_TransparentBlack}, outlineColor, 1);
+	}
+	else
+	{
+		rs->DrawRectangle(checkboxPntr->drawRec, outlineColor);
+	}
+	
+	const Font_t* actualFont = rs->boundFont;
+	const Font_t* originalFont = rs->boundFont;
+	if (labelFont != nullptr)
+	{
+		actualFont = labelFont;
+		rs->BindFont(labelFont);
+	}
+	
+	v2 labelPos = NewVec2(
+		checkboxPntr->drawRec.x + checkboxPntr->drawRec.width + 5,
+		checkboxPntr->drawRec.y + checkboxPntr->drawRec.height/2 + actualFont->lineHeight/2 - actualFont->maxExtendDown
+	);
+	rs->DrawString(checkboxPntr->label, labelPos, textColor, 1.0f, Alignment_Left);
+	
+	rs->BindFont(originalFont);
+}

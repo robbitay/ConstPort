@@ -1,5 +1,5 @@
 {
-	"main_font_size": 14,
+	"main_font_size": 24,
 	"ui_font_size":   14,
 	"line_spacing":   2,  //px
 	"tab_width":      4,  //spaces
@@ -23,7 +23,7 @@
 	"scroll_multiplier": 40,
 	"view_speed_divider": 4,
 	
-	"show_text_cursor": true,
+	"show_text_cursor": false,
 	"show_com_name_in_status_bar": true,
 	"show_line_numbers": true,
 	"show_hover_cursor": false,
@@ -62,7 +62,7 @@
 		},
 		{
 			"expression_name": "Has Hex 03",
-			"effects": ["foreground_color = F92665"], //Red/Magenta
+			"effects": ["foreground_color = F92665", "status_error = Error!"], //Red/Magenta
 		},
 		{
 			"expression_name": "Has Hex 04",

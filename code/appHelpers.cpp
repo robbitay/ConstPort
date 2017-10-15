@@ -80,6 +80,13 @@ Description:
 	}                                                                                             \
 } while(0)
 
+#define BufferPrint(array, formatStr, ...) do                                    \
+{                                                                                \
+	int snprintfResult = snprintf(array, sizeof(array), formatStr, __VA_ARGS__); \
+	Assert(snprintfResult >= 0 && snprintfResult < sizeof(array));               \
+	array[snprintfResult] = '\0';                                                \
+} while (0)
+
 char* DupStrN(const char* str, u32 strLength, MemoryArena_t* memoryArenaPntr)
 {
 	char* result;
@@ -150,3 +157,5 @@ char* FormattedSizeStr(u32 numBytes)
 	
 	return result;
 }
+
+
