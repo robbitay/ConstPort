@@ -39,6 +39,16 @@ Date:   09\26\2017
 	ConfigurationBool  ("auto_echo_input",             autoEchoInput,          true);
 	ConfigurationBool  ("show_file_after_saving",      showFileAfterSaving,    true);
 	
+	ConfigurationInt32 ("popup_corner_radius",         popupCornerRadius,      7);
+	ConfigurationInt32 ("popup_outline_thickness",     popupOutlineThickness,  1);
+	ConfigurationInt32 ("popup_default_duration",      popupDefaultDuration,   2000);
+	ConfigurationInt32 ("popup_in_anim_time",          popupInAnimTime,        500);
+	ConfigurationInt32 ("popup_out_anim_time",         popupOutAnimTime,       500);
+	ConfigurationInt32 ("status_default_duration",     statusDefaultDuration,  3500);
+	ConfigurationInt32 ("status_in_anim_char_time",    statusInAnimCharTime,   30);
+	ConfigurationInt32 ("status_out_anim_time",        statusOutAnimTime,      500);
+	ConfigurationInt32 ("checkbox_anim_time",          checkboxAnimTime,       500);
+	
 	//Python Related Options
 	ConfigurationBool  ("python_script_enabled",   pythonScriptEnabled, false);
 	ConfigurationBool  ("auto_run_python",         autoRunPython,       false);
@@ -126,6 +136,11 @@ Date:   09\26\2017
 	ConfigurationColor("window_exit",                   windowExit,                {0xFFFF0000});
 	ConfigurationColor("window_exit_icon",              windowExitIcon,            {0xFFFFFFFF});
 	ConfigurationColor("context_menu_text",             contextMenuText,           {0xFFF8F8F2});
+	
+	ConfigurationColor("popup_outline_outer",           popupOutlineOuter,         {0xFFB4B4B4});
+	ConfigurationColor("popup_outline_center",          popupOutlineCenter,        {0xFF606060});
+	ConfigurationColor("popup_outline_inner",           popupOutlineInner,         {0xFFB4B4B4});
+	ConfigurationColor("popup_background",              popupBackground,           {0xFF303030});
 	
 	ConfigurationColor("receive_led",                   receiveLed,                {0xFF000000});
 	ConfigurationColor("receive_led_active",            receiveLedActive,          {0xFFF92665}); //Red/Magenta

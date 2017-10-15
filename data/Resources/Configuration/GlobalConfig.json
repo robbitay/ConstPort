@@ -38,6 +38,18 @@
 	"auto_echo_input": false,
 	"show_file_after_saving": true,
 	
+	"popup_corner_radius":     7, //px
+	"popup_outline_thickness": 1, //px
+	"popup_default_duration":  3000, //ms
+	"popup_in_anim_time":      500, //ms
+	"popup_out_anim_time":     500, //ms
+	
+	"status_default_duration":  3500, //ms
+	"status_in_anim_char_time": 30, //ms
+	"status_out_anim_time":     500, //ms
+	
+	"checkbox_anim_time": 500,
+	
 	//Python related options
 	"python_script_enabled":   true,
 	"auto_run_python":         false,
@@ -171,7 +183,7 @@
 		"ui_text":           "F8F8F2",
 		"debug_message":     "75715E", //Comment
 		"success_message":   "A6E22E", //Green
-		"info_message":      "66D9EF", //Light Blue
+		"info_message":      "F8F8F2",
 		"error_message":     "F92665", //Red/Magenta
 		"line_numbers":      "F8F8F2",
 		"scrollbar_outline": "000000",
@@ -193,6 +205,11 @@
 		"window_exit":         "FF0000",
 		"window_exit_icon":    "FFFFFF",
 		"context_menu_text":   "F8F8F2",
+		
+		"popup_outline_outer":  "B4B4B4",
+		"popup_outline_center": "606060",
+		"popup_outline_inner":  "B4B4B4",
+		"popup_background":     "303030",
 		
 		"receive_led":       "000000",
 		"receive_led_idle":  "F92665", //Red/Magenta

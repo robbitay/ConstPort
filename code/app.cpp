@@ -104,18 +104,24 @@ char* GetElapsedString(u64 timespan)
 	app->popupColor = messageColor;                                              \
 	app->popupDuration = duration;                                               \
 	app->popupTime = platform->programTime;                                      \
+	app->popupExcused = false;                                                   \
 	DEBUG_PrintLine("[%s] Popup: %s", functionName, app->popupMessage);          \
 } while(0)
 
-#define StatusDebug(formatString, ...)   StatusMessage(__func__, GC->colors.debugMessage,   STATUS_MESSAGE_DURATION, formatString, ##__VA_ARGS__)
-#define StatusInfo(formatString, ...)    StatusMessage(__func__, GC->colors.infoMessage,    STATUS_MESSAGE_DURATION, formatString, ##__VA_ARGS__)
-#define StatusSuccess(formatString, ...) StatusMessage(__func__, GC->colors.successMessage, STATUS_MESSAGE_DURATION, formatString, ##__VA_ARGS__)
-#define StatusError(formatString, ...)   StatusMessage(__func__, GC->colors.errorMessage,   STATUS_MESSAGE_DURATION, formatString, ##__VA_ARGS__)
+#define StatusDebug(formatString, ...)   StatusMessage(__func__, GC->colors.debugMessage,   GC->statusDefaultDuration, formatString, ##__VA_ARGS__)
+#define StatusInfo(formatString, ...)    StatusMessage(__func__, GC->colors.infoMessage,    GC->statusDefaultDuration, formatString, ##__VA_ARGS__)
+#define StatusSuccess(formatString, ...) StatusMessage(__func__, GC->colors.successMessage, GC->statusDefaultDuration, formatString, ##__VA_ARGS__)
+#define StatusError(formatString, ...)   StatusMessage(__func__, GC->colors.errorMessage,   GC->statusDefaultDuration, formatString, ##__VA_ARGS__)
 
-#define PopupDebug(formatString, ...)   PopupMessage(__func__, GC->colors.debugMessage,   POPUP_MESSAGE_DURATION, formatString, ##__VA_ARGS__)
-#define PopupInfo(formatString, ...)    PopupMessage(__func__, GC->colors.infoMessage,    POPUP_MESSAGE_DURATION, formatString, ##__VA_ARGS__)
-#define PopupSuccess(formatString, ...) PopupMessage(__func__, GC->colors.successMessage, POPUP_MESSAGE_DURATION, formatString, ##__VA_ARGS__)
-#define PopupError(formatString, ...)   PopupMessage(__func__, GC->colors.errorMessage,   POPUP_MESSAGE_DURATION, formatString, ##__VA_ARGS__)
+#define StatusDebugTimed(duration, formatString, ...)   StatusMessage(__func__, GC->colors.debugMessage,   duration, formatString, ##__VA_ARGS__)
+#define StatusInfoTimed(duration, formatString, ...)    StatusMessage(__func__, GC->colors.infoMessage,    duration, formatString, ##__VA_ARGS__)
+#define StatusSuccessTimed(duration, formatString, ...) StatusMessage(__func__, GC->colors.successMessage, duration, formatString, ##__VA_ARGS__)
+#define StatusErrorTimed(duration, formatString, ...)   StatusMessage(__func__, GC->colors.errorMessage,   duration, formatString, ##__VA_ARGS__)
+
+#define PopupDebug(formatString, ...)   PopupMessage(__func__, GC->colors.debugMessage,   GC->popupDefaultDuration, formatString, ##__VA_ARGS__)
+#define PopupInfo(formatString, ...)    PopupMessage(__func__, GC->colors.infoMessage,    GC->popupDefaultDuration, formatString, ##__VA_ARGS__)
+#define PopupSuccess(formatString, ...) PopupMessage(__func__, GC->colors.successMessage, GC->popupDefaultDuration, formatString, ##__VA_ARGS__)
+#define PopupError(formatString, ...)   PopupMessage(__func__, GC->colors.errorMessage,   GC->popupDefaultDuration, formatString, ##__VA_ARGS__)
 
 #define PopupDebugTimed(duration, formatString, ...)   PopupMessage(__func__, GC->colors.debugMessage,   duration, formatString, ##__VA_ARGS__)
 #define PopupInfoTimed(duration, formatString, ...)    PopupMessage(__func__, GC->colors.infoMessage,    duration, formatString, ##__VA_ARGS__)
@@ -218,8 +224,8 @@ bool OpenComPort(const char* comPortName, ComSettings_t settings)
 	{
 		//NOTE: If we want to open the same port again we have to close it first before opening it
 		//      Otherwise we will try to open and only close the port if the open succeeds
-		platform->CloseComPortPntr(&app->mainHeap, &app->comPort);
 		StatusError("Closed %s", app->comPort.name);
+		platform->CloseComPortPntr(&app->mainHeap, &app->comPort);
 	}
 	
 	ComPort_t newComPort = platform->OpenComPortPntr(&app->mainHeap, comPortName, settings);
@@ -228,8 +234,8 @@ bool OpenComPort(const char* comPortName, ComSettings_t settings)
 	{
 		if (app->comPort.isOpen)
 		{
-			platform->CloseComPortPntr(&app->mainHeap, &app->comPort);
 			StatusError("Closed %s", app->comPort.name);
+			platform->CloseComPortPntr(&app->mainHeap, &app->comPort);
 		}
 		ClearConsole();
 		app->comPort = newComPort;
@@ -246,18 +252,14 @@ bool OpenComPort(const char* comPortName, ComSettings_t settings)
 
 void ComMenuUpdate(MenuHandler_t* menuHandler, Menu_t* menuPntr)
 {
-	if (ButtonPressed(Button_Escape))
-	{
-		menuPntr->show = !menuPntr->show;
-		if (menuPntr->show)
-		{
-			RefreshComPortList();
-			app->comMenuOptions = app->comPort;
-		}
-	}
-	
 	if (menuPntr->show)
 	{
+		if (ButtonPressedUnhandled(Button_Escape))
+		{
+			HandleButton(Button_Escape);
+			menuPntr->show = false;
+		}
+		
 		u32 numTabs = app->availablePorts.count + ((app->comPort.isOpen && !IsComAvailable(app->comPort.name)) ? 1 : 0);
 		r32 tabWidth = menuPntr->usableRec.width / numTabs;
 		r32 tabMinimumWidth = MeasureString(&app->uiFont, "1234567890").x + COM_MENU_TAB_PADDING*2;
@@ -449,6 +451,7 @@ void ComMenuUpdate(MenuHandler_t* menuHandler, Menu_t* menuPntr)
 					PopupError("Closed \"%s\"", app->comPort.name);
 					platform->CloseComPortPntr(&app->mainHeap, &app->comPort);
 					menuPntr->show = false;
+					ClearConsole();
 				}
 			}
 		}
@@ -1237,47 +1240,69 @@ void DrawPopupOverlay(RenderState_t* rs)
 			overlayRec.width = (RenderScreenSize.x);
 		}
 		
-		r32 textAreaWidth = overlayRec.width - POPUP_MESSAGE_PADDING*2;
+		r32 messagePadding = POPUP_MESSAGE_PADDING + MaxReal32((r32)GC->popupCornerRadius/2, (r32)GC->popupOutlineThickness);
+		r32 textAreaWidth = overlayRec.width - messagePadding*2;
 		v2 textSize = MeasureFormattedString(&app->uiFont, app->popupMessage, textAreaWidth, true);
 		if (textSize.x < textAreaWidth)
 		{
-			overlayRec.width = textSize.x + POPUP_MESSAGE_PADDING*2;
+			overlayRec.width = textSize.x + messagePadding*2;
 		}
 		
 		u64 timeSinceMessage = platform->programTime - app->popupTime;
 		u64 timeTillEnd = app->popupDuration - timeSinceMessage;
+		
+		if (ButtonPressedUnhandled(Button_Escape))
+		{
+			if (timeTillEnd > GC->popupOutAnimTime)
+			{
+				HandleButton(Button_Escape);
+				
+				u64 timeToSubtract = timeTillEnd - (GC->popupOutAnimTime/2);
+				if (app->popupTime >= timeToSubtract) { app->popupTime -= timeToSubtract; }
+				else { app->popupTime = 0; }
+				app->popupExcused = true;
+				
+				timeSinceMessage = platform->programTime - app->popupTime;
+				timeTillEnd = app->popupDuration - timeSinceMessage;
+			}
+		}
+		
 		r32 tMessage = (r32)timeSinceMessage / (r32)app->popupDuration;
 		
 		r32 animAmount = 1.0f;
-		if (tMessage >= 0.5f)
+		if (tMessage < 0.5f)
 		{
-			if (timeTillEnd < POPUP_ANIM_OUT_TIME)
+			if (timeSinceMessage < GC->popupInAnimTime)
 			{
-				animAmount = Ease(EasingStyle_CubicOut, (r32)timeTillEnd / POPUP_ANIM_OUT_TIME);
+				animAmount = Ease(EasingStyle_QuinticOut, (r32)timeSinceMessage / GC->popupInAnimTime);
 			}
 		}
 		else
 		{
-			if (timeSinceMessage < POPUP_ANIM_IN_TIME)
+			i32 outTime = (app->popupExcused ? GC->popupOutAnimTime/2 : GC->popupOutAnimTime);
+			if (timeTillEnd < outTime)
 			{
-				animAmount = Ease(EasingStyle_CubicOut, (r32)timeSinceMessage / POPUP_ANIM_IN_TIME);
+				animAmount = Ease(EasingStyle_CubicOut, (r32)timeTillEnd / outTime);
 			}
 		}
 		
 		overlayRec.x -= overlayRec.width * animAmount;
 		
-		
-		overlayRec.height = textSize.y + POPUP_MESSAGE_PADDING*2;
+		overlayRec.height = textSize.y + messagePadding*2;
+		if (overlayRec.height < (r32)GC->popupCornerRadius*2)
+		{
+			overlayRec.height = (r32)GC->popupCornerRadius*2;
+		}
 		
 		// rs->DrawRectangle(RectangleInflate(overlayRec, (r32)GC->menuBorderThickness), GC->colors.windowOutline);
 		// rs->DrawGradient(overlayRec, GC->colors.statusBar1, GC->colors.statusBar2, Direction2D_Right);
 		
-		r32 cornerRadius = 5.0f;
-		r32 innerRingThickness = 1.0f;
-		Color_t outerBorderColor = GC->colors.windowOutline;
-		Color_t innerRingColor = {0xFF606060};
-		Color_t innerBorderColor = GC->colors.windowOutline;
-		Color_t innerColor = GC->colors.statusBar1;
+		r32 cornerRadius = (r32)GC->popupCornerRadius;
+		r32 innerRingThickness = (r32)GC->popupOutlineThickness;
+		Color_t outerBorderColor = GC->colors.popupOutlineOuter;
+		Color_t innerRingColor   = GC->colors.popupOutlineCenter;
+		Color_t innerBorderColor = GC->colors.popupOutlineInner;
+		Color_t innerColor = GC->colors.popupBackground;
 		
 		rec innerRec = NewRectangle(
 			overlayRec.x,
@@ -1327,7 +1352,7 @@ void DrawPopupOverlay(RenderState_t* rs)
 		rs->DrawCircle(ulCircleCenter, ulCIrcleRadius - 1.0f, innerColor);
 		rs->DrawCircle(blCircleCenter, blCIrcleRadius - 1.0f, innerColor);
 		
-		v2 textPos = overlayRec.topLeft + NewVec2(overlayRec.width/2, POPUP_MESSAGE_PADDING + app->uiFont.maxExtendUp);
+		v2 textPos = overlayRec.topLeft + NewVec2(overlayRec.width/2, overlayRec.height/2 - textSize.y/2 + app->uiFont.maxExtendUp);
 		
 		rs->BindFont(&app->uiFont);
 		rs->DrawFormattedString(app->popupMessage, textPos, textAreaWidth, app->popupColor, Alignment_Center, true);
@@ -1785,7 +1810,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		{
 			//Reload shaders
 			app->simpleShader = LoadShader("Resources/Shaders/simple-vertex.glsl", "Resources/Shaders/simple-fragment.glsl");
-			StatusSuccess("Reloaded simple shader");
+			PopupSuccess("Reloaded shaders");
 		}
 		else
 		{
@@ -1794,6 +1819,8 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 			DisposeRegexFile(&app->regexList);
 			LoadRegexFile(&app->regexList, "Resources/Configuration/RegularExpressions.rgx", &app->mainHeap);
 			LoadApplicationFonts();
+			
+			PopupSuccess("Reloaded application configuration options");
 		}
 	}
 	
@@ -1876,13 +1903,13 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 			
 			RefreshComPortList();
 			
-			if (IsComAvailable(quickComSelection))
+			if (IsComAvailable(quickComSelection) == false)
 			{
-				StatusError("%s not Available!", quickComSelection);
+				PopupError("%s not Available!", quickComSelection);
 			}
 			else
 			{
-				OpenComPort(quickComSelection, app->comPort.settings);
+				OpenComPort(quickComSelection, app->comMenuOptions.settings);
 			}
 		}
 	}
@@ -1902,22 +1929,27 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	if (ButtonPressed(Button_1))
 	{
 		PopupDebug("Something interesting is happening behind the scenes");
+		StatusDebug("Something interesting is happening behind the scenes");
 	}
 	if (ButtonPressed(Button_2))
 	{
 		PopupInfo("We are working :)");
+		StatusInfo("We are working :)");
 	}
 	if (ButtonPressed(Button_3))
 	{
 		PopupSuccess("That was awesome! Do it again.");
+		StatusSuccess("That was awesome! Do it again.");
 	}
 	if (ButtonPressed(Button_4))
 	{
 		PopupError("An error has occurred. The world might be ending...");
+		StatusError("An error has occurred. The world might be ending...");
 	}
 	if (ButtonPressed(Button_5))
 	{
-		PopupErrorTimed(100000, "This is a really long message for the user to read. Because it is so long we are going to give you 10 seconds to read it.");
+		PopupErrorTimed(10000, "This is a really long message for the user to read. Because it is so long we are going to give you 10 seconds to read it.");
+		StatusErrorTimed(10000, "This is a really long message for the user to read. Because it is so long we are going to give you 10 seconds to read it.");
 	}
 	#endif
 	
@@ -2315,11 +2347,24 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	}
 	
 	// +==============================+
-	// |    Close Window Shortcut     |
+	// |       Close Shortcuts        |
 	// +==============================+
-	if (ButtonPressed(Button_W) && ButtonDown(Button_Shift) && ButtonDown(Button_Control))
+	if (ButtonPressed(Button_W) && ButtonDown(Button_Control))
 	{
-		AppOutput->closeWindow = true;
+		if (ButtonDown(Button_Shift))
+		{
+			AppOutput->closeWindow = true;
+		}
+		else
+		{
+			if (app->comPort.isOpen)
+			{
+				PopupError("Closed \"%s\"", app->comPort.name);
+				platform->CloseComPortPntr(&app->mainHeap, &app->comPort);
+				comMenu->show = false;
+				ClearConsole();
+			}
+		}
 	}
 	
 	// +--------------------------------------------------------------+
@@ -2615,7 +2660,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		// +==============================+
 		{
 			u32 stringLength = (u32)strlen(app->statusMessage);
-			u32 animInTime = stringLength * STATUS_ANIM_IN_CHAR_TIME;
+			u32 animInTime = stringLength * GC->statusInAnimCharTime;
 			u32 actualDuration = animInTime + app->statusDuration;
 			v2 stringPos = NewVec2(5, RenderScreenSize.y-app->uiFont.maxExtendDown);
 			r32 availableWidth = ui->statusBarRec.width - stringPos.x - 5;
@@ -2647,9 +2692,9 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 				}
 				
 				r32 alphaAmount = 1.0f;
-				if (timeTillEnd < STATUS_ANIM_OUT_TIME)
+				if (timeTillEnd < GC->statusOutAnimTime)
 				{
-					alphaAmount = Ease(EasingStyle_CubicOut, (r32)timeTillEnd / STATUS_ANIM_OUT_TIME);
+					alphaAmount = Ease(EasingStyle_CubicOut, (r32)timeTillEnd / GC->statusOutAnimTime);
 				}
 				
 				v2 stringSize = MeasureString(&app->uiFont, app->statusMessage, numCharacters);

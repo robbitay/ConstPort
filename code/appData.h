@@ -63,6 +63,7 @@ struct AppData_t
 	u32 popupDuration;
 	Color_t popupColor;
 	char popupMessage[POPUP_MESSAGE_BUFFER_SIZE];
+	bool popupExcused;
 	
 	RegexList_t regexList;
 	

@@ -223,7 +223,7 @@ void DrawCheckbox(Checkbox_t* checkboxPntr, RenderState_t* rs, Font_t* labelFont
 	
 	Assert(platform->programTime >= checkboxPntr->changeTime);
 	u64 timeSinceClick = platform->programTime - checkboxPntr->changeTime;
-	float animAmount = Clamp32((r32)timeSinceClick / CHECKBOX_ANIM_TIME, 0.0f, 1.0f);
+	float animAmount = Clamp32((r32)timeSinceClick / GC->checkboxAnimTime, 0.0f, 1.0f);
 	if (!checkboxPntr->checked)
 	{
 		animAmount = Ease(EasingStyle_CubicOut, animAmount);
