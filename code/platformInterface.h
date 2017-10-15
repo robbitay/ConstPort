@@ -151,33 +151,33 @@ struct PlatformInfo_t
 	bool windowHasFocus;
 	bool windowIsMinimized;
 	
-	FreeFileMemory_f*  FreeFileMemoryPntr;
-	ReadEntireFile_f*  ReadEntireFilePntr;
-	WriteEntireFile_f* WriteEntireFilePntr;
-	OpenFile_f*        OpenFilePntr;
-	AppendFile_f*      AppendFilePntr;
-	CloseFile_f*       CloseFilePntr;
-	LaunchFile_f*      LaunchFilePntr;
+	FreeFileMemory_f*  FreeFileMemory;
+	ReadEntireFile_f*  ReadEntireFile;
+	WriteEntireFile_f* WriteEntireFile;
+	OpenFile_f*        OpenFile;
+	AppendFile_f*      AppendFile;
+	CloseFile_f*       CloseFile;
+	LaunchFile_f*      LaunchFile;
 	
-	DebugWrite_f*     DebugWritePntr;
-	DebugWriteLine_f* DebugWriteLinePntr;
-	DebugPrint_f*     DebugPrintPntr;
-	DebugPrintLine_f* DebugPrintLinePntr;
+	DebugWrite_f*     DebugWrite;
+	DebugWriteLine_f* DebugWriteLine;
+	DebugPrint_f*     DebugPrint;
+	DebugPrintLine_f* DebugPrintLine;
 	
-	GetComPortList_f* GetComPortListPntr;
-	OpenComPort_f*    OpenComPortPntr;
-	CloseComPort_f*   CloseComPortPntr;
-	ReadComPort_f*    ReadComPortPntr;
-	WriteComPort_f*   WriteComPortPntr;
+	GetComPortList_f* GetComPortList;
+	OpenComPort_f*    OpenComPort;
+	CloseComPort_f*   CloseComPort;
+	ReadComPort_f*    ReadComPort;
+	WriteComPort_f*   WriteComPort;
 	
-	CopyToClipboard_f*   CopyToClipboardPntr;
-	CopyFromClipboard_f* CopyFromClipboardPntr;
+	CopyToClipboard_f*   CopyToClipboard;
+	CopyFromClipboard_f* CopyFromClipboard;
 	
-	StartProgramInstance_f* StartProgramInstancePntr;
-	GetProgramStatus_f*     GetProgramStatusPntr;
-	ReadProgramOutput_f*    ReadProgramOutputPntr;
-	WriteProgramInput_f*    WriteProgramInputPntr;
-	CloseProgramInstance_f* CloseProgramInstancePntr;
+	StartProgramInstance_f* StartProgramInstance;
+	GetProgramStatus_f*     GetProgramStatus;
+	ReadProgramOutput_f*    ReadProgramOutput;
+	WriteProgramInput_f*    WriteProgramInput;
+	CloseProgramInstance_f* CloseProgramInstance;
 	
 	r64 timeDelta;
 	u64 programTime;

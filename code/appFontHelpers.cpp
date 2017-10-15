@@ -128,7 +128,14 @@ u32 FindNextFormatChunk(const Font_t* font, const char* string, u32 numCharacter
 			}
 			else if (wordBoundIndex == 0 && IsCharClassAlphaNumeric(c) == false)
 			{
-				wordBoundIndex = cIndex;
+				if (IsCharClassBeginningCharacter(c))
+				{
+					wordBoundIndex = cIndex;
+				}
+				else
+				{
+					wordBoundIndex = cIndex+1;
+				}
 			}
 		}
 		

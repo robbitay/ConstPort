@@ -773,6 +773,7 @@
 			"inline TextLocation_t TextLocationMin(TextLocation_t location1, TextLocation_t location2)",
 			"inline bool IsCharClassAlphaNumeric(char c)",
 			"inline bool IsCharClassAlphabet(char c)",
+			"inline bool IsCharClassBeginningCharacter(char c)",
 			"inline bool IsCharClassControl(char c)",
 			"inline bool IsCharClassExtendedAscii(char c)",
 			"inline bool IsCharClassNumeric(char c)",

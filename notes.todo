@@ -1,11 +1,10 @@
 # Application TODO List
-	[!] Rename platform function pointers to get rid of Pntr suffix
-	[ ] Fix the format string functions to choose to split open and close symbols differently
 	[ ] Paste from clipboard
+	[ ] Format timestamp as date in debug overlay
+	[ ] Option to enable timestamps and line color characters when saving to file
+	
 	[ ] Add a string data stack for all input lines to get added to
 	[ ] Get rid of the UI Handler since we probably won't ever need movable/modular windows. Also function pointer remapping is stupid looking
-	[ ] Add checking for COM port errors and whether or not we are still connected
-	[ ] Option to enable timestamps and line color characters when saving to file
 	[ ] Custom regular expression effects, variable number of regular expressions
 	[ ] Text cursor maintains when dragging out of text area
 	[ ] Add better support for default configuration options that are simply overwritten by the user defined ones. Can we provide an example file or something? Maybe leave everything commented out and let them uncomment things?
@@ -17,6 +16,7 @@
 	[ ] Fix console window opening with python 2?
 	[ ] Keep old configuration options if new configuration file is unparsable (only on reload)
 	[ ] Add an option to enable commands that can be sent from the python script and interpreted by ConstPort to provide extra functionality
+	[ ] Turn the links in the about menu into clickable links (also maybe for uses other places)
 
 # Application Wish List
 	[ ] Auto-reload configuration files when saved
@@ -44,6 +44,7 @@
 
 # Win32 Platform Layer TODO List
 	[!] Fix app loading when the compilation takes longer. We need to detect whether the file is locked for reading I guess?
+	[ ] Add checking for COM port errors and whether or not we are still connected
 	[ ] Delete all OpenGL objects when we reset the application
 	[ ] Close open COM ports when resetting application
 	[ ] Move recent changes and reusable functions into a starter project for later use
@@ -63,6 +64,8 @@
 
 
 # Old TODO List Items
+	[X] Fix the format string functions to choose to split open and close symbols differently
+	[X] Rename platform function pointers to get rid of Pntr suffix
 	[X] Start using ButtonPressedHandled for Button_Escape
 	[X] Fix ctrl+[0-9] shortcuts
 	[X] Add a shortcut to close COM port

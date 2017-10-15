@@ -185,7 +185,7 @@ void ClearConsole()
 void RefreshComPortList()
 {
 	BoundedStrListDestroy(&app->availablePorts, &app->mainHeap);
-	app->availablePorts = platform->GetComPortListPntr(&app->mainHeap);
+	app->availablePorts = platform->GetComPortList(&app->mainHeap);
 	
 	StatusDebug("Found %u COM ports", app->availablePorts.count);
 	for (u32 cIndex = 0; cIndex < app->availablePorts.count; cIndex++)
@@ -225,17 +225,17 @@ bool OpenComPort(const char* comPortName, ComSettings_t settings)
 		//NOTE: If we want to open the same port again we have to close it first before opening it
 		//      Otherwise we will try to open and only close the port if the open succeeds
 		StatusError("Closed %s", app->comPort.name);
-		platform->CloseComPortPntr(&app->mainHeap, &app->comPort);
+		platform->CloseComPort(&app->mainHeap, &app->comPort);
 	}
 	
-	ComPort_t newComPort = platform->OpenComPortPntr(&app->mainHeap, comPortName, settings);
+	ComPort_t newComPort = platform->OpenComPort(&app->mainHeap, comPortName, settings);
 	
 	if (newComPort.isOpen)
 	{
 		if (app->comPort.isOpen)
 		{
 			StatusError("Closed %s", app->comPort.name);
-			platform->CloseComPortPntr(&app->mainHeap, &app->comPort);
+			platform->CloseComPort(&app->mainHeap, &app->comPort);
 		}
 		ClearConsole();
 		app->comPort = newComPort;
@@ -449,7 +449,7 @@ void ComMenuUpdate(MenuHandler_t* menuHandler, Menu_t* menuPntr)
 					ButtonReleased(MouseButton_Left) && IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, disconnectButtonRec))
 				{
 					PopupError("Closed \"%s\"", app->comPort.name);
-					platform->CloseComPortPntr(&app->mainHeap, &app->comPort);
+					platform->CloseComPort(&app->mainHeap, &app->comPort);
 					menuPntr->show = false;
 					ClearConsole();
 				}
@@ -1017,7 +1017,7 @@ void DataReceived(const char* dataBuffer, i32 numBytes)
 					IsPostMeridian(lineTime.hour) ? "pm" : "am",
 					GetMonthStr((Month_t)lineTime.month), GetDayOfMonthString(lineTime.day), lineTime.year);
 				
-				platform->AppendFilePntr(&app->outputFile, timestampBuffer, timestampLength);
+				platform->AppendFile(&app->outputFile, timestampBuffer, timestampLength);
 				
 				for (u32 cIndex2 = 0; cIndex2 < finishedLine->numChars; cIndex2++)
 				{
@@ -1042,8 +1042,8 @@ void DataReceived(const char* dataBuffer, i32 numBytes)
 						finishedLine->chars[cIndex2] = ' ';
 					}
 				}
-				platform->AppendFilePntr(&app->outputFile, finishedLine->chars, finishedLine->numChars);
-				platform->AppendFilePntr(&app->outputFile, "\r\n", 2);
+				platform->AppendFile(&app->outputFile, finishedLine->chars, finishedLine->numChars);
+				platform->AppendFile(&app->outputFile, "\r\n", 2);
 				
 				LineReset(&app->lineList, finishedLine);
 			}
@@ -1486,7 +1486,7 @@ EXPORT AppInitialize_DEFINITION(App_Initialize)
 	{
 		char* commandStr = TempPrint("python %s", GC->pythonScript);
 		StatusInfo("Running System Command: \"%s\"", commandStr);
-		app->programInstance = platform->StartProgramInstancePntr(commandStr);
+		app->programInstance = platform->StartProgramInstance(commandStr);
 		if (app->programInstance.isOpen == false)
 		{
 			StatusError("Python exec failed: \"%s\"", commandStr);
@@ -1626,7 +1626,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		while (readResult > 0)
 		{
 			char buffer[4096] = {};
-			readResult = platform->ReadComPortPntr(&app->comPort, buffer, ArrayCount(buffer)-1);
+			readResult = platform->ReadComPort(&app->comPort, buffer, ArrayCount(buffer)-1);
 			if (readResult > 0)
 			{
 				// DEBUG_PrintLine("Read %d bytes \"%.*s\"", readResult, readResult, buffer);
@@ -1642,7 +1642,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 				{
 					DEBUG_PrintLine("Writing to program instance \"%.*s\"", readResult, buffer);
 					
-					u32 numBytesWritten = platform->WriteProgramInputPntr(&app->programInstance, &buffer[0], readResult);
+					u32 numBytesWritten = platform->WriteProgramInput(&app->programInstance, &buffer[0], readResult);
 					if ((i32)numBytesWritten != readResult)
 					{
 						DEBUG_PrintLine("Only wrote %u/%u bytes to program instance", numBytesWritten, readResult);
@@ -1666,7 +1666,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		u32 numBytesRead = 1;
 		while (numBytesRead > 0)
 		{
-			numBytesRead = platform->ReadProgramOutputPntr(&app->programInstance, readBuffer, ArrayCount(readBuffer));
+			numBytesRead = platform->ReadProgramOutput(&app->programInstance, readBuffer, ArrayCount(readBuffer));
 			
 			if (numBytesRead > 0)
 			{
@@ -1683,11 +1683,11 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 			// }
 		}
 		
-		ProgramStatus_t programStatus = platform->GetProgramStatusPntr(&app->programInstance);
+		ProgramStatus_t programStatus = platform->GetProgramStatus(&app->programInstance);
 		if (programStatus != ProgramStatus_Running)
 		{
 			DEBUG_WriteLine("Program instance finished!");
-			platform->CloseProgramInstancePntr(&app->programInstance);
+			platform->CloseProgramInstance(&app->programInstance);
 		}
 	}
 	
@@ -1706,10 +1706,10 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 			if (echoInput) { DataReceived(&input->textInput[0], input->textInputLength); }
 			if (writeToComPort)
 			{
-				platform->WriteComPortPntr(&app->comPort, &input->textInput[0], input->textInputLength);
+				platform->WriteComPort(&app->comPort, &input->textInput[0], input->textInputLength);
 				app->txShiftRegister |= 0x80;
 			}
-			if (writeToProgram) { platform->WriteProgramInputPntr(&app->programInstance, &input->textInput[0], input->textInputLength); }
+			if (writeToProgram) { platform->WriteProgramInput(&app->programInstance, &input->textInput[0], input->textInputLength); }
 		}
 		
 		if (comMenu->show == false && ButtonPressed(Button_Enter))
@@ -1720,10 +1720,10 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 			if (echoInput) { DataReceived("\n", 1); }
 			if (writeToComPort)
 			{
-				platform->WriteComPortPntr(&app->comPort, &newChar, 1);
+				platform->WriteComPort(&app->comPort, &newChar, 1);
 				app->txShiftRegister |= 0x80;
 			}
-			if (writeToProgram) { platform->WriteProgramInputPntr(&app->programInstance, &newChar, 1); }
+			if (writeToProgram) { platform->WriteProgramInput(&app->programInstance, &newChar, 1); }
 		}
 		
 		if (!comMenu->show && ButtonPressed(Button_Backspace))
@@ -1734,12 +1734,12 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 			if (echoInput) { DataReceived("\b", 1); }
 			if (writeToComPort)
 			{
-				platform->WriteComPortPntr(&app->comPort, &newChar, 1);
+				platform->WriteComPort(&app->comPort, &newChar, 1);
 				app->txShiftRegister |= 0x80;
 			}
 			if (writeToProgram)
 			{
-				platform->WriteProgramInputPntr(&app->programInstance, &newChar, 1);
+				platform->WriteProgramInput(&app->programInstance, &newChar, 1);
 			}
 		}
 	}
@@ -1793,7 +1793,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 				char* selectionTempBuffer = TempString(selectionSize+1);
 				GetSelection(selectionTempBuffer);
 				
-				platform->CopyToClipboardPntr(selectionTempBuffer, selectionSize);
+				platform->CopyToClipboard(selectionTempBuffer, selectionSize);
 				
 				TempPopMark();
 			}
@@ -1860,18 +1860,18 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		
 		if (app->writeToFile)
 		{
-			platform->CloseFilePntr(&app->outputFile);
+			platform->CloseFile(&app->outputFile);
 			app->writeToFile = false;
 			StatusSuccess("Stopped outputting to file");
 		}
 		else
 		{
-			if (platform->OpenFilePntr(outputFileName, &app->outputFile))
+			if (platform->OpenFile(outputFileName, &app->outputFile))
 			{
 				StatusSuccess("Opened file successfully");
 				app->writeToFile = true;
 				const char* newString = "\r\n\r\n[File Opened for Writing]\r\n";
-				platform->AppendFilePntr(&app->outputFile, newString, (u32)strlen(newString));
+				platform->AppendFile(&app->outputFile, newString, (u32)strlen(newString));
 			}
 			else
 			{
@@ -2023,7 +2023,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		if (app->programInstance.isOpen)
 		{
 			StatusInfo("Closing python instance");
-			platform->CloseProgramInstancePntr(&app->programInstance);
+			platform->CloseProgramInstance(&app->programInstance);
 		}
 		else
 		{
@@ -2031,7 +2031,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 			{
 				char* commandStr = TempPrint("python %s", GC->pythonScript);
 				StatusInfo("Running System Command: \"%s\"", commandStr);
-				app->programInstance = platform->StartProgramInstancePntr(commandStr);
+				app->programInstance = platform->StartProgramInstance(commandStr);
 				if (app->programInstance.isOpen == false)
 				{
 					StatusError("Python exec failed: \"%s\"", commandStr);
@@ -2103,21 +2103,21 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 						//TODO: Create file if it doesn't exist
 						if (ButtonDown(Button_Shift) && ButtonDown(Button_Control))
 						{
-							platform->LaunchFilePntr("Resources/Configuration/PlatformConfig.json");
-							platform->LaunchFilePntr("Resources/Configuration/RegularExpressions.rgx");
-							platform->LaunchFilePntr("Resources/Configuration/GlobalConfig.json");
+							platform->LaunchFile("Resources/Configuration/PlatformConfig.json");
+							platform->LaunchFile("Resources/Configuration/RegularExpressions.rgx");
+							platform->LaunchFile("Resources/Configuration/GlobalConfig.json");
 						}
 						else if (ButtonDown(Button_Shift))
 						{
-							platform->LaunchFilePntr("Resources/Configuration/PlatformConfig.json");
+							platform->LaunchFile("Resources/Configuration/PlatformConfig.json");
 						}
 						else if (ButtonDown(Button_Control))
 						{
-							platform->LaunchFilePntr("Resources/Configuration/RegularExpressions.rgx");
+							platform->LaunchFile("Resources/Configuration/RegularExpressions.rgx");
 						}
 						else
 						{
-							platform->LaunchFilePntr("Resources/Configuration/GlobalConfig.json");
+							platform->LaunchFile("Resources/Configuration/GlobalConfig.json");
 						}
 					} break;
 					
@@ -2176,14 +2176,14 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 			
 			//NOTE: GetSelection adds a \0 on the end so need to remove it
 			DEBUG_PrintLine("Saving %u bytes to %s", selectionSize-1, fileName);
-			platform->WriteEntireFilePntr(fileName, fileBuffer, selectionSize-1);
+			platform->WriteEntireFile(fileName, fileBuffer, selectionSize-1);
 			DEBUG_WriteLine("Done!");
 			
 			TempPopMark();
 			
 			if (GC->showFileAfterSaving)
 			{
-				if (platform->LaunchFilePntr(fileName))
+				if (platform->LaunchFile(fileName))
 				{
 					DEBUG_WriteLine("Opened output file for viewing");
 				}
@@ -2360,7 +2360,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 			if (app->comPort.isOpen)
 			{
 				PopupError("Closed \"%s\"", app->comPort.name);
-				platform->CloseComPortPntr(&app->mainHeap, &app->comPort);
+				platform->CloseComPort(&app->mainHeap, &app->comPort);
 				comMenu->show = false;
 				ClearConsole();
 			}
@@ -3042,7 +3042,7 @@ EXPORT AppClosing_DEFINITION(App_Closing)
 	
 	if (app->programInstance.isOpen)
 	{
-		platform->CloseProgramInstancePntr(&app->programInstance);
+		platform->CloseProgramInstance(&app->programInstance);
 	}
 }
 

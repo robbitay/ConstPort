@@ -129,7 +129,7 @@ void LoadRegexFile(RegexList_t* regexList, const char* filename, MemoryArena_t* 
 	regexList->memArena = memArena;
 	CreateLinkedList(&regexList->list);
 	
-	FileInfo_t expressionFile = platform->ReadEntireFilePntr(filename);
+	FileInfo_t expressionFile = platform->ReadEntireFile(filename);
 	
 	const char* fileContents = (const char*)expressionFile.content;
 	u32 lineStart = 0;
@@ -207,7 +207,7 @@ void LoadRegexFile(RegexList_t* regexList, const char* filename, MemoryArena_t* 
 		}
 	}
 	
-	platform->FreeFileMemoryPntr(&expressionFile);
+	platform->FreeFileMemory(&expressionFile);
 }
 
 void DisposeRegexFile(RegexList_t* regexList)

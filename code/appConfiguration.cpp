@@ -237,7 +237,7 @@ void LoadGlobalConfiguration(const PlatformInfo_t* PlatformInfo, GlobalConfig_t*
 	//+==================================+
 	//|       Parse the JSON File        |
 	//+==================================+
-	FileInfo_t globalConfigFile = PlatformInfo->ReadEntireFilePntr(GLOBAL_CONFIG_FILEPATH);
+	FileInfo_t globalConfigFile = PlatformInfo->ReadEntireFile(GLOBAL_CONFIG_FILEPATH);
 	char* fileData = (char*)globalConfigFile.content;
 	SanatizeFileComments(fileData, globalConfigFile.size);
 
@@ -389,7 +389,7 @@ void LoadGlobalConfiguration(const PlatformInfo_t* PlatformInfo, GlobalConfig_t*
 		}
 	}
 	
-	PlatformInfo->FreeFileMemoryPntr(&globalConfigFile);
+	PlatformInfo->FreeFileMemory(&globalConfigFile);
 	
 	if (parseSuccess)
 	{

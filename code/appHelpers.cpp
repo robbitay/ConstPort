@@ -8,36 +8,36 @@ Description:
 
 //#included from app.cpp
 
-#define DEBUG_Write(formatStr) do {          \
+#define DEBUG_Write(formatStr) do {      \
+	if (platform != nullptr &&           \
+		platform->DebugWrite != nullptr) \
+	{                                    \
+		platform->DebugWrite(formatStr); \
+	}                                    \
+} while (0)
+
+#define DEBUG_WriteLine(formatStr) do {      \
 	if (platform != nullptr &&               \
-		platform->DebugWritePntr != nullptr) \
+		platform->DebugWriteLine != nullptr) \
 	{                                        \
-		platform->DebugWritePntr(formatStr); \
+		platform->DebugWriteLine(formatStr); \
 	}                                        \
 } while (0)
 
-#define DEBUG_WriteLine(formatStr) do {          \
-	if (platform != nullptr &&                   \
-		platform->DebugWriteLinePntr != nullptr) \
-	{                                            \
-		platform->DebugWriteLinePntr(formatStr); \
-	}                                            \
+#define DEBUG_Print(formatStr, ...) do {              \
+	if (platform != nullptr &&                        \
+		platform->DebugPrint != nullptr)              \
+	{                                                 \
+		platform->DebugPrint(formatStr, __VA_ARGS__); \
+	}                                                 \
 } while (0)
 
-#define DEBUG_Print(formatStr, ...) do {                  \
+#define DEBUG_PrintLine(formatStr, ...) do {              \
 	if (platform != nullptr &&                            \
-		platform->DebugPrintPntr != nullptr)              \
+		platform->DebugPrintLine != nullptr)              \
 	{                                                     \
-		platform->DebugPrintPntr(formatStr, __VA_ARGS__); \
+		platform->DebugPrintLine(formatStr, __VA_ARGS__); \
 	}                                                     \
-} while (0)
-
-#define DEBUG_PrintLine(formatStr, ...) do {                  \
-	if (platform != nullptr &&                                \
-		platform->DebugPrintLinePntr != nullptr)              \
-	{                                                         \
-		platform->DebugPrintLinePntr(formatStr, __VA_ARGS__); \
-	}                                                         \
 } while (0)
 
 #define HandleButton(button) do { app->buttonHandled[button] = true; } while(0)

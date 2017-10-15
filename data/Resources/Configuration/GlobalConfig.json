@@ -137,7 +137,7 @@
 		"COM4":  "Radio Right",
 		"COM6":  "App Left",
 		"COM7":  "Radio Left",
-		"COM9":  "PIC32MZ",
+		"COM9":  "PIC32MZ (COM9)",
 		"COM12": "System 2",
 		
 		// "tty.lpss-serial1": "Lpss Serial1",

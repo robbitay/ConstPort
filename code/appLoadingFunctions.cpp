@@ -93,8 +93,8 @@ Shader_t LoadShader(const char* vertShaderFileName, const char* fragShaderFileNa
 	
 	Assert(true);
 	
-	FileInfo_t vertexShaderFile = platform->ReadEntireFilePntr(vertShaderFileName);
-	FileInfo_t fragmentShaderFile = platform->ReadEntireFilePntr(fragShaderFileName);
+	FileInfo_t vertexShaderFile = platform->ReadEntireFile(vertShaderFileName);
+	FileInfo_t fragmentShaderFile = platform->ReadEntireFile(fragShaderFileName);
 	
 	result.vertId = glCreateShader(GL_VERTEX_SHADER);
 	glShaderSource(result.vertId, 1, (const char* const*)&vertexShaderFile.content, NULL);
@@ -128,8 +128,8 @@ Shader_t LoadShader(const char* vertShaderFileName, const char* fragShaderFileNa
 		DEBUG_PrintLine("Log: \"%s\"", logBuffer);
 	}
 	
-	platform->FreeFileMemoryPntr(&vertexShaderFile);
-	platform->FreeFileMemoryPntr(&fragmentShaderFile);
+	platform->FreeFileMemory(&vertexShaderFile);
+	platform->FreeFileMemory(&fragmentShaderFile);
 	
 	result.programId = glCreateProgram();
 	glAttachShader(result.programId, result.fragId);
@@ -179,7 +179,7 @@ Texture_t LoadTexture(const char* fileName, bool pixelated = false, bool repeat 
 {
 	Texture_t result = {};
 	
-	FileInfo_t textureFile = platform->ReadEntireFilePntr(fileName);
+	FileInfo_t textureFile = platform->ReadEntireFile(fileName);
 	
 	i32 numChannels;
 	i32 width, height;
@@ -190,7 +190,7 @@ Texture_t LoadTexture(const char* fileName, bool pixelated = false, bool repeat 
 	result = CreateTexture(imageData, width, height, pixelated, repeat);
 	
 	stbi_image_free(imageData);
-	platform->FreeFileMemoryPntr(&textureFile);
+	platform->FreeFileMemory(&textureFile);
 	
 	return result;
 }
@@ -201,7 +201,7 @@ Font_t LoadFont(const char* fileName,
 {
 	Font_t result = {};
 	
-	FileInfo_t fontFile = platform->ReadEntireFilePntr(fileName);
+	FileInfo_t fontFile = platform->ReadEntireFile(fileName);
 	
 	result.numChars = numCharacters;
 	result.firstChar = firstCharacter;
@@ -251,7 +251,7 @@ Font_t LoadFont(const char* fileName,
 	
 	TempPopMark();
 	
-	platform->FreeFileMemoryPntr(&fontFile);
+	platform->FreeFileMemory(&fontFile);
 	
 	//Create information about character sizes
 	{
