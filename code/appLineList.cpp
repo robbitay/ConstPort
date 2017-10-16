@@ -98,6 +98,19 @@ inline void LineReset(LineList_t* lineList, Line_t* line)
 	line->matchColor = GC->colors.textDefault;
 }
 
+inline void LineReplace(LineList_t* lineList, Line_t* linePntr, const char* newString)
+{
+	Assert(lineList != nullptr);
+	Assert(linePntr != nullptr);
+	
+	ArenaPop(lineList->arenaPntr, linePntr->chars);
+	linePntr->numChars = (u32)strlen(newString);
+	char* newLocation = PushArray(lineList->arenaPntr, char, linePntr->numChars+1);
+	strcpy(newLocation, newString);
+	linePntr->chars = newLocation;
+	linePntr->chars[linePntr->numChars] = '\0';
+}
+
 void CreateLineList(LineList_t* lineList, MemoryArena_t* arenaPntr, const char* contents)
 {
 	Assert(lineList != nullptr);

@@ -86,8 +86,9 @@
 			"effects": ["foreground_color = 66D9EF"], //Light Blue
 		},
 		{
-			"expression": "===========",
-			"effects": ["clear_screen"],
+			"expression": "[=]{4,}([^=]+)[=]{4,}",
+			"show_only_captured": true,
+			"effects": ["thick_mark", "foreground_color = Orange"],
 		},
 		
 		//Neon Color Scheme

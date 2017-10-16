@@ -921,57 +921,6 @@ struct TriggerResults_t
 	bool clearScreen;
 };
 
-#define CheckRegularExpression(perCharacter, addLineToBuffer, createNewLine, clearScreen, linePntr) do             \
-{                                                                                                                  \
-	for (u32 rIndex = 0; rIndex < GC->numTriggers; rIndex++)                                                       \
-	{                                                                                                              \
-		RegexTrigger_t* trigger = &GC->triggers[rIndex];                                                           \
-		                                                                                                           \
-		if (perCharacter == false || trigger->runPerCharacter)                                                     \
-		{                                                                                                          \
-			bool appliedToThisComPort = (trigger->numComPorts == 0 || app->comPort.isOpen == false);               \
-			if (appliedToThisComPort == false)                                                                     \
-			{                                                                                                      \
-				for (u32 comListIndex = 0; comListIndex < trigger->numComPorts; comListIndex++)                    \
-				{                                                                                                  \
-					const char* supportedName = trigger->comPorts[comListIndex];                                   \
-					if (strcmp(supportedName, app->comPort.name) == 0 ||                                           \
-						strcmp(supportedName, GetPortUserName(app->comPort.name)) == 0)                            \
-					{                                                                                              \
-						appliedToThisComPort = true;                                                               \
-						break;                                                                                     \
-					}                                                                                              \
-				}                                                                                                  \
-			}                                                                                                      \
-			                                                                                                       \
-			if (appliedToThisComPort)                                                                              \
-			{                                                                                                      \
-				const char* regexStr = nullptr;                                                                    \
-				if (trigger->expression != nullptr)                                                                \
-				{                                                                                                  \
-					regexStr = trigger->expression;                                                                \
-				}                                                                                                  \
-				else if (trigger->expressionName != nullptr)                                                       \
-				{                                                                                                  \
-					regexStr = GetRegularExpression(&app->regexList, trigger->expressionName);                     \
-				}                                                                                                  \
-				                                                                                                   \
-				if (regexStr != nullptr)                                                                           \
-				{                                                                                                  \
-					bool expressionMatched = TestRegularExpression(regexStr, linePntr->chars, linePntr->numChars); \
-					if (expressionMatched)                                                                         \
-					{                                                                                              \
-						TriggerResults_t results = ApplyTriggerEffects(linePntr, trigger);                         \
-						if (!results.addLineToBuffer) { createNewLine = true; }                                    \
-						if (results.createNewLine) { createNewLine = true; }                                       \
-						if (results.clearScreen) { clearScreen = true; }                                           \
-					}                                                                                              \
-				}                                                                                                  \
-			}                                                                                                      \
-		}                                                                                                          \
-	}                                                                                                              \
-} while(0)
-
 TriggerResults_t ApplyTriggerEffects(Line_t* newLine, RegexTrigger_t* trigger)
 {
 	TriggerResults_t result = {};
@@ -1149,6 +1098,66 @@ TriggerResults_t ApplyTriggerEffects(Line_t* newLine, RegexTrigger_t* trigger)
 	
 	return result;
 }
+
+void ReplaceLineWithCapture(Line_t* linePntr, const char* regexStr)
+{
+	TempPushMark();
+	
+	char* tempString = GetRegexCaptureString(regexStr, linePntr->chars, linePntr->numChars, TempArena);
+	DEBUG_PrintLine("tempLine: \"%s\"", tempString);
+	LineReplace(&app->lineList, linePntr, tempString);
+	
+	TempPopMark();
+}
+
+#define CheckRegularExpression(perCharacter, addLineToBuffer, createNewLine, clearScreen, linePntr) do             \
+{                                                                                                                  \
+	for (u32 rIndex = 0; rIndex < GC->numTriggers; rIndex++)                                                       \
+	{                                                                                                              \
+		RegexTrigger_t* trigger = &GC->triggers[rIndex];                                                           \
+		if (perCharacter == false || trigger->runPerCharacter)                                                     \
+		{                                                                                                          \
+			bool appliedToThisComPort = (trigger->numComPorts == 0 || app->comPort.isOpen == false);               \
+			if (appliedToThisComPort == false)                                                                     \
+			{                                                                                                      \
+				for (u32 comListIndex = 0; comListIndex < trigger->numComPorts; comListIndex++)                    \
+				{                                                                                                  \
+					const char* supportedName = trigger->comPorts[comListIndex];                                   \
+					if (strcmp(supportedName, app->comPort.name) == 0 ||                                           \
+						strcmp(supportedName, GetPortUserName(app->comPort.name)) == 0)                            \
+					{                                                                                              \
+						appliedToThisComPort = true;                                                               \
+						break;                                                                                     \
+					}                                                                                              \
+				}                                                                                                  \
+			}                                                                                                      \
+			if (appliedToThisComPort)                                                                              \
+			{                                                                                                      \
+				const char* regexStr = nullptr;                                                                    \
+				if (trigger->expression != nullptr)                                                                \
+				{                                                                                                  \
+					regexStr = trigger->expression;                                                                \
+				}                                                                                                  \
+				else if (trigger->expressionName != nullptr)                                                       \
+				{                                                                                                  \
+					regexStr = GetRegularExpression(&app->regexList, trigger->expressionName);                     \
+				}                                                                                                  \
+				if (regexStr != nullptr)                                                                           \
+				{                                                                                                  \
+					bool expressionMatched = TestRegularExpression(regexStr, linePntr->chars, linePntr->numChars); \
+					if (expressionMatched)                                                                         \
+					{                                                                                              \
+						if (trigger->showOnlyCaptured) { ReplaceLineWithCapture(linePntr, regexStr); }             \
+						TriggerResults_t results = ApplyTriggerEffects(linePntr, trigger);                         \
+						if (!results.addLineToBuffer) { createNewLine = true; }                                    \
+						if (results.createNewLine) { createNewLine = true; }                                       \
+						if (results.clearScreen) { clearScreen = true; }                                           \
+					}                                                                                              \
+				}                                                                                                  \
+			}                                                                                                      \
+		}                                                                                                          \
+	}                                                                                                              \
+} while(0)
 
 void DataReceived(const char* dataBuffer, i32 numBytes)
 {

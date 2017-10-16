@@ -1,5 +1,7 @@
 # Application TODO List
-	[ ] Implement show only captured regex trigger effect
+	[ ] Add options for seperaters between captured groups
+	[ ] Add suffix and prefix appending options to a trigger
+	[ ] Add a replace format string option with $1, $2, etc.
 	[ ] Horizontal Scrollbar (only shows up if needed)
 	
 	[ ] An option to perserve invalid ASCII characters when saving to a file
@@ -62,6 +64,7 @@
 
 
 # Old TODO List Items
+	[X] Implement show only captured regex trigger effect
 	[X] Implement clear screen regex trigger effect
 	[X] Implement new-line regex trigger effect
 	[X] Implement run per-character regex trigger option

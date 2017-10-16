@@ -253,12 +253,44 @@ bool TestRegularExpression(const char* expressionStr, const char* target, u32 ta
 	
 	if (boost::regex_search(target, target + targetLength, matches, expression))
 	{
-		// DEBUG_PrintLine("Found %d captured regions:", matches.size());
-		// for (u32 mIndex = 0; mIndex < matches.size(); mIndex++)
-		// {
-		// 	DEBUG_PrintLine("[%u] = \"%s\"", mIndex, matches[mIndex].str().c_str());
-		// }
+		DEBUG_PrintLine("Found %d captured regions:", matches.size());
+		for (u32 mIndex = 0; mIndex < matches.size(); mIndex++)
+		{
+			DEBUG_PrintLine("[%u] = \"%s\"", mIndex, matches[mIndex].str().c_str());
+		}
 		return true;
+	}
+	else
+	{
+		// DEBUG_WriteLine("Regular Expression Failed");
+		return false;
+	}
+}
+
+char* GetRegexCaptureString(const char* expressionStr, const char* target, u32 targetLength, MemoryArena_t* arenaPntr)
+{
+	boost::regex expression(expressionStr);
+	boost::cmatch matches;
+	
+	if (boost::regex_search(target, target + targetLength, matches, expression))
+	{
+		u32 totalCaptureLength = 0;
+		for (u32 mIndex = 1; mIndex < matches.size(); mIndex++)
+		{
+			totalCaptureLength += (u32)strlen(matches[mIndex].str().c_str());
+			DEBUG_PrintLine("Capture[%u] %u chars: %p \"%s\"", mIndex, (u32)strlen(matches[mIndex].str().c_str()), matches[mIndex].str().c_str(), matches[mIndex].str().c_str());
+		}
+		char* result = (char*)ArenaPush_(arenaPntr, totalCaptureLength+1);
+		char* charPntr = result;
+		for (u32 mIndex = 1; mIndex < matches.size(); mIndex++)
+		{
+			u32 captureLength = (u32)strlen(matches[mIndex].str().c_str());
+			strcpy(charPntr, matches[mIndex].str().c_str());
+			charPntr += captureLength;
+		}
+		result[totalCaptureLength] = '\0';
+		
+		return result;
 	}
 	else
 	{
