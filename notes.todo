@@ -1,5 +1,4 @@
 # Application TODO List
-	[ ] Paste from clipboard
 	[ ] Format timestamp as date in debug overlay
 	[ ] Option to enable timestamps and line color characters when saving to file
 	
@@ -64,6 +63,7 @@
 
 
 # Old TODO List Items
+	[X] Paste from clipboard
 	[X] Fix the format string functions to choose to split open and close symbols differently
 	[X] Rename platform function pointers to get rid of Pntr suffix
 	[X] Start using ButtonPressedHandled for Button_Escape

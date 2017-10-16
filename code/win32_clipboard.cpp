@@ -7,6 +7,10 @@ Description:
 */
 
 
+// +==============================+
+// |    Win32_CopyToClipboard     |
+// +==============================+
+//void CopyToClipboard(const void* dataPntr, u32 dataSize)
 CopyToClipboard_DEFINITION(Win32_CopyToClipboard)
 {
 	HWND windowHandle = GetActiveWindow();
@@ -39,11 +43,43 @@ CopyToClipboard_DEFINITION(Win32_CopyToClipboard)
 	CloseClipboard();
 }
 
+// +==============================+
+// |   Win32_CopyFromClipboard    |
+// +==============================+
+//void* CopyFromClipboard(MemoryArena_t* arenaPntr, u32* dataLengthOut)
 CopyFromClipboard_DEFINITION(Win32_CopyFromClipboard)
 {
-	u32 result = 0;
+	void* result = nullptr;
+	if (dataLengthOut != nullptr) { *dataLengthOut = 0; }
 	
+	HWND windowHandle = GetActiveWindow();
 	
+	if (OpenClipboard(windowHandle))
+	{
+		HANDLE dataHandle = GetClipboardData(CF_TEXT);
+		
+		if (dataHandle != nullptr)
+		{
+			char* lockPntr = (char*)GlobalLock(dataHandle);
+			u32 dataLength = (u32)strlen(lockPntr);
+			result = ArenaPush_(arenaPntr, dataLength+1);
+			memcpy(result, lockPntr, dataLength);
+			((u8*)result)[dataLength] = '\0';
+			GlobalUnlock(dataHandle);
+			
+			if (dataLengthOut != nullptr) { *dataLengthOut = dataLength; }
+		}
+		else
+		{
+			Win32_WriteLine("Clipboard did not contain CF_TEXT data");
+		}
+		
+		CloseClipboard();
+	}
+	else
+	{
+		Win32_WriteLine("Couldn't open clipboard");
+	}
 	
 	return result;
 }

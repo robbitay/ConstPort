@@ -718,6 +718,7 @@
 			"char* DupStr(const char* str, MemoryArena_t* memoryArenaPntr)",
 			"char* DupStrN(const char* str, u32 strLength, MemoryArena_t* memoryArenaPntr)",
 			"char* FormattedSizeStr(u32 numBytes)",
+			"char* SanatizeStringAdvanced(const char* strPntr, u32 numChars, MemoryArena_t* arenaPntr,\n\tbool keepNewLines = true, bool keepBackspaces = false, bool convertInvalidToHex = false)",
 			"char* TempCombine(const char* string1, const char* string2)",
 			"char* TempPrint(const char* formatStr, args)",
 			"const char* GetComPortFileName(ComPortIndex_t comIndex)",
@@ -825,6 +826,7 @@
 			"void ComMenuUpdate(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInput, MenuHandler_t* menuHandler, Menu_t* menuPntr)",
 			"void ContextMenuRender(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInput, RenderState_t* renderState, MenuHandler_t* menuHandler, Menu_t* menu)",
 			"void ContextMenuUpdate(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInput, MenuHandler_t* menuHandler, Menu_t* menu)",
+			"void CopyToClipboard(const void* dataPntr, u32 dataSize)",
 			"void CreateLineList(LineList_t* lineList, MemoryArena_t* arenaPntr, const char* contents)",
 			"void DataReceived(const char* dataBuffer, u32 numBytes)",
 			"void DestroyLineList(LineList_t* lineList)",
@@ -881,7 +883,8 @@
 			"void UpdateShader();",
 			"void UpdateUiElements(const AppInput_t* AppInput, UiElements_t* ui)",
 			"void Win32_CloseProgramInstance(ProgramInstance_t* program)",
-			"void* ArenaPush_(MemoryArena_t* arena, uint32 allocSize)"
+			"void* ArenaPush_(MemoryArena_t* arena, uint32 allocSize)",
+			"void* CopyFromClipboard(MemoryArena_t* arenaPntr, u32* dataLengthOut)"
 		],
 		"custom_globals":
 		[

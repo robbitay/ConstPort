@@ -827,6 +827,93 @@ u32 SanatizeString(const char* charPntr, u32 numChars, char* outputBuffer = null
 	return result;
 }
 
+char* SanatizeStringAdvanced(const char* strPntr, u32 numChars, MemoryArena_t* arenaPntr,
+	bool keepNewLines = true, bool keepBackspaces = false, bool convertInvalidToHex = false)
+{
+	char* result = nullptr;
+	u32 resultLength = 0;
+	
+	for (u8 round = 0; round < 2; round++)
+	{
+		Assert(round == 0 || result != nullptr);
+		
+		//Run this code twice, once to measure and once to actually copy into buffer
+		u32 fromIndex = 0;
+		u32 toIndex = 0;
+		while (fromIndex < numChars)
+		{
+			char c = strPntr[fromIndex];
+			char lastChar = '\0';
+			if (fromIndex > 0) { lastChar = strPntr[fromIndex-1]; }
+			char nextChar = strPntr[fromIndex+1];
+			
+			bool charHandled = false;
+			if (c == '\n')
+			{
+				if (keepNewLines)
+				{
+					if (result != nullptr) { result[toIndex] = '\n'; }
+					toIndex++;
+					charHandled = true;
+				}
+			}
+			else if (c == '\r')
+			{
+				if (nextChar == '\n' || lastChar == '\n')
+				{
+					//Drop the \r character
+					charHandled = true;
+				}
+				else if (keepNewLines)
+				{
+					if (result != nullptr) { result[toIndex] = '\n'; }
+					toIndex++;
+					charHandled = true;
+				}
+			}
+			else if (c == '\b')
+			{
+				if (keepBackspaces)
+				{
+					if (result != nullptr) { result[toIndex] = '\b'; }
+					toIndex++;
+					charHandled = true;
+				}
+			}
+			else if (IsCharClassPrintable(c) || c == '\t')
+			{
+				if (result != nullptr) { result[toIndex] = c; }
+				toIndex++;
+				charHandled = true;
+			}
+			
+			if (charHandled == false && convertInvalidToHex)
+			{
+				if (result != nullptr)
+				{
+					result[toIndex+0] = '0';
+					result[toIndex+1] = 'x';
+					result[toIndex+2] = UpperHexChar(c);
+					result[toIndex+3] = LowerHexChar(c);
+				}
+				toIndex += 4;
+			}
+			
+			fromIndex++;
+		}
+		
+		resultLength = toIndex;
+		if (resultLength == 0) { break; }
+		if (round == 0)
+		{
+			result = (char*)ArenaPush_(arenaPntr, resultLength+1);
+		}
+		result[resultLength] = '\0';
+	}
+	
+	return result;
+}
+
 bool ApplyTriggerEffects(Line_t* newLine, RegexTrigger_t* trigger)
 {
 	bool addLineToBuffer = true;
@@ -1742,6 +1829,33 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 				platform->WriteProgramInput(&app->programInstance, &newChar, 1);
 			}
 		}
+	
+		// +==============================+
+		// |     Paste from Clipboard     |
+		// +==============================+
+		if (ButtonDown(Button_Control) && ButtonPressed(Button_V))
+		{
+			TempPushMark();
+			
+			u32 clipboardDataSize = 0;
+			char* clipbardData = (char*)platform->CopyFromClipboard(TempArena, &clipboardDataSize);
+			
+			if (clipbardData != nullptr)
+			{
+				char* sanatized = SanatizeStringAdvanced(clipbardData, clipboardDataSize, TempArena, true, false, true);
+				u32 sanatizedLength = (u32)strlen(sanatized);
+				
+				if (echoInput) { DataReceived(sanatized, sanatizedLength); }
+				if (writeToComPort)
+				{
+					platform->WriteComPort(&app->comPort, sanatized, sanatizedLength);
+					app->txShiftRegister |= 0x80;
+				}
+				if (writeToProgram) { platform->WriteProgramInput(&app->programInstance, sanatized, sanatizedLength); }
+			}
+			
+			TempPopMark();
+		}
 	}
 	
 	//+==================================+
@@ -1776,8 +1890,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	//+======================================+
 	//| Clear Console and Copy to Clipboard  |
 	//+======================================+
-	if (ButtonPressed(Button_C) &&
-		ButtonDown(Button_Control))
+	if (ButtonDown(Button_Control) && ButtonPressed(Button_C))
 	{
 		if (ButtonDown(Button_Shift))
 		{

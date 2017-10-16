@@ -120,7 +120,7 @@ typedef DebugPrintLine_DEFINITION(DebugPrintLine_f);
 
 #define CopyToClipboard_DEFINITION(functionName) void functionName(const void* dataPntr, u32 dataSize)
 typedef CopyToClipboard_DEFINITION(CopyToClipboard_f);
-#define CopyFromClipboard_DEFINITION(functionName) u32 functionName(void* outputBuffer, u32 maxSize)
+#define CopyFromClipboard_DEFINITION(functionName) void* functionName(MemoryArena_t* arenaPntr, u32* dataLengthOut)
 typedef CopyFromClipboard_DEFINITION(CopyFromClipboard_f);
 
 //+================================================================+
