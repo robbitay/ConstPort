@@ -6,9 +6,6 @@
 		},
 		{
 			"path": "W:\\lib\\mylib"
-		},
-		{
-			"path": "W:\\lib\\boost_1_65_0\\boost\\regex"
 		}
 	],
 	"settings":
@@ -733,6 +730,7 @@
 			"define ButtonPressedUnhandled(button)",
 			"define ButtonReleased(button)",
 			"define ButtonReleasedUnhandled(button)",
+			"define CheckRegularExpression(perCharacter, addLineToBuffer, createNewLine, linePntr)",
 			"define DEBUG_Print(formatStr, args)",
 			"define DEBUG_PrintLine(formatStr, args)",
 			"define DEBUG_Write(formatStr)",
@@ -1022,6 +1020,7 @@
 			"TextLocation_t",
 			"Texture_t",
 			"TimeUnit_t",
+			"TriggerResults_t",
 			"UiElements_t",
 			"Vec2_t",
 			"Vec2i_t",

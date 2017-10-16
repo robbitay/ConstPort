@@ -85,6 +85,10 @@
 			"expression_name": "Has Hex 05",
 			"effects": ["foreground_color = 66D9EF"], //Light Blue
 		},
+		{
+			"expression": "===========",
+			"effects": ["clear_screen"],
+		},
 		
 		//Neon Color Scheme
 		// {
@@ -112,7 +116,6 @@
 		// {
 		// 	"expression": "\\!",
 		// 	"show_only_captured": false,
-		// 	"run_at_eol": true,
 		// 	"run_per_character": false,
 		// 	"effects":
 		// 	[

@@ -90,7 +90,6 @@ void ParseRegexTriggersList(GlobalConfig_t* globalConfig, MemoryArena_t* memAren
 		triggerPntr->expression = nullptr;
 		triggerPntr->expressionName = nullptr;
 		triggerPntr->showOnlyCaptured = false;
-		triggerPntr->runAtEol = true;
 		triggerPntr->runPerCharacter = false;
 		triggerPntr->numEffects = 0;
 		triggerPntr->effects = nullptr;
@@ -116,14 +115,12 @@ void ParseRegexTriggersList(GlobalConfig_t* globalConfig, MemoryArena_t* memAren
 		GetStrConfig(triggerObjectIndex, "expression_name", &triggerPntr->expressionName, memArena);
 		
 		GetConfig(triggerObjectIndex, Bool, "show_only_captured", &triggerPntr->showOnlyCaptured);
-		GetConfig(triggerObjectIndex, Bool, "run_at_eol",         &triggerPntr->runAtEol);
 		GetConfig(triggerObjectIndex, Bool, "run_per_character",  &triggerPntr->runPerCharacter);
 		
 		// DEBUG_PrintLine("Trigger[%u]:", listIndex);
 		// DEBUG_PrintLine("\tExpression:         \"%s\"", triggerPntr->expression);
 		// DEBUG_PrintLine("\tExpression Name:    \"%s\"", triggerPntr->expressionName);
 		// DEBUG_PrintLine("\tShow Only Captured: %s", triggerPntr->showOnlyCaptured ? "True" : "False");
-		// DEBUG_PrintLine("\tRun At Eol:         %s", triggerPntr->runAtEol ? "True" : "False");
 		// DEBUG_PrintLine("\tRun Per Character:  %s", triggerPntr->runPerCharacter ? "True" : "False");
 		
 		// +==============================+

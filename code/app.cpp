@@ -914,9 +914,68 @@ char* SanatizeStringAdvanced(const char* strPntr, u32 numChars, MemoryArena_t* a
 	return result;
 }
 
-bool ApplyTriggerEffects(Line_t* newLine, RegexTrigger_t* trigger)
+struct TriggerResults_t
 {
-	bool addLineToBuffer = true;
+	bool addLineToBuffer;
+	bool createNewLine;
+	bool clearScreen;
+};
+
+#define CheckRegularExpression(perCharacter, addLineToBuffer, createNewLine, clearScreen, linePntr) do             \
+{                                                                                                                  \
+	for (u32 rIndex = 0; rIndex < GC->numTriggers; rIndex++)                                                       \
+	{                                                                                                              \
+		RegexTrigger_t* trigger = &GC->triggers[rIndex];                                                           \
+		                                                                                                           \
+		if (perCharacter == false || trigger->runPerCharacter)                                                     \
+		{                                                                                                          \
+			bool appliedToThisComPort = (trigger->numComPorts == 0 || app->comPort.isOpen == false);               \
+			if (appliedToThisComPort == false)                                                                     \
+			{                                                                                                      \
+				for (u32 comListIndex = 0; comListIndex < trigger->numComPorts; comListIndex++)                    \
+				{                                                                                                  \
+					const char* supportedName = trigger->comPorts[comListIndex];                                   \
+					if (strcmp(supportedName, app->comPort.name) == 0 ||                                           \
+						strcmp(supportedName, GetPortUserName(app->comPort.name)) == 0)                            \
+					{                                                                                              \
+						appliedToThisComPort = true;                                                               \
+						break;                                                                                     \
+					}                                                                                              \
+				}                                                                                                  \
+			}                                                                                                      \
+			                                                                                                       \
+			if (appliedToThisComPort)                                                                              \
+			{                                                                                                      \
+				const char* regexStr = nullptr;                                                                    \
+				if (trigger->expression != nullptr)                                                                \
+				{                                                                                                  \
+					regexStr = trigger->expression;                                                                \
+				}                                                                                                  \
+				else if (trigger->expressionName != nullptr)                                                       \
+				{                                                                                                  \
+					regexStr = GetRegularExpression(&app->regexList, trigger->expressionName);                     \
+				}                                                                                                  \
+				                                                                                                   \
+				if (regexStr != nullptr)                                                                           \
+				{                                                                                                  \
+					bool expressionMatched = TestRegularExpression(regexStr, linePntr->chars, linePntr->numChars); \
+					if (expressionMatched)                                                                         \
+					{                                                                                              \
+						TriggerResults_t results = ApplyTriggerEffects(linePntr, trigger);                         \
+						if (!results.addLineToBuffer) { createNewLine = true; }                                    \
+						if (results.createNewLine) { createNewLine = true; }                                       \
+						if (results.clearScreen) { clearScreen = true; }                                           \
+					}                                                                                              \
+				}                                                                                                  \
+			}                                                                                                      \
+		}                                                                                                          \
+	}                                                                                                              \
+} while(0)
+
+TriggerResults_t ApplyTriggerEffects(Line_t* newLine, RegexTrigger_t* trigger)
+{
+	TriggerResults_t result = {};
+	result.addLineToBuffer = true;
 	
 	for (u32 eIndex = 0; eIndex < trigger->numEffects; eIndex++)
 	{
@@ -930,17 +989,33 @@ bool ApplyTriggerEffects(Line_t* newLine, RegexTrigger_t* trigger)
 		{
 			newLine->flags |= LineFlag_MarkBelow | LineFlag_ThickMark;
 		}
+		else if (strcmp(effectStr, "mark_above") == 0)
+		{
+			if (newLine->header.lastItem != nullptr)
+			{
+				Line_t* lastLine = (Line_t*)newLine->header.lastItem;
+				lastLine->flags |= LineFlag_MarkBelow;
+			}
+		}
+		else if (strcmp(effectStr, "thick_mark_above") == 0)
+		{
+			if (newLine->header.lastItem != nullptr)
+			{
+				Line_t* lastLine = (Line_t*)newLine->header.lastItem;
+				lastLine->flags |= LineFlag_MarkBelow | LineFlag_ThickMark;
+			}
+		}
 		else if (strcmp(effectStr, "clear_screen") == 0)
 		{
-			//TODO: Do something
+			result.clearScreen = true;
 		}
 		else if (strcmp(effectStr, "new_line") == 0)
 		{
-			//TODO: Do something
+			result.createNewLine = true;
 		}
 		else if (strcmp(effectStr, "clear_line") == 0)
 		{
-			addLineToBuffer = false;
+			result.addLineToBuffer = false;
 		}
 		else if (strcmp(effectStr, "count") == 0)
 		{
@@ -1072,7 +1147,7 @@ bool ApplyTriggerEffects(Line_t* newLine, RegexTrigger_t* trigger)
 		}
 	}
 	
-	return addLineToBuffer;
+	return result;
 }
 
 void DataReceived(const char* dataBuffer, i32 numBytes)
@@ -1142,59 +1217,26 @@ void DataReceived(const char* dataBuffer, i32 numBytes)
 				// | Check Line Against Regex Triggers  |
 				// +====================================+
 				bool addLineToBuffer = true;
-				for (u32 rIndex = 0; rIndex < GC->numTriggers; rIndex++)
-				{
-					RegexTrigger_t* trigger = &GC->triggers[rIndex];
-					
-					if (trigger->runAtEol)
-					{
-						bool appliedToThisComPort = (trigger->numComPorts == 0 || app->comPort.isOpen == false);
-						if (appliedToThisComPort == false)
-						{
-							for (u32 comListIndex = 0; comListIndex < trigger->numComPorts; comListIndex++)
-							{
-								const char* supportedName = trigger->comPorts[comListIndex];
-								if (strcmp(supportedName, app->comPort.name) == 0 ||
-									strcmp(supportedName, GetPortUserName(app->comPort.name)) == 0)
-								{
-									appliedToThisComPort = true;
-									break;
-								}
-							}
-						}
-						
-						if (appliedToThisComPort)
-						{
-							const char* regexStr = nullptr;
-							if (trigger->expression != nullptr)
-							{
-								regexStr = trigger->expression;
-							}
-							else if (trigger->expressionName != nullptr)
-							{
-								regexStr = GetRegularExpression(&app->regexList, trigger->expressionName);
-							}
-							
-							if (regexStr != nullptr)
-							{
-								bool expressionMatched = TestRegularExpression(regexStr, finishedLine->chars, finishedLine->numChars);
-								if (expressionMatched)
-								{
-									addLineToBuffer &= ApplyTriggerEffects(finishedLine, trigger);
-								}
-							}
-						}
-					}
-				}
+				bool createNewLine = false;
+				bool clearScreen = false;
+				CheckRegularExpression(false, addLineToBuffer, createNewLine, clearScreen, lastLine);
 				
-				if (addLineToBuffer)
+				if (clearScreen)
 				{
-					lastLine = AddLineToList(&app->lineList, "");
+					ClearConsole();
+					lastLine = GetLastLine(&app->lineList);
 				}
 				else
 				{
-					lastLine->numChars = 0;
-					lastLine->chars[0] = '\0';
+					if (addLineToBuffer)
+					{
+						lastLine = AddLineToList(&app->lineList, "");
+					}
+					else
+					{
+						lastLine->numChars = 0;
+						lastLine->chars[0] = '\0';
+					}
 				}
 			}
 		}
@@ -1209,6 +1251,37 @@ void DataReceived(const char* dataBuffer, i32 numBytes)
 		else
 		{
 			LineAppend(&app->lineList, lastLine, newChar);
+			
+			// +====================================+
+			// | Check Per Character Regex Triggers |
+			// +====================================+
+			bool addLineToBuffer = true;
+			bool createNewLine = false;
+			bool clearScreen = false;
+			CheckRegularExpression(true, addLineToBuffer, createNewLine, clearScreen, lastLine);
+			
+			if (createNewLine)
+			{
+				CheckRegularExpression(false, addLineToBuffer, createNewLine, clearScreen, lastLine);
+				
+				if (clearScreen)
+				{
+					ClearConsole();
+					lastLine = GetLastLine(&app->lineList);
+				}
+				else
+				{
+					if (addLineToBuffer)
+					{
+						lastLine = AddLineToList(&app->lineList, "");
+					}
+					else
+					{
+						lastLine->numChars = 0;
+						lastLine->chars[0] = '\0';
+					}
+				}
+			}
 		}
 	}
 	

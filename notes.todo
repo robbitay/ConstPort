@@ -1,9 +1,10 @@
 # Application TODO List
+	[ ] Implement show only captured regex trigger effect
+	[ ] Horizontal Scrollbar (only shows up if needed)
 	
 	[ ] An option to perserve invalid ASCII characters when saving to a file
 	[ ] Add a string data stack for all input lines to get added to
 	[ ] Get rid of the UI Handler since we probably won't ever need movable/modular windows. Also function pointer remapping is stupid looking
-	[ ] Custom regular expression effects, variable number of regular expressions
 	[ ] Text cursor maintains when dragging out of text area
 	[ ] Add better support for default configuration options that are simply overwritten by the user defined ones. Can we provide an example file or something? Maybe leave everything commented out and let them uncomment things?
 	[?] Combine the configuration files into one file?
@@ -20,7 +21,6 @@
 	[ ] Auto-reload configuration files when saved
 	[ ] Add support for multiple configuration files that you can switch between
 	[ ] Selection of spaces between markers
-	[ ] Horizontal Scrollbar (only shows up if needed)
 	[ ] Ability to set Flow Control mode
 	[ ] Read multiple COM ports side by side.
 	[ ] Little software LEDs to show flow control.
@@ -62,6 +62,9 @@
 
 
 # Old TODO List Items
+	[X] Implement clear screen regex trigger effect
+	[X] Implement new-line regex trigger effect
+	[X] Implement run per-character regex trigger option
 	[X] Option to enable timestamps when saving to file
 	[X] Format timestamp as date in debug overlay
 	[X] Paste from clipboard
@@ -74,6 +77,7 @@
 	[X] Add animation for the status message and better cutoff so it doesn't overlap COM name
 	[X] Change the status message layout so it pops up as an overlay with formatted text rendering so the whole message always fits nicely
 	@ 1.5
+	[X] Custom regular expression effects, variable number of regular expressions
 	[X] Add a mouse start press and max distance since pressed to AppInput
 	[X] Get the real time
 	[X] Support older versions of OpenGL

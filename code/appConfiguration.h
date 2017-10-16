@@ -13,7 +13,6 @@ struct RegexTrigger_t
 	const char* expressionName;
 	
 	bool showOnlyCaptured;
-	bool runAtEol;
 	bool runPerCharacter;
 	
 	u32 numEffects;
