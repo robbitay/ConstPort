@@ -1,5 +1,4 @@
 # Application TODO List
-	[ ] Format timestamp as date in debug overlay
 	[ ] Option to enable timestamps and line color characters when saving to file
 	
 	[ ] Add a string data stack for all input lines to get added to
@@ -63,6 +62,7 @@
 
 
 # Old TODO List Items
+	[X] Format timestamp as date in debug overlay
 	[X] Paste from clipboard
 	[X] Fix the format string functions to choose to split open and close symbols differently
 	[X] Rename platform function pointers to get rid of Pntr suffix

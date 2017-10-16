@@ -158,4 +158,24 @@ char* FormattedSizeStr(u32 numBytes)
 	return result;
 }
 
+char* FormattedTimeStr(RealTime_t realTime)
+{
+	char* result;
+	
+	result = TempPrint("%s %u:%02u:%02u%s (%s %s, %u)",
+		GetDayOfWeekStr(GetDayOfWeek(realTime)),
+		Convert24HourTo12Hour(realTime.hour), realTime.minute, realTime.second,
+		IsPostMeridian(realTime.hour) ? "pm" : "am",
+		GetMonthStr((Month_t)realTime.month), GetDayOfMonthString(realTime.day), realTime.year
+	);
+	
+	return result;
+}
+
+char* FormattedTimeStr(u64 timestamp)
+{
+	RealTime_t realTime = RealTimeAt(timestamp);
+	return FormattedTimeStr(realTime);
+}
+
 

@@ -718,6 +718,7 @@
 			"char* DupStr(const char* str, MemoryArena_t* memoryArenaPntr)",
 			"char* DupStrN(const char* str, u32 strLength, MemoryArena_t* memoryArenaPntr)",
 			"char* FormattedSizeStr(u32 numBytes)",
+			"char* FormattedTimeStr(u64 timestamp)",
 			"char* SanatizeStringAdvanced(const char* strPntr, u32 numChars, MemoryArena_t* arenaPntr,\n\tbool keepNewLines = true, bool keepBackspaces = false, bool convertInvalidToHex = false)",
 			"char* TempCombine(const char* string1, const char* string2)",
 			"char* TempPrint(const char* formatStr, args)",

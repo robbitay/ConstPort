@@ -3100,7 +3100,13 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		rs->PrintString(textPos, {Color_White}, 1.0f, "System Timestamp: %ld", GetTimestamp(platform->systemTime));
 		textPos.y += app->uiFont.lineHeight;
 		
+		rs->PrintString(textPos, {Color_White}, 1.0f, "System Time: %s", FormattedTimeStr(platform->systemTime));
+		textPos.y += app->uiFont.lineHeight;
+		
 		rs->PrintString(textPos, {Color_White}, 1.0f, "Local Timestamp: %ld", GetTimestamp(platform->localTime));
+		textPos.y += app->uiFont.lineHeight;
+		
+		rs->PrintString(textPos, {Color_White}, 1.0f, "Local Time: %s", FormattedTimeStr(platform->localTime));
 		textPos.y += app->uiFont.lineHeight;
 		
 		rs->BindFont(&app->mainFont);
