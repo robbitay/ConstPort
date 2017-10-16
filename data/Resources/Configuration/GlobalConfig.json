@@ -37,6 +37,7 @@
 	
 	"auto_echo_input": false,
 	"show_file_after_saving": true,
+	"save_times_to_file": true,
 	
 	"popup_corner_radius":     7, //px
 	"popup_outline_thickness": 1, //px

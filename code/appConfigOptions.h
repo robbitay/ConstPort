@@ -38,6 +38,7 @@ Date:   09\26\2017
 	ConfigurationBool  ("circular_tx_led",             circularTxLed,          false);
 	ConfigurationBool  ("auto_echo_input",             autoEchoInput,          true);
 	ConfigurationBool  ("show_file_after_saving",      showFileAfterSaving,    true);
+	ConfigurationBool  ("save_times_to_file",          saveTimesToFile,        false);
 	
 	ConfigurationInt32 ("popup_corner_radius",         popupCornerRadius,      7);
 	ConfigurationInt32 ("popup_outline_thickness",     popupOutlineThickness,  1);

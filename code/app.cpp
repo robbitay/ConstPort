@@ -1217,7 +1217,7 @@ void DataReceived(const char* dataBuffer, i32 numBytes)
 
 //NOTE: This function serves as a measuring function AS WELL AS
 //		a buffer filling function if not passed nullptr for bufferOutput
-u32 GetSelection(char* bufferOutput = nullptr)
+u32 GetSelection(bool insertTimestamps, char* bufferOutput = nullptr)
 {
 	TextLocation_t minLocation = TextLocationMin(app->selectionStart, app->selectionEnd);
 	TextLocation_t maxLocation = TextLocationMax(app->selectionStart, app->selectionEnd);
@@ -1246,8 +1246,26 @@ u32 GetSelection(char* bufferOutput = nullptr)
 	if (minLocation.lineNum == maxLocation.lineNum)
 	{
 		Line_t* linePntr = GetLineAt(&app->lineList, minLocation.lineNum);
-		bufferLength = maxLocation.charIndex - minLocation.charIndex;
 		
+		if (insertTimestamps)
+		{
+			TempPushMark();
+			u64 lineTimestamp = linePntr->timestamp;
+			char* timeString = FormattedTimeStr(lineTimestamp);
+			u32 timeStringLength = (u32)strlen(timeString);
+			if (bufferOutput != nullptr)
+			{
+				*outputPntr = '['; outputPntr++;
+				memcpy(outputPntr, timeString, timeStringLength);
+				outputPntr += timeStringLength;
+				*outputPntr = ']'; outputPntr++;
+				*outputPntr = ' '; outputPntr++;
+			}
+			bufferLength += timeStringLength + 3;
+			TempPopMark();
+		}
+		
+		bufferLength += maxLocation.charIndex - minLocation.charIndex;
 		if (bufferOutput != nullptr)
 		{
 			memcpy(outputPntr, &linePntr->chars[minLocation.charIndex], bufferLength);
@@ -1258,6 +1276,25 @@ u32 GetSelection(char* bufferOutput = nullptr)
 	{
 		{ //First Line
 			Line_t* minLinePntr = GetLineAt(&app->lineList, minLocation.lineNum);
+			
+			if (insertTimestamps)
+			{
+				TempPushMark();
+				u64 lineTimestamp = minLinePntr->timestamp;
+				char* timeString = FormattedTimeStr(lineTimestamp);
+				u32 timeStringLength = (u32)strlen(timeString);
+				if (bufferOutput != nullptr)
+				{
+					*outputPntr = '['; outputPntr++;
+					memcpy(outputPntr, timeString, timeStringLength);
+					outputPntr += timeStringLength;
+					*outputPntr = ']'; outputPntr++;
+					*outputPntr = ' '; outputPntr++;
+				}
+				bufferLength += timeStringLength + 3;
+				TempPopMark();
+			}
+			
 			bufferLength += SanatizeString(&minLinePntr->chars[minLocation.charIndex], minLinePntr->numChars - minLocation.charIndex);
 			bufferLength += newLineSize;
 			if (bufferOutput != nullptr)
@@ -1272,6 +1309,25 @@ u32 GetSelection(char* bufferOutput = nullptr)
 		for (i32 lineIndex = minLocation.lineNum+1; lineIndex < maxLocation.lineNum && lineIndex < app->lineList.numLines; lineIndex++)
 		{
 			Line_t* linePntr = GetLineAt(&app->lineList, lineIndex);
+			
+			if (insertTimestamps)
+			{
+				TempPushMark();
+				u64 lineTimestamp = linePntr->timestamp;
+				char* timeString = FormattedTimeStr(lineTimestamp);
+				u32 timeStringLength = (u32)strlen(timeString);
+				if (bufferOutput != nullptr)
+				{
+					*outputPntr = '['; outputPntr++;
+					memcpy(outputPntr, timeString, timeStringLength);
+					outputPntr += timeStringLength;
+					*outputPntr = ']'; outputPntr++;
+					*outputPntr = ' '; outputPntr++;
+				}
+				bufferLength += timeStringLength + 3;
+				TempPopMark();
+			}
+			
 			bufferLength += SanatizeString(linePntr->chars, linePntr->numChars);
 			bufferLength += newLineSize;
 			if (bufferOutput != nullptr)
@@ -1284,6 +1340,25 @@ u32 GetSelection(char* bufferOutput = nullptr)
 		
 		{ //Last Line
 			Line_t* maxLinePntr = GetLineAt(&app->lineList, maxLocation.lineNum);
+			
+			if (insertTimestamps)
+			{
+				TempPushMark();
+				u64 lineTimestamp = maxLinePntr->timestamp;
+				char* timeString = FormattedTimeStr(lineTimestamp);
+				u32 timeStringLength = (u32)strlen(timeString);
+				if (bufferOutput != nullptr)
+				{
+					*outputPntr = '['; outputPntr++;
+					memcpy(outputPntr, timeString, timeStringLength);
+					outputPntr += timeStringLength;
+					*outputPntr = ']'; outputPntr++;
+					*outputPntr = ' '; outputPntr++;
+				}
+				bufferLength += timeStringLength + 3;
+				TempPopMark();
+			}
+			
 			bufferLength += SanatizeString(maxLinePntr->chars, maxLocation.charIndex);
 			if (bufferOutput != nullptr)
 			{
@@ -1898,13 +1973,13 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		}
 		else
 		{
-			u32 selectionSize = GetSelection();
+			u32 selectionSize = GetSelection(false);
 			if (selectionSize != 0)
 			{
 				TempPushMark();
 				
 				char* selectionTempBuffer = TempString(selectionSize+1);
-				GetSelection(selectionTempBuffer);
+				GetSelection(false, selectionTempBuffer);
 				
 				platform->CopyToClipboard(selectionTempBuffer, selectionSize);
 				
@@ -2162,7 +2237,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	// +==================================+
 	if (ButtonPressed(Button_E) && ButtonDown(Button_Control))
 	{
-		u32 selectionLength = GetSelection(nullptr);
+		u32 selectionLength = GetSelection(false, nullptr);
 		if (selectionLength > 0)
 		{
 			const char* countExpression = GetRegularExpression(&app->regexList, GC->genericCountRegexName);
@@ -2171,7 +2246,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 				TempPushMark();
 				
 				char* selectionBuffer = TempString(selectionLength);
-				GetSelection(selectionBuffer);
+				GetSelection(false, selectionBuffer);
 				
 				TestRegularExpression(countExpression, selectionBuffer, selectionLength);
 				
@@ -2269,23 +2344,21 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	//|    Save To File Button Press     |
 	//+==================================+
 	bool saveButtonPressed = (IsInsideRectangle(RenderMousePos, ui->saveButtonRec) &&
-		ButtonReleased(MouseButton_Left) &&
-		IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, ui->saveButtonRec));
-	if (saveButtonPressed ||
-		(ButtonDown(Button_Control) && ButtonPressed(Button_S)))
+		ButtonReleased(MouseButton_Left) && IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, ui->saveButtonRec));
+	if (saveButtonPressed || (ButtonDown(Button_Control) && ButtonPressed(Button_S)))
 	{
 		char* fileName = TempPrint("ConstPortSave_%02u-%02u-%u_%u-%02u-%02u.txt",
 			platform->localTime.year, platform->localTime.month, platform->localTime.day,
 			platform->localTime.hour, platform->localTime.minute, platform->localTime.second
 		);
 		
-		u32 selectionSize = GetSelection(nullptr);
+		u32 selectionSize = GetSelection(GC->saveTimesToFile, nullptr);
 		if (selectionSize > 0)
 		{
 			TempPushMark();
 			
 			char* fileBuffer = TempString(selectionSize);
-			GetSelection(fileBuffer);
+			GetSelection(GC->saveTimesToFile, fileBuffer);
 			
 			//NOTE: GetSelection adds a \0 on the end so need to remove it
 			DEBUG_PrintLine("Saving %u bytes to %s", selectionSize-1, fileName);

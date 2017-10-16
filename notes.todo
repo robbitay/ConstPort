@@ -1,6 +1,6 @@
 # Application TODO List
-	[ ] Option to enable timestamps and line color characters when saving to file
 	
+	[ ] An option to perserve invalid ASCII characters when saving to a file
 	[ ] Add a string data stack for all input lines to get added to
 	[ ] Get rid of the UI Handler since we probably won't ever need movable/modular windows. Also function pointer remapping is stupid looking
 	[ ] Custom regular expression effects, variable number of regular expressions
@@ -62,6 +62,7 @@
 
 
 # Old TODO List Items
+	[X] Option to enable timestamps when saving to file
 	[X] Format timestamp as date in debug overlay
 	[X] Paste from clipboard
 	[X] Fix the format string functions to choose to split open and close symbols differently
