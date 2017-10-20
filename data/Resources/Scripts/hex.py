@@ -13,5 +13,6 @@ while(True):
 	if (newCharacter == '~'): print("")
 	sys.stdout.write("[%02X] " % (ord(newCharacter)))
 	
+	if (newCharacter == '\n'): print("")
 	sys.stdout.flush()
 #

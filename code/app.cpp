@@ -747,6 +747,26 @@ void ContextMenuRender(RenderState_t* renderState, MenuHandler_t* menuHandler, M
 	}
 }
 
+const char testMessage[] = "Hello world!\n"
+	"This message is intended to be used to test the capabilities of the application without having a COM port to connect to\n"
+	"It will be a really long message with not a lot of\n"
+	"actual\n"
+	"content\n"
+	"One thing that this program can do is process a lot of data at once\n"
+	"without missing or dropping any bytes\n"
+	"This is important so that the user can be confident that what they see is what was actually sent\n"
+	"We need to add a few more lines to make this message even taller\n"
+	"We will\n"
+	"do that\n"
+	"by typing\n"
+	"two words\n"
+	"at a\n"
+	"time into\n"
+	"each line\n"
+	"in this\n"
+	"lame sentence.\n"
+	"AAAAAAAA";
+
 #define REAL_LOGO_HEIGHT 75
 #define ABOUT_INFO_TEXT_PADDING 20
 #define ABOUT_INFO_FORMAT_STRING "Const Port is an application written by me, Taylor Robbins. "                      \
@@ -2220,6 +2240,28 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	{
 		PopupErrorTimed(10000, "This is a really long message for the user to read. Because it is so long we are going to give you 10 seconds to read it.");
 		StatusErrorTimed(10000, "This is a really long message for the user to read. Because it is so long we are going to give you 10 seconds to read it.");
+	}
+	
+	// +==============================+
+	// |        Debug Message         |
+	// +==============================+
+	if (ButtonPressed(Button_U))
+	{
+		u32 testMessageLength = (u32)strlen(testMessage);
+		if (app->programInstance.isOpen && ButtonDown(Button_Shift))
+		{
+			DEBUG_PrintLine("Writing to program instance \"%.*s\"", testMessageLength, testMessage);
+			
+			u32 numBytesWritten = platform->WriteProgramInput(&app->programInstance, &testMessage[0], testMessageLength);
+			if ((i32)numBytesWritten != testMessageLength)
+			{
+				DEBUG_PrintLine("Only wrote %u/%u bytes to program instance", numBytesWritten, testMessageLength);
+			}
+		}
+		else
+		{
+			DataReceived(testMessage, testMessageLength);
+		}
 	}
 	#endif
 	
