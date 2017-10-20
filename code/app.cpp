@@ -1873,7 +1873,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 			readResult = platform->ReadComPort(&app->comPort, buffer, ArrayCount(buffer)-1);
 			if (readResult > 0)
 			{
-				// DEBUG_PrintLine("Read %d bytes \"%.*s\"", readResult, readResult, buffer);
+				DEBUG_PrintLine("Read %d bytes \"%.*s\"", readResult, readResult, buffer);
 				
 				if (app->programInstance.isOpen == false ||
 					GC->sendComDataToPython == false ||
@@ -1946,7 +1946,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		
 		if (input->textInputLength > 0)
 		{
-			// DEBUG_PrintLine("Writing \"%.*s\"", input->textInputLength, input->textInput);
+			DEBUG_PrintLine("Writing \"%.*s\"", input->textInputLength, input->textInput);
 			if (echoInput) { DataReceived(&input->textInput[0], input->textInputLength); }
 			if (writeToComPort)
 			{
@@ -1958,7 +1958,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		
 		if (comMenu->show == false && ButtonPressed(Button_Enter))
 		{
-			// DEBUG_WriteLine("Writing New Line");
+			DEBUG_WriteLine("Writing New Line");
 			
 			char newChar = '\n';
 			if (echoInput) { DataReceived("\n", 1); }

@@ -4,6 +4,10 @@
 #define PLATFORM_VERSION_MAJOR    1
 #define PLATFORM_VERSION_MINOR    6
 
+<<<<<<< HEAD
 #define PLATFORM_VERSION_BUILD    64
+=======
+#define PLATFORM_VERSION_BUILD    63
+>>>>>>> 902d2e296ffd046adb90c8cabd965ea1d12054ba
 
 #endif // _WIN32_VERSION_H

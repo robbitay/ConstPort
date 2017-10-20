@@ -56,11 +56,15 @@
 	"auto_run_python":         false,
 	"send_com_data_to_python": true,
 	"also_show_com_data":      false,
-	"send_input_to_python":    false,
+	"send_input_to_python":    true,
 	"also_send_input_to_com":  false,
 	"show_python_output":      true,
+<<<<<<< HEAD
 	"python_script":           "Resources/Scripts/hex.py",
 	// "python_script":           "Resources/Scripts/asciiHex.py",
+=======
+	"python_script":           "Resources/Scripts/bleUartCommands.py",
+>>>>>>> 902d2e296ffd046adb90c8cabd965ea1d12054ba
 	// "python_script":           "Resources/Scripts/testScript.py",
 	
 	"regex_triggers":

@@ -1,4 +1,5 @@
 # Application TODO List
+	[ ] Trigger save to file using regex
 	[ ] Add options for seperaters between captured groups
 	[ ] Add suffix and prefix appending options to a trigger
 	[ ] Add a replace format string option with $1, $2, etc.
