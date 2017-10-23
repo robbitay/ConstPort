@@ -10,6 +10,11 @@
 	],
 	"settings":
 	{
+		"build_options":
+		{
+			"cmd": "..\\build.bat",
+			"working_dir": "$project_path\\build",
+		},
 		"custom_constants":
 		[
 			"APPLICATION_DLL_NAME",
