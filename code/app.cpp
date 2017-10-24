@@ -1304,6 +1304,27 @@ void DataReceived(const char* dataBuffer, i32 numBytes)
 				}
 			}
 		}
+		
+		// +==============================+
+		// |        Drop Char Data        |
+		// +==============================+
+		u32 inputArenaMax        = (u32)(app->inputArenaSize/100.f * 98);
+		u32 targetInputArenaSize = (u32)(app->inputArenaSize/100.f * 90);
+		if (DEBUG && ButtonPressed(Button_F1) && app->lineList.charDataSize >= 1)
+		{
+			targetInputArenaSize = app->lineList.charDataSize - 1;
+			inputArenaMax = targetInputArenaSize;
+		}
+		if (app->lineList.charDataSize >= inputArenaMax)
+		{
+			StatusInfo("Resizing %u bytes down to %u bytes", app->lineList.charDataSize, targetInputArenaSize);
+			u32 numLinesRemoved = 0;
+			r32 heightRemoved = LineListDownsize(&app->lineList, targetInputArenaSize, &numLinesRemoved);
+			app->uiElements.scrollOffset.y = max(0, app->uiElements.scrollOffset.y - heightRemoved);
+			app->uiElements.scrollOffsetGoto.y = max(0, app->uiElements.scrollOffsetGoto.y - heightRemoved);
+			
+			PopupError("Dropped %u line(s) due to space requirements", numLinesRemoved);
+		}
 	}
 	
 	app->rxShiftRegister |= 0x80;
@@ -2256,26 +2277,6 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	}
 	#endif
 	
-	// +==============================+
-	// |        Drop Char Data        |
-	// +==============================+
-	u32 inputArenaMax        = (u32)(app->inputArenaSize/100.f * 98);
-	u32 targetInputArenaSize = (u32)(app->inputArenaSize/100.f * 90);
-	if (DEBUG && ButtonPressed(Button_F1) && app->lineList.charDataSize >= 1)
-	{
-		targetInputArenaSize = app->lineList.charDataSize - 1;
-		inputArenaMax = targetInputArenaSize;
-	}
-	if (app->lineList.charDataSize >= inputArenaMax)
-	{
-		StatusInfo("Resizing %u bytes down to %u bytes", app->lineList.charDataSize, targetInputArenaSize);
-		u32 numLinesRemoved = 0;
-		r32 heightRemoved = LineListDownsize(&app->lineList, targetInputArenaSize, &numLinesRemoved);
-		ui->scrollOffset.y = max(0, ui->scrollOffset.y - heightRemoved);
-		ui->scrollOffsetGoto.y = max(0, ui->scrollOffsetGoto.y - heightRemoved);
-		
-		PopupError("Dropped %u line(s) due to space requirements", numLinesRemoved);
-	}
 	
 	RecalculateUiElements(ui, false);
 	
