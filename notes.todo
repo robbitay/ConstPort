@@ -64,6 +64,7 @@
 
 
 # Old TODO List Items
+	[X] Add a running indicator
 	[X] Add a string data stack for all input lines to get added to
 	[X] Implement show only captured regex trigger effect
 	[X] Implement clear screen regex trigger effect

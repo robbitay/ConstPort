@@ -112,7 +112,7 @@ Line_t* LineListPushLine(LineList_t* lineList)
 {
 	Assert(lineList != nullptr);
 	Assert(lineList->charDataBase != nullptr);
-	Assert(lineList->charDataSize + 1 <= lineList->charDataMaxSize);
+	Assert(lineList->charDataSize + 1 < lineList->charDataMaxSize);
 	
 	lineList->charDataBase[lineList->charDataSize] = '\0';
 	lineList->charDataSize++;
@@ -120,6 +120,7 @@ Line_t* LineListPushLine(LineList_t* lineList)
 	Line_t* newLine = PushStruct(&app->mainHeap, Line_t);
 	InitializeLine(newLine);
 	newLine->chars = lineList->charDataBase + lineList->charDataSize;
+	newLine->chars[0] = '\0';
 	
 	newLine->previous = lineList->lastLine;
 	lineList->lastLine->next = newLine;

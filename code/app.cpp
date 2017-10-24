@@ -3021,6 +3021,53 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 			rs->DrawButton(ui->gotoEndButtonRec, buttonColor, borderColor);
 		}
 		
+		// +==============================+
+		// |   Render Update Indicator    |
+		// +==============================+
+		if (GC->showUpdateIndicator)
+		{
+			static u32 indicatorStep = 0;
+			
+			rec indicatorRec = NewRectangle(
+				ui->statusBarRec.x,
+				ui->statusBarRec.y,
+				3,
+				ui->statusBarRec.height
+			);
+			indicatorStep++;
+			if (indicatorStep >= (u32)indicatorRec.height)
+			{
+				indicatorStep = 0;
+			}
+			
+			u32 pMin = indicatorStep;
+			u32 pMax = (indicatorStep + (u32)indicatorRec.height*3/4) % (u32)indicatorRec.height;
+			
+			rs->DrawRectangle(indicatorRec, GC->colors.updateIndicatorColor2);
+			
+			if (pMin <= pMax)
+			{
+				rec rec1 = indicatorRec;
+				rec1.height = (r32)pMax-(r32)pMin;
+				rec1.y += indicatorRec.height - rec1.height;
+				rec1.y -= pMin;
+				
+				rs->DrawRectangle(rec1, GC->colors.updateIndicatorColor1);
+			}
+			else
+			{
+				rec rec1 = indicatorRec;
+				rec1.height = indicatorRec.height - pMin;
+				
+				rec rec2 = indicatorRec;
+				rec2.height = (r32)pMax;
+				rec2.y += indicatorRec.height - rec2.height;
+				
+				rs->DrawRectangle(rec1, GC->colors.updateIndicatorColor1);
+				rs->DrawRectangle(rec2, GC->colors.updateIndicatorColor1);
+			}
+		}
+		
 	}
 	
 	//+--------------------------------------+

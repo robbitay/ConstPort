@@ -88,7 +88,7 @@ void RecalculateUiElements(UiElements_t* ui, bool resetFollowingEndOfFile)
 		ui->scrollBarGutterRec.x,
 		ui->scrollBarGutterRec.y + ui->scrollBarGutterRec.height,
 		ui->scrollBarGutterRec.width,
-		RenderScreenSize.y - ui->scrollBarGutterRec.y + ui->scrollBarGutterRec.height
+		RenderScreenSize.y - (ui->scrollBarGutterRec.y + ui->scrollBarGutterRec.height)
 	);
 	ui->gutterRec = NewRectangle(
 		0, 

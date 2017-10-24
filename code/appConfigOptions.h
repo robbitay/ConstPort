@@ -39,6 +39,7 @@ Date:   09\26\2017
 	ConfigurationBool  ("auto_echo_input",             autoEchoInput,          true);
 	ConfigurationBool  ("show_file_after_saving",      showFileAfterSaving,    true);
 	ConfigurationBool  ("save_times_to_file",          saveTimesToFile,        false);
+	ConfigurationBool  ("show_update_indicator",       showUpdateIndicator,    false);
 	
 	ConfigurationInt32 ("popup_corner_radius",         popupCornerRadius,      7);
 	ConfigurationInt32 ("popup_outline_thickness",     popupOutlineThickness,  1);
@@ -129,6 +130,8 @@ Date:   09\26\2017
 	ConfigurationColor("status_bar_2",                  statusBar2,                {0xFF303030});
 	ConfigurationColor("main_menu_1",                   mainMenu1,                 {0xFF494949});
 	ConfigurationColor("main_menu_2",                   mainMenu2,                 {0xFF303030});
+	ConfigurationColor("update_indicator_color_1",      updateIndicatorColor1,     {0xFF494949});
+	ConfigurationColor("update_indicator_color_2",      updateIndicatorColor2,     {0xFF101010});
 	
 	ConfigurationColor("window_outline",                windowOutline,             {0xFFFFFFFF});
 	ConfigurationColor("window_titlebar",               windowTitlebar,            {0xFF303030});

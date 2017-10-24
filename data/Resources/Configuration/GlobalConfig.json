@@ -38,6 +38,7 @@
 	"auto_echo_input": false,
 	"show_file_after_saving": true,
 	"save_times_to_file": true,
+	"show_update_indicator": true,
 	
 	"popup_corner_radius":     7, //px
 	"popup_outline_thickness": 1, //px
@@ -204,6 +205,8 @@
 		"status_bar_2":      "303030",
 		"main_menu_1":       "494949",
 		"main_menu_2":       "303030",
+		"update_indicator_color_1": "494949",
+		"update_indicator_color_2": "101010",
 		
 		"window_outline":      "B4B4B4",
 		"window_titlebar":     "303030",
