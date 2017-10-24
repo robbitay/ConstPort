@@ -2256,6 +2256,27 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	}
 	#endif
 	
+	// +==============================+
+	// |        Drop Char Data        |
+	// +==============================+
+	u32 inputArenaMax        = (u32)(app->inputArenaSize/100.f * 98);
+	u32 targetInputArenaSize = (u32)(app->inputArenaSize/100.f * 90);
+	if (DEBUG && ButtonPressed(Button_F1) && app->lineList.charDataSize >= 1)
+	{
+		targetInputArenaSize = app->lineList.charDataSize - 1;
+		inputArenaMax = targetInputArenaSize;
+	}
+	if (app->lineList.charDataSize >= inputArenaMax)
+	{
+		StatusInfo("Resizing %u bytes down to %u bytes", app->lineList.charDataSize, targetInputArenaSize);
+		u32 numLinesRemoved = 0;
+		r32 heightRemoved = LineListDownsize(&app->lineList, targetInputArenaSize, &numLinesRemoved);
+		ui->scrollOffset.y = max(0, ui->scrollOffset.y - heightRemoved);
+		ui->scrollOffsetGoto.y = max(0, ui->scrollOffsetGoto.y - heightRemoved);
+		
+		PopupError("Dropped %u line(s) due to space requirements", numLinesRemoved);
+	}
+	
 	RecalculateUiElements(ui, false);
 	
 	if (ButtonDown(Button_Right))
@@ -2869,7 +2890,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 			{
 				Line_t* linePntr = LineListGetItemAt(&app->lineList, lineIndex);
 				
-				RenderLineGutter(linePntr, currentPos, lineIndex, linePntr->lineHeight);
+				RenderLineGutter(linePntr, lineIndex, currentPos, linePntr->lineHeight);
 				
 				currentPos.y += linePntr->lineHeight + GC->lineSpacing;
 				if (currentPos.y - app->mainFont.maxExtendUp >= ui->scrollOffset.y + ui->viewRec.height)

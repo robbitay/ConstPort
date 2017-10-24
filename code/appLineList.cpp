@@ -33,6 +33,7 @@ void InitializeLineList(LineList_t* lineList, char* charStorageBase, u32 charSto
 	lineList->firstLine = firstLine;
 	lineList->lastLine = firstLine;
 	lineList->numLines = 1;
+	lineList->firstLineNum = 1;
 }
 
 void DestroyLineList(LineList_t* lineList)
@@ -153,6 +154,84 @@ void LineListReplaceLine(LineList_t* lineList, const char* newChars, u32 numChar
 	
 	LineListClearLine(lineList);
 	LineListAppendData(lineList, newChars, numChars);
+}
+
+//Returns the aggregate height of the lines that were removed
+r32 LineListDownsize(LineList_t* lineList, u32 targetDataSize, u32* numLinesRemovedOut = nullptr)
+{
+	Assert(lineList != nullptr);
+	Assert(lineList->firstLine != nullptr);
+	
+	if (numLinesRemovedOut != nullptr) { *numLinesRemovedOut = 0; }
+	if (lineList->charDataSize <= targetDataSize) { return 0; }
+	
+	//Count and remove the lines until we're under targetDataSize
+	u32 numLinesRemoved = 0;
+	u32 numBytesRemoved = 0;
+	r32 removedHeight = 0.0f;
+	Line_t* linePntr = lineList->firstLine;
+	u32 lIndex = 0;
+	while (linePntr != nullptr && lineList->charDataSize - numBytesRemoved > targetDataSize)
+	{
+		Line_t* nextLine = linePntr->next;
+		
+		removedHeight += linePntr->lineHeight + GC->lineSpacing; ;
+
+		numBytesRemoved += linePntr->numChars;
+		if (nextLine != nullptr) { numBytesRemoved += 1; } //Add one for null-terminator
+		Assert(numBytesRemoved <= lineList->charDataSize);
+
+		ArenaPop(&app->mainHeap, linePntr);
+		numLinesRemoved++;
+		Assert((i32)numLinesRemoved <= lineList->numLines);
+		
+		linePntr = nextLine;
+	}
+	
+	//Rectify the linkage (firstLine and it's previous pntr)
+	if (linePntr == nullptr)
+	{
+		//We removed all the lines from the list in order to satisfy the criteria
+		//we need to add one back on
+		linePntr = PushStruct(&app->mainHeap, Line_t);
+		InitializeLine(linePntr);
+	}
+	Assert(linePntr != nullptr);
+	lineList->firstLine = linePntr;
+	linePntr->previous = nullptr;
+	lineList->numLines -= numLinesRemoved;
+	lineList->firstLineNum += numLinesRemoved;
+	
+	//Shift all the charData down into the empty space
+	char* charPntr = lineList->charDataBase;
+	char* oldDataPntr = lineList->charDataBase + numBytesRemoved;
+	for (u32 cIndex = 0; cIndex < lineList->charDataSize - numBytesRemoved; cIndex++)
+	{
+		Assert(charPntr >= lineList->charDataBase && charPntr < lineList->charDataBase + lineList->charDataMaxSize);
+		Assert(oldDataPntr >= lineList->charDataBase && oldDataPntr < lineList->charDataBase + lineList->charDataMaxSize);
+		
+		*charPntr = *oldDataPntr;
+		charPntr++;
+		oldDataPntr++;
+	}
+	lineList->charDataSize -= numBytesRemoved;
+	lineList->charDataBase[lineList->charDataSize] = '\0'; //make sure null-terminator is at the end
+	
+	//Move all the char pointers in the Line_t structures so they point to the shifted data correctly
+	linePntr = lineList->firstLine;
+	while (linePntr != nullptr)
+	{
+		linePntr->chars -= numBytesRemoved;
+		
+		Assert(linePntr->chars >= lineList->charDataBase && linePntr->chars <= lineList->charDataBase + lineList->charDataSize);
+		
+		linePntr = linePntr->next;
+	}
+	
+	Assert(lineList->charDataSize <= targetDataSize);
+	
+	if (numLinesRemovedOut != nullptr) { *numLinesRemovedOut = numLinesRemoved; }
+	return removedHeight;
 }
 
 inline TextLocation_t TextLocationMin(TextLocation_t location1, TextLocation_t location2)

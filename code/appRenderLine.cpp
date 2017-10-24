@@ -91,17 +91,18 @@ r32 RenderLine(Line_t* linePntr, v2 position, bool sizeOnly = false)
 	return result;
 }
 
-void RenderLineGutter(const Line_t* linePntr, v2 position, i32 lineIndex, r32 lineHeight)
+void RenderLineGutter(const Line_t* linePntr, i32 lineIndex, v2 position, r32 lineHeight)
 {
 	UiElements_t* ui = &app->uiElements;
 	RenderState_t* rs = &app->renderState;
+	i32 lineNumber = lineIndex + app->lineList.firstLineNum;
 	
 	// +==============================+
 	// |       Draw Line Number       |
 	// +==============================+
 	if (GC->showLineNumbers)
 	{
-		rs->PrintString(NewVec2(position.x, position.y), GC->colors.lineNumbers, 1.0f, "%u", lineIndex+1);
+		rs->PrintString(NewVec2(position.x, position.y), GC->colors.lineNumbers, 1.0f, "%u", lineNumber);
 	}
 	
 	// +==============================+

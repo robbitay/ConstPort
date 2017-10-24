@@ -98,7 +98,7 @@ void RecalculateUiElements(UiElements_t* ui, bool resetFollowingEndOfFile)
 	);
 	if (GC->showLineNumbers)
 	{
-		ui->gutterRec.width = NumDecimalDigits(app->lineList.numLines) * MeasureString(&app->mainFont, " ", 1).x + 2;
+		ui->gutterRec.width = NumDecimalDigits(app->lineList.numLines + app->lineList.firstLineNum) * MeasureString(&app->mainFont, " ", 1).x + 2;
 		if (ui->gutterRec.width < (r32)GC->minGutterWidth) ui->gutterRec.width = (r32)GC->minGutterWidth;
 	}
 	ui->viewRec = NewRectangle(

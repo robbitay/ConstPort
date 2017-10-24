@@ -78,7 +78,7 @@
 		},
 		{
 			"expression_name": "Has Hex 03",
-			"effects": ["foreground_color = F92665", "status_error = Error!"], //Red/Magenta
+			"effects": ["foreground_color = F92665"], //Red/Magenta
 		},
 		{
 			"expression_name": "Has Hex 04",
@@ -88,11 +88,11 @@
 			"expression_name": "Has Hex 05",
 			"effects": ["foreground_color = 66D9EF"], //Light Blue
 		},
-		{
-			"expression": "[=]{4,}([^=]+)[=]{4,}",
-			"show_only_captured": true,
-			"effects": ["thick_mark", "foreground_color = Orange"],
-		},
+		// {
+		// 	"expression": "[=]{4,}([^=]+)[=]{4,}",
+		// 	"show_only_captured": true,
+		// 	"effects": ["thick_mark", "foreground_color = Orange"],
+		// },
 		
 		//Neon Color Scheme
 		// {

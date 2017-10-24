@@ -1,4 +1,5 @@
 # Application TODO List
+	[ ] Fix selection when line is dropped
 	[ ] Trigger save to file using regex
 	[ ] Add options for seperaters between captured groups
 	[ ] Add suffix and prefix appending options to a trigger
@@ -64,6 +65,7 @@
 
 
 # Old TODO List Items
+	[X] Implement a line limit option
 	[X] Add a running indicator
 	[X] Add a string data stack for all input lines to get added to
 	[X] Implement show only captured regex trigger effect

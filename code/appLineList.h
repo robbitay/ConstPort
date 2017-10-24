@@ -36,6 +36,7 @@ struct Line_t
 
 struct LineList_t
 {
+	i32 firstLineNum;
 	i32 numLines;
 	Line_t* firstLine;
 	Line_t* lastLine;
