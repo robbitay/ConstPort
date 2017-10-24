@@ -6,7 +6,6 @@
 	[ ] Horizontal Scrollbar (only shows up if needed)
 	
 	[ ] An option to perserve invalid ASCII characters when saving to a file
-	[ ] Add a string data stack for all input lines to get added to
 	[ ] Get rid of the UI Handler since we probably won't ever need movable/modular windows. Also function pointer remapping is stupid looking
 	[ ] Text cursor maintains when dragging out of text area
 	[ ] Add better support for default configuration options that are simply overwritten by the user defined ones. Can we provide an example file or something? Maybe leave everything commented out and let them uncomment things?
@@ -65,6 +64,7 @@
 
 
 # Old TODO List Items
+	[X] Add a string data stack for all input lines to get added to
 	[X] Implement show only captured regex trigger effect
 	[X] Implement clear screen regex trigger effect
 	[X] Implement new-line regex trigger effect

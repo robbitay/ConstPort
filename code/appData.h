@@ -10,9 +10,11 @@ Date:   06\07\2017
 struct AppData_t
 {
 	MemoryArena_t mainHeap;
-	MemoryArena_t inputArena;
 	MemoryArena_t tempArena;
 	u32 appInitTempHighWaterMark;
+	
+	char* inputArenaBase;
+	u32 inputArenaSize;
 	
 	RenderState_t renderState;
 	MenuHandler_t menuHandler;

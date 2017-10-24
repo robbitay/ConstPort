@@ -173,7 +173,7 @@ void ClearConsole()
 {
 	DEBUG_WriteLine("Clearing Console");
 	DestroyLineList(&app->lineList);
-	CreateLineList(&app->lineList, &app->mainHeap, "");
+	InitializeLineList(&app->lineList, app->inputArenaBase, app->inputArenaSize);
 	
 	app->selectionStart = NewTextLocation(0, 0);
 	app->selectionEnd = NewTextLocation(0, 0);
@@ -960,18 +960,16 @@ TriggerResults_t ApplyTriggerEffects(Line_t* newLine, RegexTrigger_t* trigger)
 		}
 		else if (strcmp(effectStr, "mark_above") == 0)
 		{
-			if (newLine->header.lastItem != nullptr)
+			if (newLine->previous != nullptr)
 			{
-				Line_t* lastLine = (Line_t*)newLine->header.lastItem;
-				lastLine->flags |= LineFlag_MarkBelow;
+				FlagSet(newLine->previous->flags, LineFlag_MarkBelow);
 			}
 		}
 		else if (strcmp(effectStr, "thick_mark_above") == 0)
 		{
-			if (newLine->header.lastItem != nullptr)
+			if (newLine->previous != nullptr)
 			{
-				Line_t* lastLine = (Line_t*)newLine->header.lastItem;
-				lastLine->flags |= LineFlag_MarkBelow | LineFlag_ThickMark;
+				FlagSet(newLine->previous->flags, LineFlag_MarkBelow | LineFlag_ThickMark);
 			}
 		}
 		else if (strcmp(effectStr, "clear_screen") == 0)
@@ -1125,7 +1123,7 @@ void ReplaceLineWithCapture(Line_t* linePntr, const char* regexStr)
 	
 	char* tempString = GetRegexCaptureString(regexStr, linePntr->chars, linePntr->numChars, TempArena);
 	DEBUG_PrintLine("tempLine: \"%s\"", tempString);
-	LineReplace(&app->lineList, linePntr, tempString);
+	LineListReplaceLine(&app->lineList, tempString, (u32)strlen(tempString));
 	
 	TempPopMark();
 }
@@ -1181,7 +1179,7 @@ void ReplaceLineWithCapture(Line_t* linePntr, const char* regexStr)
 
 void DataReceived(const char* dataBuffer, i32 numBytes)
 {
-	Line_t* lastLine = GetLastLine(&app->lineList);
+	Line_t* lastLine = app->lineList.lastLine;
 	
 	for (i32 cIndex = 0; cIndex < numBytes; cIndex++)
 	{
@@ -1236,7 +1234,7 @@ void DataReceived(const char* dataBuffer, i32 numBytes)
 				platform->AppendFile(&app->outputFile, finishedLine->chars, finishedLine->numChars);
 				platform->AppendFile(&app->outputFile, "\r\n", 2);
 				
-				LineReset(&app->lineList, finishedLine);
+				LineListClearLine(&app->lineList);
 			}
 			else
 			{
@@ -1253,33 +1251,28 @@ void DataReceived(const char* dataBuffer, i32 numBytes)
 				if (clearScreen)
 				{
 					ClearConsole();
-					lastLine = GetLastLine(&app->lineList);
+					lastLine = app->lineList.lastLine;
 				}
 				else
 				{
 					if (addLineToBuffer)
 					{
-						lastLine = AddLineToList(&app->lineList, "");
+						lastLine = LineListPushLine(&app->lineList);
 					}
 					else
 					{
-						lastLine->numChars = 0;
-						lastLine->chars[0] = '\0';
+						LineListClearLine(&app->lineList);
 					}
 				}
 			}
 		}
 		else if (newChar == '\b')
 		{
-			if (lastLine->numChars > 0)
-			{
-				lastLine->numChars--;
-				lastLine->chars[lastLine->numChars] = '\0';
-			}
+			bool charRemoved = LineListPopCharacter(&app->lineList);
 		}
 		else
 		{
-			LineAppend(&app->lineList, lastLine, newChar);
+			LineListAppendData(&app->lineList, &newChar, 1);
 			
 			// +====================================+
 			// | Check Per Character Regex Triggers |
@@ -1296,18 +1289,17 @@ void DataReceived(const char* dataBuffer, i32 numBytes)
 				if (clearScreen)
 				{
 					ClearConsole();
-					lastLine = GetLastLine(&app->lineList);
+					lastLine = app->lineList.lastLine;
 				}
 				else
 				{
 					if (addLineToBuffer)
 					{
-						lastLine = AddLineToList(&app->lineList, "");
+						lastLine = LineListPushLine(&app->lineList);
 					}
 					else
 					{
-						lastLine->numChars = 0;
-						lastLine->chars[0] = '\0';
+						LineListClearLine(&app->lineList);
 					}
 				}
 			}
@@ -1347,7 +1339,7 @@ u32 GetSelection(bool insertTimestamps, char* bufferOutput = nullptr)
 	
 	if (minLocation.lineNum == maxLocation.lineNum)
 	{
-		Line_t* linePntr = GetLineAt(&app->lineList, minLocation.lineNum);
+		Line_t* linePntr = LineListGetItemAt(&app->lineList, minLocation.lineNum);
 		
 		if (insertTimestamps)
 		{
@@ -1377,7 +1369,7 @@ u32 GetSelection(bool insertTimestamps, char* bufferOutput = nullptr)
 	else
 	{
 		{ //First Line
-			Line_t* minLinePntr = GetLineAt(&app->lineList, minLocation.lineNum);
+			Line_t* minLinePntr = LineListGetItemAt(&app->lineList, minLocation.lineNum);
 			
 			if (insertTimestamps)
 			{
@@ -1410,7 +1402,7 @@ u32 GetSelection(bool insertTimestamps, char* bufferOutput = nullptr)
 		//In Between Lines
 		for (i32 lineIndex = minLocation.lineNum+1; lineIndex < maxLocation.lineNum && lineIndex < app->lineList.numLines; lineIndex++)
 		{
-			Line_t* linePntr = GetLineAt(&app->lineList, lineIndex);
+			Line_t* linePntr = LineListGetItemAt(&app->lineList, lineIndex);
 			
 			if (insertTimestamps)
 			{
@@ -1441,7 +1433,7 @@ u32 GetSelection(bool insertTimestamps, char* bufferOutput = nullptr)
 		}
 		
 		{ //Last Line
-			Line_t* maxLinePntr = GetLineAt(&app->lineList, maxLocation.lineNum);
+			Line_t* maxLinePntr = LineListGetItemAt(&app->lineList, maxLocation.lineNum);
 			
 			if (insertTimestamps)
 			{
@@ -1664,12 +1656,11 @@ EXPORT AppInitialize_DEFINITION(App_Initialize)
 	Assert(AppMemory->permanantSize > INPUT_ARENA_SIZE);
 	ClearPointer(app);
 	
-	u8* extraSpaceStart = ((u8*)app) + sizeof(AppData_t);
-	
-	InitializeMemoryArenaLinear(&app->inputArena, extraSpaceStart, INPUT_ARENA_SIZE);
+	app->inputArenaBase = (char*)(app + 1);
+	app->inputArenaSize = INPUT_ARENA_SIZE;
 	
 	u32 mainHeapSize = AppMemory->permanantSize - sizeof(AppData_t) - INPUT_ARENA_SIZE;
-	InitializeMemoryArenaHeap(&app->mainHeap, extraSpaceStart + INPUT_ARENA_SIZE, mainHeapSize);
+	InitializeMemoryArenaHeap(&app->mainHeap, app->inputArenaBase + app->inputArenaSize, mainHeapSize);
 	
 	InitializeMemoryArenaTemp(&app->tempArena, AppMemory->transientPntr, AppMemory->transientSize, TRANSIENT_MAX_NUMBER_MARKS);
 	
@@ -1688,7 +1679,8 @@ EXPORT AppInitialize_DEFINITION(App_Initialize)
 	InitializeMenuHandler(&app->menuHandler, &app->mainHeap);
 	InitializeRegexList(&app->regexList, &app->mainHeap);
 	LoadRegexFile(&app->regexList, "Resources/Configuration/RegularExpressions.rgx", &app->mainHeap);
-	CreateLineList(&app->lineList, &app->mainHeap, "");
+	// void InitializeLineList(LineList_t* lineList, char* charStorageBase, u32 charStorageSize)
+	InitializeLineList(&app->lineList, app->inputArenaBase, app->inputArenaSize);
 	
 	DEBUG_WriteLine("Creating menus");
 	
@@ -1855,7 +1847,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		ButtonDown(Button_Control) &&// && mousePos.x <= ui->gutterRec.width)
 		(IsInsideRectangle(RenderMousePos, ui->viewRec) || IsInsideRectangle(RenderMousePos, ui->gutterRec)))
 	{
-		Line_t* linePntr = GetLineAt(&app->lineList, ui->hoverLocation.lineNum);
+		Line_t* linePntr = LineListGetItemAt(&app->lineList, ui->hoverLocation.lineNum);
 		
 		if (linePntr != nullptr && linePntr->timestamp != 0)
 		{
@@ -2124,8 +2116,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		{
 			//Select all
 			app->selectionStart = NewTextLocation(0, 0);
-			Line_t* lastLinePntr = GetLastLine(&app->lineList);
-			app->selectionEnd = NewTextLocation(app->lineList.numLines-1, lastLinePntr->numChars);
+			app->selectionEnd = NewTextLocation(app->lineList.numLines-1, app->lineList.lastLine->numChars);
 			
 			StatusInfo("Selected Everything");
 		}
@@ -2581,7 +2572,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		if (ButtonReleased(MouseButton_Left) &&
 			ui->markIndex >= 0 && ui->markIndex < app->lineList.numLines)
 		{
-			Line_t* linePntr = GetLineAt(&app->lineList, ui->markIndex);
+			Line_t* linePntr = LineListGetItemAt(&app->lineList, ui->markIndex);
 			
 			if (!IsFlagSet(linePntr->flags, LineFlag_MarkBelow) ||
 				(ButtonDown(Button_Shift) && !IsFlagSet(linePntr->flags, LineFlag_ThickMark)))
@@ -2606,10 +2597,10 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	if (ButtonDown(Button_Control) && ButtonPressed(Button_M))
 	{
 		i32 lastIndex = app->lineList.numLines - 1;
-		Line_t* linePntr = GetLineAt(&app->lineList, lastIndex);
+		Line_t* linePntr = LineListGetItemAt(&app->lineList, lastIndex);
 		if (linePntr->numChars == 0 && lastIndex > 0)
 		{
-			linePntr = GetLineAt(&app->lineList, lastIndex - 1);
+			linePntr = LineListGetItemAt(&app->lineList, lastIndex - 1);
 		}
 		
 		//Set mark
@@ -2716,7 +2707,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 			v2 currentPos = NewVec2((r32)GC->lineSpacing, ui->scrollOffset.y - ui->firstRenderLineOffset + app->mainFont.maxExtendUp);
 			for (i32 lineIndex = firstLine; lineIndex < app->lineList.numLines; lineIndex++)
 			{
-				Line_t* linePntr = GetLineAt(&app->lineList, lineIndex);
+				Line_t* linePntr = LineListGetItemAt(&app->lineList, lineIndex);
 				
 				r32 lineHeight = RenderLine(linePntr, currentPos, true);
 				//Draw line highlight
@@ -2802,7 +2793,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 				lineIndex < app->lineList.numLines && lineIndex <= maxLocation.lineNum;
 				lineIndex++)
 			{
-				Line_t* linePntr = GetLineAt(&app->lineList, lineIndex);
+				Line_t* linePntr = LineListGetItemAt(&app->lineList, lineIndex);
 				
 				if (lineIndex >= minLocation.lineNum && lineIndex <= maxLocation.lineNum)
 				{
@@ -2876,7 +2867,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 			v2 currentPos = NewVec2(0, ui->scrollOffset.y - ui->firstRenderLineOffset + app->mainFont.maxExtendUp);
 			for (i32 lineIndex = firstLine; lineIndex < app->lineList.numLines; lineIndex++)
 			{
-				Line_t* linePntr = GetLineAt(&app->lineList, lineIndex);
+				Line_t* linePntr = LineListGetItemAt(&app->lineList, lineIndex);
 				
 				RenderLineGutter(linePntr, currentPos, lineIndex, linePntr->lineHeight);
 				
@@ -2947,7 +2938,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		// PrintString(app, app->testFont,
 		// 	NewVec2(0, RenderScreenSize.y-app->testFont.maxExtendDown), GC->colors.uiText, 1.0f,
 		// 	"%u Lines Offset: %f (%fpx long)", app->lineList.numLines, ui->scrollOffset, ui->fileHeight);
-		// Line_t* linePntr = GetLineAt(&app->lineList, ui->hoverLocation.lineNum);
+		// Line_t* linePntr = LineListGetItemAt(&app->lineList, ui->hoverLocation.lineNum);
 		// if (linePntr != nullptr)
 		// {
 		// 	Line_t* lineBefore = (Line_t*)linePntr->header.lastItem;
@@ -2957,13 +2948,6 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		// 		NewVec2(0, RenderScreenSize.y-app->testFont.maxExtendDown), GC->colors.uiText, 1.0f,
 		// 		"%08X <- #%u %08X -> %08X", lineBefore, ui->hoverLocation.lineNum, linePntr, lineAfter);
 		// }
-		
-		Line_t* lastLine = GetLastLine(&app->lineList);
-		// DEBUG_PrintLine("Last Item: %p", lastLine->header.lastItem);
-		if (lastLine->timestamp == 0 && app->lineList.numLines > 1)
-		{
-			lastLine = GetLineAt(&app->lineList, app->lineList.numLines-1 - 1);
-		}
 		
 		// +==============================+
 		// |  Render the Status Message   |
@@ -3269,8 +3253,8 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		textPos.y += app->uiFont.lineHeight;
 		
 		rs->PrintString(textPos, {Color_White}, 1.0f, "Input Arena: %u/%u (%.3f%%)",
-			app->inputArena.used, app->inputArena.size,
-			(r32)app->inputArena.used / (r32)app->inputArena.size * 100.0f);
+			app->lineList.charDataSize, app->lineList.charDataMaxSize,
+			(r32)app->lineList.charDataSize / (r32)app->lineList.charDataMaxSize * 100.0f);
 		textPos.y += app->uiFont.lineHeight;
 		
 		rs->PrintString(textPos, {Color_White}, 1.0f, "Main Heap: %u/%u (%.3f%%)",

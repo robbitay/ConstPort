@@ -7,164 +7,151 @@ Description:
 	** have useful functions associated with them 
 */
 
-Line_t* AddLineToList(LineList_t* lineList, const char* string, u32 stringLength)
+void InitializeLine(Line_t* linePntr)
+{
+	ClearPointer(linePntr);
+	linePntr->matchColor = GC->colors.textDefault;
+	linePntr->backgroundColor = GC->colors.textBackground;
+}
+
+void InitializeLineList(LineList_t* lineList, char* charStorageBase, u32 charStorageSize)
 {
 	Assert(lineList != nullptr);
-	Assert(string != nullptr);
+	Assert(charStorageBase != nullptr);
+	Assert(charStorageSize > 0);
 	
-	Line_t* newLine = LinkedPushStruct(&lineList->list, lineList->arenaPntr, Line_t);
-	char* newStringBuffer = PushArray(lineList->arenaPntr, char, stringLength+1);
+	ClearPointer(lineList);
 	
-	// DEBUG_PrintLine("New Line Added at %08X. Last: %08X  Next: %08X", newLine, newLine->header.lastItem, newLine->header.nextItem);
-	// Line_t* lastLine = (Line_t*)newLine->header.lastItem;
-	// if (lastLine != nullptr)
-	// {
-	// 	DEBUG_PrintLine("Last line at %08X. Last: %08X  Next: %08X", lastLine, lastLine->header.lastItem, lastLine->header.nextItem);
-	// }
+	lineList->charDataBase = charStorageBase;
+	lineList->charDataSize = 0;
+	lineList->charDataMaxSize = charStorageSize;
 	
-	memcpy(newStringBuffer, string, stringLength);
-	newStringBuffer[stringLength] = '\0';
+	Line_t* firstLine = PushStruct(&app->mainHeap, Line_t);
+	InitializeLine(firstLine);
+	firstLine->chars = lineList->charDataBase + lineList->charDataSize;
 	
-	newLine->numChars = stringLength;
-	newLine->chars = newStringBuffer;
-	newLine->animProgress = 0.0f;
-	newLine->lineHeight = 0;
-	newLine->timestamp = 0;
-	newLine->flags = 0;
-	newLine->matchColor = GC->colors.textDefault;
-	newLine->backgroundColor = GC->colors.textBackground;
+	lineList->firstLine = firstLine;
+	lineList->lastLine = firstLine;
+	lineList->numLines = 1;
+}
+
+void DestroyLineList(LineList_t* lineList)
+{
+	Assert(lineList != nullptr);
+	if (lineList->numLines == 0) { Assert(lineList->firstLine == nullptr); return; } //already deallocated
+	
+	Line_t* linePntr = lineList->firstLine;
+	for (i32 lIndex = 0; lIndex < lineList->numLines; lIndex++)
+	{
+		Assert(linePntr != nullptr);
+		
+		Line_t* nextLine = linePntr->next;
+		ArenaPop(&app->mainHeap, linePntr);
+		linePntr = nextLine;
+	}
+	
+	ClearPointer(lineList);
+}
+
+Line_t* LineListGetItemAt(LineList_t* lineList, i32 lineIndex)
+{
+	Assert(lineList != nullptr);
+	Assert(lineList->numLines > lineIndex);
+	Assert(lineIndex >= 0);
+	
+	if (lineIndex < 0 || lineIndex >= lineList->numLines) { return nullptr; }
+	
+	Line_t* linePntr = lineList->firstLine;
+	for (i32 lIndex = 0; lIndex < lineIndex; lIndex++)
+	{
+		Assert(linePntr != nullptr);
+		
+		linePntr = linePntr->next;
+	}
+	
+	return linePntr;
+}
+
+void LineListAppendData(LineList_t* lineList, const char* newChars, u32 numChars)
+{
+	Assert(lineList != nullptr);
+	Assert(lineList->lastLine != nullptr);
+	Assert(lineList->charDataBase != nullptr);
+	Assert(lineList->charDataSize + numChars < lineList->charDataMaxSize);
+	if (newChars == nullptr || numChars == 0) { Assert(false); return; }
+	
+	Line_t* linePntr = lineList->lastLine;
+	Assert(linePntr->chars + linePntr->numChars == lineList->charDataBase + lineList->charDataSize);
+	
+	memcpy(linePntr->chars + linePntr->numChars, newChars, numChars);
+	linePntr->numChars += numChars;
+	linePntr->chars[linePntr->numChars] = '\0';
+	lineList->charDataSize += numChars;
+}
+
+bool LineListPopCharacter(LineList_t* lineList)
+{
+	Assert(lineList != nullptr);
+	Assert(lineList->lastLine != nullptr);
+	
+	if (lineList->lastLine->numChars > 0)
+	{
+		lineList->lastLine->numChars--;
+		lineList->lastLine->chars[lineList->lastLine->numChars] = '\0';
+		lineList->charDataSize--;
+		
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+Line_t* LineListPushLine(LineList_t* lineList)
+{
+	Assert(lineList != nullptr);
+	Assert(lineList->charDataBase != nullptr);
+	Assert(lineList->charDataSize + 1 <= lineList->charDataMaxSize);
+	
+	lineList->charDataBase[lineList->charDataSize] = '\0';
+	lineList->charDataSize++;
+	
+	Line_t* newLine = PushStruct(&app->mainHeap, Line_t);
+	InitializeLine(newLine);
+	newLine->chars = lineList->charDataBase + lineList->charDataSize;
+	
+	newLine->previous = lineList->lastLine;
+	lineList->lastLine->next = newLine;
+	lineList->lastLine = newLine;
 	
 	lineList->numLines++;
 	
 	return newLine;
 }
 
-inline Line_t* AddLineToList(LineList_t* lineList, const char* nullTermString)
+void LineListClearLine(LineList_t* lineList)
 {
 	Assert(lineList != nullptr);
-	Assert(nullTermString != nullptr);
+	Assert(lineList->lastLine != nullptr);
 	
-	return AddLineToList(lineList, nullTermString, (u32)strlen(nullTermString));
+	Line_t* lastLine = lineList->lastLine;
+	Assert(lastLine->chars + lastLine->numChars == lineList->charDataBase + lineList->charDataSize);
+	Assert(lineList->charDataSize >= lastLine->numChars);
+	
+	if (lastLine->numChars == 0) { return; } //Already empty
+	
+	lineList->charDataSize -= lastLine->numChars;
+	lastLine->numChars = 0;
+	lastLine->chars[0] = '\0';
 }
 
-inline Line_t* GetLineAt(LineList_t* lineList, i32 index)
-{
-	Assert(lineList != nullptr);
-	
-	return (Line_t*)LinkedListGetItem(&lineList->list, index);
-}
-
-inline Line_t* GetLastLine(LineList_t* lineList)
-{
-	Assert(lineList != nullptr);
-	
-	return (Line_t*)LinkedListGetLastItem(&lineList->list);
-}
-
-inline void LineAppend(LineList_t* lineList, Line_t* line, char newCharacter)
-{
-	Assert(lineList != nullptr);
-	Assert(line != nullptr);
-	
-	char* newLocation = PushArray(lineList->arenaPntr, char, line->numChars+1+1);
-	memcpy(newLocation, line->chars, line->numChars+1);
-	ArenaPop(lineList->arenaPntr, line->chars);
-	line->chars = newLocation;
-	line->chars[line->numChars] = newCharacter;
-	//First Character to come in on this line, record the timestamp
-	if (line->numChars == 0)
-	{
-		line->timestamp = GetTimestamp(platform->localTime);
-	}
-	line->numChars++;
-	line->chars[line->numChars] = '\0';
-}
-
-inline void LineReset(LineList_t* lineList, Line_t* line)
-{
-	Assert(lineList != nullptr);
-	Assert(line != nullptr);
-	
-	ArenaPop(lineList->arenaPntr, line->chars);
-	line->numChars = 0;
-	char* newLocation = PushArray(lineList->arenaPntr, char, line->numChars+1);
-	line->chars = newLocation;
-	line->chars[line->numChars] = '\0';
-	
-	line->animProgress = 0.0f;
-	line->lineHeight = 0;
-	line->timestamp = 0;
-	line->flags = 0;
-	line->matchColor = GC->colors.textDefault;
-}
-
-inline void LineReplace(LineList_t* lineList, Line_t* linePntr, const char* newString)
-{
-	Assert(lineList != nullptr);
-	Assert(linePntr != nullptr);
-	
-	ArenaPop(lineList->arenaPntr, linePntr->chars);
-	linePntr->numChars = (u32)strlen(newString);
-	char* newLocation = PushArray(lineList->arenaPntr, char, linePntr->numChars+1);
-	strcpy(newLocation, newString);
-	linePntr->chars = newLocation;
-	linePntr->chars[linePntr->numChars] = '\0';
-}
-
-void CreateLineList(LineList_t* lineList, MemoryArena_t* arenaPntr, const char* contents)
-{
-	Assert(lineList != nullptr);
-	Assert(arenaPntr != nullptr);
-	Assert(contents != nullptr);
-	ClearPointer(lineList);
-	
-	lineList->arenaPntr = arenaPntr;
-	CreateLinkedList(&lineList->list);
-	
-	u32 lastIndex = 0;
-	u32 cIndex = 0;
-	for (cIndex = 0; contents[cIndex] != '\0'; cIndex++)
-	{
-		if (contents[cIndex] == '\n')
-		{
-			if (cIndex > lastIndex)
-			{
-				AddLineToList(lineList, &contents[lastIndex], cIndex - lastIndex);
-			}
-			
-			lastIndex = cIndex+1;
-		}
-	}
-	
-	if (cIndex > lastIndex)
-	{
-		AddLineToList(lineList, &contents[lastIndex], cIndex - lastIndex);
-	}
-	
-	if (lineList->numLines == 0)
-	{
-		AddLineToList(lineList, "");
-	}
-}
-
-void DestroyLineList(LineList_t* lineList)
+void LineListReplaceLine(LineList_t* lineList, const char* newChars, u32 numChars)
 {
 	Assert(lineList != nullptr);
 	
-	for (i32 lineIndex = 0; lineIndex < lineList->numLines; lineIndex++)
-	{
-		Line_t* linePntr = (Line_t*)LinkedListGetItem(&lineList->list, lineIndex);
-		ArenaPop(lineList->arenaPntr, linePntr->chars);
-	}
-	
-	DeleteLinkedList(&lineList->list, lineList->arenaPntr);
-	lineList->numLines = 0;
-	lineList->arenaPntr = 0;
-}
-
-inline v2 MeasureLine(const Font_t* font, const Line_t* line)
-{
-	return MeasureString(font, line->chars);
+	LineListClearLine(lineList);
+	LineListAppendData(lineList, newChars, numChars);
 }
 
 inline TextLocation_t TextLocationMin(TextLocation_t location1, TextLocation_t location2)
@@ -211,3 +198,4 @@ inline TextLocation_t TextLocationMax(TextLocation_t location1, TextLocation_t l
 		return location2;
 	}
 }
+

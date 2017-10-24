@@ -19,7 +19,8 @@ enum
 
 struct Line_t
 {
-	LinkHeader_t header;
+	Line_t* next;
+	Line_t* previous;
 	
 	u32 numChars;
 	char* chars;
@@ -36,8 +37,12 @@ struct Line_t
 struct LineList_t
 {
 	i32 numLines;
-	LinkedList_t list;
-	MemoryArena_t* arenaPntr;
+	Line_t* firstLine;
+	Line_t* lastLine;
+	
+	char* charDataBase;
+	u32 charDataSize;
+	u32 charDataMaxSize;
 };
 
 union TextLocation_t

@@ -41,7 +41,7 @@ r32 RenderLine(Line_t* linePntr, v2 position, bool sizeOnly = false)
 	// +==============================+
 	if (GC->elapsedBannerEnabled)
 	{
-		Line_t* nextLine = (Line_t*)linePntr->header.nextItem;
+		Line_t* nextLine = linePntr->next;
 		if (nextLine != nullptr)
 		{
 			u64 nextLineTimestamp = nextLine->timestamp;
@@ -110,7 +110,7 @@ void RenderLineGutter(const Line_t* linePntr, v2 position, i32 lineIndex, r32 li
 	r32 bannerHeight = 0;
 	if (GC->elapsedBannerEnabled)
 	{
-		Line_t* nextLine = (Line_t*)linePntr->header.nextItem;
+		Line_t* nextLine = linePntr->next;
 		if (nextLine != nullptr)
 		{
 			u64 nextLineTimestamp = nextLine->timestamp;
@@ -261,7 +261,7 @@ v2 MeasureLines(LineList_t* lineList, const Font_t* font)
 	v2 result = Vec2_Zero;
 	UiElements_t* ui = &app->uiElements;
 	RenderState_t* rs = &app->renderState;
-	Line_t* linePntr = (Line_t*)lineList->list.firstItem;
+	Line_t* linePntr = lineList->firstLine;
 	u32 numCharsMax = 0;
 	i32 lineIndex = 0;
 	i32 firstLineIndex = 0;
@@ -308,7 +308,7 @@ v2 MeasureLines(LineList_t* lineList, const Font_t* font)
 			}
 		}
 		
-		linePntr = (Line_t*)linePntr->header.nextItem;
+		linePntr = linePntr->next;
 		lineIndex++;
 	}
 	
@@ -320,7 +320,7 @@ v2 MeasureLines(LineList_t* lineList, const Font_t* font)
 	if (ui->hoverLocation.lineNum == -1)
 	{
 		ui->hoverLocation.lineNum = max(0, lineList->numLines-1);
-		ui->hoverLocation.charIndex = ((Line_t*)lineList->list.lastItem)->numChars;
+		ui->hoverLocation.charIndex = lineList->lastLine->numChars;
 	}
 	
 	return result;
