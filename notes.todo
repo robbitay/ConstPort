@@ -1,6 +1,7 @@
 # Application TODO List
 	[ ] Trigger save to file using regex
 	[ ] Horizontal Scrollbar (only shows up if needed)
+	[ ] Line wrapping
 	
 	[ ] An option to perserve invalid ASCII characters when saving to a file
 	[ ] Get rid of the UI Handler since we probably won't ever need movable/modular windows. Also function pointer remapping is stupid looking

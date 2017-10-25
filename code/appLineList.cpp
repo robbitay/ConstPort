@@ -29,6 +29,7 @@ void InitializeLineList(LineList_t* lineList, char* charStorageBase, u32 charSto
 	Line_t* firstLine = PushStruct(&app->mainHeap, Line_t);
 	InitializeLine(firstLine);
 	firstLine->chars = lineList->charDataBase + lineList->charDataSize;
+	firstLine->chars[0] = '\0';
 	
 	lineList->firstLine = firstLine;
 	lineList->lastLine = firstLine;

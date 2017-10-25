@@ -20,8 +20,8 @@ Half Alphabet:         ^[^A-Za-z]*[A-Ma-m]
 Has Exclamation:       \!
 
 # These match lines with the unused codepoints 0x01-0x05 anywhere in the line
-Has Hex 01: \x{0001}
-Has Hex 02: \x{0002}
-Has Hex 03: \x{0003}
-Has Hex 04: \x{0004}
-Has Hex 05: \x{0005}
+DebugPrefix:     ^([\x{0002}\x{0003}\x{0004}\x{0005}]*)\x{0001}(.*)
+InfoPrefix:      ^([\x{0001}\x{0003}\x{0004}\x{0005}]*)\x{0002}(.*)
+AlertPrefix:     ^([\x{0001}\x{0002}\x{0004}\x{0005}]*)\x{0003}(.*)
+NotifyPrefix:    ^([\x{0001}\x{0002}\x{0003}\x{0005}]*)\x{0004}(.*)
+ImportantPrefix: ^([\x{0001}\x{0002}\x{0003}\x{0004}]*)\x{0005}(.*)

@@ -40,6 +40,8 @@ Date:   09\26\2017
 	ConfigurationBool  ("show_file_after_saving",      showFileAfterSaving,    true);
 	ConfigurationBool  ("save_times_to_file",          saveTimesToFile,        false);
 	ConfigurationBool  ("show_update_indicator",       showUpdateIndicator,    false);
+	ConfigurationBool  ("line_wrap_enabled",           lineWrapEnabled,        true);
+	ConfigurationBool  ("line_wrap_preserve_words",    lineWrapPreserveWords,  true);
 	
 	ConfigurationInt32 ("popup_corner_radius",         popupCornerRadius,      7);
 	ConfigurationInt32 ("popup_outline_thickness",     popupOutlineThickness,  1);

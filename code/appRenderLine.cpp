@@ -17,6 +17,20 @@ r32 RenderLine(Line_t* linePntr, v2 position, bool sizeOnly = false)
 	
 	Color_t color = linePntr->matchColor;
 	Color_t backgroundColor = linePntr->backgroundColor;
+	v2 lineStringSize = Vec2_Zero;
+	r32 maxLineWidth = ui->viewRec.width - position.x;
+	if (GC->lineWrapEnabled)
+	{
+		lineStringSize = MeasureFormattedString(&app->mainFont, linePntr->chars, maxLineWidth, GC->lineWrapPreserveWords);
+	}
+	else
+	{
+		lineStringSize = MeasureString(&app->mainFont, linePntr->chars);
+	}
+	if (lineStringSize.y < app->mainFont.lineHeight)
+	{
+		lineStringSize.y = app->mainFont.lineHeight;
+	}
 	
 	if (!sizeOnly)
 	{
@@ -25,16 +39,24 @@ r32 RenderLine(Line_t* linePntr, v2 position, bool sizeOnly = false)
 			0,
 			position.y - app->mainFont.maxExtendUp - GC->lineSpacing/2,
 			10000,
-			app->mainFont.lineHeight + GC->lineSpacing
+			lineStringSize.y + GC->lineSpacing
 		);
 		if (GC->highlightHoverLine && IsInsideRectangle(relMousePos, backgroundRec))
 		{
 			backgroundColor = GC->colors.hoverBackground;
 		}
 		app->renderState.DrawRectangle(backgroundRec, backgroundColor);
-		app->renderState.DrawString(linePntr->chars, position, color, 1.0f);
+		
+		if (GC->lineWrapEnabled)
+		{
+			app->renderState.DrawFormattedString(linePntr->chars, position, maxLineWidth, color, Alignment_Left, GC->lineWrapPreserveWords);
+		}
+		else
+		{
+			app->renderState.DrawString(linePntr->chars, position, color, 1.0f);
+		}
 	}
-	result += app->mainFont.lineHeight;
+	result += lineStringSize.y;
 	
 	// +==============================+
 	// |  Measure the Elapsed Banner  |
