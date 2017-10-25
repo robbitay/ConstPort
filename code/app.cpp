@@ -1177,6 +1177,29 @@ void ReplaceLineWithCapture(Line_t* linePntr, const char* regexStr)
 	}                                                                                                              \
 } while(0)
 
+void DropCharData(u32 targetSize)
+{
+	StatusInfo("Resizing %u bytes down to %u bytes", app->lineList.charDataSize, targetSize);
+	u32 numLinesRemoved = 0;
+	r32 heightRemoved = LineListDownsize(&app->lineList, targetSize, &numLinesRemoved);
+	app->uiElements.scrollOffset.y = max(0, app->uiElements.scrollOffset.y - heightRemoved);
+	app->uiElements.scrollOffsetGoto.y = max(0, app->uiElements.scrollOffsetGoto.y - heightRemoved);
+	app->selectionStart.lineNum -= numLinesRemoved;
+	if (app->selectionStart.lineNum < 0)
+	{
+		app->selectionStart.lineNum = 0;
+		app->selectionStart.charIndex = 0;
+	}
+	app->selectionEnd.lineNum -= numLinesRemoved;
+	if (app->selectionEnd.lineNum < 0)
+	{
+		app->selectionEnd.lineNum = 0;
+		app->selectionEnd.charIndex = 0;
+	}
+	
+	PopupError("Dropped %u line(s) due to space requirements", numLinesRemoved);
+}
+
 void DataReceived(const char* dataBuffer, i32 numBytes)
 {
 	Line_t* lastLine = app->lineList.lastLine;
@@ -1310,20 +1333,9 @@ void DataReceived(const char* dataBuffer, i32 numBytes)
 		// +==============================+
 		u32 inputArenaMax        = (u32)(app->inputArenaSize/100.f * 98);
 		u32 targetInputArenaSize = (u32)(app->inputArenaSize/100.f * 90);
-		if (DEBUG && ButtonPressed(Button_F1) && app->lineList.charDataSize >= 1)
-		{
-			targetInputArenaSize = app->lineList.charDataSize - 1;
-			inputArenaMax = targetInputArenaSize;
-		}
 		if (app->lineList.charDataSize >= inputArenaMax)
 		{
-			StatusInfo("Resizing %u bytes down to %u bytes", app->lineList.charDataSize, targetInputArenaSize);
-			u32 numLinesRemoved = 0;
-			r32 heightRemoved = LineListDownsize(&app->lineList, targetInputArenaSize, &numLinesRemoved);
-			app->uiElements.scrollOffset.y = max(0, app->uiElements.scrollOffset.y - heightRemoved);
-			app->uiElements.scrollOffsetGoto.y = max(0, app->uiElements.scrollOffsetGoto.y - heightRemoved);
-			
-			PopupError("Dropped %u line(s) due to space requirements", numLinesRemoved);
+			DropCharData(targetInputArenaSize);
 		}
 	}
 	
@@ -2032,6 +2044,8 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 			
 			if (clipbardData != nullptr)
 			{
+				StatusSuccess("Pasted %u bytes from clipboard", clipboardDataSize);
+				
 				char* sanatized = SanatizeStringAdvanced(clipbardData, clipboardDataSize, TempArena, true, false, true);
 				u32 sanatizedLength = (u32)strlen(sanatized);
 				
@@ -2097,6 +2111,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 				GetSelection(false, selectionTempBuffer);
 				
 				platform->CopyToClipboard(selectionTempBuffer, selectionSize);
+				StatusSuccess("Copied %u bytes to clipboard", selectionSize);
 				
 				TempPopMark();
 			}
@@ -2227,7 +2242,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	// +==============================+
 	// |         Debug Popups         |
 	// +==============================+
-	#if 1
+	#if DEBUG
 	if (ButtonPressed(Button_1))
 	{
 		PopupDebug("Something interesting is happening behind the scenes");
@@ -2257,7 +2272,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	// +==============================+
 	// |        Debug Message         |
 	// +==============================+
-	if (ButtonPressed(Button_U))
+	if (ButtonPressed(Button_F2))
 	{
 		u32 testMessageLength = (u32)strlen(testMessage);
 		if (app->programInstance.isOpen && ButtonDown(Button_Shift))
@@ -2274,6 +2289,11 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		{
 			DataReceived(testMessage, testMessageLength);
 		}
+	}
+	
+	if (ButtonPressed(Button_F1) && app->lineList.charDataSize >= 1)
+	{
+		DropCharData(app->lineList.charDataSize - 1);
 	}
 	#endif
 	
