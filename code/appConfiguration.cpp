@@ -89,6 +89,7 @@ void ParseRegexTriggersList(GlobalConfig_t* globalConfig, MemoryArena_t* memAren
 		RegexTrigger_t* triggerPntr = &globalConfig->triggers[listIndex];
 		triggerPntr->expression = nullptr;
 		triggerPntr->expressionName = nullptr;
+		triggerPntr->replaceStr = nullptr;
 		triggerPntr->showOnlyCaptured = false;
 		triggerPntr->runPerCharacter = false;
 		triggerPntr->numEffects = 0;
@@ -113,6 +114,7 @@ void ParseRegexTriggersList(GlobalConfig_t* globalConfig, MemoryArena_t* memAren
 		
 		GetStrConfig(triggerObjectIndex, "expression",      &triggerPntr->expression, memArena);
 		GetStrConfig(triggerObjectIndex, "expression_name", &triggerPntr->expressionName, memArena);
+		GetStrConfig(triggerObjectIndex, "replace_str",     &triggerPntr->replaceStr, memArena);
 		
 		GetConfig(triggerObjectIndex, Bool, "show_only_captured", &triggerPntr->showOnlyCaptured);
 		GetConfig(triggerObjectIndex, Bool, "run_per_character",  &triggerPntr->runPerCharacter);
@@ -423,6 +425,7 @@ void DisposeGlobalConfig(GlobalConfig_t* globalConfig)
 		
 		if (trigger->expression != nullptr) { ArenaPop(globalConfig->memArena, (char*)trigger->expression); }
 		if (trigger->expressionName != nullptr) { ArenaPop(globalConfig->memArena, (char*)trigger->expressionName); }
+		if (trigger->replaceStr != nullptr) { ArenaPop(globalConfig->memArena, (char*)trigger->replaceStr); }
 		
 		for (u32 eIndex = 0; eIndex < trigger->numEffects; eIndex++)
 		{

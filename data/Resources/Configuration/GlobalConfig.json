@@ -88,11 +88,17 @@
 			"expression_name": "Has Hex 05",
 			"effects": ["foreground_color = 66D9EF"], //Light Blue
 		},
-		// {
-		// 	"expression": "[=]{4,}([^=]+)[=]{4,}",
-		// 	"show_only_captured": true,
-		// 	"effects": ["thick_mark", "foreground_color = Orange"],
-		// },
+		{
+			"expression": "([^=]*)[=]{4,}([^=]+)[=]{4,}([^=]*)",
+			// "show_only_captured": true,
+			"replace_str": "$0+-+-+$1+-+-+$2",
+			"effects": ["mark_above", "foreground_color = Orange"],
+		},
+		{
+			"expression_name": "BlePrefix",
+			"replace_str": "$0$1",
+			"effects": ["background_color = Black"],
+		},
 		
 		//Neon Color Scheme
 		// {

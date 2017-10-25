@@ -1122,7 +1122,18 @@ void ReplaceLineWithCapture(Line_t* linePntr, const char* regexStr)
 	TempPushMark();
 	
 	char* tempString = GetRegexCaptureString(regexStr, linePntr->chars, linePntr->numChars, TempArena);
-	DEBUG_PrintLine("tempLine: \"%s\"", tempString);
+	DEBUG_PrintLine("Captured replacement: \"%s\"", tempString);
+	LineListReplaceLine(&app->lineList, tempString, (u32)strlen(tempString));
+	
+	TempPopMark();
+}
+
+void ReplaceLineWithCaptureFormatString(Line_t* linePntr, const char* regexStr, const char* formatStr)
+{
+	TempPushMark();
+	
+	char* tempString = GetRegexCaptureFormatString(regexStr, linePntr->chars, linePntr->numChars, formatStr, TempArena);
+	DEBUG_PrintLine("Captured formatted replacement: \"%s\"", tempString);
 	LineListReplaceLine(&app->lineList, tempString, (u32)strlen(tempString));
 	
 	TempPopMark();
@@ -1165,7 +1176,14 @@ void ReplaceLineWithCapture(Line_t* linePntr, const char* regexStr)
 					bool expressionMatched = TestRegularExpression(regexStr, linePntr->chars, linePntr->numChars); \
 					if (expressionMatched)                                                                         \
 					{                                                                                              \
-						if (trigger->showOnlyCaptured) { ReplaceLineWithCapture(linePntr, regexStr); }             \
+						if (trigger->showOnlyCaptured)                                                             \
+						{                                                                                          \
+							ReplaceLineWithCapture(linePntr, regexStr);                                            \
+						}                                                                                          \
+						if (trigger->replaceStr != nullptr)                                                        \
+						{                                                                                          \
+							ReplaceLineWithCaptureFormatString(linePntr, regexStr, trigger->replaceStr);           \
+						}                                                                                          \
 						TriggerResults_t results = ApplyTriggerEffects(linePntr, trigger);                         \
 						if (!results.addLineToBuffer) { createNewLine = true; }                                    \
 						if (results.createNewLine) { createNewLine = true; }                                       \

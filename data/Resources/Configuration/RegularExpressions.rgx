@@ -15,7 +15,7 @@
 More Than 3 Equals:    \={3,}
 Has Elipse:            \.\.\.
 Short Line:            ^[^\n]{1,5}$
-BlePrefix:             ^b\-
+BlePrefix:             ^([\x{0001}\x{0002}\x{0003}\x{0004}\x{0005}]*)b-(.*)
 Half Alphabet:         ^[^A-Za-z]*[A-Ma-m]
 Has Exclamation:       \!
 

@@ -298,3 +298,87 @@ char* GetRegexCaptureString(const char* expressionStr, const char* target, u32 t
 		return false;
 	}
 }
+
+char* GetRegexCaptureFormatString(const char* expressionStr, const char* target, u32 targetLength, const char* formatStr, MemoryArena_t* arenaPntr)
+{
+	boost::regex expression(expressionStr);
+	boost::cmatch matches;
+	
+	if (boost::regex_search(target, target + targetLength, matches, expression))
+	{
+		u32 formatStrLength = (u32)strlen(formatStr);
+		
+		char* captureStrs[10] = {};
+		for (u32 cIndex = 0; cIndex < ArrayCount(captureStrs); cIndex++)
+		{
+			if (cIndex+1 < matches.size())
+			{
+				captureStrs[cIndex] = ArenaString(TempArena, matches[cIndex+1].str().c_str());
+			}
+			else { break; }
+		}
+		
+		u32 resultLength = 0;
+		for (u32 cIndex = 0; cIndex < formatStrLength; cIndex++)
+		{
+			char c = formatStr[cIndex];
+			if (c == '$' && IsCharClassNumeric(formatStr[cIndex+1]))
+			{
+				u32 captureNumber = (u32)(formatStr[cIndex+1] - '0');
+				if (captureStrs[captureNumber] != nullptr)
+				{
+					DEBUG_PrintLine("We will replace $%u with \"%s\"", captureNumber, captureStrs[captureNumber]);
+					resultLength += (u32)strlen(captureStrs[captureNumber]);
+					cIndex++;
+				}
+				else
+				{
+					DEBUG_PrintLine("No replacement for symbol $%u.\nOnly %u groups captured", captureNumber, matches.size());
+					resultLength += 1;
+				}
+			}
+			else
+			{
+				resultLength += 1;
+			}
+		}
+		
+		char* result = PushArray(arenaPntr, char, resultLength+1);
+		
+		u32 toIndex = 0;
+		for (u32 fromIndex = 0; fromIndex < formatStrLength; fromIndex++)
+		{
+			char c = formatStr[fromIndex];
+			char nextChar = formatStr[fromIndex+1];
+			if (c == '$' && IsCharClassNumeric(nextChar))
+			{
+				u32 captureNumber = (u32)(nextChar - '0');
+				if (captureStrs[captureNumber] != nullptr)
+				{
+					u32 captureStrLength = (u32)strlen(captureStrs[captureNumber]);
+					strncpy(&result[toIndex], captureStrs[captureNumber], captureStrLength);
+					toIndex += captureStrLength;
+					fromIndex++;
+				}
+				else
+				{
+					result[toIndex] = c;
+					toIndex++;
+				}
+			}
+			else
+			{
+				result[toIndex] = c;
+				toIndex++;
+			}
+		}
+		
+		result[resultLength] = '\0';
+		return result;
+	}
+	else
+	{
+		// DEBUG_WriteLine("Regular Expression Failed");
+		return false;
+	}
+}

@@ -11,6 +11,7 @@ struct RegexTrigger_t
 {
 	const char* expression;
 	const char* expressionName;
+	const char* replaceStr;
 	
 	bool showOnlyCaptured;
 	bool runPerCharacter;
