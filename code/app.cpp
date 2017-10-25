@@ -177,7 +177,7 @@ void ClearConsole()
 	
 	app->selectionStart = NewTextLocation(0, 0);
 	app->selectionEnd = NewTextLocation(0, 0);
-	app->uiElements.hoverLocation = NewTextLocation(0, 0);
+	app->uiElements.mouseTextLocation = NewTextLocation(0, 0);
 	
 	app->genericCounter = 0;
 }
@@ -1202,16 +1202,16 @@ void DropCharData(u32 targetSize)
 	r32 heightRemoved = LineListDownsize(&app->lineList, targetSize, &numLinesRemoved);
 	app->uiElements.scrollOffset.y = max(0, app->uiElements.scrollOffset.y - heightRemoved);
 	app->uiElements.scrollOffsetGoto.y = max(0, app->uiElements.scrollOffsetGoto.y - heightRemoved);
-	app->selectionStart.lineNum -= numLinesRemoved;
-	if (app->selectionStart.lineNum < 0)
+	app->selectionStart.lineIndex -= numLinesRemoved;
+	if (app->selectionStart.lineIndex < 0)
 	{
-		app->selectionStart.lineNum = 0;
+		app->selectionStart.lineIndex = 0;
 		app->selectionStart.charIndex = 0;
 	}
-	app->selectionEnd.lineNum -= numLinesRemoved;
-	if (app->selectionEnd.lineNum < 0)
+	app->selectionEnd.lineIndex -= numLinesRemoved;
+	if (app->selectionEnd.lineIndex < 0)
 	{
-		app->selectionEnd.lineNum = 0;
+		app->selectionEnd.lineIndex = 0;
 		app->selectionEnd.charIndex = 0;
 	}
 	
@@ -1367,7 +1367,7 @@ u32 GetSelection(bool insertTimestamps, char* bufferOutput = nullptr)
 	TextLocation_t minLocation = TextLocationMin(app->selectionStart, app->selectionEnd);
 	TextLocation_t maxLocation = TextLocationMax(app->selectionStart, app->selectionEnd);
 	
-	if (minLocation.lineNum == maxLocation.lineNum &&
+	if (minLocation.lineIndex == maxLocation.lineIndex &&
 		minLocation.charIndex == maxLocation.charIndex)
 	{
 		//No selection made
@@ -1388,9 +1388,9 @@ u32 GetSelection(bool insertTimestamps, char* bufferOutput = nullptr)
 	u32 bufferLength = 0;
 	char* outputPntr = bufferOutput;
 	
-	if (minLocation.lineNum == maxLocation.lineNum)
+	if (minLocation.lineIndex == maxLocation.lineIndex)
 	{
-		Line_t* linePntr = LineListGetItemAt(&app->lineList, minLocation.lineNum);
+		Line_t* linePntr = LineListGetItemAt(&app->lineList, minLocation.lineIndex);
 		
 		if (insertTimestamps)
 		{
@@ -1420,7 +1420,7 @@ u32 GetSelection(bool insertTimestamps, char* bufferOutput = nullptr)
 	else
 	{
 		{ //First Line
-			Line_t* minLinePntr = LineListGetItemAt(&app->lineList, minLocation.lineNum);
+			Line_t* minLinePntr = LineListGetItemAt(&app->lineList, minLocation.lineIndex);
 			
 			if (insertTimestamps)
 			{
@@ -1451,7 +1451,7 @@ u32 GetSelection(bool insertTimestamps, char* bufferOutput = nullptr)
 		}
 		
 		//In Between Lines
-		for (i32 lineIndex = minLocation.lineNum+1; lineIndex < maxLocation.lineNum && lineIndex < app->lineList.numLines; lineIndex++)
+		for (i32 lineIndex = minLocation.lineIndex+1; lineIndex < maxLocation.lineIndex && lineIndex < app->lineList.numLines; lineIndex++)
 		{
 			Line_t* linePntr = LineListGetItemAt(&app->lineList, lineIndex);
 			
@@ -1484,7 +1484,7 @@ u32 GetSelection(bool insertTimestamps, char* bufferOutput = nullptr)
 		}
 		
 		{ //Last Line
-			Line_t* maxLinePntr = LineListGetItemAt(&app->lineList, maxLocation.lineNum);
+			Line_t* maxLinePntr = LineListGetItemAt(&app->lineList, maxLocation.lineIndex);
 			
 			if (insertTimestamps)
 			{
@@ -1898,7 +1898,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		ButtonDown(Button_Control) &&// && mousePos.x <= ui->gutterRec.width)
 		(IsInsideRectangle(RenderMousePos, ui->viewRec) || IsInsideRectangle(RenderMousePos, ui->gutterRec)))
 	{
-		Line_t* linePntr = LineListGetItemAt(&app->lineList, ui->hoverLocation.lineNum);
+		Line_t* linePntr = LineListGetItemAt(&app->lineList, ui->mouseTextLocation.lineIndex);
 		
 		if (linePntr != nullptr && linePntr->timestamp != 0)
 		{
@@ -2165,7 +2165,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	//+==================================+
 	if (ButtonPressed(Button_A) && ButtonDown(Button_Control))
 	{
-		if (app->selectionStart.lineNum == app->selectionEnd.lineNum &&
+		if (app->selectionStart.lineIndex == app->selectionEnd.lineIndex &&
 			app->selectionStart.charIndex == app->selectionEnd.charIndex)
 		{
 			//Select all
@@ -2613,12 +2613,12 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		{
 			if (input->buttons[MouseButton_Left].transCount > 0)//Pressed the button down
 			{
-				app->selectionStart = ui->hoverLocation;
-				app->selectionEnd = ui->hoverLocation;
+				app->selectionStart = ui->mouseTextLocation;
+				app->selectionEnd = ui->mouseTextLocation;
 			}
 			else //if (IsInsideRectangle(RenderMousePos, ui->viewRec)) //Mouse Button Holding
 			{
-				app->selectionEnd = ui->hoverLocation;
+				app->selectionEnd = ui->mouseTextLocation;
 			}
 		}
 	}
@@ -2759,6 +2759,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	//|            Render Lines              |
 	//+--------------------------------------+
 	{
+		r32 lineWrapWidth = ui->viewRec.width - GC->lineSpacing;
 		i32 firstLine = max(0, ui->firstRenderLine);
 		
 		rs->SetViewMatrix(Matrix4Translate(NewVec3(ui->viewRec.x - ui->scrollOffset.x, ui->viewRec.y - ui->scrollOffset.y, 0)));
@@ -2769,33 +2770,33 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 			{
 				Line_t* linePntr = LineListGetItemAt(&app->lineList, lineIndex);
 				
-				r32 lineHeight = RenderLine(linePntr, currentPos, true);
+				v2 lineSize = RenderLine(linePntr, currentPos, lineWrapWidth, true);
 				//Draw line highlight
 				if (GC->highlightHoverLine &&
-					lineIndex == ui->hoverLocation.lineNum &&
+					lineIndex == ui->mouseTextLocation.lineIndex &&
 					IsInsideRectangle(RenderMousePos, ui->viewRec) &&
 					!ui->mouseInMenu)
 				{
 					rec backRec = NewRectangle(
 						currentPos.x + ui->scrollOffset.x,
 						currentPos.y - app->mainFont.maxExtendUp,
-						ui->viewRec.width, lineHeight
+						ui->viewRec.width, lineSize.y
 					);
 					rs->DrawRectangle(backRec, GC->colors.hoverBackground);
 				}
 				
-				RenderLine(linePntr, currentPos, false);
+				RenderLine(linePntr, currentPos, lineWrapWidth, false);
 				
 				// +==============================+
 				// |    Draw the Hover Cursor     |
 				// +==============================+
 				if (GC->showHoverCursor &&
-					lineIndex == ui->hoverLocation.lineNum &&
+					lineIndex == ui->mouseTextLocation.lineIndex &&
 					IsInsideRectangle(RenderMousePos, ui->viewRec) &&
 					!ui->mouseInMenu)
 				{
 					Color_t hoverCursorColor  = ColorLerp(GC->colors.hoverCursor1, GC->colors.hoverCursor2, (Sin32((platform->programTime/1000.0f)*8.0f) + 1.0f) / 2.0f);
-					v2 skipSize = MeasureString(&app->mainFont, linePntr->chars, ui->hoverLocation.charIndex);
+					v2 skipSize = MeasureString(&app->mainFont, linePntr->chars, ui->mouseTextLocation.charIndex);
 					rec cursorRec = NewRectangle(
 						currentPos.x + skipSize.x,
 						currentPos.y - app->mainFont.maxExtendUp,
@@ -2819,7 +2820,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 					rs->DrawRectangle(cursorRec, fileCursorColor);
 				}
 				
-				currentPos.y += lineHeight + GC->lineSpacing;
+				currentPos.y += lineSize.y + GC->lineSpacing;
 				if (currentPos.y - app->mainFont.maxExtendUp >= ui->scrollOffset.y + ui->viewRec.height)
 				{
 					//We've reached the bottom of the view
@@ -2838,7 +2839,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	//+--------------------------------------+
 	//|          Render Selection            |
 	//+--------------------------------------+
-	if (app->selectionStart.lineNum != app->selectionEnd.lineNum ||
+	if (app->selectionStart.lineIndex != app->selectionEnd.lineIndex ||
 		app->selectionStart.charIndex != app->selectionEnd.charIndex)
 	{
 		TextLocation_t minLocation = TextLocationMin(app->selectionStart, app->selectionEnd);
@@ -2850,29 +2851,29 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 			
 			v2 currentPos = NewVec2(0, ui->scrollOffset.y - ui->firstRenderLineOffset + app->mainFont.maxExtendUp);
 			for (i32 lineIndex = firstLine;
-				lineIndex < app->lineList.numLines && lineIndex <= maxLocation.lineNum;
+				lineIndex < app->lineList.numLines && lineIndex <= maxLocation.lineIndex;
 				lineIndex++)
 			{
 				Line_t* linePntr = LineListGetItemAt(&app->lineList, lineIndex);
 				
-				if (lineIndex >= minLocation.lineNum && lineIndex <= maxLocation.lineNum)
+				if (lineIndex >= minLocation.lineIndex && lineIndex <= maxLocation.lineIndex)
 				{
 					v2 skipSize = Vec2_Zero;
 					v2 selectionSize = Vec2_Zero;
 					
-					if (lineIndex == minLocation.lineNum &&
-						lineIndex == maxLocation.lineNum)
+					if (lineIndex == minLocation.lineIndex &&
+						lineIndex == maxLocation.lineIndex)
 					{
 						skipSize = MeasureString(&app->mainFont, linePntr->chars, minLocation.charIndex);
 						selectionSize = MeasureString(&app->mainFont, &linePntr->chars[minLocation.charIndex], maxLocation.charIndex - minLocation.charIndex);
 					}
-					else if (lineIndex == minLocation.lineNum)
+					else if (lineIndex == minLocation.lineIndex)
 					{
 						skipSize = MeasureString(&app->mainFont, linePntr->chars, minLocation.charIndex);
 						selectionSize = MeasureString(&app->mainFont, &linePntr->chars[minLocation.charIndex]);
 						// selectionSize.x += MeasureString(&app->mainFont, " ", 1).x;
 					}
-					else if (lineIndex == maxLocation.lineNum)
+					else if (lineIndex == maxLocation.lineIndex)
 					{
 						selectionSize = MeasureString(&app->mainFont, linePntr->chars, maxLocation.charIndex);
 					}
@@ -2893,7 +2894,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 					}
 				}
 				
-				currentPos.y += linePntr->lineHeight + GC->lineSpacing;
+				currentPos.y += linePntr->size.y + GC->lineSpacing;
 			}
 			
 		}
@@ -2929,9 +2930,9 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 			{
 				Line_t* linePntr = LineListGetItemAt(&app->lineList, lineIndex);
 				
-				RenderLineGutter(linePntr, lineIndex, currentPos, linePntr->lineHeight);
+				RenderLineGutter(linePntr, lineIndex, currentPos);
 				
-				currentPos.y += linePntr->lineHeight + GC->lineSpacing;
+				currentPos.y += linePntr->size.y + GC->lineSpacing;
 				if (currentPos.y - app->mainFont.maxExtendUp >= ui->scrollOffset.y + ui->viewRec.height)
 				{
 					//We've reached the bottom of the view
@@ -2974,40 +2975,10 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	//+--------------------------------------+
 	{
 		rs->DrawGradient(ui->statusBarRec, GC->colors.statusBar1, GC->colors.statusBar2, Direction2D_Right);
-		// rs->DrawGradient(NewRectangle(10, 10, 300, 300), color1, color2, Direction2D_Right);
-		// rs->PrintString(
-		// 	NewVec2(0, RenderScreenSize.y-app->testFont.maxExtendDown), GC->colors.uiText, 1.0f,
-		// 	"Heap: %u/%u used", app->mainHeap.used, app->mainHeap.size);
-		// rs->PrintString(
-		// 	NewVec2(0, RenderScreenSize.y-app->testFont.maxExtendDown), GC->colors.uiText, 1.0f,
-		// 	"Line %d Char %d", ui->hoverLocation.lineNum+1, ui->hoverLocation.charIndex);
-		// rs->PrintString(
-		// 	NewVec2(0, RenderScreenSize.y-app->testFont.maxExtendDown), GC->colors.uiText, 1.0f,
-		// 	"Offset: %f", ui->firstRenderLineOffset);
-		// rs->PrintString(
-		// 	NewVec2(0, RenderScreenSize.y-app->testFont.maxExtendDown), GC->colors.uiText, 1.0f,
-		// 	"%s %u:%02u%s (%s %s, %u) [%u]",
-		// 	GetDayOfWeekStr(GetDayOfWeek(platform->localTime)),
-		// 	Convert24HourTo12Hour(platform->localTime.hour), platform->localTime.minute,
-		// 	IsPostMeridian(platform->localTime.hour) ? "pm" : "am",
-		// 	GetMonthStr((Month_t)platform->localTime.month), GetDayOfMonthString(platform->localTime.day), platform->localTime.year,
-		// 	GetTimestamp(platform->localTime));
-		// rs->PrintString(
-		// 	NewVec2(0, RenderScreenSize.y-app->testFont.maxExtendDown), GC->colors.uiText, 1.0f,
-		// 	"First: %d Last: %d", firstLine, lastLine);
-		// PrintString(app, app->testFont,
-		// 	NewVec2(0, RenderScreenSize.y-app->testFont.maxExtendDown), GC->colors.uiText, 1.0f,
-		// 	"%u Lines Offset: %f (%fpx long)", app->lineList.numLines, ui->scrollOffset, ui->fileHeight);
-		// Line_t* linePntr = LineListGetItemAt(&app->lineList, ui->hoverLocation.lineNum);
-		// if (linePntr != nullptr)
-		// {
-		// 	Line_t* lineBefore = (Line_t*)linePntr->header.lastItem;
-		// 	Line_t* lineAfter = (Line_t*)linePntr->header.nextItem;
-		
-		// 	rs->PrintString(
-		// 		NewVec2(0, RenderScreenSize.y-app->testFont.maxExtendDown), GC->colors.uiText, 1.0f,
-		// 		"%08X <- #%u %08X -> %08X", lineBefore, ui->hoverLocation.lineNum, linePntr, lineAfter);
-		// }
+		rs->BindFont(&app->uiFont);
+		rs->PrintString(NewVec2(ui->statusBarRec.x+5, ui->statusBarRec.y + app->uiFont.maxExtendUp), GC->colors.uiText, 1.0f,
+			"Hover Location: (%d, %d)", ui->mouseTextLocation.lineIndex, ui->mouseTextLocation.charIndex);
+		rs->BindFont(&app->mainFont);
 		
 		// +==============================+
 		// |  Render the Status Message   |
@@ -3316,7 +3287,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	// +==================================+
 	// |       Save To File Button        |
 	// +==================================+
-	if (app->selectionStart.lineNum != app->selectionEnd.lineNum ||
+	if (app->selectionStart.lineIndex != app->selectionEnd.lineIndex ||
 		app->selectionStart.charIndex != app->selectionEnd.charIndex)
 	{
 		const char* clearStr = "Save To File";

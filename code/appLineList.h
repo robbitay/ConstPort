@@ -26,7 +26,8 @@ struct Line_t
 	char* chars;
 	
 	r32 animProgress;
-	r32 lineHeight;
+	v2  size;
+	r32 lineWrapWidth;
 	u64 timestamp;
 	//Use the LineFlag enumeration
 	flags8 flags;
@@ -51,14 +52,14 @@ union TextLocation_t
 	v2i vec;
 	struct
 	{
-		i32 lineNum;
+		i32 lineIndex;
 		i32 charIndex;
 	};
 };
 
-inline TextLocation_t NewTextLocation(i32 lineNum, i32 charIndex)
+inline TextLocation_t NewTextLocation(i32 lineIndex, i32 charIndex)
 {
-	return { lineNum, charIndex };
+	return { lineIndex, charIndex };
 }
 
 #endif // _APP_LINE_LIST_H

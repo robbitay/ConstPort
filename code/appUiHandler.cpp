@@ -109,7 +109,7 @@ void RecalculateUiElements(UiElements_t* ui, bool resetFollowingEndOfFile)
 	);
 	
 	//Dynamic helpers
-	ui->fileSize = MeasureLines(&app->lineList, &app->mainFont);
+	ui->fileSize = MeasureLines(&app->lineList, ui->viewRec.width - GC->lineSpacing);
 	ui->fileSize.x += 10;
 	// DEBUG_PrintLine("FileSize = (%f, %f)", ui->fileSize.x, ui->fileSize.y);
 	ui->maxScrollOffset = NewVec2(
@@ -143,10 +143,9 @@ void RecalculateUiElements(UiElements_t* ui, bool resetFollowingEndOfFile)
 		ui->scrollBarRec.height = ui->scrollBarGutterRec.height;
 	ui->scrollBarRec.y = ui->scrollBarGutterRec.y + (ui->scrollBarGutterRec.height - ui->scrollBarRec.height) * ui->scrollPercent.y;
 	
-	//NOTE: Since MeasureLines also captures the position of the hoverLocation and scrollOffset of the first line that
-	//		needs to be rendered it is dependant on the scrollOffset to be in it's proper position for these calculations
-	//		Therefore we have to run it once more to update those locations correctly after min and max offset have been accounted for
-	MeasureLines(&app->lineList, &app->mainFont);
+	v2 mouseViewPos = RenderMousePos - ui->viewRec.topLeft + ui->scrollOffset;
+	ui->mouseTextLocation = GetTextLocation(&app->lineList, mouseViewPos, &ui->mouseTextLineLocation);
+	ui->firstRenderLine = GetLineIndex(&app->lineList, ui->scrollOffset.y, &ui->firstRenderLineOffset);
 	
 	// DEBUG_PrintLine("scrollOffset = (%f, %f)", ui->scrollOffset.x, ui->scrollOffset.y);
 	// DEBUG_PrintLine("MaxScrollOffset = (%f, %f)", ui->maxScrollOffset.x, ui->maxScrollOffset.y);

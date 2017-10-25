@@ -54,22 +54,21 @@ inline v2 MeasureString(const Font_t* font, const char* nullTermString)
 	return MeasureString(font, nullTermString, (u32)strlen(nullTermString));
 }
 
-//TODO: Handle this more correctly with line wrapping
-inline i32 GetStringIndexForLocation(const Font_t* font, const char* nullTermString, v2 relativePos)
+inline i32 GetStringIndexForLocation(const Font_t* font, const char* inputStr, u32 inputStrLength, v2 relativePos)
 {
 	i32 result = 0;
 	
-	if (relativePos.y > MeasureString(font, nullTermString).y + GC->lineSpacing)
+	if (relativePos.y > MeasureString(font, inputStr).y + GC->lineSpacing)
 	{
-		result = (i32)strlen(nullTermString);
+		result = (i32)strlen(inputStr);
 		return result;
 	}
 	
 	v2 lastStringSize = Vec2_Zero;
-	for (i32 cIndex = 0; nullTermString[cIndex] != '\0'; cIndex++)
+	for (i32 cIndex = 0; inputStr[cIndex] != '\0'; cIndex++)
 	{
-		v2 stringSize = MeasureString(font, nullTermString, cIndex+1);
-		if (stringSize.x > relativePos.x || nullTermString[cIndex+1] == '\0')
+		v2 stringSize = MeasureString(font, inputStr, cIndex+1);
+		if (stringSize.x > relativePos.x || inputStr[cIndex+1] == '\0')
 		{
 			if (Abs32(relativePos.x - lastStringSize.x) < Abs32(relativePos.x - stringSize.x))
 			{
@@ -87,6 +86,12 @@ inline i32 GetStringIndexForLocation(const Font_t* font, const char* nullTermStr
 	}
 	
 	return result;
+}
+
+inline i32 GetStringIndexForLocation(const Font_t* font, const char* nullTermString, v2 relativePos)
+{
+	u32 strLength = (u32)strlen(nullTermString);
+	return GetStringIndexForLocation(font, nullTermString, strLength, relativePos);
 }
 
 u32 FindNextFormatChunk(const Font_t* font, const char* string, u32 numCharacters, r32 maxWidth, bool preserveWords)
@@ -195,6 +200,54 @@ v2 MeasureFormattedString(const Font_t* font, const char* string, u32 numCharact
 	}
 	
 	return NewVec2(maxChunkWidth, numLines * font->lineHeight);
+}
+
+i32 GetFormattedStrIndex(const Font_t* font, const char* string, u32 numCharacters, r32 maxWidth, v2 relativePos, bool preserveWords,
+	TextLocation_t* lineLocationOut = nullptr)
+{
+	i32 result = 0;
+	u32 cIndex = 0;
+	
+	u32 numLines = 0;
+	while (cIndex < numCharacters)
+	{
+		u32 numChars = FindNextFormatChunk(font, &string[cIndex], numCharacters - cIndex, maxWidth, preserveWords);
+		if (numChars == 0) { numChars = 1; }
+		
+		while (numChars > 1 && IsCharClassWhitespace(string[cIndex + numChars-1]))
+		{
+			numChars--;
+		}
+		
+		r32 yPos = numLines * font->lineHeight;
+		if (relativePos.y >= yPos)
+		{
+			result = GetStringIndexForLocation(font, &string[cIndex], numCharacters-cIndex, relativePos - NewVec2(0, yPos));
+			if (lineLocationOut != nullptr)
+			{
+				*lineLocationOut = NewTextLocation(numLines, result);
+			}
+			result += cIndex;
+		}
+		
+		if (cIndex+numChars < numCharacters && string[cIndex+numChars] == '\r')
+		{
+			numChars++;
+		}
+		if (cIndex+numChars < numCharacters && string[cIndex+numChars] == '\n')
+		{
+			numChars++;
+		}
+		while (cIndex+numChars < numCharacters && string[cIndex+numChars] == ' ')
+		{
+			numChars++;
+		}
+		
+		numLines++;
+		cIndex += numChars;
+	}
+	
+	return result;
 }
 
 v2 MeasureFormattedString(const Font_t* font, const char* nullTermString, r32 maxWidth, bool preserveWords)

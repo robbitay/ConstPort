@@ -8,20 +8,19 @@ Description:
 #included from app.cpp
 */
 
-//Returns the height of the line
-r32 RenderLine(Line_t* linePntr, v2 position, bool sizeOnly = false)
+v2 RenderLine(Line_t* linePntr, v2 position, r32 viewWidth, bool sizeOnly = false)
 {
 	UiElements_t* ui = &app->uiElements;
-	r32 result = 0;
+	v2 result = Vec2_Zero;
 	v2 relMousePos = RenderMousePos - ui->viewRec.topLeft + ui->scrollOffset;
+	linePntr->lineWrapWidth = viewWidth;
 	
 	Color_t color = linePntr->matchColor;
 	Color_t backgroundColor = linePntr->backgroundColor;
 	v2 lineStringSize = Vec2_Zero;
-	r32 maxLineWidth = ui->viewRec.width - position.x;
 	if (GC->lineWrapEnabled)
 	{
-		lineStringSize = MeasureFormattedString(&app->mainFont, linePntr->chars, maxLineWidth, GC->lineWrapPreserveWords);
+		lineStringSize = MeasureFormattedString(&app->mainFont, linePntr->chars, viewWidth, GC->lineWrapPreserveWords);
 	}
 	else
 	{
@@ -49,14 +48,14 @@ r32 RenderLine(Line_t* linePntr, v2 position, bool sizeOnly = false)
 		
 		if (GC->lineWrapEnabled)
 		{
-			app->renderState.DrawFormattedString(linePntr->chars, position, maxLineWidth, color, Alignment_Left, GC->lineWrapPreserveWords);
+			app->renderState.DrawFormattedString(linePntr->chars, position, viewWidth, color, Alignment_Left, GC->lineWrapPreserveWords);
 		}
 		else
 		{
 			app->renderState.DrawString(linePntr->chars, position, color, 1.0f);
 		}
 	}
-	result += lineStringSize.y;
+	result = lineStringSize;
 	
 	// +==============================+
 	// |  Measure the Elapsed Banner  |
@@ -93,7 +92,7 @@ r32 RenderLine(Line_t* linePntr, v2 position, bool sizeOnly = false)
 					{
 						r32 halfAnimProgress = (linePntr->animProgress-0.5f) / 0.5f;
 						r32 bannerHeight = MaxReal32(MIN_BANNER_HEIGHT, GC->elapsedBannerHeight * EaseCubicOut(halfAnimProgress));
-						result += bannerHeight;
+						result.y += bannerHeight;
 					}
 				}
 				else
@@ -106,18 +105,32 @@ r32 RenderLine(Line_t* linePntr, v2 position, bool sizeOnly = false)
 	
 	if (IsFlagSet(linePntr->flags, LineFlag_MarkBelow) && IsFlagSet(linePntr->flags, LineFlag_ThickMark))
 	{
-		result += GC->thickMarkHeight;
+		result.y += GC->thickMarkHeight;
 	}
 	
-	linePntr->lineHeight = result;
+	linePntr->size = result;
 	return result;
 }
 
-void RenderLineGutter(const Line_t* linePntr, i32 lineIndex, v2 position, r32 lineHeight)
+void RenderLineGutter(const Line_t* linePntr, i32 lineIndex, v2 position)
 {
 	UiElements_t* ui = &app->uiElements;
 	RenderState_t* rs = &app->renderState;
 	i32 lineNumber = lineIndex + app->lineList.firstLineNum;
+	
+	v2 lineStringSize = Vec2_Zero;
+	if (GC->lineWrapEnabled)
+	{
+		lineStringSize = MeasureFormattedString(&app->mainFont, linePntr->chars, linePntr->lineWrapWidth, GC->lineWrapPreserveWords);
+	}
+	else
+	{
+		lineStringSize = MeasureString(&app->mainFont, linePntr->chars);
+	}
+	if (lineStringSize.y < app->mainFont.lineHeight)
+	{
+		lineStringSize.y = app->mainFont.lineHeight;
+	}
 	
 	// +==============================+
 	// |       Draw Line Number       |
@@ -151,7 +164,7 @@ void RenderLineGutter(const Line_t* linePntr, i32 lineIndex, v2 position, r32 li
 						r32 bannerWidth = ui->viewRec.width * EaseCubicOut(halfAnimProgress);
 						rec bannerRec = NewRectangle(
 							ui->viewRec.x + ui->viewRec.width/2 - bannerWidth/2,
-							position.y + app->mainFont.maxExtendDown,
+							position.y - app->mainFont.maxExtendUp + lineStringSize.y,
 							bannerWidth,
 							2
 						);
@@ -164,7 +177,7 @@ void RenderLineGutter(const Line_t* linePntr, i32 lineIndex, v2 position, r32 li
 						bannerHeight = MaxReal32(MIN_BANNER_HEIGHT, GC->elapsedBannerHeight * EaseCubicOut(halfAnimProgress));
 						rec bannerRec = NewRectangle(
 							ui->viewRec.x,
-							position.y + app->mainFont.maxExtendDown + GC->lineSpacing/2, 
+							position.y - app->mainFont.maxExtendUp + lineStringSize.y + GC->lineSpacing/2, 
 							ui->viewRec.width,
 							bannerHeight
 						);
@@ -279,71 +292,28 @@ void RenderLineGutter(const Line_t* linePntr, i32 lineIndex, v2 position, r32 li
 	}
 }
 
-v2 MeasureLines(LineList_t* lineList, const Font_t* font)
+v2 MeasureLines(LineList_t* lineList, r32 viewWidth)
 {
 	v2 result = Vec2_Zero;
-	UiElements_t* ui = &app->uiElements;
 	RenderState_t* rs = &app->renderState;
 	Line_t* linePntr = lineList->firstLine;
 	u32 numCharsMax = 0;
 	i32 lineIndex = 0;
-	i32 firstLineIndex = 0;
-	v2 relMousePos = ui->scrollOffset + RenderMousePos - ui->viewRec.topLeft - NewVec2((r32)GC->lineSpacing, 0);
-	ui->hoverLocation.lineNum = -1;
-	ui->firstRenderLine = 0;
-	ui->firstRenderLineOffset = 0;
-	ui->markIndex = -1;
 	
 	while (linePntr != nullptr)
 	{
-		if (linePntr->numChars > numCharsMax)
-		{
-			v2 lineSize = MeasureString(font, linePntr->chars);
-			if (result.x < lineSize.x)
-			{
-				result.x = lineSize.x;
-			}
-			numCharsMax = linePntr->numChars;
-		}
+		v2 lineSize = RenderLine(linePntr, Vec2_Zero, viewWidth, true);
 		
 		r32 beforeHeight = result.y;
-		r32 lineHeight = RenderLine(linePntr, Vec2_Zero, true);
+		result.y += lineSize.y + GC->lineSpacing;
 		
-		result.y += lineHeight;
-		result.y += GC->lineSpacing;
-		
-		//Check if we've passed the top of the view
-		if (beforeHeight <= ui->scrollOffset.y && result.y > ui->scrollOffset.y)
+		if (lineSize.x > result.x)
 		{
-			ui->firstRenderLine = lineIndex;
-			ui->firstRenderLineOffset = ui->scrollOffset.y - beforeHeight;
-		}
-		//Check if we passed the mouse hover location
-		if (beforeHeight <= relMousePos.y && result.y > relMousePos.y)
-		{
-			ui->hoverLocation.lineNum = lineIndex;
-			ui->hoverMouseLineOffset = relMousePos - NewVec2(0, beforeHeight);
-			ui->hoverLocation.charIndex = GetStringIndexForLocation(font, linePntr->chars, ui->hoverMouseLineOffset);
-			ui->markIndex = lineIndex;
-			if (ui->markIndex > 0 && ui->hoverMouseLineOffset.y < (lineHeight+GC->lineSpacing) / 2.0f)
-			{
-				ui->markIndex--;
-			}
+			result.x = lineSize.x;
 		}
 		
 		linePntr = linePntr->next;
 		lineIndex++;
-	}
-	
-	// if (result.y <= ui->scrollOffset.y)
-	// {
-	// 	ui->firstRenderLine = max(0, lineIndex-1);
-	// 	ui->firstRenderLineOffset = ui->scrollOffset.y - result.y;
-	// }
-	if (ui->hoverLocation.lineNum == -1)
-	{
-		ui->hoverLocation.lineNum = max(0, lineList->numLines-1);
-		ui->hoverLocation.charIndex = lineList->lastLine->numChars;
 	}
 	
 	return result;

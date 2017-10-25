@@ -176,7 +176,7 @@ r32 LineListDownsize(LineList_t* lineList, u32 targetDataSize, u32* numLinesRemo
 	{
 		Line_t* nextLine = linePntr->next;
 		
-		removedHeight += linePntr->lineHeight + GC->lineSpacing; ;
+		removedHeight += linePntr->size.y + GC->lineSpacing;
 
 		numBytesRemoved += linePntr->numChars;
 		if (nextLine != nullptr) { numBytesRemoved += 1; } //Add one for null-terminator
@@ -237,7 +237,7 @@ r32 LineListDownsize(LineList_t* lineList, u32 targetDataSize, u32* numLinesRemo
 
 inline TextLocation_t TextLocationMin(TextLocation_t location1, TextLocation_t location2)
 {
-	if (location1.lineNum == location2.lineNum)
+	if (location1.lineIndex == location2.lineIndex)
 	{
 		if (location1.charIndex >= location2.charIndex)
 		{
@@ -248,7 +248,7 @@ inline TextLocation_t TextLocationMin(TextLocation_t location1, TextLocation_t l
 			return location1;
 		}
 	}
-	else if (location1.lineNum > location2.lineNum)
+	else if (location1.lineIndex > location2.lineIndex)
 	{
 		return location2;
 	}
@@ -259,7 +259,7 @@ inline TextLocation_t TextLocationMin(TextLocation_t location1, TextLocation_t l
 }
 inline TextLocation_t TextLocationMax(TextLocation_t location1, TextLocation_t location2)
 {
-	if (location1.lineNum == location2.lineNum)
+	if (location1.lineIndex == location2.lineIndex)
 	{
 		if (location1.charIndex >= location2.charIndex)
 		{
@@ -270,7 +270,7 @@ inline TextLocation_t TextLocationMax(TextLocation_t location1, TextLocation_t l
 			return location2;
 		}
 	}
-	else if (location1.lineNum > location2.lineNum)
+	else if (location1.lineIndex > location2.lineIndex)
 	{
 		return location1;
 	}
@@ -278,5 +278,59 @@ inline TextLocation_t TextLocationMax(TextLocation_t location1, TextLocation_t l
 	{
 		return location2;
 	}
+}
+
+i32 GetLineIndex(LineList_t* lineList, r32 viewLocationY, r32* yOffsetOut = nullptr)
+{
+	i32 result = 0;
+	
+	Line_t* linePntr = lineList->firstLine;
+	u32 lineIndex = 0;
+	r32 aggregate = 0;
+	bool foundResult = false;
+	while (linePntr != nullptr)
+	{
+		r32 lineHeight = linePntr->size.y + GC->lineSpacing;
+		if (aggregate + lineHeight >= viewLocationY)
+		{
+			result = lineIndex;
+			foundResult = true;
+			if (yOffsetOut != nullptr) { *yOffsetOut = viewLocationY - aggregate; }
+			break;
+		}
+		
+		linePntr = linePntr->next;
+		lineIndex++;
+		aggregate += lineHeight;
+		
+		if (aggregate < viewLocationY && yOffsetOut != nullptr) { *yOffsetOut = viewLocationY - aggregate; }
+	}
+	
+	if (!foundResult)
+	{
+		result = lineList->numLines-1;
+	}
+	
+	return result;
+}
+
+//NOTE: viewLocation should be relative to the topLeft of the entire buffer
+TextLocation_t GetTextLocation(LineList_t* lineList, v2 viewLocation, TextLocation_t* lineLocationOut = nullptr)
+{
+	TextLocation_t result = {};
+	
+	r32 lineOffsetY = 0;
+	result.lineIndex = GetLineIndex(lineList, viewLocation.y, &lineOffsetY);
+	
+	Line_t* linePntr = LineListGetItemAt(lineList, result.lineIndex);
+	result.charIndex = linePntr->numChars;
+	v2 relativePos = NewVec2(viewLocation.x - GC->lineSpacing, lineOffsetY);
+	result.charIndex = GetFormattedStrIndex(&app->mainFont,
+		linePntr->chars, linePntr->numChars, linePntr->lineWrapWidth,
+		relativePos,
+		GC->lineWrapPreserveWords, lineLocationOut
+	);
+	
+	return result;
 }
 
