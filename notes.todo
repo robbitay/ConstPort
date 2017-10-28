@@ -5,6 +5,8 @@
 	[ ] Trigger save to file using regex
 	[ ] Add a function that writes to a single option in the configuration file so we can have program written configuration options?
 	[ ] Make a line wrap enabled checkbox
+	[ ] Paste from clipboard into input box
+	[ ] Selection in input box (copy to clipboard)
 	
 	[ ] Keep a history of sent messages and allow up arrow to recall messages
 	[ ] An option to perserve invalid ASCII characters when saving to a file
