@@ -1821,6 +1821,66 @@ void DrawSelectionOnFormattedLine(RenderState_t* rs, Line_t* linePntr, v2 positi
 	}
 }
 
+u8* GetHexForAsciiString(const char* inputStr, u32 inputStrLength, u32* numBytesOut, MemoryArena_t* arenaPntr)
+{
+	u32 numBytes = 0;
+	
+	for (u32 cIndex = 0; cIndex+1 < inputStrLength; /*Nothing*/)
+	{
+		char c = inputStr[cIndex];
+		char nextChar = inputStr[cIndex+1];
+		
+		if (IsCharClassHexChar(c) && IsCharClassHexChar(nextChar))
+		{
+			numBytes++;
+			cIndex += 2;
+		}
+		else
+		{
+			//The character does not generate a hex value
+			cIndex++;
+		}
+	}
+	
+	*numBytesOut = numBytes;
+	if (numBytes == 0) { return nullptr; }
+	
+	u8* result = PushArray(arenaPntr, u8, numBytes);
+	u8* bytePntr = result;
+	
+	for (u32 cIndex = 0; cIndex+1 < inputStrLength; /*Nothing*/)
+	{
+		char c = inputStr[cIndex];
+		char nextChar = inputStr[cIndex+1];
+		
+		if (IsCharClassHexChar(c) && IsCharClassHexChar(nextChar))
+		{
+			Assert(bytePntr >= result && bytePntr < result + numBytes);
+			u8 upper = GetHexCarValue(c);
+			u8 lower = GetHexCarValue(nextChar);
+			*bytePntr = (upper << 4) + (lower);
+			// DEBUG_PrintLine("Convert %c and %c to %u (%u+%u)", c, nextChar, *bytePntr, upper, lower);
+			bytePntr++;
+			
+			numBytes++;
+			cIndex += 2; //Skip forward 2
+		}
+		else
+		{
+			//The character does not generate a hex value
+			cIndex++;
+		}
+	}
+	
+	return result;
+}
+
+u8* GetHexForAsciiString(const char* nulltermString, u32* numBytesOut, MemoryArena_t* arenaPntr)
+{
+	u32 strLength = (u32)strlen(nulltermString);
+	return GetHexForAsciiString(nulltermString, strLength, numBytesOut, arenaPntr);
+}
+
 //+================================================================+
 //|                       App Get Version                          |
 //+================================================================+
@@ -2221,30 +2281,75 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		{
 			if (GC->showInputTextBox)
 			{
+				bool outputNewLine = true;
+				
 				if (app->inputTextLength > 0)
 				{
-					DEBUG_PrintLine("Writing %u byte input: \"%.*s\"", app->inputTextLength, app->inputTextLength, app->inputText);
-					if (echoInput) { DataReceived(app->inputText, app->inputTextLength); }
-					if (writeToComPort)
+					if (ButtonDown(Button_Control))
 					{
-						platform->WriteComPort(&app->comPort, app->inputText, app->inputTextLength);
-						app->txShiftRegister |= 0x80;
+						TempPushMark();
+						
+						u32 numHexBytes = 0;
+						u8* hexBytes = GetHexForAsciiString(app->inputText, app->inputTextLength, &numHexBytes, TempArena);
+						if (hexBytes != nullptr && numHexBytes > 0)
+						{
+							DEBUG_Print("Writing %u HEX bytes: { ", numHexBytes);
+							for (u32 hIndex = 0; hIndex < numHexBytes; hIndex++)
+							{
+								DEBUG_Print("%02X ", hexBytes[hIndex]);
+							}
+							DEBUG_WriteLine("}");
+							
+							if (echoInput) { DataReceived((char*)hexBytes, numHexBytes); }
+							if (writeToComPort)
+							{
+								platform->WriteComPort(&app->comPort, (char*)hexBytes, numHexBytes);
+								app->txShiftRegister |= 0x80;
+							}
+							if (writeToProgram) { platform->WriteProgramInput(&app->programInstance, (char*)hexBytes, numHexBytes); }
+							
+							memcpy(app->lastInputText, app->inputText, ArrayCount(app->inputText));
+							app->lastInputTextLength = app->inputTextLength;
+							
+							app->inputTextLength = 0;
+							app->inputTextCursor = 0;
+							app->inputText[app->inputTextLength] = '\0';
+						}
+						else
+						{
+							StatusError("No hex value to send");
+						}
+						
+						TempPopMark();
+						
+						outputNewLine = false;
 					}
-					if (writeToProgram) { platform->WriteProgramInput(&app->programInstance, app->inputText, app->inputTextLength); }
-					
-					memcpy(app->lastInputText, app->inputText, ArrayCount(app->inputText));
-					app->lastInputTextLength = app->inputTextLength;
-					
-					app->inputTextLength = 0;
-					app->inputTextCursor = 0;
-					app->inputText[app->inputTextLength] = '\0';
+					else
+					{
+						DEBUG_PrintLine("Writing %u byte input: \"%.*s\"", app->inputTextLength, app->inputTextLength, app->inputText);
+						
+						if (echoInput) { DataReceived(app->inputText, app->inputTextLength); }
+						if (writeToComPort)
+						{
+							platform->WriteComPort(&app->comPort, app->inputText, app->inputTextLength);
+							app->txShiftRegister |= 0x80;
+						}
+						if (writeToProgram) { platform->WriteProgramInput(&app->programInstance, app->inputText, app->inputTextLength); }
+						
+						memcpy(app->lastInputText, app->inputText, ArrayCount(app->inputText));
+						app->lastInputTextLength = app->inputTextLength;
+						
+						app->inputTextLength = 0;
+						app->inputTextCursor = 0;
+						app->inputText[app->inputTextLength] = '\0';
+					}
 				}
 				else
 				{
 					StatusInfo("Writing blank line");
 				}
 				
-				if (true) //Write new line after text input
+				if (outputNewLine) //Write new line after text input
 				{
 					const char* newLineStr = GC->newLineString;
 					if (newLineStr == nullptr) { newLineStr = "\n"; }
