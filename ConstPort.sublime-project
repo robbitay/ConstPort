@@ -848,6 +848,7 @@
 			"void DrawGradient(rec rectangle, Color_t color1, Color_t color2, Direction2D_t direction);",
 			"void DrawPopupOverlay(RenderState_t* rs)",
 			"void DrawRectangle(rec rectangle, Color_t color);",
+			"void DrawSelectionOnFormattedLine(RenderState_t* rs, Line_t* linePntr, v2 position, u32 startIndex, u32 endIndex, Color_t selectionColor)",
 			"void DrawString(const char* nullTermString, v2 position, Color_t color, r32 scale = 1.0f, Alignment_t alignment = Alignment_Left);",
 			"void DrawString(const char* string, u32 numCharacters, v2 position, Color_t color, r32 scale = 1.0f, Alignment_t alignment = Alignment_Left);",
 			"void DrawTexturedRec(rec rectangle, Color_t color);",

@@ -4,7 +4,7 @@
 	"line_spacing":   2,  //px
 	"tab_width":      4,  //spaces
 	
-	"elapsed_banner_enabled": true,
+	"elapsed_banner_enabled": false,
 	"elapsed_banner_time":    15, //secs
 	"elapsed_banner_height":  25, //px
 	

@@ -1,14 +1,16 @@
 # Application TODO List
+	[ ] Escape counter of COM read loop so we keep rendering
+	[ ] Only blink cursor when window is selected
 	[ ] Trigger save to file using regex
 	[ ] Horizontal Scrollbar (only shows up if needed)
-	[ ] Line wrapping
+	[ ] Add a function that writes to a single option in the configuration file so we can have program written configuration options?
+	[ ] Make a line wrap enabled checkbox
 	
 	[ ] An option to perserve invalid ASCII characters when saving to a file
 	[ ] Get rid of the UI Handler since we probably won't ever need movable/modular windows. Also function pointer remapping is stupid looking
 	[ ] Text cursor maintains when dragging out of text area
 	[ ] Add better support for default configuration options that are simply overwritten by the user defined ones. Can we provide an example file or something? Maybe leave everything commented out and let them uncomment things?
 	[?] Combine the configuration files into one file?
-	[ ] Add a function that writes to a single option in the configuration file so we can have program written configuration options?
 	[ ] Create the configuration files again if they are found to be missing on startup?
 	[ ] Save window position and size when closing to configuration options. Pass these to windows when we create the window at startup
 	[ ] Add the actual COM# below the assigned name in the COM port menu
@@ -39,6 +41,7 @@
 	[ ] Better way to detect open COM ports
 	[ ] Search functionality
 	[ ] Changeable key mappings
+	[ ] Look into what it would take to make certain core mechanics asynchronous so they are always running even if the main thread is doing a frame flip or locked processing something
 
 # Win32 Platform Layer TODO List
 	[!] Fix app loading when the compilation takes longer. We need to detect whether the file is locked for reading I guess?
@@ -62,6 +65,7 @@
 
 
 # Old TODO List Items
+	[X] Line wrapping
 	[X] Add a replace format string option with $1, $2, etc.
 	[-] Add options for seperaters between captured groups
 	[-] Add suffix and prefix appending options to a trigger

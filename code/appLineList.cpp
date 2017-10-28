@@ -325,11 +325,20 @@ TextLocation_t GetTextLocation(LineList_t* lineList, v2 viewLocation, TextLocati
 	Line_t* linePntr = LineListGetItemAt(lineList, result.lineIndex);
 	result.charIndex = linePntr->numChars;
 	v2 relativePos = NewVec2(viewLocation.x - GC->lineSpacing, lineOffsetY);
-	result.charIndex = GetFormattedStrIndex(&app->mainFont,
-		linePntr->chars, linePntr->numChars, linePntr->lineWrapWidth,
-		relativePos,
-		GC->lineWrapPreserveWords, lineLocationOut
-	);
+	
+	if (GC->lineWrapEnabled)
+	{
+		result.charIndex = GetFormattedStrIndex(&app->mainFont,
+			linePntr->chars, linePntr->numChars, linePntr->lineWrapWidth,
+			relativePos,
+			GC->lineWrapPreserveWords, lineLocationOut
+		);
+	}
+	else
+	{
+		result.charIndex = GetStringIndexForLocation(&app->mainFont, linePntr->chars, linePntr->numChars, relativePos);
+		if (lineLocationOut != nullptr) { *lineLocationOut = NewTextLocation(0, result.charIndex); }
+	}
 	
 	return result;
 }

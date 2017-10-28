@@ -56,19 +56,18 @@ inline v2 MeasureString(const Font_t* font, const char* nullTermString)
 
 inline i32 GetStringIndexForLocation(const Font_t* font, const char* inputStr, u32 inputStrLength, v2 relativePos)
 {
-	i32 result = 0;
+	i32 result = (i32)inputStrLength;
 	
-	if (relativePos.y > MeasureString(font, inputStr).y + GC->lineSpacing)
+	if (relativePos.y > font->lineHeight + GC->lineSpacing)
 	{
-		result = (i32)strlen(inputStr);
 		return result;
 	}
 	
 	v2 lastStringSize = Vec2_Zero;
-	for (i32 cIndex = 0; inputStr[cIndex] != '\0'; cIndex++)
+	for (u32 cIndex = 0; cIndex < inputStrLength; cIndex++)
 	{
 		v2 stringSize = MeasureString(font, inputStr, cIndex+1);
-		if (stringSize.x > relativePos.x || inputStr[cIndex+1] == '\0')
+		if (stringSize.x > relativePos.x || cIndex == inputStrLength-1)
 		{
 			if (Abs32(relativePos.x - lastStringSize.x) < Abs32(relativePos.x - stringSize.x))
 			{
@@ -207,6 +206,7 @@ i32 GetFormattedStrIndex(const Font_t* font, const char* string, u32 numCharacte
 {
 	i32 result = 0;
 	u32 cIndex = 0;
+	if (lineLocationOut != nullptr) { *lineLocationOut = NewTextLocation(0, 0); }
 	
 	u32 numLines = 0;
 	while (cIndex < numCharacters)
@@ -222,7 +222,7 @@ i32 GetFormattedStrIndex(const Font_t* font, const char* string, u32 numCharacte
 		r32 yPos = numLines * font->lineHeight;
 		if (relativePos.y >= yPos)
 		{
-			result = GetStringIndexForLocation(font, &string[cIndex], numCharacters-cIndex, relativePos - NewVec2(0, yPos));
+			result = GetStringIndexForLocation(font, &string[cIndex], numChars, relativePos - NewVec2(0, yPos));
 			if (lineLocationOut != nullptr)
 			{
 				*lineLocationOut = NewTextLocation(numLines, result);

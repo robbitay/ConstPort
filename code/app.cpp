@@ -1667,6 +1667,80 @@ void DrawPopupOverlay(RenderState_t* rs)
 	}
 }
 
+void DrawSelectionOnFormattedLine(RenderState_t* rs, Line_t* linePntr, v2 position, u32 startIndex, u32 endIndex, Color_t selectionColor)
+{
+	Assert(rs != nullptr);
+	Assert(linePntr != nullptr);
+	Assert(startIndex >= 0 && (u32)startIndex <= linePntr->numChars);
+	Assert(endIndex >= 0 && (u32)endIndex <= linePntr->numChars);
+	Assert(startIndex <= endIndex);
+	
+	// if (startIndex == endIndex) { return; }
+	
+	if (linePntr->numChars == 0)
+	{
+		rec selectionRec = NewRectangle(
+			position.x, position.y,
+			1, app->mainFont.lineHeight
+		);
+		selectionRec = RectangleInflate(selectionRec, (r32)GC->lineSpacing/2);
+		rs->DrawRectangle(selectionRec, selectionColor);
+		return;
+	}
+	
+	u32 cIndex = 0;
+	
+	u32 numLines = 0;
+	while (cIndex < linePntr->numChars)
+	{
+		u32 numChars = FindNextFormatChunk(&app->mainFont, &linePntr->chars[cIndex], linePntr->numChars - cIndex, linePntr->lineWrapWidth, GC->lineWrapPreserveWords);
+		if (numChars == 0) { numChars = 1; }
+		
+		while (numChars > 1 && IsCharClassWhitespace(linePntr->chars[cIndex + numChars-1]))
+		{
+			numChars--;
+		}
+		
+		if (cIndex < endIndex && cIndex+numChars > startIndex)
+		{
+			u32 measureStart = cIndex;
+			u32 measureEnd = cIndex + numChars;
+			if (measureStart < startIndex) { measureStart = startIndex; }
+			if (measureEnd > endIndex) { measureEnd = endIndex; }
+			r32 skipSize = 0;
+			if (measureStart > cIndex) { skipSize = MeasureString(&app->mainFont, &linePntr->chars[cIndex], measureStart - cIndex).x; }
+			r32 selectionWidth = MeasureString(&app->mainFont, &linePntr->chars[measureStart], measureEnd - measureStart).x;
+			if (selectionWidth == 0) { selectionWidth = 1; }
+			
+			rec selectionRec = NewRectangle(
+				position.x + skipSize,
+				position.y + (app->mainFont.lineHeight*numLines),
+				selectionWidth,
+				app->mainFont.lineHeight
+			);
+			selectionRec = RectangleInflate(selectionRec, (r32)GC->lineSpacing/2);
+			rs->DrawRectangle(selectionRec, selectionColor);
+		}
+		
+		
+		if (cIndex+numChars < linePntr->numChars && linePntr->chars[cIndex+numChars] == '\r')
+		{
+			numChars++;
+		}
+		if (cIndex+numChars < linePntr->numChars && linePntr->chars[cIndex+numChars] == '\n')
+		{
+			numChars++;
+		}
+		while (cIndex+numChars < linePntr->numChars && linePntr->chars[cIndex+numChars] == ' ')
+		{
+			numChars++;
+		}
+		
+		numLines++;
+		cIndex += numChars;
+	}
+}
+
 //+================================================================+
 //|                       App Get Version                          |
 //+================================================================+
@@ -2796,10 +2870,11 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 					!ui->mouseInMenu)
 				{
 					Color_t hoverCursorColor  = ColorLerp(GC->colors.hoverCursor1, GC->colors.hoverCursor2, (Sin32((platform->programTime/1000.0f)*8.0f) + 1.0f) / 2.0f);
-					v2 skipSize = MeasureString(&app->mainFont, linePntr->chars, ui->mouseTextLocation.charIndex);
+					const char* skipStrPntr = &linePntr->chars[ui->mouseTextLocation.charIndex - ui->mouseTextLineLocation.charIndex];
+					v2 skipSize = MeasureString(&app->mainFont, skipStrPntr, ui->mouseTextLineLocation.charIndex);
 					rec cursorRec = NewRectangle(
 						currentPos.x + skipSize.x,
-						currentPos.y - app->mainFont.maxExtendUp,
+						currentPos.y - app->mainFont.maxExtendUp + (ui->mouseTextLineLocation.lineIndex * app->mainFont.lineHeight),
 						1, app->mainFont.lineHeight
 					);
 					rs->DrawRectangle(cursorRec, hoverCursorColor);
@@ -2858,39 +2933,60 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 				
 				if (lineIndex >= minLocation.lineIndex && lineIndex <= maxLocation.lineIndex)
 				{
-					v2 skipSize = Vec2_Zero;
-					v2 selectionSize = Vec2_Zero;
-					
-					if (lineIndex == minLocation.lineIndex &&
-						lineIndex == maxLocation.lineIndex)
+					if (GC->lineWrapEnabled)
 					{
-						skipSize = MeasureString(&app->mainFont, linePntr->chars, minLocation.charIndex);
-						selectionSize = MeasureString(&app->mainFont, &linePntr->chars[minLocation.charIndex], maxLocation.charIndex - minLocation.charIndex);
-					}
-					else if (lineIndex == minLocation.lineIndex)
-					{
-						skipSize = MeasureString(&app->mainFont, linePntr->chars, minLocation.charIndex);
-						selectionSize = MeasureString(&app->mainFont, &linePntr->chars[minLocation.charIndex]);
-						// selectionSize.x += MeasureString(&app->mainFont, " ", 1).x;
-					}
-					else if (lineIndex == maxLocation.lineIndex)
-					{
-						selectionSize = MeasureString(&app->mainFont, linePntr->chars, maxLocation.charIndex);
+						i32 startIndex = 0;
+						i32 endIndex = linePntr->numChars;
+						
+						if (lineIndex == minLocation.lineIndex)
+						{
+							startIndex = minLocation.charIndex;
+						}
+						if (lineIndex == maxLocation.lineIndex)
+						{
+							endIndex = maxLocation.charIndex;
+						}
+						
+						DrawSelectionOnFormattedLine(rs, linePntr,
+							currentPos + NewVec2((r32)GC->lineSpacing, -app->mainFont.maxExtendUp),
+							startIndex, endIndex, selectionColor);
 					}
 					else
 					{
-						selectionSize = MeasureString(&app->mainFont, linePntr->chars);
-						// selectionSize.x += MeasureString(&app->mainFont, " ", 1).x;
-					}
-					
-					rec backRec = NewRectangle(GC->lineSpacing + currentPos.x + skipSize.x, currentPos.y - app->mainFont.maxExtendUp, selectionSize.x, app->mainFont.lineHeight);//linePntr->lineHeight);
-					backRec = RectangleInflate(backRec, (r32)GC->lineSpacing/2);
-					rs->DrawRectangle(backRec, selectionColor);
-					
-					if (currentPos.y - app->mainFont.maxExtendUp >= ui->scrollOffset.y + ui->viewRec.height)
-					{
-						//We've reached the bottom of the view
-						break;
+						v2 skipSize = Vec2_Zero;
+						v2 selectionSize = Vec2_Zero;
+						
+						if (lineIndex == minLocation.lineIndex &&
+							lineIndex == maxLocation.lineIndex)
+						{
+							skipSize = MeasureString(&app->mainFont, linePntr->chars, minLocation.charIndex);
+							selectionSize = MeasureString(&app->mainFont, &linePntr->chars[minLocation.charIndex], maxLocation.charIndex - minLocation.charIndex);
+						}
+						else if (lineIndex == minLocation.lineIndex)
+						{
+							skipSize = MeasureString(&app->mainFont, linePntr->chars, minLocation.charIndex);
+							selectionSize = MeasureString(&app->mainFont, &linePntr->chars[minLocation.charIndex]);
+							// selectionSize.x += MeasureString(&app->mainFont, " ", 1).x;
+						}
+						else if (lineIndex == maxLocation.lineIndex)
+						{
+							selectionSize = MeasureString(&app->mainFont, linePntr->chars, maxLocation.charIndex);
+						}
+						else
+						{
+							selectionSize = MeasureString(&app->mainFont, linePntr->chars);
+							// selectionSize.x += MeasureString(&app->mainFont, " ", 1).x;
+						}
+						
+						rec backRec = NewRectangle(GC->lineSpacing + currentPos.x + skipSize.x, currentPos.y - app->mainFont.maxExtendUp, selectionSize.x, app->mainFont.lineHeight);//linePntr->lineHeight);
+						backRec = RectangleInflate(backRec, (r32)GC->lineSpacing/2);
+						rs->DrawRectangle(backRec, selectionColor);
+						
+						if (currentPos.y - app->mainFont.maxExtendUp >= ui->scrollOffset.y + ui->viewRec.height)
+						{
+							//We've reached the bottom of the view
+							break;
+						}
 					}
 				}
 				
@@ -2977,7 +3073,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		rs->DrawGradient(ui->statusBarRec, GC->colors.statusBar1, GC->colors.statusBar2, Direction2D_Right);
 		rs->BindFont(&app->uiFont);
 		rs->PrintString(NewVec2(ui->statusBarRec.x+5, ui->statusBarRec.y + app->uiFont.maxExtendUp), GC->colors.uiText, 1.0f,
-			"Hover Location: (%d, %d)", ui->mouseTextLocation.lineIndex, ui->mouseTextLocation.charIndex);
+			"Mouse Line Location: (%d, %d)", ui->mouseTextLineLocation.lineIndex, ui->mouseTextLineLocation.charIndex);
 		rs->BindFont(&app->mainFont);
 		
 		// +==============================+
