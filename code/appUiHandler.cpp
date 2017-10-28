@@ -225,7 +225,7 @@ void UpdateCheckbox(Checkbox_t* checkboxPntr)
 	Assert(checkboxPntr != nullptr);
 	
 	bool mouseInside = IsInsideRectangle(RenderMousePos, checkboxPntr->drawRec);
-	bool mouseStartedInside = IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, checkboxPntr->drawRec);
+	bool mouseStartedInside = IsInsideRectangle(RenderMouseStartPos, checkboxPntr->drawRec);
 	
 	if (!mouseInside) { checkboxPntr->mouseHasLeft = true; }
 	
@@ -245,7 +245,7 @@ void DrawCheckbox(Checkbox_t* checkboxPntr, RenderState_t* rs, Font_t* labelFont
 	Assert(rs != nullptr);
 	
 	bool mouseInside = IsInsideRectangle(RenderMousePos, checkboxPntr->drawRec);
-	bool mouseStartedInside = IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, checkboxPntr->drawRec);
+	bool mouseStartedInside = IsInsideRectangle(RenderMouseStartPos, checkboxPntr->drawRec);
 	
 	Assert(platform->programTime >= checkboxPntr->changeTime);
 	u64 timeSinceClick = platform->programTime - checkboxPntr->changeTime;
@@ -270,7 +270,7 @@ void DrawCheckbox(Checkbox_t* checkboxPntr, RenderState_t* rs, Font_t* labelFont
 		if (mouseInside)
 		{
 			outlineColor = checkboxPntr->activeColor;
-			// if (ButtonDown(MouseButton_Left) && IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, checkboxPntr->drawRec))
+			// if (ButtonDown(MouseButton_Left) && IsInsideRectangle(RenderMouseStartPos, checkboxPntr->drawRec))
 			// {
 			// 	outlineColor = GC->colors.buttonPress;
 			// }

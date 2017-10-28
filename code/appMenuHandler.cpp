@@ -141,8 +141,7 @@ void MenuHandlerUpdate(MenuHandler_t* menuHandler)
 			if (!input->buttons[MouseButton_Left].isDown && input->buttons[MouseButton_Left].transCount > 0 &&
 				input->mouseMaxDist[MouseButton_Left] / GUI_SCALE < 10)
 			{
-				if (IsInsideRectangle(RenderMousePos, closeRec) &&
-					IsInsideRectangle(input->mouseStartPos[MouseButton_Left] / GUI_SCALE, closeRec))
+				if (IsInsideRectangle(RenderMousePos, closeRec) && IsInsideRectangle(RenderMouseStartPos, closeRec))
 				{
 					menuPntr->show = false;
 				}

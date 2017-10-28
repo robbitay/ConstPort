@@ -914,6 +914,7 @@
 			"PlatformInfo",
 			"PlatformVersion",
 			"RenderMousePos",
+			"RenderMouseStartPos",
 			"RenderScreenSize",
 			"TempArena",
 			"WindowOpen",

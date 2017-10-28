@@ -58,6 +58,7 @@ AppData_t* app = nullptr;
 GlobalConfig_t* GC = nullptr;
 v2 RenderScreenSize = {};
 v2 RenderMousePos = {};
+v2 RenderMouseStartPos = {};
 
 char* GetElapsedString(u64 timespan)
 {
@@ -349,7 +350,7 @@ void ComMenuUpdate(MenuHandler_t* menuHandler, Menu_t* menuPntr)
 				baudRateRec.y + baudIndex*app->uiFont.lineHeight,
 				baudRateRec.width, app->uiFont.lineHeight
 			);
-			if (IsInsideRectangle(RenderMousePos, currentRec) && IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, currentRec) &&
+			if (IsInsideRectangle(RenderMousePos, currentRec) && IsInsideRectangle(RenderMouseStartPos, currentRec) &&
 				ButtonReleased(MouseButton_Left))
 			{
 				app->comMenuOptions.settings.baudRate = (BaudRate_t)baudIndex;
@@ -362,7 +363,7 @@ void ComMenuUpdate(MenuHandler_t* menuHandler, Menu_t* menuPntr)
 				numBitsRec.y + bitIndex*app->uiFont.lineHeight,
 				numBitsRec.width, app->uiFont.lineHeight
 			);
-			if (IsInsideRectangle(RenderMousePos, currentRec) && IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, currentRec) &&
+			if (IsInsideRectangle(RenderMousePos, currentRec) && IsInsideRectangle(RenderMouseStartPos, currentRec) &&
 				ButtonReleased(MouseButton_Left))
 			{
 				app->comMenuOptions.settings.numBits = (u8)(bitIndex+1);
@@ -375,7 +376,7 @@ void ComMenuUpdate(MenuHandler_t* menuHandler, Menu_t* menuPntr)
 				parityTypesRec.y + parityIndex*app->uiFont.lineHeight,
 				parityTypesRec.width, app->uiFont.lineHeight
 			);
-			if (IsInsideRectangle(RenderMousePos, currentRec) && IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, currentRec) &&
+			if (IsInsideRectangle(RenderMousePos, currentRec) && IsInsideRectangle(RenderMouseStartPos, currentRec) &&
 				ButtonReleased(MouseButton_Left))
 			{
 				app->comMenuOptions.settings.parity = (Parity_t)parityIndex;
@@ -388,7 +389,7 @@ void ComMenuUpdate(MenuHandler_t* menuHandler, Menu_t* menuPntr)
 				stopBitsRec.y + stopBitIndex*app->uiFont.lineHeight,
 				stopBitsRec.width, app->uiFont.lineHeight
 			);
-			if (IsInsideRectangle(RenderMousePos, currentRec) && IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, currentRec) &&
+			if (IsInsideRectangle(RenderMousePos, currentRec) && IsInsideRectangle(RenderMouseStartPos, currentRec) &&
 				ButtonReleased(MouseButton_Left))
 			{
 				app->comMenuOptions.settings.stopBits = (StopBits_t)stopBitIndex;
@@ -408,7 +409,7 @@ void ComMenuUpdate(MenuHandler_t* menuHandler, Menu_t* menuPntr)
 			tabRec.topLeft += menuPntr->usableRec.topLeft;
 			
 			if (ButtonReleased(MouseButton_Left) && IsInsideRectangle(RenderMousePos, tabRec) &&
-				IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, tabRec))
+				IsInsideRectangle(RenderMouseStartPos, tabRec))
 			{
 				if (app->comMenuOptions.name != nullptr) { ArenaPop(&app->mainHeap, app->comMenuOptions.name); }
 				app->comMenuOptions.name = DupStr(tabName, &app->mainHeap);
@@ -420,7 +421,7 @@ void ComMenuUpdate(MenuHandler_t* menuHandler, Menu_t* menuPntr)
 		// | Check for Connect Button Press |
 		// +================================+
 		bool connectButtonPressed = (IsInsideRectangle(RenderMousePos, connectButtonRec) &&
-			ButtonReleased(MouseButton_Left) && IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, connectButtonRec));
+			ButtonReleased(MouseButton_Left) && IsInsideRectangle(RenderMouseStartPos, connectButtonRec));
 		if (app->comMenuOptions.isOpen &&
 			(connectButtonPressed || ButtonReleased(Button_Enter)))
 		{
@@ -446,7 +447,7 @@ void ComMenuUpdate(MenuHandler_t* menuHandler, Menu_t* menuPntr)
 			if (currentPortIsSelected)
 			{
 				if (app->comMenuOptions.isOpen && IsInsideRectangle(RenderMousePos, disconnectButtonRec) &&
-					ButtonReleased(MouseButton_Left) && IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, disconnectButtonRec))
+					ButtonReleased(MouseButton_Left) && IsInsideRectangle(RenderMouseStartPos, disconnectButtonRec))
 				{
 					PopupError("Closed \"%s\"", app->comPort.name);
 					platform->CloseComPort(&app->mainHeap, &app->comPort);
@@ -1921,7 +1922,9 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	GC = &app->globalConfig;
 	TempArena = &app->tempArena;
 	RenderScreenSize = NewVec2((r32)platform->screenSize.x / GUI_SCALE, (r32)platform->screenSize.y / GUI_SCALE);
-	RenderMousePos = NewVec2(input->mousePos.x / GUI_SCALE, input->mousePos.y / GUI_SCALE);
+	RenderMousePos = NewVec2(input->mousePos.x, input->mousePos.y) / (r32)GUI_SCALE;
+	RenderMouseStartPos = NewVec2(input->mouseStartPos[MouseButton_Left].x, input->mouseStartPos[MouseButton_Left].y) / (r32)GUI_SCALE;
+	AppOutput->cursorType = Cursor_Default;
 	
 	UiElements_t* ui = &app->uiElements;
 	RenderState_t* rs = &app->renderState;
@@ -2123,10 +2126,15 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 			}
 		}
 		
-		bool sendButtonPressed = (input->mouseInsideWindow &&
-			ButtonReleased(MouseButton_Left) &&
-			IsInsideRectangle(RenderMousePos, ui->sendButtonRec) &&
-			IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, ui->sendButtonRec));
+		bool sendButtonPressed = false;
+		if (IsInsideRectangle(RenderMousePos, ui->sendButtonRec) && input->mouseInsideWindow && !ui->mouseInMenu)
+		{
+			AppOutput->cursorType = Cursor_Pointer;
+			if (ButtonReleased(MouseButton_Left) && IsInsideRectangle(RenderMouseStartPos, ui->sendButtonRec))
+			{
+				sendButtonPressed = true;
+			}
+		}
 		
 		if (comMenu->show == false && (ButtonPressed(Button_Enter) || sendButtonPressed))
 		{
@@ -2545,7 +2553,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	
 	bool gotoEndButtonPressed = (IsInsideRectangle(RenderMousePos, ui->gotoEndButtonRec) &&
 		ButtonReleased(MouseButton_Left) &&
-		IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, ui->gotoEndButtonRec));
+		IsInsideRectangle(RenderMouseStartPos, ui->gotoEndButtonRec));
 	if (gotoEndButtonPressed || ButtonPressed(Button_End))
 	{
 		ui->followingEndOfFile = true;
@@ -2624,68 +2632,72 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	//+==================================+
 	//|        Main Menu Buttons         |
 	//+==================================+
-	if (ui->mouseInMenu == false &&
-		ButtonReleased(MouseButton_Left) && IsInsideRectangle(RenderMousePos, ui->mainMenuRec) &&
-		IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, ui->mainMenuRec))
+	if (input->mouseInsideWindow && !ui->mouseInMenu)
 	{
 		for (u32 bIndex = 0; bIndex < ArrayCount(ui->buttonRecs); bIndex++)
 		{
-			if (IsInsideRectangle(RenderMousePos, ui->buttonRecs[bIndex]) &&
-				IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, ui->buttonRecs[bIndex]))
+			v2 buttonCenter = ui->buttonRecs[bIndex].topLeft + ui->buttonRecs[bIndex].size/2.0f;
+			r32 buttonRadius = ui->buttonRecs[bIndex].width/2.0f;
+			if (Vec2Length(RenderMousePos - buttonCenter) <= buttonRadius)
 			{
-				switch (bIndex)
+				AppOutput->cursorType = Cursor_Pointer;
+				
+				if (ButtonReleased(MouseButton_Left) && Vec2Length(RenderMouseStartPos - buttonCenter) <= buttonRadius)
 				{
-					case Button_ComPort:
+					switch (bIndex)
 					{
-						if (comMenu->show)
+						case Button_ComPort:
 						{
-							HideComMenu();
-						}
-						else
+							if (comMenu->show)
+							{
+								HideComMenu();
+							}
+							else
+							{
+								RefreshComPortList();
+								ShowComMenu();
+							}
+						} break;
+						
+						case Button_Settings:
 						{
-							RefreshComPortList();
-							ShowComMenu();
-						}
-					} break;
-					
-					case Button_Settings:
-					{
-						//TODO: Create file if it doesn't exist
-						if (ButtonDown(Button_Shift) && ButtonDown(Button_Control))
+							//TODO: Create file if it doesn't exist
+							if (ButtonDown(Button_Shift) && ButtonDown(Button_Control))
+							{
+								platform->LaunchFile("Resources/Configuration/PlatformConfig.json");
+								platform->LaunchFile("Resources/Configuration/RegularExpressions.rgx");
+								platform->LaunchFile("Resources/Configuration/GlobalConfig.json");
+							}
+							else if (ButtonDown(Button_Shift))
+							{
+								platform->LaunchFile("Resources/Configuration/PlatformConfig.json");
+							}
+							else if (ButtonDown(Button_Control))
+							{
+								platform->LaunchFile("Resources/Configuration/RegularExpressions.rgx");
+							}
+							else
+							{
+								platform->LaunchFile("Resources/Configuration/GlobalConfig.json");
+							}
+						} break;
+						
+						case Button_About:
 						{
-							platform->LaunchFile("Resources/Configuration/PlatformConfig.json");
-							platform->LaunchFile("Resources/Configuration/RegularExpressions.rgx");
-							platform->LaunchFile("Resources/Configuration/GlobalConfig.json");
-						}
-						else if (ButtonDown(Button_Shift))
+							aboutMenu->show = !aboutMenu->show;
+							if (aboutMenu->show)
+							{
+								aboutMenu->drawRec.x = RenderScreenSize.x / 2 - aboutMenu->drawRec.width/2;
+								aboutMenu->drawRec.y = RenderScreenSize.y / 2 - aboutMenu->drawRec.height/2;
+							}
+						} break;
+						
+						default:
 						{
-							platform->LaunchFile("Resources/Configuration/PlatformConfig.json");
-						}
-						else if (ButtonDown(Button_Control))
-						{
-							platform->LaunchFile("Resources/Configuration/RegularExpressions.rgx");
-						}
-						else
-						{
-							platform->LaunchFile("Resources/Configuration/GlobalConfig.json");
-						}
-					} break;
-					
-					case Button_About:
-					{
-						aboutMenu->show = !aboutMenu->show;
-						if (aboutMenu->show)
-						{
-							aboutMenu->drawRec.x = RenderScreenSize.x / 2 - aboutMenu->drawRec.width/2;
-							aboutMenu->drawRec.y = RenderScreenSize.y / 2 - aboutMenu->drawRec.height/2;
-						}
-					} break;
-					
-					default:
-					{
-						StatusError("Button does nothing.");
+							StatusError("Button does nothing.");
+						};
 					};
-				};
+				}
 			}
 		}
 	}
@@ -2693,10 +2705,11 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	//+================================+
 	//|       Clear Button Press       |
 	//+================================+
-	if (IsInsideRectangle(RenderMousePos, ui->clearButtonRec))
+	if (IsInsideRectangle(RenderMousePos, ui->clearButtonRec) && input->mouseInsideWindow && !ui->mouseInMenu)
 	{
+		AppOutput->cursorType = Cursor_Pointer;
 		if (ButtonReleased(MouseButton_Left) &&
-			IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, ui->clearButtonRec))
+			IsInsideRectangle(RenderMouseStartPos, ui->clearButtonRec))
 		{
 			ClearConsole();
 		}
@@ -2705,8 +2718,15 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	//+==================================+
 	//|    Save To File Button Press     |
 	//+==================================+
-	bool saveButtonPressed = (IsInsideRectangle(RenderMousePos, ui->saveButtonRec) &&
-		ButtonReleased(MouseButton_Left) && IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, ui->saveButtonRec));
+	bool saveButtonPressed = false;
+	if (IsInsideRectangle(RenderMousePos, ui->saveButtonRec) && input->mouseInsideWindow && !ui->mouseInMenu)
+	{
+		AppOutput->cursorType = Cursor_Pointer;
+		if (ButtonReleased(MouseButton_Left) && IsInsideRectangle(RenderMouseStartPos, ui->saveButtonRec))
+		{
+			saveButtonPressed = true;
+		}
+	}
 	if (saveButtonPressed || (ButtonDown(Button_Control) && ButtonPressed(Button_S)))
 	{
 		char* fileName = TempPrint("ConstPortSave_%02u-%02u-%u_%u-%02u-%02u.txt",
@@ -2751,7 +2771,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	if (ButtonDown(MouseButton_Left) && !ui->mouseInMenu)
 	{
 		//Handle scrollbar interaction with mouse
-		if (IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, ui->scrollBarGutterRec) &&
+		if (IsInsideRectangle(RenderMouseStartPos, ui->scrollBarGutterRec) &&
 			ui->scrollBarRec.height < ui->scrollBarGutterRec.height)
 		{
 			if (input->buttons[MouseButton_Left].transCount > 0)//Pressed the button down
@@ -2796,7 +2816,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 				}
 			}
 		}
-		else if (IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, ui->viewRec))
+		else if (IsInsideRectangle(RenderMouseStartPos, ui->viewRec))
 		{
 			if (input->buttons[MouseButton_Left].transCount > 0)//Pressed the button down
 			{
@@ -2814,7 +2834,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	//|   Mark lines using the mouse   |
 	//+================================+
 	if (ui->mouseInMenu == false &&
-		IsInsideRectangle(RenderMousePos, ui->gutterRec) && IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, ui->gutterRec))
+		IsInsideRectangle(RenderMousePos, ui->gutterRec) && IsInsideRectangle(RenderMouseStartPos, ui->gutterRec))
 	{
 		if (ButtonReleased(MouseButton_Left) &&
 			ui->markIndex >= 0 && ui->markIndex < app->lineList.numLines)
@@ -2882,16 +2902,12 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		ui->scrollOffsetGoto.y = ui->maxScrollOffset.y;
 	}
 	
-	//+==================================+
-	//|           Cursor Type            |
-	//+==================================+
+	// +==============================+
+	// |       Show Text Cursor       |
+	// +==============================+
 	if (IsInsideRectangle(RenderMousePos, ui->viewRec) && !ui->mouseInMenu && GC->showTextCursor)
 	{
 		AppOutput->cursorType = Cursor_Text;
-	}
-	else
-	{
-		AppOutput->cursorType = Cursor_Default;
 	}
 	
 	// +==============================+
@@ -3207,7 +3223,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		Color_t buttonColor = GC->colors.button;
 		Color_t textColor = GC->colors.buttonText;
 		Color_t borderColor = GC->colors.buttonBorder;
-		ButtonColorChoice(buttonColor, textColor, borderColor, ui->sendButtonRec, false, app->inputTextLength > 0);
+		ButtonColorChoice(buttonColor, textColor, borderColor, ui->sendButtonRec, ButtonDown(Button_Enter), app->inputTextLength > 0);
 		
 		rs->DrawButton(ui->sendButtonRec, buttonColor, borderColor, 1);
 		rs->BindFont(&app->uiFont);
@@ -3364,7 +3380,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		
 		// if (IsInsideRectangle(RenderMousePos, buttonRec) && !ui->mouseInMenu)
 		// {
-		// 	if (ButtonDown(MouseButton_Left) && IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, buttonRec))
+		// 	if (ButtonDown(MouseButton_Left) && IsInsideRectangle(RenderMouseStartPos, buttonRec))
 		// 	{
 		// 		// iconColor = Color_Highlight2;
 		// 		highlightColor = {Color_Black};//Color_Highlight4;
@@ -3394,7 +3410,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 			borderColor = GC->colors.mainMenuButtonHoverBorder;
 			iconColor   = GC->colors.mainMenuButtonHoverIcon;
 			
-			v2 mouseStartPos = input->mouseStartPos[MouseButton_Left]/GUI_SCALE;
+			v2 mouseStartPos = RenderMouseStartPos;
 			if (ButtonDown(MouseButton_Left) && Vec2Length(mouseStartPos - buttonCenter) < buttonRadius)
 			{
 				centerColor = GC->colors.mainMenuButtonPress;
@@ -3619,7 +3635,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	}
 	#endif
 	
-	// rs->DrawCircle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, input->mouseMaxDist[MouseButton_Left]/GUI_SCALE, {Color_Red});
+	// rs->DrawCircle(RenderMouseStartPos, input->mouseMaxDist[MouseButton_Left]/GUI_SCALE, {Color_Red});
 	// rs->DrawCircle(input->mouseStartPos[MouseButton_Right]/GUI_SCALE, input->mouseMaxDist[MouseButton_Right]/GUI_SCALE, {Color_Blue});
 	// rs->DrawCircle(input->mouseStartPos[MouseButton_Middle]/GUI_SCALE, input->mouseMaxDist[MouseButton_Middle]/GUI_SCALE, {Color_Green});
 	
@@ -3648,7 +3664,8 @@ EXPORT AppGetSoundSamples_DEFINITION(App_GetSoundSamples)
 	GC = &app->globalConfig;
 	TempArena = &app->tempArena;
 	RenderScreenSize = NewVec2((r32)platform->screenSize.x / GUI_SCALE, (r32)platform->screenSize.y / GUI_SCALE);
-	RenderMousePos = NewVec2(input->mousePos.x / GUI_SCALE, input->mousePos.y / GUI_SCALE);
+	RenderMousePos = NewVec2(input->mousePos.x, input->mousePos.y) / (r32)GUI_SCALE;
+	RenderMouseStartPos = NewVec2(input->mouseStartPos[MouseButton_Left].x, input->mouseStartPos[MouseButton_Left].y) / (r32)GUI_SCALE;
 }
 
 //+================================================================+

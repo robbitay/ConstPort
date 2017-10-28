@@ -54,7 +54,7 @@ Description:
 {                                                                                                 \
 	if (ButtonDown(MouseButton_Left) && input->mouseInsideWindow &&                               \
 		IsInsideRectangle(RenderMousePos, rectangle) &&                                           \
-		IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, rectangle))           \
+		IsInsideRectangle(RenderMouseStartPos, rectangle))                                        \
 	{                                                                                             \
 		buttonColor = GC->colors.buttonPress;                                                     \
 		textColor   = GC->colors.buttonPressText;                                                 \

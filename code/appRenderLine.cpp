@@ -214,7 +214,7 @@ void RenderLineGutter(const Line_t* linePntr, i32 lineIndex, v2 position)
 	// |        Draw Line Mark        |
 	// +==============================+
 	if (IsFlagSet(linePntr->flags, LineFlag_MarkBelow) ||
-		(ButtonDown(MouseButton_Left) && IsInsideRectangle(input->mouseStartPos[MouseButton_Left] / GUI_SCALE, ui->gutterRec) && ui->markIndex != -1 && ui->markIndex == lineIndex))
+		(ButtonDown(MouseButton_Left) && IsInsideRectangle(RenderMouseStartPos, ui->gutterRec) && ui->markIndex != -1 && ui->markIndex == lineIndex))
 	{
 		if (bannerHeight > 0) bannerHeight += 2;
 		rec markRec = NewRectangle(
@@ -275,7 +275,7 @@ void RenderLineGutter(const Line_t* linePntr, i32 lineIndex, v2 position)
 		Color_t markColor1 = GC->colors.lineMark1;
 		Color_t markColor2 = GC->colors.lineMark2;
 		if (ui->markIndex == lineIndex &&
-			// IsInsideRectangle(input->mouseStartPos[MouseButton_Left] / GUI_SCALE, ui->gutterRec) &&
+			// IsInsideRectangle(RenderMouseStartPos, ui->gutterRec) &&
 			IsInsideRectangle(RenderMousePos, ui->gutterRec))
 		{
 			markColor1 = GC->colors.lineMarkHover;
