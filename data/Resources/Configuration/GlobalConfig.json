@@ -15,17 +15,17 @@
 	
 	"mouse_click_tolerance":  10, //px
 	"menu_border_thickness":  1,  //px
-	"scrollbar_width":        13, //px
-	"scrollbar_padding":      3,  //px
+	"scrollbar_width":        0,//13, //px
+	"scrollbar_padding":      0,//3,  //px
 	"min_scrollbar_height":   32, //px
-	"min_gutter_width":       30, //px
+	"min_gutter_width":       0,//30, //px
 	
 	"scroll_multiplier": 40,
 	"view_speed_divider": 4,
 	
 	"show_text_cursor": false,
 	"show_com_name_in_status_bar": true,
-	"show_line_numbers": true,
+	"show_line_numbers": false,
 	"show_hover_cursor": true,
 	"highlight_hover_line": true,
 	"show_file_cursor": true,

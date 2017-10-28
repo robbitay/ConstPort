@@ -1,6 +1,10 @@
 # Application TODO List
-	[ ] Trigger save to file using regex
+	[ ] Create a little text input window that can be enabled and typed/edited and then sent
+	[ ] Keep a history of sent messages and allow up arrow to recall messages
+	[ ] Add a HEX interpretation of the text input so we can send specific values
 	[ ] Horizontal Scrollbar (only shows up if needed)
+	[ ] Add an wrap indent option to the line formatting functions
+	[ ] Trigger save to file using regex
 	[ ] Add a function that writes to a single option in the configuration file so we can have program written configuration options?
 	[ ] Make a line wrap enabled checkbox
 	
@@ -30,7 +34,6 @@
 	[ ] Hex string mode
 	[ ] Add an option to freeze output (read the COM port and throw away data)
 	[ ] New Line Type option for input and output
-	[ ] Option to enable an input line that sends messages all at once (Hex or string)
 	[ ] Command board with configurable command buttons
 	[ ] Save configurations to a file and load on startup
 	[ ] Try to auto-connect to last opened COM port on startup
