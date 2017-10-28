@@ -31,19 +31,24 @@ v2 RenderLine(Line_t* linePntr, v2 position, r32 viewWidth, bool sizeOnly = fals
 		lineStringSize.y = app->mainFont.lineHeight;
 	}
 	
+	// +====================================+
+	// | Draw the Line Background and Text  |
+	// +====================================+
 	if (!sizeOnly)
 	{
-		//TODO: Draw this non-relative to the camera?
+		//NOTE: We need to shift the rectangle to be 1 down and 1 shorter so that
+		//		the IsInsideRectangle is never true for more than one line
 		rec backgroundRec = NewRectangle(
 			0,
-			position.y - app->mainFont.maxExtendUp - GC->lineSpacing/2,
+			position.y - app->mainFont.maxExtendUp + 1,
 			10000,
-			lineStringSize.y + GC->lineSpacing
+			lineStringSize.y + (r32)GC->lineSpacing - 1
 		);
-		if (GC->highlightHoverLine && IsInsideRectangle(relMousePos, backgroundRec))
+		if (GC->highlightHoverLine && IsInsideRectangle(relMousePos, backgroundRec) && input->mouseInsideWindow)
 		{
 			backgroundColor = GC->colors.hoverBackground;
 		}
+		backgroundRec.y -= 1; backgroundRec.height += 1;
 		app->renderState.DrawRectangle(backgroundRec, backgroundColor);
 		
 		if (GC->lineWrapEnabled)

@@ -35,6 +35,11 @@ void GlfwWindowMinimizeCallback(GLFWwindow* window, i32 isMinimized)
 	Win32_PrintLine("Window %s", isMinimized ? "Minimized" : "Restored");
 	GL_PlatformInfo->windowIsMinimized = (isMinimized > 0);
 }
+void GlfwWindowFocusCallback(GLFWwindow* window, i32 isFocused)
+{
+	Win32_PrintLine("Window %s focus!", isFocused ? "Gained" : "Lost");
+	GL_PlatformInfo->windowHasFocus = (isFocused > 0);
+}
 void GlfwKeyPressedCallback(GLFWwindow* window, i32 key, i32 scanCode, i32 action, i32 modifiers)
 {
 	// const char* actionStr = "Pressed";
@@ -113,5 +118,11 @@ void GlfwMouseScrollCallback(GLFWwindow* window, real64 deltaX, real64 deltaY)
 	
 	currentInput->scrollValue += NewVec2((r32)deltaX, (r32)deltaY);
 	currentInput->scrollDelta += NewVec2((r32)deltaX, (r32)deltaY);
+}
+void GlfwCursorEnteredCallback(GLFWwindow* window, i32 entered)
+{
+	Win32_PrintLine("Mouse %s window", entered ? "entered" : "left");
+	AppInput_t* currentInput = (AppInput_t*)glfwGetWindowUserPointer(window);
+	currentInput->mouseInsideWindow = (entered > 0);
 }
 

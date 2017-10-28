@@ -1,6 +1,4 @@
 # Application TODO List
-	[ ] Escape counter of COM read loop so we keep rendering
-	[ ] Only blink cursor when window is selected
 	[ ] Trigger save to file using regex
 	[ ] Horizontal Scrollbar (only shows up if needed)
 	[ ] Add a function that writes to a single option in the configuration file so we can have program written configuration options?
@@ -65,6 +63,8 @@
 
 
 # Old TODO List Items
+	[X] Only blink cursor when window is selected
+	[X] Escape counter of COM read loop so we keep rendering
 	[X] Line wrapping
 	[X] Add a replace format string option with $1, $2, etc.
 	[-] Add options for seperaters between captured groups

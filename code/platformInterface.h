@@ -399,6 +399,7 @@ struct ButtonState_t
 
 struct AppInput_t
 {
+	bool mouseInsideWindow;
 	v2 mousePos;
 	v2 mouseStartPos[3];
 	r32 mouseMaxDist[3];

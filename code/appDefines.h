@@ -45,6 +45,7 @@ Date:   06\08\2017
 #define MAX_JSON_TOKENS            2048
 #define MAX_USER_PORT_NAMES        24
 #define MAX_USER_PORT_NAME_LENGTH  40 //bytes
+#define MAX_COM_READ_LOOPS         5
 
 #define GLOBAL_CONFIG_FILEPATH     "Resources/Configuration/GlobalConfig.json"
 #define OUTPUT_FILE_NAME           "Output.txt"

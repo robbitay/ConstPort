@@ -233,11 +233,13 @@ int WINAPI WinMain(HINSTANCE hInstance,
 	glfwSetFramebufferSizeCallback(window, GlfwWindowSizeCallback);
 	glfwSetWindowPosCallback(window,       GlfwWindowMoveCallback);
 	glfwSetWindowIconifyCallback(window,   GlfwWindowMinimizeCallback);
+	glfwSetWindowFocusCallback(window,     GlfwWindowFocusCallback);
 	glfwSetKeyCallback(window,             GlfwKeyPressedCallback);
 	glfwSetCharCallback(window,            GlfwCharPressedCallback);
 	glfwSetCursorPosCallback(window,       GlfwCursorPosCallback);
 	glfwSetMouseButtonCallback(window,     GlfwMousePressCallback);
 	glfwSetScrollCallback(window,          GlfwMouseScrollCallback);
+	glfwSetCursorEnterCallback(window,     GlfwCursorEnteredCallback);
 	
 	//+--------------------------------------+
 	//|        Fill Platform Info            |
@@ -248,6 +250,8 @@ int WINAPI WinMain(HINSTANCE hInstance,
 	platformInfo.version.build            = PLATFORM_VERSION_BUILD;
 	platformInfo.screenSize               = NewVec2i(screenWidth, screenHeight);
 	platformInfo.windowHasFocus           = true;
+	platformInfo.window                   = window;
+	
 	platformInfo.DebugWrite           = Win32_Write;
 	platformInfo.DebugWriteLine       = Win32_WriteLine;
 	platformInfo.DebugPrint           = Win32_Print;
@@ -271,7 +275,6 @@ int WINAPI WinMain(HINSTANCE hInstance,
 	platformInfo.ReadProgramOutput    = Win32_ReadProgramOutput;
 	platformInfo.WriteProgramInput    = Win32_WriteProgramInput;
 	platformInfo.CloseProgramInstance = Win32_CloseProgramInstance;
-	platformInfo.window                   = window;
 	
 	//+--------------------------------------+
 	//|         Application Memory           |
@@ -320,6 +323,16 @@ int WINAPI WinMain(HINSTANCE hInstance,
 	UpdateWindowTitle(window, WINDOW_TITLE, &PlatformVersion, &loadedApp.version);
 	
 	loadedApp.AppInitializePntr(&platformInfo, &appMemory);
+	
+	// +==============================+
+	// |   Fill Initial AppInput_t    |
+	// +==============================+
+	{
+		r64 mousePosX, mousePosY;
+		glfwGetCursorPos(window, &mousePosX, &mousePosY);
+		currentInput->mousePos = NewVec2((r32)mousePosX, (r32)mousePosY);
+		currentInput->mouseInsideWindow = (mousePosX >= 0 && mousePosY >= 0 && mousePosX < platformInfo.screenSize.x && mousePosY < platformInfo.screenSize.y);
+	}
 	
 	//+--------------------------------------+
 	//|              Main Loop               |

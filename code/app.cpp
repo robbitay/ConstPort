@@ -2004,6 +2004,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	if (app->comPort.isOpen)
 	{
 		i32 readResult = 1;
+		u32 readCount = 0;
 		while (readResult > 0)
 		{
 			char buffer[4096] = {};
@@ -2033,6 +2034,13 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 			else if (readResult < 0)
 			{
 				DEBUG_PrintLine("COM port read Error!: %d", readResult);
+			}
+			
+			readCount++;
+			if (readCount >= MAX_COM_READ_LOOPS)
+			{
+				StatusError("Too much information recieved in a single frame");
+				break;
 			}
 		}
 	}
@@ -2845,26 +2853,13 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 				Line_t* linePntr = LineListGetItemAt(&app->lineList, lineIndex);
 				
 				v2 lineSize = RenderLine(linePntr, currentPos, lineWrapWidth, true);
-				//Draw line highlight
-				if (GC->highlightHoverLine &&
-					lineIndex == ui->mouseTextLocation.lineIndex &&
-					IsInsideRectangle(RenderMousePos, ui->viewRec) &&
-					!ui->mouseInMenu)
-				{
-					rec backRec = NewRectangle(
-						currentPos.x + ui->scrollOffset.x,
-						currentPos.y - app->mainFont.maxExtendUp,
-						ui->viewRec.width, lineSize.y
-					);
-					rs->DrawRectangle(backRec, GC->colors.hoverBackground);
-				}
 				
 				RenderLine(linePntr, currentPos, lineWrapWidth, false);
 				
 				// +==============================+
 				// |    Draw the Hover Cursor     |
 				// +==============================+
-				if (GC->showHoverCursor &&
+				if (GC->showHoverCursor && input->mouseInsideWindow &&
 					lineIndex == ui->mouseTextLocation.lineIndex &&
 					IsInsideRectangle(RenderMousePos, ui->viewRec) &&
 					!ui->mouseInMenu)
@@ -2883,7 +2878,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 				// +==============================+
 				// |     Draw the File Cursor     |
 				// +==============================+
-				if (GC->showFileCursor && lineIndex == app->lineList.numLines-1)
+				if (GC->showFileCursor && lineIndex == app->lineList.numLines-1 && platform->windowHasFocus)
 				{
 					Color_t fileCursorColor  = ColorLerp(GC->colors.fileCursor1, GC->colors.fileCursor2, (Sin32((platform->programTime/1000.0f)*8.0f) + 1.0f) / 2.0f);
 					v2 skipSize = MeasureString(&app->mainFont, linePntr->chars, linePntr->numChars);
@@ -3071,10 +3066,13 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	//+--------------------------------------+
 	{
 		rs->DrawGradient(ui->statusBarRec, GC->colors.statusBar1, GC->colors.statusBar2, Direction2D_Right);
+		
+		#if 0
 		rs->BindFont(&app->uiFont);
 		rs->PrintString(NewVec2(ui->statusBarRec.x+5, ui->statusBarRec.y + app->uiFont.maxExtendUp), GC->colors.uiText, 1.0f,
 			"Mouse Line Location: (%d, %d)", ui->mouseTextLineLocation.lineIndex, ui->mouseTextLineLocation.charIndex);
 		rs->BindFont(&app->mainFont);
+		#endif
 		
 		// +==============================+
 		// |  Render the Status Message   |

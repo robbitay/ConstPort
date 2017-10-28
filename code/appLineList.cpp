@@ -11,7 +11,7 @@ void InitializeLine(Line_t* linePntr)
 {
 	ClearPointer(linePntr);
 	linePntr->matchColor = GC->colors.textDefault;
-	linePntr->backgroundColor = GC->colors.textBackground;
+	linePntr->backgroundColor = {Color_TransparentBlack};
 }
 
 void InitializeLineList(LineList_t* lineList, char* charStorageBase, u32 charStorageSize)
