@@ -78,35 +78,62 @@ void RecalculateUiElements(UiElements_t* ui, bool resetFollowingEndOfFile)
 		RenderScreenSize.x, 
 		app->uiFont.lineHeight
 	);
+	
 	ui->scrollBarGutterRec = NewRectangle(
 		RenderScreenSize.x - (r32)GC->scrollbarWidth - (r32)GC->scrollbarPadding*2, 
 		ui->mainMenuRec.y + ui->mainMenuRec.height, 
 		(r32)GC->scrollbarWidth + (r32)GC->scrollbarPadding*2, 
-		RenderScreenSize.y - ui->statusBarRec.height - (ui->mainMenuRec.y + ui->mainMenuRec.height)
+		0
 	);
+	ui->scrollBarGutterRec.height = ui->statusBarRec.y - ui->scrollBarGutterRec.y;
 	ui->gotoEndButtonRec = NewRectangle(
-		ui->scrollBarGutterRec.x,
-		ui->scrollBarGutterRec.y + ui->scrollBarGutterRec.height,
-		ui->scrollBarGutterRec.width,
-		RenderScreenSize.y - (ui->scrollBarGutterRec.y + ui->scrollBarGutterRec.height)
+		ui->statusBarRec.x + ui->statusBarRec.width - ui->statusBarRec.height,
+		ui->statusBarRec.y,
+		ui->statusBarRec.height,
+		ui->statusBarRec.height
 	);
 	ui->gutterRec = NewRectangle(
 		0, 
 		ui->mainMenuRec.y + ui->mainMenuRec.height, 
 		(r32)GC->minGutterWidth,
-		RenderScreenSize.y - ui->statusBarRec.height - (ui->mainMenuRec.y + ui->mainMenuRec.height)
+		0
 	);
+	ui->gutterRec.height = ui->statusBarRec.y - ui->gutterRec.y;
 	if (GC->showLineNumbers)
 	{
 		ui->gutterRec.width = NumDecimalDigits(app->lineList.numLines + app->lineList.firstLineNum) * MeasureString(&app->mainFont, " ", 1).x + 2;
 		if (ui->gutterRec.width < (r32)GC->minGutterWidth) ui->gutterRec.width = (r32)GC->minGutterWidth;
 	}
-	ui->viewRec = NewRectangle(
-		ui->gutterRec.width, 
-		ui->mainMenuRec.y + ui->mainMenuRec.height,
-		RenderScreenSize.x - ui->gutterRec.width - ui->scrollBarGutterRec.width, 
-		RenderScreenSize.y - ui->statusBarRec.height - (ui->mainMenuRec.y + ui->mainMenuRec.height)
+	
+	ui->textInputRec = NewRectangle(
+		ui->gutterRec.x + ui->gutterRec.width,
+		ui->statusBarRec.y,
+		0,
+		app->mainFont.lineHeight + 10
 	);
+	ui->textInputRec.width = ui->scrollBarGutterRec.x - ui->textInputRec.x;
+	if (GC->showInputTextBox == false)
+	{
+		ui->textInputRec.height = 0;
+	}
+	ui->textInputRec.y -= ui->textInputRec.height;
+	
+	ui->sendButtonRec = NewRectangle(
+		ui->textInputRec.x + ui->textInputRec.width,
+		ui->textInputRec.y,
+		0, ui->textInputRec.height
+	);
+	ui->sendButtonRec.width = MeasureString(&app->uiFont, "Send").x + 10;
+	ui->sendButtonRec.x    -= ui->sendButtonRec.width;
+	ui->textInputRec.width -= ui->sendButtonRec.width;
+	
+	ui->viewRec = NewRectangle(
+		ui->gutterRec.x + ui->gutterRec.width, 
+		ui->mainMenuRec.y + ui->mainMenuRec.height,
+		0, 0
+	);
+	ui->viewRec.width = ui->scrollBarGutterRec.x - ui->viewRec.x;
+	ui->viewRec.height = ui->textInputRec.y - ui->viewRec.y;
 	
 	//Dynamic helpers
 	ui->fileSize = MeasureLines(&app->lineList, ui->viewRec.width - GC->lineSpacing);

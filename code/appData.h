@@ -79,6 +79,12 @@ struct AppData_t
 	ProgramInstance_t programInstance;
 	
 	bool buttonHandled[Buttons_NumButtons];
+	
+	char lastInputText[INPUT_TEXT_BUFFER_SIZE];
+	u32  lastInputTextLength;
+	char inputText[INPUT_TEXT_BUFFER_SIZE];
+	u32  inputTextLength;
+	i32  inputTextCursor;
 };
 
 #endif // _APP_DATA_H

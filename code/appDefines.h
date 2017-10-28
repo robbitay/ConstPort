@@ -40,6 +40,7 @@ Date:   06\08\2017
 
 #define STATUS_MESSAGE_BUFFER_SIZE 128//bytes
 #define POPUP_MESSAGE_BUFFER_SIZE  512//bytes
+#define INPUT_TEXT_BUFFER_SIZE     256//bytes
 #define INPUT_ARENA_SIZE           1024*1024 //bytes
 #define TRANSIENT_MAX_NUMBER_MARKS 16
 #define MAX_JSON_TOKENS            2048

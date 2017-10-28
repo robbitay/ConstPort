@@ -15,25 +15,28 @@
 	
 	"mouse_click_tolerance":  10, //px
 	"menu_border_thickness":  1,  //px
-	"scrollbar_width":        0,//13, //px
-	"scrollbar_padding":      0,//3,  //px
+	"scrollbar_width":        13, //px
+	"scrollbar_padding":      3,  //px
 	"min_scrollbar_height":   32, //px
-	"min_gutter_width":       0,//30, //px
+	"min_gutter_width":       30, //px
 	
 	"scroll_multiplier": 40,
 	"view_speed_divider": 4,
 	
 	"show_text_cursor": false,
 	"show_com_name_in_status_bar": true,
-	"show_line_numbers": false,
+	"show_line_numbers": true,
 	"show_hover_cursor": true,
 	"highlight_hover_line": true,
-	"show_file_cursor": true,
+	"show_file_cursor": false,
+	"show_input_text_box": true,
 	
 	"rx_tx_led_delay":     4, //frames
 	"rx_tx_led_ring_size": 1, //frames
 	"circular_rx_led":     true,
 	"circular_tx_led":     false,
+	
+	"new_line_string": "\n",
 	
 	"auto_echo_input": false,
 	"show_file_after_saving": true,
@@ -195,10 +198,10 @@
 		"line_mark_hover":  "A6E22E", //Green
 		"line_mark_1":      "FFFFFFFF",
 		"line_mark_2":      "FFFFFF80",
-		"hover_cursor_1":   "FFFFFFFF",
-		"hover_cursor_2":   "FFFFFF00",
-		"file_cursor_1":    "FFFFFFFF",
-		"file_cursor_2":    "FFFFFF00",
+		"hover_cursor_1":   "B4B4B4",
+		"hover_cursor_2":   "B4B4B4",
+		"file_cursor_1":    "F8F8F2",
+		"file_cursor_2":    "F8F8F2",
 		
 		"ui_text":           "F8F8F2",
 		"debug_message":     "75715E", //Comment
@@ -219,6 +222,12 @@
 		"main_menu_2":       "303030",
 		"update_indicator_color_1": "494949",
 		"update_indicator_color_2": "101010",
+		
+		"text_input_box_1":    "CCCCCC",
+		"text_input_box_2":    "FFFFFF",
+		"text_input_text":     "101010",
+		"text_input_cursor_1": "101010FF",
+		"text_input_cursor_2": "10101000",
 		
 		"window_outline":      "B4B4B4",
 		"window_titlebar":     "303030",

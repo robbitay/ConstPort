@@ -44,6 +44,8 @@ struct UiElements_t
 	rec clearButtonRec;
 	rec saveButtonRec;
 	rec gotoEndButtonRec;
+	rec textInputRec;
+	rec sendButtonRec;
 	
 	const char* contextString;
 	Texture_t buttonBaseTexture;

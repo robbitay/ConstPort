@@ -42,6 +42,9 @@ Date:   09\26\2017
 	ConfigurationBool  ("show_update_indicator",       showUpdateIndicator,    false);
 	ConfigurationBool  ("line_wrap_enabled",           lineWrapEnabled,        true);
 	ConfigurationBool  ("line_wrap_preserve_words",    lineWrapPreserveWords,  true);
+	ConfigurationBool  ("show_input_text_box",         showInputTextBox,       true);
+	
+	ConfigurationString("new_line_string",             newLineString,          nullptr);
 	
 	ConfigurationInt32 ("popup_corner_radius",         popupCornerRadius,      7);
 	ConfigurationInt32 ("popup_outline_thickness",     popupOutlineThickness,  1);
@@ -134,6 +137,12 @@ Date:   09\26\2017
 	ConfigurationColor("main_menu_2",                   mainMenu2,                 {0xFF303030});
 	ConfigurationColor("update_indicator_color_1",      updateIndicatorColor1,     {0xFF494949});
 	ConfigurationColor("update_indicator_color_2",      updateIndicatorColor2,     {0xFF101010});
+	
+	ConfigurationColor("text_input_box_1",              textInputBox1,             {0xFFFFFFFF});
+	ConfigurationColor("text_input_box_2",              textInputBox2,             {0xFFFFFFFF});
+	ConfigurationColor("text_input_text",               textInputText,             {0xFF000000});
+	ConfigurationColor("text_input_cursor_1",           textInputCursor1,          {0xFF000000});
+	ConfigurationColor("text_input_cursor_2",           textInputCursor2,          {0xFF000000});
 	
 	ConfigurationColor("window_outline",                windowOutline,             {0xFFFFFFFF});
 	ConfigurationColor("window_titlebar",               windowTitlebar,            {0xFF303030});

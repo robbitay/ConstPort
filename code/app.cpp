@@ -2091,44 +2091,131 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		
 		if (input->textInputLength > 0)
 		{
-			DEBUG_PrintLine("Writing \"%.*s\"", input->textInputLength, input->textInput);
-			if (echoInput) { DataReceived(&input->textInput[0], input->textInputLength); }
-			if (writeToComPort)
+			if (GC->showInputTextBox) //put the new text in the inputTextBox
 			{
-				platform->WriteComPort(&app->comPort, &input->textInput[0], input->textInputLength);
-				app->txShiftRegister |= 0x80;
+				for (u32 cIndex = 0; cIndex < input->textInputLength; cIndex++)
+				{
+					char newChar = input->textInput[cIndex];
+					if (app->inputTextLength+1 < ArrayCount(app->inputText))
+					{
+						app->inputText[app->inputTextLength] = newChar;
+						app->inputTextLength++;
+						app->inputTextCursor++;
+						app->inputText[app->inputTextLength] = '\0';
+						DEBUG_PrintLine("Added 0x%02X \'%c\'", newChar, newChar);
+					}
+					else
+					{
+						StatusError("Input text box is full");
+					}
+				}
 			}
-			if (writeToProgram) { platform->WriteProgramInput(&app->programInstance, &input->textInput[0], input->textInputLength); }
+			else //route the input immediately
+			{
+				DEBUG_PrintLine("Writing \"%.*s\"", input->textInputLength, input->textInput);
+				if (echoInput) { DataReceived(&input->textInput[0], input->textInputLength); }
+				if (writeToComPort)
+				{
+					platform->WriteComPort(&app->comPort, &input->textInput[0], input->textInputLength);
+					app->txShiftRegister |= 0x80;
+				}
+				if (writeToProgram) { platform->WriteProgramInput(&app->programInstance, &input->textInput[0], input->textInputLength); }
+			}
 		}
 		
-		if (comMenu->show == false && ButtonPressed(Button_Enter))
+		bool sendButtonPressed = (input->mouseInsideWindow &&
+			ButtonReleased(MouseButton_Left) &&
+			IsInsideRectangle(RenderMousePos, ui->sendButtonRec) &&
+			IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, ui->sendButtonRec));
+		
+		if (comMenu->show == false && (ButtonPressed(Button_Enter) || sendButtonPressed))
 		{
-			DEBUG_WriteLine("Writing New Line");
-			
-			char newChar = '\n';
-			if (echoInput) { DataReceived("\n", 1); }
-			if (writeToComPort)
+			if (GC->showInputTextBox)
 			{
-				platform->WriteComPort(&app->comPort, &newChar, 1);
-				app->txShiftRegister |= 0x80;
+				if (app->inputTextLength > 0)
+				{
+					DEBUG_PrintLine("Writing %u byte input: \"%.*s\"", app->inputTextLength, app->inputTextLength, app->inputText);
+					if (echoInput) { DataReceived(app->inputText, app->inputTextLength); }
+					if (writeToComPort)
+					{
+						platform->WriteComPort(&app->comPort, app->inputText, app->inputTextLength);
+						app->txShiftRegister |= 0x80;
+					}
+					if (writeToProgram) { platform->WriteProgramInput(&app->programInstance, app->inputText, app->inputTextLength); }
+					
+					memcpy(app->lastInputText, app->inputText, ArrayCount(app->inputText));
+					app->lastInputTextLength = app->inputTextLength;
+					
+					app->inputTextLength = 0;
+					app->inputTextCursor = 0;
+					app->inputText[app->inputTextLength] = '\0';
+				}
+				else
+				{
+					StatusInfo("Writing blank line");
+				}
+				
+				if (true) //Write new line after text input
+				{
+					const char* newLineStr = GC->newLineString;
+					if (newLineStr == nullptr) { newLineStr = "\n"; }
+					u32 newLineStrLength = (u32)strlen(newLineStr);
+					if (echoInput) { DataReceived(newLineStr, newLineStrLength); }
+					if (writeToComPort)
+					{
+						platform->WriteComPort(&app->comPort, newLineStr, newLineStrLength);
+						app->txShiftRegister |= 0x80;
+					}
+					if (writeToProgram) { platform->WriteProgramInput(&app->programInstance, newLineStr, newLineStrLength); }
+				}
 			}
-			if (writeToProgram) { platform->WriteProgramInput(&app->programInstance, &newChar, 1); }
+			else
+			{
+				DEBUG_WriteLine("Writing New Line");
+				
+				const char* newLineStr = GC->newLineString;
+				if (newLineStr == nullptr) { newLineStr = "\n"; }
+				u32 newLineStrLength = (u32)strlen(newLineStr);
+				if (echoInput) { DataReceived(newLineStr, newLineStrLength); }
+				if (writeToComPort)
+				{
+					platform->WriteComPort(&app->comPort, newLineStr, newLineStrLength);
+					app->txShiftRegister |= 0x80;
+				}
+				if (writeToProgram) { platform->WriteProgramInput(&app->programInstance, newLineStr, newLineStrLength); }
+			}
 		}
 		
 		if (!comMenu->show && ButtonPressed(Button_Backspace))
 		{
-			DEBUG_WriteLine("Writing Backspace");
-			
-			char newChar = '\b';
-			if (echoInput) { DataReceived("\b", 1); }
-			if (writeToComPort)
+			if (GC->showInputTextBox)
 			{
-				platform->WriteComPort(&app->comPort, &newChar, 1);
-				app->txShiftRegister |= 0x80;
+				if (app->inputTextLength > 0)
+				{
+					app->inputTextLength--;
+					app->inputTextCursor--;
+					app->inputText[app->inputTextLength] = '\0';
+				}
+				else
+				{
+					// StatusInfo("No characters to delete");
+				}
 			}
-			if (writeToProgram)
+			else
 			{
-				platform->WriteProgramInput(&app->programInstance, &newChar, 1);
+				DEBUG_WriteLine("Writing Backspace");
+				
+				char newChar = '\b';
+				if (echoInput) { DataReceived("\b", 1); }
+				if (writeToComPort)
+				{
+					platform->WriteComPort(&app->comPort, &newChar, 1);
+					app->txShiftRegister |= 0x80;
+				}
+				if (writeToProgram)
+				{
+					platform->WriteProgramInput(&app->programInstance, &newChar, 1);
+				}
 			}
 		}
 	
@@ -2160,6 +2247,22 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 			
 			TempPopMark();
 		}
+	}
+	
+	// +==============================+
+	// |      Recall Last Input       |
+	// +==============================+
+	if (GC->showInputTextBox && ButtonPressed(Button_Up))
+	{
+		memcpy(app->inputText, app->lastInputText, ArrayCount(app->inputText));
+		app->inputTextLength = app->lastInputTextLength;
+		app->inputTextCursor = app->lastInputTextLength;
+	}
+	if (GC->showInputTextBox && ButtonPressed(Button_Down))
+	{
+		app->inputTextLength = 0;
+		app->inputText[0] = '\0';
+		app->inputTextCursor = 0;
 	}
 	
 	//+==================================+
@@ -2342,6 +2445,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	// +==============================+
 	// |         Debug Popups         |
 	// +==============================+
+	#if 0
 	#if DEBUG
 	if (ButtonPressed(Button_1))
 	{
@@ -2396,6 +2500,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		DropCharData(app->lineList.charDataSize - 1);
 	}
 	#endif
+	#endif
 	
 	
 	RecalculateUiElements(ui, false);
@@ -2408,11 +2513,11 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	{
 		ui->scrollOffsetGoto.x -= ButtonDown(Button_Shift) ? 16 : 5;
 	}
-	if (ButtonDown(Button_Down))
+	if (GC->showInputTextBox == false && ButtonDown(Button_Down))
 	{
 		ui->scrollOffsetGoto.y += ButtonDown(Button_Shift) ? 16 : 5;
 	}
-	if (ButtonDown(Button_Up))
+	if (GC->showInputTextBox == false && ButtonDown(Button_Up))
 	{
 		ui->scrollOffsetGoto.y -= ButtonDown(Button_Shift) ? 16 : 5;
 		ui->followingEndOfFile = false;
@@ -2855,6 +2960,21 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 				v2 lineSize = RenderLine(linePntr, currentPos, lineWrapWidth, true);
 				
 				RenderLine(linePntr, currentPos, lineWrapWidth, false);
+			
+				// +==============================+
+				// |     Draw the File Cursor     |
+				// +==============================+
+				if (GC->showFileCursor && lineIndex == app->lineList.numLines-1 && platform->windowHasFocus)
+				{
+					Color_t fileCursorColor  = ColorLerp(GC->colors.fileCursor1, GC->colors.fileCursor2, (Sin32((platform->programTime/1000.0f)*8.0f) + 1.0f) / 2.0f);
+					v2 skipSize = MeasureString(&app->mainFont, linePntr->chars, linePntr->numChars);
+					rec cursorRec = NewRectangle(
+						currentPos.x + skipSize.x,
+						currentPos.y - app->mainFont.maxExtendUp,
+						1, app->mainFont.lineHeight
+					);
+					rs->DrawRectangle(cursorRec, fileCursorColor);
+				}
 				
 				// +==============================+
 				// |    Draw the Hover Cursor     |
@@ -2873,21 +2993,6 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 						1, app->mainFont.lineHeight
 					);
 					rs->DrawRectangle(cursorRec, hoverCursorColor);
-				}
-			
-				// +==============================+
-				// |     Draw the File Cursor     |
-				// +==============================+
-				if (GC->showFileCursor && lineIndex == app->lineList.numLines-1 && platform->windowHasFocus)
-				{
-					Color_t fileCursorColor  = ColorLerp(GC->colors.fileCursor1, GC->colors.fileCursor2, (Sin32((platform->programTime/1000.0f)*8.0f) + 1.0f) / 2.0f);
-					v2 skipSize = MeasureString(&app->mainFont, linePntr->chars, linePntr->numChars);
-					rec cursorRec = NewRectangle(
-						currentPos.x + skipSize.x,
-						currentPos.y - app->mainFont.maxExtendUp,
-						1, app->mainFont.lineHeight
-					);
-					rs->DrawRectangle(cursorRec, fileCursorColor);
 				}
 				
 				currentPos.y += lineSize.y + GC->lineSpacing;
@@ -3061,6 +3166,55 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		rs->DrawGradient(centerScrollBarRec, GC->colors.scrollbar1, GC->colors.scrollbar2, Direction2D_Right);
 	}
 	
+	// +==============================+
+	// |   Render Text Input Field    |
+	// +==============================+
+	if (GC->showInputTextBox)
+	{
+		rs->DrawGradient(ui->textInputRec, GC->colors.textInputBox1, GC->colors.textInputBox2, Direction2D_Down);
+		rs->DrawButton(ui->textInputRec, {Color_TransparentBlack}, GC->colors.textInputText, 1);
+		
+		v2 wholeInputSize = MeasureString(&app->mainFont, app->inputText, app->inputTextLength);
+		r32 cursorOffset  = MeasureString(&app->mainFont, app->inputText, (u32)app->inputTextCursor).x;
+		
+		v2 textPosition = NewVec2(
+			ui->textInputRec.x + 5,
+			ui->textInputRec.y + ui->textInputRec.height/2 - app->mainFont.lineHeight/2 + app->mainFont.maxExtendUp
+		);
+		
+		rs->DrawString(app->inputText, app->inputTextLength, textPosition, GC->colors.textInputText);
+		
+		if (platform->windowHasFocus)
+		{
+			Rectangle_t cursorRec = NewRectangle(
+				textPosition.x + cursorOffset,
+				textPosition.y - app->mainFont.maxExtendUp,
+				1, app->mainFont.lineHeight
+			);
+			Color_t cursorColor = ColorLerp(GC->colors.textInputCursor1, GC->colors.textInputCursor2, (Sin32((platform->programTime/1000.0f)*6.0f) + 1.0f) / 2.0f); //TODO: Sin?
+			rs->DrawRectangle(cursorRec, cursorColor);
+		}
+	}
+	
+	// +==============================+
+	// |      Render Send Button      |
+	// +==============================+
+	if (GC->showInputTextBox)
+	{
+		v2 textSize = MeasureString(&app->uiFont, "Send");
+		v2 textPos = ui->sendButtonRec.topLeft + ui->sendButtonRec.size/2.f - textSize/2.f + NewVec2(0, app->uiFont.maxExtendUp);
+		
+		Color_t buttonColor = GC->colors.button;
+		Color_t textColor = GC->colors.buttonText;
+		Color_t borderColor = GC->colors.buttonBorder;
+		ButtonColorChoice(buttonColor, textColor, borderColor, ui->sendButtonRec, false, app->inputTextLength > 0);
+		
+		rs->DrawButton(ui->sendButtonRec, buttonColor, borderColor, 1);
+		rs->BindFont(&app->uiFont);
+		rs->DrawString("Send", textPos, textColor);
+		rs->BindFont(&app->mainFont);
+	}
+	
 	//+--------------------------------------+
 	//|          Render Status Bar           |
 	//+--------------------------------------+
@@ -3192,7 +3346,6 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 				rs->DrawRectangle(rec2, GC->colors.updateIndicatorColor1);
 			}
 		}
-		
 	}
 	
 	//+--------------------------------------+
@@ -3235,7 +3388,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		Color_t borderColor = GC->colors.mainMenuButtonBorder;
 		Color_t iconColor   = GC->colors.mainMenuButtonIcon;
 		
-		if (Vec2Length(RenderMousePos - buttonCenter) < buttonRadius)
+		if (input->mouseInsideWindow && Vec2Length(RenderMousePos - buttonCenter) < buttonRadius)
 		{
 			centerColor = GC->colors.mainMenuButtonHover;
 			borderColor = GC->colors.mainMenuButtonHoverBorder;

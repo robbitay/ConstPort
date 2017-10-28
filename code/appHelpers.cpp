@@ -52,7 +52,7 @@ Description:
 //This code shows up for most buttons so I pulled it out into a macro to make it look nice
 #define ButtonColorChoice(buttonColor, textColor, borderColor, rectangle, isSelected, isReady) do \
 {                                                                                                 \
-	if (ButtonDown(MouseButton_Left) &&                                                           \
+	if (ButtonDown(MouseButton_Left) && input->mouseInsideWindow &&                               \
 		IsInsideRectangle(RenderMousePos, rectangle) &&                                           \
 		IsInsideRectangle(input->mouseStartPos[MouseButton_Left]/GUI_SCALE, rectangle))           \
 	{                                                                                             \
@@ -72,7 +72,8 @@ Description:
 		textColor   = GC->colors.buttonReadyText;                                                 \
 		borderColor = GC->colors.buttonReadyBorder;                                               \
 	}                                                                                             \
-	if (IsInsideRectangle(RenderMousePos, rectangle) && !ButtonDown(MouseButton_Left))            \
+	if (IsInsideRectangle(RenderMousePos, rectangle) && input->mouseInsideWindow &&               \
+		!ButtonDown(MouseButton_Left))                                                            \
 	{                                                                                             \
 		buttonColor = ColorMultiply(buttonColor, GC->colors.buttonHover);                         \
 		textColor   = ColorMultiply(textColor,   GC->colors.buttonHoverText);                     \

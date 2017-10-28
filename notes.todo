@@ -1,6 +1,4 @@
 # Application TODO List
-	[ ] Create a little text input window that can be enabled and typed/edited and then sent
-	[ ] Keep a history of sent messages and allow up arrow to recall messages
 	[ ] Add a HEX interpretation of the text input so we can send specific values
 	[ ] Horizontal Scrollbar (only shows up if needed)
 	[ ] Add an wrap indent option to the line formatting functions
@@ -8,6 +6,7 @@
 	[ ] Add a function that writes to a single option in the configuration file so we can have program written configuration options?
 	[ ] Make a line wrap enabled checkbox
 	
+	[ ] Keep a history of sent messages and allow up arrow to recall messages
 	[ ] An option to perserve invalid ASCII characters when saving to a file
 	[ ] Get rid of the UI Handler since we probably won't ever need movable/modular windows. Also function pointer remapping is stupid looking
 	[ ] Text cursor maintains when dragging out of text area
@@ -66,6 +65,8 @@
 
 
 # Old TODO List Items
+	[X] Recall the last input text
+	[X] Create a little text input window that can be enabled and typed/edited and then sent
 	[X] Only blink cursor when window is selected
 	[X] Escape counter of COM read loop so we keep rendering
 	[X] Line wrapping
