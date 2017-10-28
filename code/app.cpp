@@ -3393,7 +3393,8 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	// +==============================+
 	if (GC->showInputTextBox)
 	{
-		v2 textSize = MeasureString(&app->uiFont, "Send");
+		const char* sendButtonText = (ButtonDown(Button_Control) ? "Send HEX" : "Send");
+		v2 textSize = MeasureString(&app->uiFont, sendButtonText);
 		v2 textPos = ui->sendButtonRec.topLeft + ui->sendButtonRec.size/2.f - textSize/2.f + NewVec2(0, app->uiFont.maxExtendUp);
 		
 		Color_t buttonColor = GC->colors.button;
@@ -3403,7 +3404,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		
 		rs->DrawButton(ui->sendButtonRec, buttonColor, borderColor, 1);
 		rs->BindFont(&app->uiFont);
-		rs->DrawString("Send", textPos, textColor);
+		rs->DrawString(sendButtonText, textPos, textColor);
 		rs->BindFont(&app->mainFont);
 	}
 	
