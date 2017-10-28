@@ -35,6 +35,7 @@ Description:
 // +--------------------------------------------------------------+
 const PlatformInfo_t* platform = nullptr;
 const AppInput_t* input = nullptr;
+AppOutput_t* appOutput = nullptr;
 
 #include "appHelpers.cpp"
 
@@ -350,10 +351,13 @@ void ComMenuUpdate(MenuHandler_t* menuHandler, Menu_t* menuPntr)
 				baudRateRec.y + baudIndex*app->uiFont.lineHeight,
 				baudRateRec.width, app->uiFont.lineHeight
 			);
-			if (IsInsideRectangle(RenderMousePos, currentRec) && IsInsideRectangle(RenderMouseStartPos, currentRec) &&
-				ButtonReleased(MouseButton_Left))
+			if (IsInsideRectangle(RenderMousePos, currentRec) && input->mouseInsideWindow)
 			{
-				app->comMenuOptions.settings.baudRate = (BaudRate_t)baudIndex;
+				appOutput->cursorType = Cursor_Pointer;
+				if (IsInsideRectangle(RenderMouseStartPos, currentRec) && ButtonReleased(MouseButton_Left))
+				{
+					app->comMenuOptions.settings.baudRate = (BaudRate_t)baudIndex;
+				}
 			}
 		}
 		
@@ -363,10 +367,13 @@ void ComMenuUpdate(MenuHandler_t* menuHandler, Menu_t* menuPntr)
 				numBitsRec.y + bitIndex*app->uiFont.lineHeight,
 				numBitsRec.width, app->uiFont.lineHeight
 			);
-			if (IsInsideRectangle(RenderMousePos, currentRec) && IsInsideRectangle(RenderMouseStartPos, currentRec) &&
-				ButtonReleased(MouseButton_Left))
+			if (IsInsideRectangle(RenderMousePos, currentRec) && input->mouseInsideWindow)
 			{
-				app->comMenuOptions.settings.numBits = (u8)(bitIndex+1);
+				appOutput->cursorType = Cursor_Pointer;
+				if (IsInsideRectangle(RenderMouseStartPos, currentRec) && ButtonReleased(MouseButton_Left))
+				{
+					app->comMenuOptions.settings.numBits = (u8)(bitIndex+1);
+				}
 			}
 		}
 		
@@ -376,10 +383,13 @@ void ComMenuUpdate(MenuHandler_t* menuHandler, Menu_t* menuPntr)
 				parityTypesRec.y + parityIndex*app->uiFont.lineHeight,
 				parityTypesRec.width, app->uiFont.lineHeight
 			);
-			if (IsInsideRectangle(RenderMousePos, currentRec) && IsInsideRectangle(RenderMouseStartPos, currentRec) &&
-				ButtonReleased(MouseButton_Left))
+			if (IsInsideRectangle(RenderMousePos, currentRec) && input->mouseInsideWindow)
 			{
-				app->comMenuOptions.settings.parity = (Parity_t)parityIndex;
+				appOutput->cursorType = Cursor_Pointer;
+				if (IsInsideRectangle(RenderMouseStartPos, currentRec) && ButtonReleased(MouseButton_Left))
+				{
+					app->comMenuOptions.settings.parity = (Parity_t)parityIndex;
+				}
 			}
 		}
 		
@@ -389,10 +399,13 @@ void ComMenuUpdate(MenuHandler_t* menuHandler, Menu_t* menuPntr)
 				stopBitsRec.y + stopBitIndex*app->uiFont.lineHeight,
 				stopBitsRec.width, app->uiFont.lineHeight
 			);
-			if (IsInsideRectangle(RenderMousePos, currentRec) && IsInsideRectangle(RenderMouseStartPos, currentRec) &&
-				ButtonReleased(MouseButton_Left))
+			if (IsInsideRectangle(RenderMousePos, currentRec) && input->mouseInsideWindow)
 			{
-				app->comMenuOptions.settings.stopBits = (StopBits_t)stopBitIndex;
+				appOutput->cursorType = Cursor_Pointer;
+				if (IsInsideRectangle(RenderMouseStartPos, currentRec) && ButtonReleased(MouseButton_Left))
+				{
+					app->comMenuOptions.settings.stopBits = (StopBits_t)stopBitIndex;
+				}
 			}
 		}
 		
@@ -408,22 +421,31 @@ void ComMenuUpdate(MenuHandler_t* menuHandler, Menu_t* menuPntr)
 			rec tabRec = NewRectangle(tabIndex * tabWidth, 0, tabWidth, tabHeight);
 			tabRec.topLeft += menuPntr->usableRec.topLeft;
 			
-			if (ButtonReleased(MouseButton_Left) && IsInsideRectangle(RenderMousePos, tabRec) &&
-				IsInsideRectangle(RenderMouseStartPos, tabRec))
+			if (IsInsideRectangle(RenderMousePos, tabRec) && input->mouseInsideWindow)
 			{
-				if (app->comMenuOptions.name != nullptr) { ArenaPop(&app->mainHeap, app->comMenuOptions.name); }
-				app->comMenuOptions.name = DupStr(tabName, &app->mainHeap);
-				app->comMenuOptions.isOpen = true;
+				appOutput->cursorType = Cursor_Pointer;
+				if (IsInsideRectangle(RenderMouseStartPos, tabRec) && ButtonReleased(MouseButton_Left))
+				{
+					if (app->comMenuOptions.name != nullptr) { ArenaPop(&app->mainHeap, app->comMenuOptions.name); }
+					app->comMenuOptions.name = DupStr(tabName, &app->mainHeap);
+					app->comMenuOptions.isOpen = true;
+				}
 			}
 		}
 		
 		// +================================+
 		// | Check for Connect Button Press |
 		// +================================+
-		bool connectButtonPressed = (IsInsideRectangle(RenderMousePos, connectButtonRec) &&
-			ButtonReleased(MouseButton_Left) && IsInsideRectangle(RenderMouseStartPos, connectButtonRec));
-		if (app->comMenuOptions.isOpen &&
-			(connectButtonPressed || ButtonReleased(Button_Enter)))
+		bool connectButtonPressed = false;
+		if (IsInsideRectangle(RenderMousePos, connectButtonRec) && input->mouseInsideWindow)
+		{
+			appOutput->cursorType = Cursor_Pointer;
+			if (IsInsideRectangle(RenderMouseStartPos, connectButtonRec) && ButtonReleased(MouseButton_Left))
+			{
+				connectButtonPressed = true;
+			}
+		}
+		if (app->comMenuOptions.isOpen && (connectButtonPressed || ButtonReleased(Button_Enter)))
 		{
 			if (OpenComPort(app->comMenuOptions.name, app->comMenuOptions.settings))
 			{
@@ -446,13 +468,16 @@ void ComMenuUpdate(MenuHandler_t* menuHandler, Menu_t* menuPntr)
 			
 			if (currentPortIsSelected)
 			{
-				if (app->comMenuOptions.isOpen && IsInsideRectangle(RenderMousePos, disconnectButtonRec) &&
-					ButtonReleased(MouseButton_Left) && IsInsideRectangle(RenderMouseStartPos, disconnectButtonRec))
+				if (app->comMenuOptions.isOpen && IsInsideRectangle(RenderMousePos, disconnectButtonRec) && input->mouseInsideWindow)
 				{
-					PopupError("Closed \"%s\"", app->comPort.name);
-					platform->CloseComPort(&app->mainHeap, &app->comPort);
-					menuPntr->show = false;
-					ClearConsole();
+					appOutput->cursorType = Cursor_Pointer;
+					if (ButtonReleased(MouseButton_Left) && IsInsideRectangle(RenderMouseStartPos, disconnectButtonRec))
+					{
+						PopupError("Closed \"%s\"", app->comPort.name);
+						platform->CloseComPort(&app->mainHeap, &app->comPort);
+						menuPntr->show = false;
+						ClearConsole();
+					}
 				}
 			}
 		}
@@ -1773,6 +1798,7 @@ EXPORT AppInitialize_DEFINITION(App_Initialize)
 	GC = &app->globalConfig;
 	TempArena = &app->tempArena;
 	RenderScreenSize = NewVec2((r32)platform->screenSize.x / GUI_SCALE, (r32)platform->screenSize.y / GUI_SCALE);
+	appOutput = nullptr;
 	
 	DEBUG_WriteLine("Initializing Game...");
 	
@@ -1918,6 +1944,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 {
 	platform = PlatformInfo;
 	input = AppInput;
+	appOutput = AppOutput;
 	app = (AppData_t*)AppMemory->permanantPntr;
 	GC = &app->globalConfig;
 	TempArena = &app->tempArena;
@@ -2513,23 +2540,33 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	
 	RecalculateUiElements(ui, false);
 	
-	if (ButtonDown(Button_Right))
+	// +==============================+
+	// |     Arrow Key Scrolling      |
+	// +==============================+
+	if (GC->showInputTextBox == false)
 	{
-		ui->scrollOffsetGoto.x += ButtonDown(Button_Shift) ? 16 : 5;
+		if (ButtonDown(Button_Right))
+		{
+			ui->scrollOffsetGoto.x += ButtonDown(Button_Shift) ? 16 : 5;
+		}
+		if (ButtonDown(Button_Left))
+		{
+			ui->scrollOffsetGoto.x -= ButtonDown(Button_Shift) ? 16 : 5;
+		}
+		if (ButtonDown(Button_Down))
+		{
+			ui->scrollOffsetGoto.y += ButtonDown(Button_Shift) ? 16 : 5;
+		}
+		if (ButtonDown(Button_Up))
+		{
+			ui->scrollOffsetGoto.y -= ButtonDown(Button_Shift) ? 16 : 5;
+			ui->followingEndOfFile = false;
+		}
 	}
-	if (ButtonDown(Button_Left))
-	{
-		ui->scrollOffsetGoto.x -= ButtonDown(Button_Shift) ? 16 : 5;
-	}
-	if (GC->showInputTextBox == false && ButtonDown(Button_Down))
-	{
-		ui->scrollOffsetGoto.y += ButtonDown(Button_Shift) ? 16 : 5;
-	}
-	if (GC->showInputTextBox == false && ButtonDown(Button_Up))
-	{
-		ui->scrollOffsetGoto.y -= ButtonDown(Button_Shift) ? 16 : 5;
-		ui->followingEndOfFile = false;
-	}
+	
+	// +==============================+
+	// | Mouse Scroll Wheel Handling  |
+	// +==============================+
 	if (input->scrollDelta.y != 0)
 	{
 		if (ButtonDown(Button_Shift))
@@ -2551,13 +2588,26 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		ui->scrollOffsetGoto.x -= input->scrollDelta.x * (r32)GC->scrollMultiplier;
 	}
 	
-	bool gotoEndButtonPressed = (IsInsideRectangle(RenderMousePos, ui->gotoEndButtonRec) &&
-		ButtonReleased(MouseButton_Left) &&
-		IsInsideRectangle(RenderMouseStartPos, ui->gotoEndButtonRec));
+	// +==============================+
+	// |   Goto End Button Pressed    |
+	// +==============================+
+	bool gotoEndButtonPressed = false;
+	if (IsInsideRectangle(RenderMousePos, ui->gotoEndButtonRec) && input->mouseInsideWindow && !ui->mouseInMenu)
+	{
+		AppOutput->cursorType = Cursor_Pointer;
+		if (ButtonReleased(MouseButton_Left) && IsInsideRectangle(RenderMouseStartPos, ui->gotoEndButtonRec))
+		{
+			gotoEndButtonPressed = true;
+		}
+	}
 	if (gotoEndButtonPressed || ButtonPressed(Button_End))
 	{
 		ui->followingEndOfFile = true;
 	}
+	
+	// +==================================+
+	// | Home PageUp and PageDown Hotkeys |
+	// +==================================+
 	if (ButtonPressed(Button_Home))
 	{
 		ui->scrollOffsetGoto.y = 0;

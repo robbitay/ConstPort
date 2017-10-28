@@ -63,10 +63,10 @@ void LoadGlobalConfiguration(PlatformConfig_t* platformConfig)
 	//+================================+
 	//|       Set Default Values       |
 	//+================================+
-	platformConfig->windowWidth         = 500;
-	platformConfig->windowHeight        = 400;
-	platformConfig->minWindowWidth      = 350;
-	platformConfig->minWindowHeight     = 400;
+	platformConfig->windowWidth         = 450;
+	platformConfig->windowHeight        = 1000;
+	platformConfig->minWindowWidth      = 200;
+	platformConfig->minWindowHeight     = 180;
 	platformConfig->forceAspectRatio    = false;
 	platformConfig->aspectRatio         = NewVec2i(16, 9);
 	platformConfig->allowResizeWindow   = true;

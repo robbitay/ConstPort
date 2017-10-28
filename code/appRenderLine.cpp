@@ -44,7 +44,7 @@ v2 RenderLine(Line_t* linePntr, v2 position, r32 viewWidth, bool sizeOnly = fals
 			10000,
 			lineStringSize.y + (r32)GC->lineSpacing - 1
 		);
-		if (GC->highlightHoverLine && IsInsideRectangle(relMousePos, backgroundRec) && input->mouseInsideWindow)
+		if (GC->highlightHoverLine && IsInsideRectangle(relMousePos, backgroundRec) && input->mouseInsideWindow && !ui->mouseInMenu)
 		{
 			backgroundColor = GC->colors.hoverBackground;
 		}

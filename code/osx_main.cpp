@@ -49,8 +49,8 @@ const char* WorkingDirectory = nullptr;
 #define APPLICATION_DLL_NAME "ConstPort.dll"
 
 #define WINDOW_TITLE     "ConstPort (OSX)"
-#define WINDOW_WIDTH     640
-#define WINDOW_HEIGHT    480
+#define WINDOW_WIDTH     450
+#define WINDOW_HEIGHT    1000
 #define WINDOW_RESIZABLE true
 #define TOPMOST_WINDOW   DEBUG
 #define BACKBUFFER_DEPTH_BITS   8

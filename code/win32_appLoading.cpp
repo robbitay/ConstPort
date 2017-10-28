@@ -69,13 +69,17 @@ bool LoadDllCode(const char* appDllName, const char* tempDllName, LoadedApp_t* l
 		u32 copyTries = 0;
 		while (!CopyFileA(appDllName, tempDllName, false))
 		{
-			copyTries++;
-			//TODO: Seems this is dependant on how long the file is locked during compilation
-			//		We should revise it so it's more robust rather than hard-coded
-			if (copyTries >= 50000) 
+			DWORD error = GetLastError();
+			if (error != ERROR_SHARING_VIOLATION)
 			{
-				Win32_WriteLine("Could not copy DLL.");
-				return false;
+				Win32_PrintLine("CopyFileA error: %u", GetLastError());
+				copyTries++;
+				
+				if (copyTries >= 100) 
+				{
+					Win32_WriteLine("Could not copy DLL.");
+					return false;
+				}
 			}
 		}
 		// Win32_PrintLine("Tried to copy %u times", copyTries);

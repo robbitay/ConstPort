@@ -388,6 +388,7 @@
 			"Direction_Right",
 			"Direction_Up",
 			"ERROR_FILE_NOT_FOUND",
+			"ERROR_SHARING_VIOLATION",
 			"ERROR_SUCCESS",
 			"EVENPARITY",
 			"EV_ERR",
@@ -921,6 +922,7 @@
 			"WindowResized",
 			"app",
 			"appData",
+			"appOutput",
 			"input",
 			"platform"
 		],
