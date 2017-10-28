@@ -960,6 +960,205 @@ char* SanatizeStringAdvanced(const char* strPntr, u32 numChars, MemoryArena_t* a
 	return result;
 }
 
+//NOTE: This function serves as a measuring function AS WELL AS
+//		a buffer filling function if not passed nullptr for bufferOutput
+u32 GetSelection(TextLocation_t location1, TextLocation_t location2, bool insertTimestamps, char* bufferOutput = nullptr)
+{
+	TextLocation_t minLocation = TextLocationMin(location1, location2);
+	TextLocation_t maxLocation = TextLocationMax(location1, location2);
+	
+	if (minLocation.lineIndex == maxLocation.lineIndex &&
+		minLocation.charIndex == maxLocation.charIndex)
+	{
+		//No selection made
+		return 0;
+	}
+	
+	u8 newLineSize = (platform->platformType == Platform_Windows) ? 2 : 1;
+	char newLine[2] = {};
+	if (platform->platformType == Platform_Windows)
+	{
+		newLine[0] = '\r';
+		newLine[1] = '\n';
+	}
+	else
+	{
+		newLine[0] = '\n';
+	}
+	u32 bufferLength = 0;
+	char* outputPntr = bufferOutput;
+	
+	if (minLocation.lineIndex == maxLocation.lineIndex)
+	{
+		Line_t* linePntr = LineListGetItemAt(&app->lineList, minLocation.lineIndex);
+		
+		if (insertTimestamps)
+		{
+			TempPushMark();
+			u64 lineTimestamp = linePntr->timestamp;
+			char* timeString = FormattedTimeStr(lineTimestamp);
+			u32 timeStringLength = (u32)strlen(timeString);
+			if (bufferOutput != nullptr)
+			{
+				*outputPntr = '['; outputPntr++;
+				memcpy(outputPntr, timeString, timeStringLength);
+				outputPntr += timeStringLength;
+				*outputPntr = ']'; outputPntr++;
+				*outputPntr = ' '; outputPntr++;
+			}
+			bufferLength += timeStringLength + 3;
+			TempPopMark();
+		}
+		
+		bufferLength += maxLocation.charIndex - minLocation.charIndex;
+		if (bufferOutput != nullptr)
+		{
+			memcpy(outputPntr, &linePntr->chars[minLocation.charIndex], bufferLength);
+			outputPntr += bufferLength;
+		}
+	}
+	else
+	{
+		{ //First Line
+			Line_t* minLinePntr = LineListGetItemAt(&app->lineList, minLocation.lineIndex);
+			
+			if (insertTimestamps)
+			{
+				TempPushMark();
+				u64 lineTimestamp = minLinePntr->timestamp;
+				char* timeString = FormattedTimeStr(lineTimestamp);
+				u32 timeStringLength = (u32)strlen(timeString);
+				if (bufferOutput != nullptr)
+				{
+					*outputPntr = '['; outputPntr++;
+					memcpy(outputPntr, timeString, timeStringLength);
+					outputPntr += timeStringLength;
+					*outputPntr = ']'; outputPntr++;
+					*outputPntr = ' '; outputPntr++;
+				}
+				bufferLength += timeStringLength + 3;
+				TempPopMark();
+			}
+			
+			bufferLength += SanatizeString(&minLinePntr->chars[minLocation.charIndex], minLinePntr->numChars - minLocation.charIndex);
+			bufferLength += newLineSize;
+			if (bufferOutput != nullptr)
+			{
+				outputPntr += SanatizeString(&minLinePntr->chars[minLocation.charIndex], minLinePntr->numChars - minLocation.charIndex, outputPntr);
+				memcpy(outputPntr, newLine, newLineSize);
+				outputPntr += newLineSize;
+			}
+		}
+		
+		//In Between Lines
+		for (i32 lineIndex = minLocation.lineIndex+1; lineIndex < maxLocation.lineIndex && lineIndex < app->lineList.numLines; lineIndex++)
+		{
+			Line_t* linePntr = LineListGetItemAt(&app->lineList, lineIndex);
+			
+			if (insertTimestamps)
+			{
+				TempPushMark();
+				u64 lineTimestamp = linePntr->timestamp;
+				char* timeString = FormattedTimeStr(lineTimestamp);
+				u32 timeStringLength = (u32)strlen(timeString);
+				if (bufferOutput != nullptr)
+				{
+					*outputPntr = '['; outputPntr++;
+					memcpy(outputPntr, timeString, timeStringLength);
+					outputPntr += timeStringLength;
+					*outputPntr = ']'; outputPntr++;
+					*outputPntr = ' '; outputPntr++;
+				}
+				bufferLength += timeStringLength + 3;
+				TempPopMark();
+			}
+			
+			bufferLength += SanatizeString(linePntr->chars, linePntr->numChars);
+			bufferLength += newLineSize;
+			if (bufferOutput != nullptr)
+			{
+				outputPntr += SanatizeString(linePntr->chars, linePntr->numChars, outputPntr);
+				memcpy(outputPntr, newLine, newLineSize);
+				outputPntr += newLineSize;
+			}
+		}
+		
+		{ //Last Line
+			Line_t* maxLinePntr = LineListGetItemAt(&app->lineList, maxLocation.lineIndex);
+			
+			if (insertTimestamps)
+			{
+				TempPushMark();
+				u64 lineTimestamp = maxLinePntr->timestamp;
+				char* timeString = FormattedTimeStr(lineTimestamp);
+				u32 timeStringLength = (u32)strlen(timeString);
+				if (bufferOutput != nullptr)
+				{
+					*outputPntr = '['; outputPntr++;
+					memcpy(outputPntr, timeString, timeStringLength);
+					outputPntr += timeStringLength;
+					*outputPntr = ']'; outputPntr++;
+					*outputPntr = ' '; outputPntr++;
+				}
+				bufferLength += timeStringLength + 3;
+				TempPopMark();
+			}
+			
+			bufferLength += SanatizeString(maxLinePntr->chars, maxLocation.charIndex);
+			if (bufferOutput != nullptr)
+			{
+				outputPntr += SanatizeString(maxLinePntr->chars, maxLocation.charIndex, outputPntr);
+			}
+		}
+	}
+	
+	bufferLength += 1; //For null terminator
+	if (bufferOutput != nullptr)
+	{
+		*outputPntr = '\0';
+	}
+	
+	return bufferLength;
+}
+
+void SaveSelectionToFile(TextLocation_t start, TextLocation_t end, bool openFile = false)
+{
+	char* fileName = TempPrint("ConstPortSave_%02u-%02u-%u_%u-%02u-%02u.txt",
+		platform->localTime.year, platform->localTime.month, platform->localTime.day,
+		platform->localTime.hour, platform->localTime.minute, platform->localTime.second
+	);
+	
+	u32 selectionSize = GetSelection(start, end, GC->saveTimesToFile, nullptr);
+	if (selectionSize > 0)
+	{
+		TempPushMark();
+		
+		char* fileBuffer = TempString(selectionSize);
+		GetSelection(start, end, GC->saveTimesToFile, fileBuffer);
+		
+		//NOTE: GetSelection adds a \0 on the end so need to remove it
+		DEBUG_PrintLine("Saving %u bytes to %s", selectionSize-1, fileName);
+		platform->WriteEntireFile(fileName, fileBuffer, selectionSize-1);
+		DEBUG_WriteLine("Done!");
+		
+		TempPopMark();
+		
+		if (openFile)
+		{
+			if (platform->LaunchFile(fileName))
+			{
+				DEBUG_WriteLine("Opened output file for viewing");
+			}
+			else
+			{
+				DEBUG_WriteLine("Could not open output file");
+			}
+		}
+		
+		StatusSuccess("Saved to %s", fileName);
+	}
+}
+
 struct TriggerResults_t
 {
 	bool addLineToBuffer;
@@ -1127,6 +1326,22 @@ TriggerResults_t ApplyTriggerEffects(Line_t* newLine, RegexTrigger_t* trigger)
 				else if (strcmp(nameStr, "popup_error") == 0)
 				{
 					PopupError(valueStr);
+				}
+				else if (strcmp(nameStr, "save") == 0)
+				{
+					i32 numLinesOffset = 0;
+					if (TryParseInt32(valueStr, (u32)strlen(valueStr), &numLinesOffset) && numLinesOffset >= 0)
+					{
+						i32 lineIndex = app->lineList.numLines - numLinesOffset;
+						if (lineIndex < 0) { lineIndex = 0; }
+						Assert(lineIndex < app->lineList.numLines);
+						
+						SaveSelectionToFile(NewTextLocation(lineIndex, 0), NewTextLocation(app->lineList.numLines-1, app->lineList.lastLine->numChars), DEBUG);
+					}
+					else
+					{
+						PopupError("Couldn't parse effect value as integer: \"%s\" in save effect", valueStr);
+					}
 				}
 				else
 				{
@@ -1384,167 +1599,6 @@ void DataReceived(const char* dataBuffer, i32 numBytes)
 	}
 	
 	app->rxShiftRegister |= 0x80;
-}
-
-//NOTE: This function serves as a measuring function AS WELL AS
-//		a buffer filling function if not passed nullptr for bufferOutput
-u32 GetSelection(bool insertTimestamps, char* bufferOutput = nullptr)
-{
-	TextLocation_t minLocation = TextLocationMin(app->selectionStart, app->selectionEnd);
-	TextLocation_t maxLocation = TextLocationMax(app->selectionStart, app->selectionEnd);
-	
-	if (minLocation.lineIndex == maxLocation.lineIndex &&
-		minLocation.charIndex == maxLocation.charIndex)
-	{
-		//No selection made
-		return 0;
-	}
-	
-	u8 newLineSize = (platform->platformType == Platform_Windows) ? 2 : 1;
-	char newLine[2] = {};
-	if (platform->platformType == Platform_Windows)
-	{
-		newLine[0] = '\r';
-		newLine[1] = '\n';
-	}
-	else
-	{
-		newLine[0] = '\n';
-	}
-	u32 bufferLength = 0;
-	char* outputPntr = bufferOutput;
-	
-	if (minLocation.lineIndex == maxLocation.lineIndex)
-	{
-		Line_t* linePntr = LineListGetItemAt(&app->lineList, minLocation.lineIndex);
-		
-		if (insertTimestamps)
-		{
-			TempPushMark();
-			u64 lineTimestamp = linePntr->timestamp;
-			char* timeString = FormattedTimeStr(lineTimestamp);
-			u32 timeStringLength = (u32)strlen(timeString);
-			if (bufferOutput != nullptr)
-			{
-				*outputPntr = '['; outputPntr++;
-				memcpy(outputPntr, timeString, timeStringLength);
-				outputPntr += timeStringLength;
-				*outputPntr = ']'; outputPntr++;
-				*outputPntr = ' '; outputPntr++;
-			}
-			bufferLength += timeStringLength + 3;
-			TempPopMark();
-		}
-		
-		bufferLength += maxLocation.charIndex - minLocation.charIndex;
-		if (bufferOutput != nullptr)
-		{
-			memcpy(outputPntr, &linePntr->chars[minLocation.charIndex], bufferLength);
-			outputPntr += bufferLength;
-		}
-	}
-	else
-	{
-		{ //First Line
-			Line_t* minLinePntr = LineListGetItemAt(&app->lineList, minLocation.lineIndex);
-			
-			if (insertTimestamps)
-			{
-				TempPushMark();
-				u64 lineTimestamp = minLinePntr->timestamp;
-				char* timeString = FormattedTimeStr(lineTimestamp);
-				u32 timeStringLength = (u32)strlen(timeString);
-				if (bufferOutput != nullptr)
-				{
-					*outputPntr = '['; outputPntr++;
-					memcpy(outputPntr, timeString, timeStringLength);
-					outputPntr += timeStringLength;
-					*outputPntr = ']'; outputPntr++;
-					*outputPntr = ' '; outputPntr++;
-				}
-				bufferLength += timeStringLength + 3;
-				TempPopMark();
-			}
-			
-			bufferLength += SanatizeString(&minLinePntr->chars[minLocation.charIndex], minLinePntr->numChars - minLocation.charIndex);
-			bufferLength += newLineSize;
-			if (bufferOutput != nullptr)
-			{
-				outputPntr += SanatizeString(&minLinePntr->chars[minLocation.charIndex], minLinePntr->numChars - minLocation.charIndex, outputPntr);
-				memcpy(outputPntr, newLine, newLineSize);
-				outputPntr += newLineSize;
-			}
-		}
-		
-		//In Between Lines
-		for (i32 lineIndex = minLocation.lineIndex+1; lineIndex < maxLocation.lineIndex && lineIndex < app->lineList.numLines; lineIndex++)
-		{
-			Line_t* linePntr = LineListGetItemAt(&app->lineList, lineIndex);
-			
-			if (insertTimestamps)
-			{
-				TempPushMark();
-				u64 lineTimestamp = linePntr->timestamp;
-				char* timeString = FormattedTimeStr(lineTimestamp);
-				u32 timeStringLength = (u32)strlen(timeString);
-				if (bufferOutput != nullptr)
-				{
-					*outputPntr = '['; outputPntr++;
-					memcpy(outputPntr, timeString, timeStringLength);
-					outputPntr += timeStringLength;
-					*outputPntr = ']'; outputPntr++;
-					*outputPntr = ' '; outputPntr++;
-				}
-				bufferLength += timeStringLength + 3;
-				TempPopMark();
-			}
-			
-			bufferLength += SanatizeString(linePntr->chars, linePntr->numChars);
-			bufferLength += newLineSize;
-			if (bufferOutput != nullptr)
-			{
-				outputPntr += SanatizeString(linePntr->chars, linePntr->numChars, outputPntr);
-				memcpy(outputPntr, newLine, newLineSize);
-				outputPntr += newLineSize;
-			}
-		}
-		
-		{ //Last Line
-			Line_t* maxLinePntr = LineListGetItemAt(&app->lineList, maxLocation.lineIndex);
-			
-			if (insertTimestamps)
-			{
-				TempPushMark();
-				u64 lineTimestamp = maxLinePntr->timestamp;
-				char* timeString = FormattedTimeStr(lineTimestamp);
-				u32 timeStringLength = (u32)strlen(timeString);
-				if (bufferOutput != nullptr)
-				{
-					*outputPntr = '['; outputPntr++;
-					memcpy(outputPntr, timeString, timeStringLength);
-					outputPntr += timeStringLength;
-					*outputPntr = ']'; outputPntr++;
-					*outputPntr = ' '; outputPntr++;
-				}
-				bufferLength += timeStringLength + 3;
-				TempPopMark();
-			}
-			
-			bufferLength += SanatizeString(maxLinePntr->chars, maxLocation.charIndex);
-			if (bufferOutput != nullptr)
-			{
-				outputPntr += SanatizeString(maxLinePntr->chars, maxLocation.charIndex, outputPntr);
-			}
-		}
-	}
-	
-	bufferLength += 1; //For null terminator
-	if (bufferOutput != nullptr)
-	{
-		*outputPntr = '\0';
-	}
-	
-	return bufferLength;
 }
 
 void LoadApplicationFonts()
@@ -2340,13 +2394,13 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		}
 		else
 		{
-			u32 selectionSize = GetSelection(false);
+			u32 selectionSize = GetSelection(app->selectionStart, app->selectionEnd, false);
 			if (selectionSize != 0)
 			{
 				TempPushMark();
 				
 				char* selectionTempBuffer = TempString(selectionSize+1);
-				GetSelection(false, selectionTempBuffer);
+				GetSelection(app->selectionStart, app->selectionEnd, false, selectionTempBuffer);
 				
 				platform->CopyToClipboard(selectionTempBuffer, selectionSize);
 				StatusSuccess("Copied %u bytes to clipboard", selectionSize);
@@ -2657,7 +2711,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	// +==================================+
 	if (ButtonPressed(Button_E) && ButtonDown(Button_Control))
 	{
-		u32 selectionLength = GetSelection(false, nullptr);
+		u32 selectionLength = GetSelection(app->selectionStart, app->selectionEnd, false, nullptr);
 		if (selectionLength > 0)
 		{
 			const char* countExpression = GetRegularExpression(&app->regexList, GC->genericCountRegexName);
@@ -2666,7 +2720,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 				TempPushMark();
 				
 				char* selectionBuffer = TempString(selectionLength);
-				GetSelection(false, selectionBuffer);
+				GetSelection(app->selectionStart, app->selectionEnd, false, selectionBuffer);
 				
 				TestRegularExpression(countExpression, selectionBuffer, selectionLength);
 				
@@ -2779,40 +2833,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	}
 	if (saveButtonPressed || (ButtonDown(Button_Control) && ButtonPressed(Button_S)))
 	{
-		char* fileName = TempPrint("ConstPortSave_%02u-%02u-%u_%u-%02u-%02u.txt",
-			platform->localTime.year, platform->localTime.month, platform->localTime.day,
-			platform->localTime.hour, platform->localTime.minute, platform->localTime.second
-		);
-		
-		u32 selectionSize = GetSelection(GC->saveTimesToFile, nullptr);
-		if (selectionSize > 0)
-		{
-			TempPushMark();
-			
-			char* fileBuffer = TempString(selectionSize);
-			GetSelection(GC->saveTimesToFile, fileBuffer);
-			
-			//NOTE: GetSelection adds a \0 on the end so need to remove it
-			DEBUG_PrintLine("Saving %u bytes to %s", selectionSize-1, fileName);
-			platform->WriteEntireFile(fileName, fileBuffer, selectionSize-1);
-			DEBUG_WriteLine("Done!");
-			
-			TempPopMark();
-			
-			if (GC->showFileAfterSaving)
-			{
-				if (platform->LaunchFile(fileName))
-				{
-					DEBUG_WriteLine("Opened output file for viewing");
-				}
-				else
-				{
-					DEBUG_WriteLine("Could not open output file");
-				}
-			}
-			
-			StatusSuccess("Saved to %s", fileName);
-		}
+		SaveSelectionToFile(app->selectionStart, app->selectionEnd, GC->showFileAfterSaving);
 	}
 	
 	//+==========================================+

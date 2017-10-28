@@ -2,7 +2,6 @@
 	[ ] Add a HEX interpretation of the text input so we can send specific values
 	[ ] Horizontal Scrollbar (only shows up if needed)
 	[ ] Add an wrap indent option to the line formatting functions
-	[ ] Trigger save to file using regex
 	[ ] Add a function that writes to a single option in the configuration file so we can have program written configuration options?
 	[ ] Make a line wrap enabled checkbox
 	[ ] Paste from clipboard into input box
@@ -66,6 +65,7 @@
 
 
 # Old TODO List Items
+	[X] Trigger save to file using regex
 	[X] Fix app loading when the compilation takes longer. We need to detect whether the file is locked for reading I guess?
 	[X] Recall the last input text
 	[X] Create a little text input window that can be enabled and typed/edited and then sent
