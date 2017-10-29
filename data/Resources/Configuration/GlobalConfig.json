@@ -224,11 +224,11 @@
 		"update_indicator_color_1": "494949",
 		"update_indicator_color_2": "101010",
 		
-		"text_input_box_1":    "CCCCCC",
-		"text_input_box_2":    "FFFFFF",
-		"text_input_text":     "101010",
-		"text_input_cursor_1": "101010FF",
-		"text_input_cursor_2": "10101000",
+		"text_input_box_1":    "696969",
+		"text_input_box_2":    "494949",
+		"text_input_text":     "F8F8F2",
+		"text_input_cursor_1": "F8F8F2FF",
+		"text_input_cursor_2": "F8F8F200",
 		
 		"window_outline":      "B4B4B4",
 		"window_titlebar":     "303030",

@@ -82,9 +82,11 @@ struct AppData_t
 	
 	char lastInputText[INPUT_TEXT_BUFFER_SIZE];
 	u32  lastInputTextLength;
-	char inputText[INPUT_TEXT_BUFFER_SIZE];
-	u32  inputTextLength;
-	i32  inputTextCursor;
+	
+	const void* activeElement;
+	
+	TextBox_t inputBox;
+	TextBox_t testTextBox;
 };
 
 #endif // _APP_DATA_H

@@ -49,6 +49,10 @@ Description:
 #define ButtonDown(button) (input->buttons[button].isDown)
 #define ButtonDownUnhandled(button) (app->buttonHandled[button] == false && input->buttons[button].isDown)
 
+#define ClickedOnRec(rectangle) (ButtonReleasedUnhandled(MouseButton_Left) && IsInsideRectangle(RenderMousePos, rectangle) && IsInsideRectangle(RenderMouseStartPos, rectangle))
+
+#define IsActiveElement(elementPntr) (app->activeElement == elementPntr)
+
 //This code shows up for most buttons so I pulled it out into a macro to make it look nice
 #define ButtonColorChoice(buttonColor, textColor, borderColor, rectangle, isSelected, isReady) do \
 {                                                                                                 \

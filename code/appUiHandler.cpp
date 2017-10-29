@@ -123,7 +123,7 @@ void RecalculateUiElements(UiElements_t* ui, bool resetFollowingEndOfFile)
 		ui->textInputRec.y,
 		0, ui->textInputRec.height
 	);
-	const char* sendButtonText = (ButtonDown(Button_Control) ? "Send HEX" : "Send");
+	const char* sendButtonText = "Send";//(ButtonDown(Button_Control) ? "Send HEX" : "Send");
 	ui->sendButtonRec.width = MeasureString(&app->uiFont, sendButtonText).x + 10;
 	ui->sendButtonRec.x    -= ui->sendButtonRec.width;
 	ui->textInputRec.width -= ui->sendButtonRec.width;

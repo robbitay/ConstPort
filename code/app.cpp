@@ -43,9 +43,11 @@ AppOutput_t* appOutput = nullptr;
 // |                     Application Includes                     |
 // +--------------------------------------------------------------+
 #include "appDefines.h"
+#include "appDynamicColor.h"
 #include "appStructs.h"
 #include "appLineList.h"
 #include "appRenderState.h"
+#include "appTextBox.h"
 #include "appMenuHandler.h"
 #include "appUiHandler.h"
 #include "appRegularExpressions.h"
@@ -130,6 +132,10 @@ char* GetElapsedString(u64 timespan)
 #define PopupSuccessTimed(duration, formatString, ...) PopupMessage(__func__, GC->colors.successMessage, duration, formatString, ##__VA_ARGS__)
 #define PopupErrorTimed(duration, formatString, ...)   PopupMessage(__func__, GC->colors.errorMessage,   duration, formatString, ##__VA_ARGS__)
 
+void ChangeActiveElement(const void* elementPntr);
+char* SanatizeStringAdvanced(const char* strPntr, u32 numChars, MemoryArena_t* arenaPntr,
+	bool keepNewLines = true, bool keepBackspaces = false, bool convertInvalidToHex = false);
+
 // +--------------------------------------------------------------+
 // |                   Application Source Files                   |
 // +--------------------------------------------------------------+
@@ -140,6 +146,7 @@ char* GetElapsedString(u64 timespan)
 #include "appRenderState.cpp"
 #include "appMenuHandler.cpp"
 #include "appRenderLine.cpp"
+#include "appTextBox.cpp"
 #include "appUiHandler.cpp"
 #include "appRegularExpressions.cpp"
 
@@ -204,6 +211,15 @@ void HideComMenu()
 		comMenu->show = false;
 		if (app->comMenuOptions.name != nullptr) { ArenaPop(&app->mainHeap, app->comMenuOptions.name); }
 	}
+	
+	if (GC->showInputTextBox)
+	{
+		ChangeActiveElement(&app->inputBox);
+	}
+	else
+	{
+		ChangeActiveElement(&app->uiElements.viewRec);
+	}
 }
 
 void ShowComMenu()
@@ -218,6 +234,8 @@ void ShowComMenu()
 			app->comMenuOptions.name = DupStr(app->comPort.name, &app->mainHeap);
 		}
 	}
+	
+	ChangeActiveElement(nullptr);
 }
 
 bool OpenComPort(const char* comPortName, ComSettings_t settings)
@@ -259,7 +277,7 @@ void ComMenuUpdate(MenuHandler_t* menuHandler, Menu_t* menuPntr)
 		if (ButtonPressedUnhandled(Button_Escape))
 		{
 			HandleButton(Button_Escape);
-			menuPntr->show = false;
+			HideComMenu();
 		}
 		
 		u32 numTabs = app->availablePorts.count + ((app->comPort.isOpen && !IsComAvailable(app->comPort.name)) ? 1 : 0);
@@ -449,7 +467,7 @@ void ComMenuUpdate(MenuHandler_t* menuHandler, Menu_t* menuPntr)
 		{
 			if (OpenComPort(app->comMenuOptions.name, app->comMenuOptions.settings))
 			{
-				menuPntr->show = false;
+				HideComMenu();
 			}
 		}
 		
@@ -471,11 +489,12 @@ void ComMenuUpdate(MenuHandler_t* menuHandler, Menu_t* menuPntr)
 				if (app->comMenuOptions.isOpen && IsInsideRectangle(RenderMousePos, disconnectButtonRec) && input->mouseInsideWindow)
 				{
 					appOutput->cursorType = Cursor_Pointer;
-					if (ButtonReleased(MouseButton_Left) && IsInsideRectangle(RenderMouseStartPos, disconnectButtonRec))
+					if (ClickedOnRec(disconnectButtonRec))
 					{
+						HandleButton(MouseButton_Left);
 						PopupError("Closed \"%s\"", app->comPort.name);
 						platform->CloseComPort(&app->mainHeap, &app->comPort);
-						menuPntr->show = false;
+						HideComMenu();
 						ClearConsole();
 					}
 				}
@@ -874,7 +893,7 @@ u32 SanatizeString(const char* charPntr, u32 numChars, char* outputBuffer = null
 }
 
 char* SanatizeStringAdvanced(const char* strPntr, u32 numChars, MemoryArena_t* arenaPntr,
-	bool keepNewLines = true, bool keepBackspaces = false, bool convertInvalidToHex = false)
+	bool keepNewLines, bool keepBackspaces, bool convertInvalidToHex)
 {
 	char* result = nullptr;
 	u32 resultLength = 0;
@@ -1881,6 +1900,16 @@ u8* GetHexForAsciiString(const char* nulltermString, u32* numBytesOut, MemoryAre
 	return GetHexForAsciiString(nulltermString, strLength, numBytesOut, arenaPntr);
 }
 
+void ChangeActiveElement(const void* elementPntr)
+{
+	if (app->activeElement == &app->inputBox)
+	{
+		//TODO: Do anything we need to when the inputBox is deselected
+	}
+	
+	app->activeElement = elementPntr;
+}
+
 //+================================================================+
 //|                       App Get Version                          |
 //+================================================================+
@@ -2015,6 +2044,22 @@ EXPORT AppInitialize_DEFINITION(App_Initialize)
 		}
 	}
 	
+	app->testTextBox = NewTextBox(
+		NewRectangle(100, 100, 300, app->uiFont.lineHeight + 10), 
+		"Hello", 5, 256, &app->mainHeap, &app->uiFont);
+	
+	app->inputBox = NewTextBox(NewRectangle(0, 0, 0, 0), //NOTE: This will get set in  the update loop
+		"", 0, INPUT_TEXT_BUFFER_SIZE, &app->mainHeap, &app->mainFont);
+	
+	if (GC->showInputTextBox)
+	{
+		app->activeElement = &app->inputBox;
+	}
+	else
+	{
+		app->activeElement = &app->uiElements.viewRec;
+	}
+	
 	TempPopMark();
 	DEBUG_WriteLine("Initialization Done!");
 	app->appInitTempHighWaterMark = ArenaGetHighWaterMark(TempArena);
@@ -2106,6 +2151,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	}
 	
 	RecalculateUiElements(ui, true);
+	TextBoxRellocate(&app->inputBox, ui->textInputRec);
 	ui->mouseInMenu = (hoverMenu != nullptr && hoverMenu != contextMenu);
 	
 	//+================================+
@@ -2235,26 +2281,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		
 		if (input->textInputLength > 0)
 		{
-			if (GC->showInputTextBox) //put the new text in the inputTextBox
-			{
-				for (u32 cIndex = 0; cIndex < input->textInputLength; cIndex++)
-				{
-					char newChar = input->textInput[cIndex];
-					if (app->inputTextLength+1 < ArrayCount(app->inputText))
-					{
-						app->inputText[app->inputTextLength] = newChar;
-						app->inputTextLength++;
-						app->inputTextCursor++;
-						app->inputText[app->inputTextLength] = '\0';
-						DEBUG_PrintLine("Added 0x%02X \'%c\'", newChar, newChar);
-					}
-					else
-					{
-						StatusError("Input text box is full");
-					}
-				}
-			}
-			else //route the input immediately
+			if (IsActiveElement(&ui->viewRec)) //route the input to the COM port
 			{
 				DEBUG_PrintLine("Writing \"%.*s\"", input->textInputLength, input->textInput);
 				if (echoInput) { DataReceived(&input->textInput[0], input->textInputLength); }
@@ -2279,18 +2306,18 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		
 		if (comMenu->show == false && (ButtonPressed(Button_Enter) || sendButtonPressed))
 		{
-			if (GC->showInputTextBox)
+			if (IsActiveElement(&app->inputBox))
 			{
 				bool outputNewLine = true;
 				
-				if (app->inputTextLength > 0)
+				if (app->inputBox.numChars > 0)
 				{
 					if (ButtonDown(Button_Control))
 					{
 						TempPushMark();
 						
 						u32 numHexBytes = 0;
-						u8* hexBytes = GetHexForAsciiString(app->inputText, app->inputTextLength, &numHexBytes, TempArena);
+						u8* hexBytes = GetHexForAsciiString(app->inputBox.chars, app->inputBox.numChars, &numHexBytes, TempArena);
 						if (hexBytes != nullptr && numHexBytes > 0)
 						{
 							DEBUG_Print("Writing %u HEX bytes: { ", numHexBytes);
@@ -2308,12 +2335,11 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 							}
 							if (writeToProgram) { platform->WriteProgramInput(&app->programInstance, (char*)hexBytes, numHexBytes); }
 							
-							memcpy(app->lastInputText, app->inputText, ArrayCount(app->inputText));
-							app->lastInputTextLength = app->inputTextLength;
+							memcpy(app->lastInputText, app->inputBox.chars, app->inputBox.numChars);
+							app->lastInputTextLength = app->inputBox.numChars;
+							app->lastInputText[app->lastInputTextLength] = '\0';
 							
-							app->inputTextLength = 0;
-							app->inputTextCursor = 0;
-							app->inputText[app->inputTextLength] = '\0';
+							TextBoxClear(&app->inputBox);
 						}
 						else
 						{
@@ -2326,22 +2352,21 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 					}
 					else
 					{
-						DEBUG_PrintLine("Writing %u byte input: \"%.*s\"", app->inputTextLength, app->inputTextLength, app->inputText);
+						DEBUG_PrintLine("Writing %u byte input: \"%.*s\"", app->inputBox.numChars, app->inputBox.numChars, app->inputBox.chars);
 						
-						if (echoInput) { DataReceived(app->inputText, app->inputTextLength); }
+						if (echoInput) { DataReceived(app->inputBox.chars, app->inputBox.numChars); }
 						if (writeToComPort)
 						{
-							platform->WriteComPort(&app->comPort, app->inputText, app->inputTextLength);
+							platform->WriteComPort(&app->comPort, app->inputBox.chars, app->inputBox.numChars);
 							app->txShiftRegister |= 0x80;
 						}
-						if (writeToProgram) { platform->WriteProgramInput(&app->programInstance, app->inputText, app->inputTextLength); }
+						if (writeToProgram) { platform->WriteProgramInput(&app->programInstance, app->inputBox.chars, app->inputBox.numChars); }
 						
-						memcpy(app->lastInputText, app->inputText, ArrayCount(app->inputText));
-						app->lastInputTextLength = app->inputTextLength;
+						memcpy(app->lastInputText, app->inputBox.chars, app->inputBox.numChars);
+						app->lastInputTextLength = app->inputBox.numChars;
+						app->lastInputText[app->lastInputTextLength] = '\0';
 						
-						app->inputTextLength = 0;
-						app->inputTextCursor = 0;
-						app->inputText[app->inputTextLength] = '\0';
+						TextBoxClear(&app->inputBox);
 					}
 				}
 				else
@@ -2363,7 +2388,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 					if (writeToProgram) { platform->WriteProgramInput(&app->programInstance, newLineStr, newLineStrLength); }
 				}
 			}
-			else
+			else if (IsActiveElement(&ui->viewRec))
 			{
 				DEBUG_WriteLine("Writing New Line");
 				
@@ -2382,20 +2407,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		
 		if (!comMenu->show && ButtonPressed(Button_Backspace))
 		{
-			if (GC->showInputTextBox)
-			{
-				if (app->inputTextLength > 0)
-				{
-					app->inputTextLength--;
-					app->inputTextCursor--;
-					app->inputText[app->inputTextLength] = '\0';
-				}
-				else
-				{
-					// StatusInfo("No characters to delete");
-				}
-			}
-			else
+			if (IsActiveElement(&ui->viewRec))
 			{
 				DEBUG_WriteLine("Writing Backspace");
 				
@@ -2416,7 +2428,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		// +==============================+
 		// |     Paste from Clipboard     |
 		// +==============================+
-		if (ButtonDown(Button_Control) && ButtonPressed(Button_V))
+		if (IsActiveElement(&ui->viewRec) && ButtonDown(Button_Control) && ButtonPressed(Button_V))
 		{
 			TempPushMark();
 			
@@ -2448,15 +2460,11 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	// +==============================+
 	if (GC->showInputTextBox && ButtonPressed(Button_Up))
 	{
-		memcpy(app->inputText, app->lastInputText, ArrayCount(app->inputText));
-		app->inputTextLength = app->lastInputTextLength;
-		app->inputTextCursor = app->lastInputTextLength;
+		TextBoxSet(&app->inputBox, app->lastInputText, app->lastInputTextLength);
 	}
 	if (GC->showInputTextBox && ButtonPressed(Button_Down))
 	{
-		app->inputTextLength = 0;
-		app->inputText[0] = '\0';
-		app->inputTextCursor = 0;
+		TextBoxClear(&app->inputBox);
 	}
 	
 	//+==================================+
@@ -2491,7 +2499,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	//+======================================+
 	//| Clear Console and Copy to Clipboard  |
 	//+======================================+
-	if (ButtonDown(Button_Control) && ButtonPressed(Button_C))
+	if (IsActiveElement(&ui->viewRec) && ButtonDown(Button_Control) && ButtonPressed(Button_C))
 	{
 		if (ButtonDown(Button_Shift))
 		{
@@ -2641,63 +2649,84 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	// +==============================+
 	#if 0
 	#if DEBUG
-	if (ButtonPressed(Button_1))
 	{
-		PopupDebug("Something interesting is happening behind the scenes");
-		StatusDebug("Something interesting is happening behind the scenes");
-	}
-	if (ButtonPressed(Button_2))
-	{
-		PopupInfo("We are working :)");
-		StatusInfo("We are working :)");
-	}
-	if (ButtonPressed(Button_3))
-	{
-		PopupSuccess("That was awesome! Do it again.");
-		StatusSuccess("That was awesome! Do it again.");
-	}
-	if (ButtonPressed(Button_4))
-	{
-		PopupError("An error has occurred. The world might be ending...");
-		StatusError("An error has occurred. The world might be ending...");
-	}
-	if (ButtonPressed(Button_5))
-	{
-		PopupErrorTimed(10000, "This is a really long message for the user to read. Because it is so long we are going to give you 10 seconds to read it.");
-		StatusErrorTimed(10000, "This is a really long message for the user to read. Because it is so long we are going to give you 10 seconds to read it.");
-	}
-	
-	// +==============================+
-	// |        Debug Message         |
-	// +==============================+
-	if (ButtonPressed(Button_F2))
-	{
-		u32 testMessageLength = (u32)strlen(testMessage);
-		if (app->programInstance.isOpen && ButtonDown(Button_Shift))
+		if (ButtonPressed(Button_1))
 		{
-			DEBUG_PrintLine("Writing to program instance \"%.*s\"", testMessageLength, testMessage);
-			
-			u32 numBytesWritten = platform->WriteProgramInput(&app->programInstance, &testMessage[0], testMessageLength);
-			if ((i32)numBytesWritten != testMessageLength)
+			PopupDebug("Something interesting is happening behind the scenes");
+			StatusDebug("Something interesting is happening behind the scenes");
+		}
+		if (ButtonPressed(Button_2))
+		{
+			PopupInfo("We are working :)");
+			StatusInfo("We are working :)");
+		}
+		if (ButtonPressed(Button_3))
+		{
+			PopupSuccess("That was awesome! Do it again.");
+			StatusSuccess("That was awesome! Do it again.");
+		}
+		if (ButtonPressed(Button_4))
+		{
+			PopupError("An error has occurred. The world might be ending...");
+			StatusError("An error has occurred. The world might be ending...");
+		}
+		if (ButtonPressed(Button_5))
+		{
+			PopupErrorTimed(10000, "This is a really long message for the user to read. Because it is so long we are going to give you 10 seconds to read it.");
+			StatusErrorTimed(10000, "This is a really long message for the user to read. Because it is so long we are going to give you 10 seconds to read it.");
+		}
+		
+		// +==============================+
+		// |        Debug Message         |
+		// +==============================+
+		if (ButtonPressed(Button_F2))
+		{
+			u32 testMessageLength = (u32)strlen(testMessage);
+			if (app->programInstance.isOpen && ButtonDown(Button_Shift))
 			{
-				DEBUG_PrintLine("Only wrote %u/%u bytes to program instance", numBytesWritten, testMessageLength);
+				DEBUG_PrintLine("Writing to program instance \"%.*s\"", testMessageLength, testMessage);
+				
+				u32 numBytesWritten = platform->WriteProgramInput(&app->programInstance, &testMessage[0], testMessageLength);
+				if ((i32)numBytesWritten != testMessageLength)
+				{
+					DEBUG_PrintLine("Only wrote %u/%u bytes to program instance", numBytesWritten, testMessageLength);
+				}
+			}
+			else
+			{
+				DataReceived(testMessage, testMessageLength);
 			}
 		}
-		else
+		
+		if (ButtonPressed(Button_F1) && app->lineList.charDataSize >= 1)
 		{
-			DataReceived(testMessage, testMessageLength);
+			DropCharData(app->lineList.charDataSize - 1);
 		}
-	}
-	
-	if (ButtonPressed(Button_F1) && app->lineList.charDataSize >= 1)
-	{
-		DropCharData(app->lineList.charDataSize - 1);
+		
+		#if 0
+		static bool testBoxSelected = false;
+		if (input->mouseInsideWindow && ButtonReleased(MouseButton_Left) && !ui->mouseInMenu)
+		{
+			if (IsInsideRectangle(RenderMousePos, app->testTextBox.drawRec) &&
+				IsInsideRectangle(RenderMouseStartPos, app->testTextBox.drawRec))
+			{
+				if (!testBoxSelected) { app->testTextBox.cursorBegin = app->testTextBox.numChars; app->testTextBox.cursorEnd = app->testTextBox.cursorBegin; }
+				testBoxSelected = true;
+			}
+			else if (!IsInsideRectangle(RenderMouseStartPos, app->testTextBox.drawRec))
+			{
+				testBoxSelected = false;
+			}
+		}
+		TextBoxUpdate(&app->testTextBox, testBoxSelected && platform->windowHasFocus);
+		#endif
 	}
 	#endif
 	#endif
 	
 	
 	RecalculateUiElements(ui, false);
+	TextBoxRellocate(&app->inputBox, ui->textInputRec);
 	
 	// +==============================+
 	// |     Arrow Key Scrolling      |
@@ -3066,6 +3095,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		}
 	}
 	
+	
 	//+================================+
 	//|          Update Menus          |
 	//+================================+
@@ -3073,9 +3103,28 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	
 	UpdateUiElements(ui);
 	RecalculateUiElements(ui, false);
+	TextBoxRellocate(&app->inputBox, ui->textInputRec);
 	if (ui->followingEndOfFile)
 	{
 		ui->scrollOffsetGoto.y = ui->maxScrollOffset.y;
+	}
+	TextBoxUpdate(&app->inputBox, IsActiveElement(&app->inputBox) && platform->windowHasFocus);
+	
+	// +==============================+
+	// |      Text Box Selection      |
+	// +==============================+
+	if (input->mouseInsideWindow && !ui->mouseInMenu)
+	{
+		if (ClickedOnRec(app->inputBox.drawRec))
+		{
+			HandleButton(MouseButton_Left);
+			ChangeActiveElement(&app->inputBox);
+		}
+		else if (ClickedOnRec(ui->viewRec))
+		{
+			HandleButton(MouseButton_Left);
+			ChangeActiveElement(&ui->viewRec);
+		}
 	}
 	
 	// +==============================+
@@ -3358,49 +3407,21 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		rs->DrawGradient(centerScrollBarRec, GC->colors.scrollbar1, GC->colors.scrollbar2, Direction2D_Right);
 	}
 	
-	// +==============================+
-	// |   Render Text Input Field    |
-	// +==============================+
-	if (GC->showInputTextBox)
-	{
-		rs->DrawGradient(ui->textInputRec, GC->colors.textInputBox1, GC->colors.textInputBox2, Direction2D_Down);
-		rs->DrawButton(ui->textInputRec, {Color_TransparentBlack}, GC->colors.textInputText, 1);
-		
-		v2 wholeInputSize = MeasureString(&app->mainFont, app->inputText, app->inputTextLength);
-		r32 cursorOffset  = MeasureString(&app->mainFont, app->inputText, (u32)app->inputTextCursor).x;
-		
-		v2 textPosition = NewVec2(
-			ui->textInputRec.x + 5,
-			ui->textInputRec.y + ui->textInputRec.height/2 - app->mainFont.lineHeight/2 + app->mainFont.maxExtendUp
-		);
-		
-		rs->DrawString(app->inputText, app->inputTextLength, textPosition, GC->colors.textInputText);
-		
-		if (platform->windowHasFocus)
-		{
-			Rectangle_t cursorRec = NewRectangle(
-				textPosition.x + cursorOffset,
-				textPosition.y - app->mainFont.maxExtendUp,
-				1, app->mainFont.lineHeight
-			);
-			Color_t cursorColor = ColorLerp(GC->colors.textInputCursor1, GC->colors.textInputCursor2, (Sin32((platform->programTime/1000.0f)*6.0f) + 1.0f) / 2.0f); //TODO: Sin?
-			rs->DrawRectangle(cursorRec, cursorColor);
-		}
-	}
+	TextBoxRender(&app->inputBox, rs, IsActiveElement(&app->inputBox) && platform->windowHasFocus);
 	
 	// +==============================+
 	// |      Render Send Button      |
 	// +==============================+
 	if (GC->showInputTextBox)
 	{
-		const char* sendButtonText = (ButtonDown(Button_Control) ? "Send HEX" : "Send");
+		const char* sendButtonText = (ButtonDown(Button_Control) ? "HEX" : "Send");
 		v2 textSize = MeasureString(&app->uiFont, sendButtonText);
 		v2 textPos = ui->sendButtonRec.topLeft + ui->sendButtonRec.size/2.f - textSize/2.f + NewVec2(0, app->uiFont.maxExtendUp);
 		
 		Color_t buttonColor = GC->colors.button;
 		Color_t textColor = GC->colors.buttonText;
 		Color_t borderColor = GC->colors.buttonBorder;
-		ButtonColorChoice(buttonColor, textColor, borderColor, ui->sendButtonRec, ButtonDown(Button_Enter), app->inputTextLength > 0);
+		ButtonColorChoice(buttonColor, textColor, borderColor, ui->sendButtonRec, ButtonDown(Button_Enter), app->inputBox.numChars > 0);
 		
 		rs->DrawButton(ui->sendButtonRec, buttonColor, borderColor, 1);
 		rs->BindFont(&app->uiFont);
@@ -3752,10 +3773,14 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	
 	DrawPopupOverlay(&app->renderState);
 	
+	#if DEBUG
+	#if 0
+	TextBoxRender(&app->testTextBox, rs, testBoxSelected && platform->windowHasFocus);
+	#endif
+	
 	// +================================+
 	// |       Draw Debug Overlay       |
 	// +================================+
-	#if DEBUG
 	if (app->showDebugMenu)
 	{
 		rec overlayRec = NewRectangle(10, 10, (r32)RenderScreenSize.x - 10*2, (r32)RenderScreenSize.y - 10*2);
