@@ -64,10 +64,28 @@
 	"send_input_to_python":    true,
 	"also_send_input_to_com":  false,
 	"show_python_output":      true,
-	"python_script":           "Resources/Scripts/hex.py",
+	// "python_script":           "Resources/Scripts/hex.py",
 	// "python_script":           "Resources/Scripts/asciiHex.py",
-	// "python_script":           "Resources/Scripts/bleUartCommands.py",
+	"python_script":           "Resources/Scripts/bleUartCommands.py",
 	// "python_script":           "Resources/Scripts/testScript.py",
+	
+	"port_names":
+	{
+		"COM1":  "System 1",
+		"COM3":  "App Right",
+		"COM4":  "Radio Right",
+		"COM6":  "App Left",
+		"COM7":  "Radio Left",
+		"COM9":  "PIC32MZ (COM9)",
+		"COM12": "RS485 Cable 1",
+		"COM13": "Radio Right",
+		"COM14": "RS485 Cable 2",
+		
+		// "tty.lpss-serial1": "Lpss Serial1",
+		// "tty.lpss-serial2": "Lpss Serial2",
+		// "tty.Bluetooth-Incoming-Port": "Bluetooth Incoming",
+		// "tty.usbserial-A506KDE9": "Test Loopback",
+	},
 	
 	"regex_triggers":
 	[
@@ -97,12 +115,12 @@
 			"replace_str": "$0$1",
 			"effects": ["foreground_color = 66D9EF"], //Light Blue
 		},
-		{
-			"expression": "([^=]*)[=]{4,}([^=]+)[=]{4,}([^=]*)",
-			// "show_only_captured": true,
-			"replace_str": "$0+-+-+$1+-+-+$2",
-			"effects": ["mark_above", "foreground_color = Orange"],
-		},
+		// {
+		// 	"expression": "([^=]*)[=]{4,}([^=]+)[=]{4,}([^=]*)",
+		// 	// "show_only_captured": true,
+		// 	"replace_str": "$0+-+-+$1+-+-+$2",
+		// 	"effects": ["mark_above", "foreground_color = Orange"],
+		// },
 		{
 			"expression_name": "BlePrefix",
 			"replace_str": "$0$1",
@@ -153,22 +171,6 @@
 		// 	"com_ports": ["COM9"],
 		// },
 	],
-	
-	"port_names":
-	{
-		"COM1":  "System 1",
-		"COM3":  "App Right",
-		"COM4":  "Radio Right",
-		"COM6":  "App Left",
-		"COM7":  "Radio Left",
-		"COM9":  "PIC32MZ (COM9)",
-		"COM12": "System 2",
-		
-		// "tty.lpss-serial1": "Lpss Serial1",
-		// "tty.lpss-serial2": "Lpss Serial2",
-		// "tty.Bluetooth-Incoming-Port": "Bluetooth Incoming",
-		// "tty.usbserial-A506KDE9": "Test Loopback",
-	},
 	
 	//Various Colors Used in UI drawing
 	"colors":
