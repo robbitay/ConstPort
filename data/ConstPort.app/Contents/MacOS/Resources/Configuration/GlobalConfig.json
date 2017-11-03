@@ -1,5 +1,5 @@
 {
-	"main_font_size": 24,
+	"main_font_size": 16,
 	"ui_font_size":   14,
 	"line_spacing":   2,  //px
 	"tab_width":      4,  //spaces
@@ -8,15 +8,15 @@
 	"elapsed_banner_time":    15, //secs
 	"elapsed_banner_height":  25, //px
 	
-	"mark_height":      1, //px
+	"mark_height":       1, //px
 	"thick_mark_height": 5, //px
 	
 	"status_message_time": 3, //secs
 	
 	"mouse_click_tolerance":  10, //px
 	"menu_border_thickness":  1,  //px
-	"scrollbar_width":       12, //px
-	"scrollbar_padding":     3,  //px
+	"scrollbar_width":        13, //px
+	"scrollbar_padding":      3,  //px
 	"min_scrollbar_height":   32, //px
 	"min_gutter_width":       30, //px
 	
@@ -26,64 +26,133 @@
 	"show_text_cursor": true,
 	"show_com_name_in_status_bar": true,
 	"show_line_numbers": true,
-	"show_hover_cursor": false,
-	"highlight_hover_line": false,
+	"show_hover_cursor": true,
+	"highlight_hover_line": true,
+	"show_file_cursor": false,
+	"show_input_text_box": true,
 	
 	"rx_tx_led_delay":     4, //frames
 	"rx_tx_led_ring_size": 1, //frames
 	"circular_rx_led":     true,
 	"circular_tx_led":     false,
 	
+	"new_line_string": "\n",
+	
 	"auto_echo_input": false,
+	"show_file_after_saving": true,
+	"save_times_to_file": true,
+	"show_update_indicator": true,
+	"line_wrap_enabled": true,
+	
+	"popup_corner_radius":     7, //px
+	"popup_outline_thickness": 1, //px
+	"popup_default_duration":  3000, //ms
+	"popup_in_anim_time":      500, //ms
+	"popup_out_anim_time":     500, //ms
+	
+	"status_default_duration":  3500, //ms
+	"status_in_anim_char_time": 30, //ms
+	"status_out_anim_time":     500, //ms
+	
+	"checkbox_anim_time": 500,
 	
 	//Python related options
 	"python_script_enabled":   true,
 	"auto_run_python":         false,
 	"send_com_data_to_python": true,
 	"also_show_com_data":      false,
-	"send_input_to_python":    false,
+	"send_input_to_python":    true,
 	"also_send_input_to_com":  false,
 	"show_python_output":      true,
-	"python_script":           "Resources/Scripts/asciiHex.py",
+	// "python_script":           "Resources/Scripts/hex.py",
+	// "python_script":           "Resources/Scripts/asciiHex.py",
+	"python_script":           "Resources/Scripts/bleUartCommands.py",
 	// "python_script":           "Resources/Scripts/testScript.py",
 	
-	"generic_count_regex_name":    "Has Exclamation",
-	"mark_line_regex_name":        "",
-	"highlight1_regex_name":       "Has Hex 01",
-	"highlight2_regex_name":       "Has Hex 02",
-	"highlight3_regex_name":       "Has Hex 03",
-	"highlight4_regex_name":       "Has Hex 04",
-	"highlight5_regex_name":       "Has Hex 05",
-	"background_color_regex_name": "Has Exclamation",
+	"port_names":
+	{
+		"COM1":  "System 1",
+		"COM3":  "App Right",
+		"COM4":  "Radio Right",
+		"COM6":  "App Left",
+		"COM7":  "Radio Left",
+		"COM9":  "PIC32MZ (COM9)",
+		"COM12": "RS485 Cable 1",
+		"COM13": "Radio Right",
+		"COM14": "RS485 Cable 2",
+		
+		// "tty.lpss-serial1": "Lpss Serial1",
+		// "tty.lpss-serial2": "Lpss Serial2",
+		// "tty.Bluetooth-Incoming-Port": "Bluetooth Incoming",
+		// "tty.usbserial-A506KDE9": "Test Loopback",
+	},
 	
 	"regex_triggers":
 	[
+		//Monokai Color Scheme
 		{
-			"expression_name": "Has Hex 01",
-			"effects": ["foreground_color = 75715E"],
+			"expression_name": "DebugPrefix",
+			"replace_str": "$0$1",
+			"effects": ["foreground_color = 75715E"], //Comment
 		},
 		{
-			"expression_name": "Has Hex 02",
-			"effects": ["foreground_color = A6E22E"],
+			"expression_name": "InfoPrefix",
+			"replace_str": "$0$1",
+			"effects": ["foreground_color = A6E22E"], //Green
 		},
 		{
-			"expression_name": "Has Hex 03",
-			"effects": ["foreground_color = F92665"],
+			"expression_name": "AlertPrefix",
+			"replace_str": "$0$1",
+			"effects": ["foreground_color = F92665"], //Red/Magenta
 		},
 		{
-			"expression_name": "Has Hex 04",
-			"effects": ["foreground_color = AE81FF"],
+			"expression_name": "NotifyPrefix",
+			"replace_str": "$0$1",
+			"effects": ["foreground_color = AE81FF"], //Purple
 		},
 		{
-			"expression_name": "Has Hex 05",
-			"effects": ["foreground_color = 66D9EF"],
+			"expression_name": "ImportantPrefix",
+			"replace_str": "$0$1",
+			"effects": ["foreground_color = 66D9EF"], //Light Blue
 		},
+		// {
+		// 	"expression": "([^=]*)[=]{4,}([^=]+)[=]{4,}([^=]*)",
+		// 	// "show_only_captured": true,
+		// 	"replace_str": "$0+-+-+$1+-+-+$2",
+		// 	"effects": ["mark_above", "foreground_color = Orange"],
+		// },
+		{
+			"expression_name": "BlePrefix",
+			"replace_str": "$0$1",
+			"effects": ["background_color = Black"],
+		},
+		
+		//Neon Color Scheme
+		// {
+		// 	"expression_name": "Has Hex 01",
+		// 	"effects": ["foreground_color = 7F817E"], //Gray
+		// },
+		// {
+		// 	"expression_name": "Has Hex 02",
+		// 	"effects": ["foreground_color = 02AEFF"], //Turquoise
+		// },
+		// {
+		// 	"expression_name": "Has Hex 03",
+		// 	"effects": ["foreground_color = FF0604"], //Red
+		// },
+		// {
+		// 	"expression_name": "Has Hex 04",
+		// 	"effects": ["foreground_color = FF6803"], //Orange
+		// },
+		// {
+		// 	"expression_name": "Has Hex 05",
+		// 	"effects": ["foreground_color = CFFF01"], //Yellow
+		// },
 		
 		//Example Trigger
 		// {
 		// 	"expression": "\\!",
 		// 	"show_only_captured": false,
-		// 	"run_at_eol": true,
 		// 	"run_per_character": false,
 		// 	"effects":
 		// 	[
@@ -96,94 +165,225 @@
 		// 		// "clear_line",
 		// 		// "count",
 		// 		"status = We found an exclamation mark!",
+		//		"save = 20",
 		// 	],
 		// 	//TODO: Implement com_ports list
 		// 	"com_ports": ["COM9"],
 		// },
 	],
 	
-	"port_names":
-	{
-		"COM1":  "System 1",
-		// "COM2":  "Name",
-		"COM3":  "Loopback Test",
-		// "COM4":  "Name",
-		// "COM5":  "Name",
-		// "COM6":  "Name",
-		// "COM7":  "Name",
-		// "COM8":  "Name",
-		"COM9":  "PIC32MZ",
-		// "COM10": "Name",
-		// "COM11": "Name",
-		"COM12": "System 2",
-		// "COM13": "Name",
-		// "COM14": "Name",
-		// "COM15": "Name",
-		// "COM16": "Name",
-		// "COM17": "Name",
-		// "COM18": "Name",
-		// "COM19": "Name",
-		// "COM20": "Name",
-		// "COM21": "Name",
-		// "COM22": "Name",
-		// "COM23": "Name",
-		// "COM24": "Name",
-		
-		"tty.lpss-serial1": "Lpss Serial1",
-		"tty.lpss-serial2": "Lpss Serial2",
-		"tty.Bluetooth-Incoming-Port": "Bluetooth Incoming",
-		"tty.usbserial-A506KDE9": "Test Loopback",
-	},
-	
 	//Various Colors Used in UI drawing
 	"colors":
 	{
-		"background":             "212121",
-		"foreground":             "F8F8F2",
-		"selection_1":            "White",
-		"selection_2":            "Gray",
-		"regex_match_background": "Black",
-		"ui_gray_1":              "494949",
-		"ui_gray_2":              "404040",
-		"ui_gray_3":              "303030",
-		"ui_gray_4":              "101010",
-		"ui_light_gray_1":        "B4B4B4",
-		"receive_led":            [249,  38, 101, 255], //Red/Magenta
-		"transmit_led":           [174, 129, 255, 255], //Purple
-		"hover_line":             "303030", //UiGray3
-		"banner_color_1":         "494949", //UiGray1
-		"banner_color_2":         "303030", //UiGray3
-		"window_title_bar":       "303030", //UiGray3
-		"window_background":      "494949", //UiGray1
-		"window_border":          "B4B4B4", //UiLightGray1
-		"mark_color_1":           [255, 255, 255, 128],
-		"mark_color_2":           [255, 255, 255,   0],
-		"highlight_1":            [117, 113,  94, 255], //75715E Comment Color
-		"highlight_2":            [166, 226,  46, 255], //A6E22E Green Color
-		"highlight_3":            [249,  38, 101, 255], //F92665 Red/Magenta
-		"highlight_4":            [174, 129, 255, 255], //AE81FF Purple
-		"highlight_5":            [102, 217, 239, 255], //66D9EF Light Blue
 		
-		"button":                 "White",
-		"button_text":            "Black",
-		"button_border":          "Black",
+		// +==============================+
+		// |     Monokai Color Scheme     |
+		// +==============================+
+		// 75715E - Comment
+		// A6E22E - Green
+		// F92665 - Red/Magenta
+		// AE81FF - Purple
+		// 66D9EF - Light Blue
+		// 494949 - Ui Gray 1
+		// 404040 - Ui Gray 2
+		// 303030 - Ui Gray 3
+		// 101010 - Ui Gray 4
+		// B4B4B4 - Ui Light Gray 1
 		
-		//NOTE: The hover colors are mulitplied on top of the other states
-		//      (except when the button is being pressed)
+		"text_default":     "F8F8F2",
+		"text_background":  "212121",
+		"hover_background": "000000",
+		"selection_1":      "FFFFFF",
+		"selection_2":      "808080",
+		"banner_1":         "494949",
+		"banner_2":         "303030",
+		"banner_text":      "F8F8F2",
+		"line_mark_hover":  "A6E22E", //Green
+		"line_mark_1":      "FFFFFFFF",
+		"line_mark_2":      "FFFFFF80",
+		"hover_cursor_1":   "B4B4B4",
+		"hover_cursor_2":   "B4B4B4",
+		"file_cursor_1":    "F8F8F2",
+		"file_cursor_2":    "F8F8F2",
+		
+		"ui_text":           "F8F8F2",
+		"debug_message":     "75715E", //Comment
+		"success_message":   "A6E22E", //Green
+		"info_message":      "F8F8F2",
+		"error_message":     "F92665", //Red/Magenta
+		"line_numbers":      "F8F8F2",
+		"scrollbar_outline": "000000",
+		"scrollbar_1":       "494949",
+		"scrollbar_2":       "303030",
+		"scrollbar_back_1":  "202020",
+		"scrollbar_back_2":  "303030",
+		"gutter_1":          "494949",
+		"gutter_2":          "303030",
+		"status_bar_1":      "303030",
+		"status_bar_2":      "303030",
+		"main_menu_1":       "494949",
+		"main_menu_2":       "303030",
+		"update_indicator_color_1": "494949",
+		"update_indicator_color_2": "101010",
+		
+		"text_input_box_1":    "696969",
+		"text_input_box_2":    "494949",
+		"text_input_text":     "F8F8F2",
+		"text_input_cursor_1": "F8F8F2FF",
+		"text_input_cursor_2": "F8F8F200",
+		
+		"window_outline":      "B4B4B4",
+		"window_titlebar":     "303030",
+		"window_background_1": "494949",
+		"window_background_2": "303030",
+		"window_exit":         "FF0000",
+		"window_exit_icon":    "FFFFFF",
+		"context_menu_text":   "F8F8F2",
+		
+		"popup_outline_outer":  "B4B4B4",
+		"popup_outline_center": "606060",
+		"popup_outline_inner":  "B4B4B4",
+		"popup_background":     "303030",
+		
+		"receive_led":       "000000",
+		"receive_led_idle":  "F92665", //Red/Magenta
+		"receive_led_ring":  "F92665", //Red/Magenta
+		"transmit_led":      "000000",
+		"transmit_led_idle": "AE81FF", //Purple
+		"transmit_led_ring": "AE81FF", //Purple
+		
+		"button":                 "FFFFFF",
+		"button_text":            "000000",
+		"button_border":          "000000",
+		
 		"button_hover":           "B4B4B4", //UiLightGray1
-		"button_hover_text":      "White",
-		"button_hover_border":    "White",
+		"button_hover_text":      "FFFFFF",
+		"button_hover_border":    "FFFFFF",
 		
-		"button_press":           [249,  38, 101, 255], //Red/Magenta
-		"button_press_text":      "White",
-		"button_press_border":    "White",
+		"button_press":           "F92665", //Red/Magenta
+		"button_press_text":      "FFFFFF",
+		"button_press_border":    "FFFFFF",
 		
-		"button_selected":        [174, 129, 255, 255], //Purple
-		"button_selected_text":   "Black",
-		"button_selected_border": "Black",
+		"button_selected":        "AE81FF", //Purple
+		"button_selected_text":   "000000",
+		"button_selected_border": "000000",
 		
-		"button_ready":           [166, 226,  46, 255], //Green Color
-		"button_ready_text":      "Black",
-		"button_ready_border":    "Black",
+		"button_ready":           "A6E22E", //Green
+		"button_ready_text":      "000000",
+		"button_ready_border":    "000000",
+		
+		"button_disabled":        "494949",
+		"button_disabled_text":   "000000",
+		"button_disabled_border": "000000",
+		
+		"main_menu_button":              "303030",
+		"main_menu_button_icon":         "F8F8F2",
+		"main_menu_button_border":       "F8F8F2",
+		
+		"main_menu_button_hover":        "303030",
+		"main_menu_button_hover_icon":   "B4B4B4",
+		"main_menu_button_hover_border": "B4B4B4",
+		
+		"main_menu_button_press":        "303030",
+		"main_menu_button_press_icon":   "66D9EF", //Light Blue
+		"main_menu_button_press_border": "66D9EF", //Light Blue
+		
+		// +==============================+
+		// |      Neon Color Scheme       |
+		// +==============================+
+		// 1F1F1F - Dark Gray
+		// 474747 - Gray
+		// 7F817E - Light Gray
+		// 02AEFF - Turquoise
+		// FF0604 - Red
+		// FF6803 - Orange
+		// CFFF01 - Yellow
+		// 6F6F6F - Ui Gray
+		
+		// "text_default":     "FFFFFF",
+		// "text_background":  "000000",
+		// "hover_background": "2D2D2D",
+		// "selection_1":      "0205FF",
+		// "selection_2":      "0205FF",
+		// "banner_1":         "1F1F1F",
+		// "banner_2":         "1F1F1F",
+		// "banner_text":      "7F817E",
+		// "line_mark_hover":  "CFFF01", //Yellow
+		// "line_mark_1":      "02AEFF", //Turquoise
+		// "line_mark_2":      "02AEFF", //Turquoise
+		// "hover_cursor_1":   "FFFFFFFF",
+		// "hover_cursor_2":   "FFFFFF00",
+		// "file_cursor_1":    "FFFFFFFF",
+		// "file_cursor_2":    "FFFFFF00",
+		
+		// "ui_text":           "000000",
+		// "debug_message":     "7F817E", //Gray
+		// "success_message":   "02AEFF", //Turquoise
+		// "info_message":      "CFFF01", //Yellow
+		// "error_message":     "FF0604", //Red
+		// "line_numbers":      "7F817E",
+		// "scrollbar_outline": "000000",
+		// "scrollbar_1":       "474747",
+		// "scrollbar_2":       "474747",
+		// "scrollbar_back_1":  "1F1F1F",
+		// "scrollbar_back_2":  "1F1F1F",
+		// "gutter_1":          "1F1F1F",
+		// "gutter_2":          "1F1F1F",
+		// "status_bar_1":      "474747",
+		// "status_bar_2":      "474747",
+		// "main_menu_1":       "474747",
+		// "main_menu_2":       "474747",
+		
+		// "window_outline":      "47474700",
+		// "window_titlebar":     "474747",
+		// "window_background_1": "7F817E",
+		// "window_background_2": "7F817E",
+		// "window_exit":         "CFFF01", //Yellow
+		// "window_exit_icon":    "02AEFF", //Turquoise
+		// "context_menu_text":   "000000",
+		
+		// "receive_led":         "000000",
+		// "receive_led_active":  "CFFF01", //Yellow
+		// "receive_led_ring":    "CFFF01", //Yellow
+		// "transmit_led":        "000000",
+		// "transmit_led_active": "02AEFF", //Turquoise
+		// "transmit_led_ring":   "02AEFF", //Turquoise
+		
+		// "button":                 "FFFFFF",
+		// "button_text":            "000000",
+		// "button_border":          "000000",
+		
+		// "button_hover":           "7F817E",
+		// "button_hover_text":      "FFFFFF",
+		// "button_hover_border":    "FFFFFF",
+		
+		// "button_press":           "FF0604", //Red
+		// "button_press_text":      "FFFFFF",
+		// "button_press_border":    "FFFFFF",
+		
+		// "button_selected":        "02AEFF", //Turquoise
+		// "button_selected_text":   "000000",
+		// "button_selected_border": "000000",
+		
+		// "button_ready":           "CFFF01", //Yellow
+		// "button_ready_text":      "000000",
+		// "button_ready_border":    "000000",
+		
+		// "button_disabled":        "7F817E",
+		// "button_disabled_text":   "000000",
+		// "button_disabled_border": "000000",
+		
+		// "main_menu_button":              "000000",
+		// "main_menu_button_icon":         "FFFFFF",
+		// "main_menu_button_border":       "FFFFFF",
+		
+		// "main_menu_button_hover":        "000000",
+		// "main_menu_button_hover_icon":   "02AEFF",
+		// "main_menu_button_hover_border": "02AEFF",
+		
+		// "main_menu_button_press":        "000000",
+		// "main_menu_button_press_icon":   "FF0604",
+		// "main_menu_button_press_border": "FF0604",
+		
 	},
 }

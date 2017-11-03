@@ -10,6 +10,7 @@ while(True):
 #
 	newCharacter = sys.stdin.read(1)
 	# print("Char \'%s\'" % (newCharacter))
+	
 	if (newCharacter == '\n'):
 	#
 		print("")

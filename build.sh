@@ -4,7 +4,7 @@ ProjectName="ConstPort"
 CompilePlatform=1
 CompileApplication=1
 CreateApplicationBundle=1
-DebugBuild=1
+DebugBuild=0
 
 if [ $DebugBuild -gt 0 ]
 then
@@ -66,7 +66,24 @@ if [ $CreateApplicationBundle -gt 0 ]
 then
 	echo [Creating application bundle]
 	
-	echo This will be filled later!
+	cd ../data
+	
+	rm -f -r ConstPort.app
+	mkdir ConstPort.app
+	mkdir ConstPort.app/Contents
+	cp Info.plist ConstPort.app/Contents/Info.plist
+
+	mkdir ConstPort.app/Contents/MacOS
+	cp ConstPort     ConstPort.app/Contents/MacOS/ConstPort
+	cp ConstPort.dll ConstPort.app/Contents/MacOS/ConstPort.dll
+	cp glew32.dll    ConstPort.app/Contents/MacOS/glew32.dll
+	
+	cp -r Resources  ConstPort.app/Contents/MacOS/Resources
+	
+	mkdir ConstPort.app/Contents/Resources
+	cp Icon.icns ConstPort.app/Contents/Resources/Icon.icns
+	
+	echo Application Bundle Succeeded!
 	
 	echo 
 fi

@@ -11,7 +11,7 @@
   <key>CFBundleName</key>
   <string>constport</string>
   <key>CFBundleIconFile</key>
-  <string>icon.icns</string>
+  <string>Icon</string>
   <key>CFBundleShortVersionString</key>
   <string>1.05</string>
   <key>CFBundleInfoDictionaryVersion</key>
@@ -22,5 +22,7 @@
   <integer>1</integer>
   <key>IFMinorVersion</key>
   <integer>5</integer>
+  <key>NSPrincipalClass</key>
+  <string>NSApplication</string>
 </dict>
 </plist>

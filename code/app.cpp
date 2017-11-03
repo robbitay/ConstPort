@@ -2480,8 +2480,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	//+================================+
 	//|         Show COM Menu          |
 	//+================================+
-	if (ButtonPressed(Button_O) &&
-		ButtonDown(Button_Control))
+	if (ButtonPressed(Button_O) && ButtonDown(Button_Control))
 	{
 		Assert(comMenu != nullptr);
 		
@@ -2496,31 +2495,32 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		}
 	}
 	
-	//+======================================+
-	//| Clear Console and Copy to Clipboard  |
-	//+======================================+
-	if (IsActiveElement(&ui->viewRec) && ButtonDown(Button_Control) && ButtonPressed(Button_C))
+	// +==============================+
+	// | Copy Selection to Clipboard  |
+	// +==============================+
+	if (IsActiveElement(&ui->viewRec) && ButtonDown(Button_Control) && ButtonPressed(Button_C) && !ButtonDown(Button_Shift))
 	{
-		if (ButtonDown(Button_Shift))
+		u32 selectionSize = GetSelection(app->selectionStart, app->selectionEnd, false);
+		if (selectionSize != 0)
 		{
-			ClearConsole();
+			TempPushMark();
+			
+			char* selectionTempBuffer = TempString(selectionSize+1);
+			GetSelection(app->selectionStart, app->selectionEnd, false, selectionTempBuffer);
+			
+			platform->CopyToClipboard(selectionTempBuffer, selectionSize);
+			StatusSuccess("Copied %u bytes to clipboard", selectionSize);
+			
+			TempPopMark();
 		}
-		else
-		{
-			u32 selectionSize = GetSelection(app->selectionStart, app->selectionEnd, false);
-			if (selectionSize != 0)
-			{
-				TempPushMark();
-				
-				char* selectionTempBuffer = TempString(selectionSize+1);
-				GetSelection(app->selectionStart, app->selectionEnd, false, selectionTempBuffer);
-				
-				platform->CopyToClipboard(selectionTempBuffer, selectionSize);
-				StatusSuccess("Copied %u bytes to clipboard", selectionSize);
-				
-				TempPopMark();
-			}
-		}
+	}
+	
+	// +==============================+
+	// |    Clear Console Shortcut    |
+	// +==============================+
+	if (ButtonDown(Button_Control) && ButtonPressed(Button_C) && !ButtonDown(Button_Shift))
+	{
+		ClearConsole();
 	}
 	
 	//+==================================+
@@ -3123,7 +3123,14 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		else if (ClickedOnRec(ui->viewRec))
 		{
 			HandleButton(MouseButton_Left);
-			ChangeActiveElement(&ui->viewRec);
+			if (GC->showInputTextBox) //TODO: Make a configuration option to disable this?
+			{
+				ChangeActiveElement(&app->inputBox);
+			}
+			else
+			{
+				ChangeActiveElement(&ui->viewRec);
+			}
 		}
 	}
 	
