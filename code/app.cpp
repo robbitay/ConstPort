@@ -2647,7 +2647,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	// +==============================+
 	// |         Debug Popups         |
 	// +==============================+
-	#if 0
+	#if 1
 	#if DEBUG
 	{
 		if (ButtonPressed(Button_1))

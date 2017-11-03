@@ -87,9 +87,39 @@ ReadEntireFile_DEFINITION(OSX_ReadEntireFile)
 // bool32 OSX_WriteEntireFile(const char* filename, void* memory, uint32 memorySize)
 WriteEntireFile_DEFINITION(OSX_WriteEntireFile)
 {
-	//TODO: Write the file
+	FILE* fileHandle;
 	
-	return false;
+	if (filename[0] != '/')
+	{
+		char absolutePath[256] = {};
+		snprintf(absolutePath, sizeof(absolutePath), "%s/%s", WorkingDirectory, filename);
+		printf("Attempting to save to \"%s\"\n", absolutePath);
+		fileHandle = fopen(absolutePath, "wb");
+	}
+	else
+	{
+		printf("Attempting to save to \"%s\"\n", filename);
+		fileHandle = fopen(filename, "wb");
+	}
+	
+	if (fileHandle == nullptr)
+	{
+		OSX_WriteLine("Failed to open file");
+		return false;
+	}
+	
+	size_t writeResult = fwrite(memory, 1, (size_t)memorySize, fileHandle);
+	
+	fclose(fileHandle);
+	
+	if (writeResult != memorySize)
+	{
+		return false;
+	}
+	else
+	{
+		return true;
+	}
 }
 
 // +==============================+
