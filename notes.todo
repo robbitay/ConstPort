@@ -57,6 +57,7 @@
 	
 
 # OSX Platform Layer TODO List
+	[!] Fix selection rendering on OSX?
 	[!] Add support for cursor setting on OSX platform layer
 	[ ] Implement OSX_OpenFile, OSX_AppendFile, and OSX_CloseFile
 	[ ] Implement PlatformConfig in OSX platform layer
