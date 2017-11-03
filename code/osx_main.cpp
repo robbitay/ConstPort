@@ -188,6 +188,8 @@ int main(int argc, char** argv)
 	PlatformInfo.WriteComPort      = OSX_WriteComPort;
 	PlatformInfo.CopyToClipboard   = OSX_CopyToClipboard;
 	PlatformInfo.CopyFromClipboard = OSX_CopyFromClipboard;
+	PlatformInfo.CreateNewWindow   = OSX_CreateNewWindow;
+	PlatformInfo.GetAbsolutePath   = OSX_GetAbsolutePath;
 	PlatformInfo.StartProgramInstance = OSX_StartProgramInstance;
 	PlatformInfo.GetProgramStatus     = OSX_GetProgramStatus;
 	PlatformInfo.ReadProgramOutput    = OSX_ReadProgramOutput;

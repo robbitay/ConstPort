@@ -2867,6 +2867,14 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		}
 	}
 	
+	// +==============================+
+	// |     Open New Window Test     |
+	// +==============================+
+	if (ButtonDown(Button_Control) && ButtonDown(Button_Shift) && ButtonPressed(Button_N))
+	{
+		platform->CreateNewWindow();
+	}
+	
 	//+==================================+
 	//|        Main Menu Buttons         |
 	//+==================================+

@@ -133,3 +133,42 @@ WriteProgramInput_DEFINITION(OSX_WriteProgramInput)
 	
 	return (u32)writeResult;
 }
+
+// +==============================+
+// |     OSX_CreateNewWindow      |
+// +==============================+
+// void OSX_CreateNewWindow()
+CreateNewWindow_DEFINITION(OSX_CreateNewWindow)
+{
+	char tempBuffer[256];
+	snprintf(tempBuffer, ArrayCount(tempBuffer)-1, "open -n \"%s/../../../ConstPort.app\"", WorkingDirectory);
+	
+	pid_t pid = popen2(tempBuffer, nullptr, nullptr);
+	
+	if (pid > 0)
+	{
+		OSX_PrintLine("New window created, PID = %d", pid);
+	}
+	else
+	{
+		OSX_PrintLine("Failed to create new window: errno=%s", GetErrnoName(errno));
+	}
+}
+
+// +==============================+
+// |     OSX_GetAbsolutePath      |
+// +==============================+
+// char* OSX_GetAbsolutePath(MemoryArena_t* arenaPntr, const char* relativePath)
+GetAbsolutePath_DEFINITION(OSX_GetAbsolutePath)
+{
+	//TODO: Do better at detecting absolute paths
+	if (relativePath[0] != '/')
+	{
+		return ArenaPrint(arenaPntr, "%s/%s", WorkingDirectory, relativePath);
+	}
+	else
+	{
+		return ArenaString(arenaPntr, relativePath);
+	}
+	return nullptr;
+}

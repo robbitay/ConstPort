@@ -123,6 +123,11 @@ typedef CopyToClipboard_DEFINITION(CopyToClipboard_f);
 #define CopyFromClipboard_DEFINITION(functionName) void* functionName(MemoryArena_t* arenaPntr, u32* dataLengthOut)
 typedef CopyFromClipboard_DEFINITION(CopyFromClipboard_f);
 
+#define CreateNewWindow_DEFINITION(functionName) void functionName()
+typedef CreateNewWindow_DEFINITION(CreateNewWindow_f);
+#define GetAbsolutePath_DEFINITION(functionName) char* functionName(MemoryArena_t* arenaPntr, const char* relativePath)
+typedef GetAbsolutePath_DEFINITION(GetAbsolutePath_f);
+
 //+================================================================+
 //|                          Structures                            |
 //+================================================================+
@@ -172,6 +177,9 @@ struct PlatformInfo_t
 	
 	CopyToClipboard_f*   CopyToClipboard;
 	CopyFromClipboard_f* CopyFromClipboard;
+	
+	CreateNewWindow_f* CreateNewWindow;
+	GetAbsolutePath_f* GetAbsolutePath;
 	
 	StartProgramInstance_f* StartProgramInstance;
 	GetProgramStatus_f*     GetProgramStatus;
