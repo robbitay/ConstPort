@@ -14,9 +14,13 @@ Description:
 // void OSX_CopyToClipboard(const void* dataPntr, u32 dataSize)
 CopyToClipboard_DEFINITION(OSX_CopyToClipboard)
 {
-	Assert(((u8*)dataPntr)[dataSize] == '\0');
+	char* tempSpace = (char*)malloc(dataSize+1);
+	memcpy(tempSpace, dataPntr, dataSize);
+	tempSpace[dataSize] = '\0';
 	
-	glfwSetClipboardString(PlatformInfo.window, (const char*)dataPntr);
+	glfwSetClipboardString(PlatformInfo.window, tempSpace);
+	
+	free(tempSpace);
 }
 
 // +==============================+

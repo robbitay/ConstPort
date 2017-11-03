@@ -4,7 +4,7 @@ ProjectName="ConstPort"
 CompilePlatform=1
 CompileApplication=1
 CreateApplicationBundle=1
-DebugBuild=0
+DebugBuild=1
 
 if [ $DebugBuild -gt 0 ]
 then
