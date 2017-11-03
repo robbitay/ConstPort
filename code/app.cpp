@@ -2703,6 +2703,12 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 			DropCharData(app->lineList.charDataSize - 1);
 		}
 		
+		if (ButtonPressed(Button_F3))
+		{
+			char* testPath = platform->GetAbsolutePath(TempArena, "Resources/test.txt");
+			PopupInfoTimed(100000, "%s", testPath);
+		}
+		
 		#if 0
 		static bool testBoxSelected = false;
 		if (input->mouseInsideWindow && ButtonReleased(MouseButton_Left) && !ui->mouseInMenu)
@@ -2868,11 +2874,15 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	}
 	
 	// +==============================+
-	// |     Open New Window Test     |
+	// |      Create New Window       |
 	// +==============================+
 	if (ButtonDown(Button_Control) && ButtonDown(Button_Shift) && ButtonPressed(Button_N))
 	{
+		#if DEBUG
+		PopupError("Cannot open new window in debug mode");
+		#else
 		platform->CreateNewWindow();
+		#endif
 	}
 	
 	//+==================================+

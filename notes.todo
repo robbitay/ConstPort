@@ -47,6 +47,8 @@
 # Win32 Platform Layer TODO List
 	[?] Change Win32_CopyToClipboard and Win32_CopyFromCipboard to use glfw calls like OSX?
 	[!] Add support for key hold trigger count
+	[!] Make Win32_GetAbsolutePath work when the executable is in another directory
+	[ ] Make startup time faster for new window?
 	[ ] Add checking for COM port errors and whether or not we are still connected
 	[ ] Fix the WIN32_LaunchFile and WIN32_StartProgramInstance support for non-relative paths
 	[ ] Make sure the program can run when started from any current directory
@@ -65,6 +67,8 @@
 
 
 # Old TODO List Items
+	[X] Added CreateNewWindow to platform layer
+	[X] Added GetAbsolutePath to platform layer
 	[X] Disable DLL copying in release mode
 	[X] Write a script to make the application bundle.
 	[X] Make an application bundle that can be run from anywhere

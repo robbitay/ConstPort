@@ -216,6 +216,7 @@ LaunchFile_DEFINITION(Win32_LaunchFile)
 	}
 }
 
+//TODO: This actually gets the executable directory. The name is misleading. Should be renamed
 uint32 GetRunningDirectory(char* buffer, uint32 maxBufferSize)
 {
 	DWORD moduleFilenameLength = GetModuleFileNameA(0, buffer, maxBufferSize);

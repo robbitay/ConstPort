@@ -275,6 +275,8 @@ int WINAPI WinMain(HINSTANCE hInstance,
 	platformInfo.ReadProgramOutput    = Win32_ReadProgramOutput;
 	platformInfo.WriteProgramInput    = Win32_WriteProgramInput;
 	platformInfo.CloseProgramInstance = Win32_CloseProgramInstance;
+	platformInfo.CreateNewWindow      = Win32_CreateNewWindow;
+	platformInfo.GetAbsolutePath      = Win32_GetAbsolutePath;
 	
 	//+--------------------------------------+
 	//|         Application Memory           |

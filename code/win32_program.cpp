@@ -11,7 +11,7 @@ Description:
 // +==============================+
 // |  Win32_StartProgramInstance  |
 // +==============================+
-// ProgramInstance_t StartProgramInstancePntr(const char* commandStr)
+// ProgramInstance_t StartProgramInstance(const char* commandStr)
 StartProgramInstance_DEFINITION(Win32_StartProgramInstance)
 {
 	ProgramInstance_t result = {};
@@ -81,7 +81,7 @@ StartProgramInstance_DEFINITION(Win32_StartProgramInstance)
 // +==============================+
 // |    Win32_GetProgramStatus    |
 // +==============================+
-// ProgramStatus_t GetProgramStatusPntr(const ProgramInstance_t* program)
+// ProgramStatus_t GetProgramStatus(const ProgramInstance_t* program)
 GetProgramStatus_DEFINITION(Win32_GetProgramStatus)
 {
 	DWORD exitCode;
@@ -107,7 +107,7 @@ GetProgramStatus_DEFINITION(Win32_GetProgramStatus)
 // +==============================+
 // |   Win32_ReadProgramOutput    |
 // +==============================+
-// u32 ReadProgramOutputPntr(const ProgramInstance_t* program, char* outputBuffer, u32 outputBufferSize)
+// u32 ReadProgramOutput(const ProgramInstance_t* program, char* outputBuffer, u32 outputBufferSize)
 ReadProgramOutput_DEFINITION(Win32_ReadProgramOutput)
 {
 	Assert(program != nullptr);
@@ -133,7 +133,7 @@ ReadProgramOutput_DEFINITION(Win32_ReadProgramOutput)
 // +==============================+
 // |   Win32_WriteProgramInput    |
 // +==============================+
-// u32 WriteProgramInputPntr(const ProgramInstance_t* program, const char* dataPntr, u32 numBytes)
+// u32 WriteProgramInput(const ProgramInstance_t* program, const char* dataPntr, u32 numBytes)
 WriteProgramInput_DEFINITION(Win32_WriteProgramInput)
 {
 	Assert(program != nullptr);
@@ -154,7 +154,7 @@ WriteProgramInput_DEFINITION(Win32_WriteProgramInput)
 // +==============================+
 // |  Win32_CloseProgramInstance  |
 // +==============================+
-// void CloseProgramInstancePntr(ProgramInstance_t* program)
+// void CloseProgramInstance(ProgramInstance_t* program)
 CloseProgramInstance_DEFINITION(Win32_CloseProgramInstance)
 {
 	if (program == nullptr) return;
@@ -201,4 +201,65 @@ CloseProgramInstance_DEFINITION(Win32_CloseProgramInstance)
 	program->isOpen = false;
 }
 
+// +==============================+
+// |    Win32_CreateNewWindow     |
+// +==============================+
+// void CreateNewWindow()
+CreateNewWindow_DEFINITION(Win32_CreateNewWindow)
+{
+	char moduleName[256] = {};
+	DWORD moduleNameLength = GetModuleFileNameA(0, moduleName, ArrayCount(moduleName));
+	
+	PROCESS_INFORMATION procInfo = {};
+	
+	STARTUPINFO startupInfo = {};
+	startupInfo.cb = sizeof(STARTUPINFO);
+	startupInfo.dwFlags |= STARTF_USESHOWWINDOW;
+	startupInfo.wShowWindow = SW_SHOWMINNOACTIVE;
+	
+	bool32 createProcessResult = CreateProcess(NULL,
+		(LPSTR)moduleName, // command line
+		NULL,              // process security attributes
+		NULL,              // primary thread security attributes
+		true,              // handles are inherited
+		0,                 // creation flags
+		NULL,              // use parent's environment
+		NULL,              // use parent's current directory
+		&startupInfo,      // STARTUPINFO pointer
+		&procInfo);        // receives PROCESS_INFORMATION
+	
+	if (createProcessResult)
+	{
+		Win32_WriteLine("Created new window!");
+	}
+	else
+	{
+		Win32_WriteLine("Failed to create new window");
+	}
+}
 
+void ReplaceCharInString(char* strPntr, char oldChar, char newChar)
+{
+	for (u32 cIndex = 0; strPntr[cIndex] != '\0'; cIndex++)
+	{
+		if (strPntr[cIndex] == oldChar)
+		{
+			strPntr[cIndex] = newChar;
+		}
+	}
+}
+
+// +==============================+
+// |    Win32_GetAbsolutePath     |
+// +==============================+
+// char* GetAbsolutePath(MemoryArena_t* arenaPntr, const char* relativePath)
+GetAbsolutePath_DEFINITION(Win32_GetAbsolutePath)
+{
+	char workingDir[256] = {};
+	u32 workingDirLength = GetRunningDirectory(workingDir, ArrayCount(workingDir));
+	
+	char* result = ArenaPrint(arenaPntr, "%s%s", workingDir, relativePath);
+	ReplaceCharInString(result, '/', '\\');
+	
+	return result;
+}
