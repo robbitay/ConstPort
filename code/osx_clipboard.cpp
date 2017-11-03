@@ -21,9 +21,9 @@ CopyToClipboard_DEFINITION(OSX_CopyToClipboard)
 // +==============================+
 CopyFromClipboard_DEFINITION(OSX_CopyFromClipboard)
 {
-	u32 result = 0;
+	*dataLengthOut = 0;
 	
 	//TODO: Copy contents from the clipboard
 	
-	return result;
+	return nullptr;
 }

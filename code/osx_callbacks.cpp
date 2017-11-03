@@ -33,6 +33,11 @@ void GlfwWindowMinimizeCallback(GLFWwindow* window, i32 isMinimized)
 	OSX_PrintLine("Window %s", isMinimized ? "Minimized" : "Restored");
 	PlatformInfo.windowIsMinimized = (isMinimized > 0);
 }
+void GlfwWindowFocusCallback(GLFWwindow* window, i32 isFocused)
+{
+	OSX_PrintLine("Window %s focus!", isFocused ? "Gained" : "Lost");
+	PlatformInfo.windowHasFocus = (isFocused > 0);
+}
 void GlfwKeyPressedCallback(GLFWwindow* window, i32 key, i32 scanCode, i32 action, i32 modifiers)
 {
 	// OSX_WriteLine("Received GlfwKeyPressedCallback");
@@ -109,5 +114,11 @@ void GlfwMouseScrollCallback(GLFWwindow* window, real64 deltaX, real64 deltaY)
 	
 	currentInput->scrollValue += NewVec2((r32)deltaX, (r32)deltaY);
 	currentInput->scrollDelta += NewVec2((r32)deltaX, (r32)deltaY);
+}
+void GlfwCursorEnteredCallback(GLFWwindow* window, i32 entered)
+{
+	OSX_PrintLine("Mouse %s window", entered ? "entered" : "left");
+	AppInput_t* currentInput = (AppInput_t*)glfwGetWindowUserPointer(window);
+	currentInput->mouseInsideWindow = (entered > 0);
 }
 

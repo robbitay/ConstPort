@@ -1460,8 +1460,8 @@ void DropCharData(u32 targetSize)
 	StatusInfo("Resizing %u bytes down to %u bytes", app->lineList.charDataSize, targetSize);
 	u32 numLinesRemoved = 0;
 	r32 heightRemoved = LineListDownsize(&app->lineList, targetSize, &numLinesRemoved);
-	app->uiElements.scrollOffset.y = max(0, app->uiElements.scrollOffset.y - heightRemoved);
-	app->uiElements.scrollOffsetGoto.y = max(0, app->uiElements.scrollOffsetGoto.y - heightRemoved);
+	app->uiElements.scrollOffset.y = MaxReal32(0, app->uiElements.scrollOffset.y - heightRemoved);
+	app->uiElements.scrollOffsetGoto.y = MaxReal32(0, app->uiElements.scrollOffsetGoto.y - heightRemoved);
 	app->selectionStart.lineIndex -= numLinesRemoved;
 	if (app->selectionStart.lineIndex < 0)
 	{

@@ -295,7 +295,7 @@ char* GetRegexCaptureString(const char* expressionStr, const char* target, u32 t
 	else
 	{
 		// DEBUG_WriteLine("Regular Expression Failed");
-		return false;
+		return nullptr;
 	}
 }
 
@@ -379,6 +379,6 @@ char* GetRegexCaptureFormatString(const char* expressionStr, const char* target,
 	else
 	{
 		// DEBUG_WriteLine("Regular Expression Failed");
-		return false;
+		return nullptr;
 	}
 }

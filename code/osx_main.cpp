@@ -170,29 +170,29 @@ int main(int argc, char** argv)
 	PlatformInfo.version.minor = PLATFORM_VERSION_MINOR;
 	PlatformInfo.version.build = PLATFORM_VERSION_BUILD;
 	
-	PlatformInfo.FreeFileMemoryPntr    = OSX_FreeFileMemory;
-	PlatformInfo.ReadEntireFilePntr    = OSX_ReadEntireFile;
-	PlatformInfo.WriteEntireFilePntr   = OSX_WriteEntireFile;
-	PlatformInfo.OpenFilePntr          = OSX_OpenFile;
-	PlatformInfo.AppendFilePntr        = OSX_AppendFile;
-	PlatformInfo.CloseFilePntr         = OSX_CloseFile;
-	PlatformInfo.LaunchFilePntr        = OSX_LaunchFile;
-	PlatformInfo.DebugWritePntr        = OSX_Write;
-	PlatformInfo.DebugWriteLinePntr    = OSX_WriteLine;
-	PlatformInfo.DebugPrintPntr        = OSX_Print;
-	PlatformInfo.DebugPrintLinePntr    = OSX_PrintLine;
-	PlatformInfo.GetComPortListPntr    = OSX_GetComPortList;
-	PlatformInfo.OpenComPortPntr       = OSX_OpenComPort;
-	PlatformInfo.CloseComPortPntr      = OSX_CloseComPort;
-	PlatformInfo.ReadComPortPntr       = OSX_ReadComPort;
-	PlatformInfo.WriteComPortPntr      = OSX_WriteComPort;
-	PlatformInfo.CopyToClipboardPntr   = OSX_CopyToClipboard;
-	PlatformInfo.CopyFromClipboardPntr = OSX_CopyFromClipboard;
-	PlatformInfo.StartProgramInstancePntr = OSX_StartProgramInstance;
-	PlatformInfo.GetProgramStatusPntr     = OSX_GetProgramStatus;
-	PlatformInfo.ReadProgramOutputPntr    = OSX_ReadProgramOutput;
-	PlatformInfo.WriteProgramInputPntr    = OSX_WriteProgramInput;
-	PlatformInfo.CloseProgramInstancePntr = OSX_CloseProgramInstance;
+	PlatformInfo.FreeFileMemory    = OSX_FreeFileMemory;
+	PlatformInfo.ReadEntireFile    = OSX_ReadEntireFile;
+	PlatformInfo.WriteEntireFile   = OSX_WriteEntireFile;
+	PlatformInfo.OpenFile          = OSX_OpenFile;
+	PlatformInfo.AppendFile        = OSX_AppendFile;
+	PlatformInfo.CloseFile         = OSX_CloseFile;
+	PlatformInfo.LaunchFile        = OSX_LaunchFile;
+	PlatformInfo.DebugWrite        = OSX_Write;
+	PlatformInfo.DebugWriteLine    = OSX_WriteLine;
+	PlatformInfo.DebugPrint        = OSX_Print;
+	PlatformInfo.DebugPrintLine    = OSX_PrintLine;
+	PlatformInfo.GetComPortList    = OSX_GetComPortList;
+	PlatformInfo.OpenComPort       = OSX_OpenComPort;
+	PlatformInfo.CloseComPort      = OSX_CloseComPort;
+	PlatformInfo.ReadComPort       = OSX_ReadComPort;
+	PlatformInfo.WriteComPort      = OSX_WriteComPort;
+	PlatformInfo.CopyToClipboard   = OSX_CopyToClipboard;
+	PlatformInfo.CopyFromClipboard = OSX_CopyFromClipboard;
+	PlatformInfo.StartProgramInstance = OSX_StartProgramInstance;
+	PlatformInfo.GetProgramStatus     = OSX_GetProgramStatus;
+	PlatformInfo.ReadProgramOutput    = OSX_ReadProgramOutput;
+	PlatformInfo.WriteProgramInput    = OSX_WriteProgramInput;
+	PlatformInfo.CloseProgramInstance = OSX_CloseProgramInstance;
 	
 	StartProgramInstance_f* StartProgramInstancePntr;
 	GetProgramStatus_f*     GetProgramStatusPntr;
@@ -251,11 +251,13 @@ int main(int argc, char** argv)
 	glfwSetFramebufferSizeCallback(window, GlfwWindowSizeCallback);
 	glfwSetWindowPosCallback(window,       GlfwWindowMoveCallback);
 	glfwSetWindowIconifyCallback(window,   GlfwWindowMinimizeCallback);
+	glfwSetWindowFocusCallback(window,     GlfwWindowFocusCallback);
 	glfwSetKeyCallback(window,             GlfwKeyPressedCallback);
 	glfwSetCharCallback(window,            GlfwCharPressedCallback);
 	glfwSetCursorPosCallback(window,       GlfwCursorPosCallback);
 	glfwSetMouseButtonCallback(window,     GlfwMousePressCallback);
 	glfwSetScrollCallback(window,          GlfwMouseScrollCallback);
+	glfwSetCursorEnterCallback(window,     GlfwCursorEnteredCallback);
 	
 	// +==============================+
 	// |       Main Update Loop       |

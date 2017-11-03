@@ -74,7 +74,7 @@ Checkbox_t NewCheckbox(rec drawRec, const char* label, Color_t activeColor)
 	result.mouseHasLeft = true;
 	result.drawRec = drawRec;
 	result.activeColor = activeColor;
-	BufferPrint(result.label, label);
+	strncpy(result.label, label, ArrayCount(result.label));
 	
 	return result;
 }
