@@ -45,6 +45,7 @@
 	[ ] Look into what it would take to make certain core mechanics asynchronous so they are always running even if the main thread is doing a frame flip or locked processing something
 
 # Win32 Platform Layer TODO List
+	[?] Change Win32_CopyToClipboard and Win32_CopyFromCipboard to use glfw calls like OSX?
 	[!] Add support for key hold trigger count
 	[ ] Add checking for COM port errors and whether or not we are still connected
 	[ ] Fix the WIN32_LaunchFile and WIN32_StartProgramInstance support for non-relative paths
@@ -56,7 +57,6 @@
 	
 
 # OSX Platform Layer TODO List
-	[!] Implement OSX_CopyToClipboard and OSX_CopyFromClipboard
 	[!] Implement OSX_WriteEntireFile
 	[!] Implement OSX_OpenFile, OSX_AppendFile, and OSX_CloseFile
 	[ ] Make an application bundle that can be run from anywhere
@@ -66,6 +66,7 @@
 
 
 # Old TODO List Items
+	[X] Implement OSX_CopyToClipboard and OSX_CopyFromClipboard
 	[X] Selection in input box (copy to clipboard)
 	[X] Paste from clipboard into input box
 	[X] Better text editing features in the input text box

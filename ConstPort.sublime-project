@@ -922,6 +922,7 @@
 			"void LoadRegexFile(RegexList_t* regexList, const char* filename, MemoryArena_t* memArena)",
 			"void MenuHandlerDrawMenus(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInput, RenderState_t* renderState, MenuHandler_t* menuHandler)",
 			"void MenuHandlerUpdate(const PlatformInfo_t* PlatformInfo, const AppInput_t* AppInput, MenuHandler_t* menuHandler)",
+			"void OSX_CopyToClipboard(const void* dataPntr, u32 dataSize)",
 			"void OpenComPort(ComPortIndex_t comPortIndex, ComSettings_t settings)",
 			"void PrintString(v2 position, Color_t color, r32 scale, const char* formatString, args);",
 			"void RecalculateUiElements(const AppInput_t* AppInput, UiElements_t* ui, bool resetFollowingEndOfFile)",
@@ -957,7 +958,8 @@
 			"void UpdateUiElements(const AppInput_t* AppInput, UiElements_t* ui)",
 			"void Win32_CloseProgramInstance(ProgramInstance_t* program)",
 			"void* ArenaPush_(MemoryArena_t* arena, uint32 allocSize)",
-			"void* CopyFromClipboard(MemoryArena_t* arenaPntr, u32* dataLengthOut)"
+			"void* CopyFromClipboard(MemoryArena_t* arenaPntr, u32* dataLengthOut)",
+			"void* OSX_CopyFromClipboard(MemoryArena_t* arenaPntr, u32* dataLengthOut)"
 		],
 		"custom_globals":
 		[

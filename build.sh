@@ -64,5 +64,9 @@ fi
 
 if [ $CreateApplicationBundle -gt 0 ]
 then
+	echo [Creating application bundle]
 	
+	echo This will be filled later!
+	
+	echo 
 fi

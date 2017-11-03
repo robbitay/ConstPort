@@ -11,19 +11,26 @@ Description:
 // +==============================+
 // |     OSX_CopyToClipboard      |
 // +==============================+
+// void OSX_CopyToClipboard(const void* dataPntr, u32 dataSize)
 CopyToClipboard_DEFINITION(OSX_CopyToClipboard)
 {
-	//TODO: Copy to the clipboard
+	Assert(((u8*)dataPntr)[dataSize] == '\0');
+	
+	glfwSetClipboardString(PlatformInfo.window, (const char*)dataPntr);
 }
 
 // +==============================+
 // |    OSX_CopyFromClipboard     |
 // +==============================+
+// void* OSX_CopyFromClipboard(MemoryArena_t* arenaPntr, u32* dataLengthOut)
 CopyFromClipboard_DEFINITION(OSX_CopyFromClipboard)
 {
 	*dataLengthOut = 0;
 	
-	//TODO: Copy contents from the clipboard
+	const char* contents = glfwGetClipboardString(PlatformInfo.window);
+	if (contents == nullptr) { return nullptr; }
 	
-	return nullptr;
+	*dataLengthOut = (u32)strlen(contents);
+
+	return (void*)contents;
 }
