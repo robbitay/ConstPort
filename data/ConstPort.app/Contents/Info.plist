@@ -13,16 +13,14 @@
   <key>CFBundleIconFile</key>
   <string>Icon</string>
   <key>CFBundleShortVersionString</key>
-  <string>1.05</string>
+  <string>1.6.996</string>
   <key>CFBundleInfoDictionaryVersion</key>
   <string>6.0</string>
   <key>CFBundlePackageType</key>
   <string>APPL</string>
-  <key>IFMajorVersion</key>
-  <integer>1</integer>
-  <key>IFMinorVersion</key>
-  <integer>5</integer>
   <key>NSPrincipalClass</key>
   <string>NSApplication</string>
+  <key>CFBundleSignature</key>
+  <string>cstp</string>
 </dict>
 </plist>

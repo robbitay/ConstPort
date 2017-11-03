@@ -67,11 +67,19 @@ bool LoadDllCode(const char* appDllPath, const char* tempDllPath, LoadedApp_t* l
 	
 	loadedApp->lastWriteTime = GetLastModifiedTime(appDllPath);
 	
-	char copyCommand[256] = {};
-	snprintf(copyCommand, sizeof(copyCommand), "cp %s %s", appDllPath, tempDllPath);
-	system(copyCommand);
-	
-	loadedApp->handle = dlopen(tempDllPath, RTLD_NOW);
+	#if DEBUG
+	{
+		char copyCommand[256] = {};
+		snprintf(copyCommand, sizeof(copyCommand), "cp %s %s", appDllPath, tempDllPath);
+		system(copyCommand);
+		
+		loadedApp->handle = dlopen(tempDllPath, RTLD_NOW);
+	}
+	#else
+	{
+		loadedApp->handle = dlopen(appDllPath, RTLD_NOW);
+	}
+	#endif
 	
 	if (loadedApp->handle != nullptr)
 	{
