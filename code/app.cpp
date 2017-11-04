@@ -2050,6 +2050,25 @@ EXPORT AppInitialize_DEFINITION(App_Initialize)
 		app->activeElement = &app->uiElements.viewRec;
 	}
 	
+	// +==============================+
+	// |         Testing Area         |
+	// +==============================+
+	#if 1
+	char* testStr = StrReplaceChar(TempArena, NtStr("Hello World!"), 'l', '1');
+	DEBUG_PrintLine("testStr = \"%s\"", testStr);
+	
+	char* replaceStr = ArenaString(TempArena, "Hello World! This is a great World!");
+	StrReplaceInPlace(NtStr(replaceStr), "World", "12345", 5);
+	DEBUG_PrintLine("replaceStr = \"%s\"", replaceStr);
+	
+	char* spliceStr = StrSplice(TempArena, NtStr("Hello World!"), 5, 0, NtStr(" Hi"));
+	DEBUG_PrintLine("spliceStr = \"%s\"", spliceStr);
+	
+	spliceStr = ArenaString(TempArena, "Hello World!");
+	StrSpliceInPlace(NtStr(spliceStr), 0, 5, "12345");
+	DEBUG_PrintLine("spliceStr = \"%s\"", spliceStr);
+	#endif
+	
 	TempPopMark();
 	DEBUG_WriteLine("Initialization Done!");
 	app->appInitTempHighWaterMark = ArenaGetHighWaterMark(TempArena);
@@ -3178,7 +3197,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	glEnable(GL_BLEND);
 	rs->SetViewport(NewRec(0, 0, (r32)platform->screenSize.x, (r32)platform->screenSize.y));
 	
-	v4 backgroundColorVec = ColorToVec4(GC->colors.textBackground);
+	v4 backgroundColorVec = NewVec4(GC->colors.textBackground);
 	glClearColor(backgroundColorVec.x, backgroundColorVec.y, backgroundColorVec.z, backgroundColorVec.w);
 	// glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

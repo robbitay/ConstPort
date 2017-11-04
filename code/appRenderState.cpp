@@ -15,13 +15,13 @@ void InitializeRenderState(RenderState_t* renderState)
 	
 	Vertex_t squareVertices[] =
 	{
-		{  {0.0f, 0.0f, 0.0f}, ColorToVec4(Color_White), {0.0f, 0.0f} },
-		{  {1.0f, 0.0f, 0.0f}, ColorToVec4(Color_White), {1.0f, 0.0f} },
-		{  {0.0f, 1.0f, 0.0f}, ColorToVec4(Color_White), {0.0f, 1.0f} },
+		{  {0.0f, 0.0f, 0.0f}, NewVec4(NewColor(Color_White)), {0.0f, 0.0f} },
+		{  {1.0f, 0.0f, 0.0f}, NewVec4(NewColor(Color_White)), {1.0f, 0.0f} },
+		{  {0.0f, 1.0f, 0.0f}, NewVec4(NewColor(Color_White)), {0.0f, 1.0f} },
 		
-		{  {0.0f, 1.0f, 0.0f}, ColorToVec4(Color_White), {0.0f, 1.0f} },
-		{  {1.0f, 0.0f, 0.0f}, ColorToVec4(Color_White), {1.0f, 0.0f} },
-		{  {1.0f, 1.0f, 0.0f}, ColorToVec4(Color_White), {1.0f, 1.0f} },
+		{  {0.0f, 1.0f, 0.0f}, NewVec4(NewColor(Color_White)), {0.0f, 1.0f} },
+		{  {1.0f, 0.0f, 0.0f}, NewVec4(NewColor(Color_White)), {1.0f, 0.0f} },
+		{  {1.0f, 1.0f, 0.0f}, NewVec4(NewColor(Color_White)), {1.0f, 1.0f} },
 	};
 	renderState->squareBuffer = CreateVertexBuffer(squareVertices, ArrayCount(squareVertices));
 	
@@ -229,7 +229,7 @@ void RenderState_t::SetViewport(rec viewport)
 // +==============================+
 void RenderState_t::SetColor(Color_t color)
 {
-	v4 colorVec = ColorToVec4(color);
+	v4 colorVec = NewVec4(color);
 	glUniform4f(this->boundShader->diffuseColorLocation, colorVec.r, colorVec.g, colorVec.b, colorVec.a);
 }
 // +==============================+
@@ -237,7 +237,7 @@ void RenderState_t::SetColor(Color_t color)
 // +==============================+
 void RenderState_t::SetSecondaryColor(Color_t color)
 {
-	v4 colorVec = ColorToVec4(color);
+	v4 colorVec = NewVec4(color);
 	glUniform4f(this->boundShader->secondaryColorLocation, colorVec.r, colorVec.g, colorVec.b, colorVec.a);
 }
 
