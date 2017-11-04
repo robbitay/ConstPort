@@ -28,24 +28,24 @@ void RecalculateUiElements(UiElements_t* ui, bool resetFollowingEndOfFile)
 	ui->lineHeight = app->mainFont.lineHeight + GC->lineSpacing;
 	
 	//Static Rectangles
-	ui->mainMenuRec = NewRectangle(
+	ui->mainMenuRec = NewRec(
 		0, 0,
 		RenderScreenSize.x, 
 		MAIN_MENU_HEIGHT
 	);
 	r32 ledExtend = (r32)GC->rxTxLedRingSize * 9;
-	ui->rxLedRec = NewRectangle(
+	ui->rxLedRec = NewRec(
 		ui->mainMenuRec.x + ui->mainMenuRec.width - RX_TX_LED_SIZE - ledExtend - 4,
 		ui->mainMenuRec.y + ledExtend + 4,
 		RX_TX_LED_SIZE, RX_TX_LED_SIZE
 	);
-	ui->txLedRec = NewRectangle(
+	ui->txLedRec = NewRec(
 		ui->rxLedRec.x - RX_TX_LED_SIZE - ledExtend*2 - 4,
 		ui->rxLedRec.y,
 		RX_TX_LED_SIZE, RX_TX_LED_SIZE
 	);
 	v2 clearStringSize = MeasureString(&app->uiFont, "Clear");
-	ui->clearButtonRec = NewRectangle(
+	ui->clearButtonRec = NewRec(
 		ui->rxLedRec.x + ui->rxLedRec.width + ledExtend,
 		ui->rxLedRec.y + ui->rxLedRec.height + ledExtend,
 		clearStringSize.x + 4, clearStringSize.y + 4
@@ -61,38 +61,38 @@ void RecalculateUiElements(UiElements_t* ui, bool resetFollowingEndOfFile)
 	for (u32 bIndex = 0; bIndex < NumMainMenuButtons; bIndex++)
 	{
 		r32 buttonSize = ui->mainMenuRec.height - MAIN_MENU_BUTTON_PADDING*2;
-		ui->buttonRecs[bIndex] = NewRectangle(
+		ui->buttonRecs[bIndex] = NewRec(
 			ui->mainMenuRec.x + MAIN_MENU_BUTTON_PADDING + (buttonSize+MAIN_MENU_BUTTON_PADDING) * bIndex,
 			ui->mainMenuRec.y + MAIN_MENU_BUTTON_PADDING,
 			buttonSize, buttonSize
 		);
 	}
-	ui->saveButtonRec = NewRectangle(
+	ui->saveButtonRec = NewRec(
 		ui->clearButtonRec.x - SAVE_BUTTON_WIDTH - MAIN_MENU_BUTTON_PADDING,
 		ui->clearButtonRec.y,
 		SAVE_BUTTON_WIDTH, SAVE_BUTTON_HEIGHT
 	);
-	ui->statusBarRec = NewRectangle(
+	ui->statusBarRec = NewRec(
 		0, 
 		RenderScreenSize.y - app->uiFont.lineHeight, 
 		RenderScreenSize.x, 
 		app->uiFont.lineHeight
 	);
 	
-	ui->scrollBarGutterRec = NewRectangle(
+	ui->scrollBarGutterRec = NewRec(
 		RenderScreenSize.x - (r32)GC->scrollbarWidth - (r32)GC->scrollbarPadding*2, 
 		ui->mainMenuRec.y + ui->mainMenuRec.height, 
 		(r32)GC->scrollbarWidth + (r32)GC->scrollbarPadding*2, 
 		0
 	);
 	ui->scrollBarGutterRec.height = ui->statusBarRec.y - ui->scrollBarGutterRec.y;
-	ui->gotoEndButtonRec = NewRectangle(
+	ui->gotoEndButtonRec = NewRec(
 		ui->statusBarRec.x + ui->statusBarRec.width - ui->statusBarRec.height,
 		ui->statusBarRec.y,
 		ui->statusBarRec.height,
 		ui->statusBarRec.height
 	);
-	ui->gutterRec = NewRectangle(
+	ui->gutterRec = NewRec(
 		0, 
 		ui->mainMenuRec.y + ui->mainMenuRec.height, 
 		(r32)GC->minGutterWidth,
@@ -101,11 +101,11 @@ void RecalculateUiElements(UiElements_t* ui, bool resetFollowingEndOfFile)
 	ui->gutterRec.height = ui->statusBarRec.y - ui->gutterRec.y;
 	if (GC->showLineNumbers)
 	{
-		ui->gutterRec.width = NumDecimalDigits(app->lineList.numLines + app->lineList.firstLineNum) * MeasureString(&app->mainFont, " ", 1).x + 2;
+		ui->gutterRec.width = NumDigitsDEC(app->lineList.numLines + app->lineList.firstLineNum) * MeasureString(&app->mainFont, " ", 1).x + 2;
 		if (ui->gutterRec.width < (r32)GC->minGutterWidth) ui->gutterRec.width = (r32)GC->minGutterWidth;
 	}
 	
-	ui->textInputRec = NewRectangle(
+	ui->textInputRec = NewRec(
 		ui->gutterRec.x + ui->gutterRec.width,
 		ui->statusBarRec.y,
 		0,
@@ -118,7 +118,7 @@ void RecalculateUiElements(UiElements_t* ui, bool resetFollowingEndOfFile)
 	}
 	ui->textInputRec.y -= ui->textInputRec.height;
 	
-	ui->sendButtonRec = NewRectangle(
+	ui->sendButtonRec = NewRec(
 		ui->textInputRec.x + ui->textInputRec.width,
 		ui->textInputRec.y,
 		0, ui->textInputRec.height
@@ -128,7 +128,7 @@ void RecalculateUiElements(UiElements_t* ui, bool resetFollowingEndOfFile)
 	ui->sendButtonRec.x    -= ui->sendButtonRec.width;
 	ui->textInputRec.width -= ui->sendButtonRec.width;
 	
-	ui->viewRec = NewRectangle(
+	ui->viewRec = NewRec(
 		ui->gutterRec.x + ui->gutterRec.width, 
 		ui->mainMenuRec.y + ui->mainMenuRec.height,
 		0, 0
@@ -160,7 +160,7 @@ void RecalculateUiElements(UiElements_t* ui, bool resetFollowingEndOfFile)
 	}
 	
 	//Scroll Bar
-	ui->scrollBarRec = NewRectangle(
+	ui->scrollBarRec = NewRec(
 		ui->scrollBarGutterRec.x + (r32)GC->scrollbarPadding, 0,
 		(r32)GC->scrollbarWidth,
 		ui->scrollBarGutterRec.height * (ui->viewRec.height / ui->fileSize.y)
@@ -183,7 +183,7 @@ void UpdateUiElements(UiElements_t* ui)
 {
 	v2 gotoOffset = (ui->scrollOffsetGoto - ui->scrollOffset);
 	
-	if (Abs32(gotoOffset.x) < 1)
+	if (AbsR32(gotoOffset.x) < 1)
 	{
 		ui->scrollOffset.x = ui->scrollOffsetGoto.x;
 	}
@@ -192,7 +192,7 @@ void UpdateUiElements(UiElements_t* ui)
 		ui->scrollOffset.x += gotoOffset.x / (r32)GC->viewSpeedDivider;
 	}
 	
-	if (Abs32(gotoOffset.y) < 1)
+	if (AbsR32(gotoOffset.y) < 1)
 	{
 		ui->scrollOffset.y = ui->scrollOffsetGoto.y;
 	}
@@ -225,8 +225,8 @@ void UpdateCheckbox(Checkbox_t* checkboxPntr)
 {
 	Assert(checkboxPntr != nullptr);
 	
-	bool mouseInside = IsInsideRectangle(RenderMousePos, checkboxPntr->drawRec);
-	bool mouseStartedInside = IsInsideRectangle(RenderMouseStartPos, checkboxPntr->drawRec);
+	bool mouseInside = IsInsideRec(checkboxPntr->drawRec, RenderMousePos);
+	bool mouseStartedInside = IsInsideRec(checkboxPntr->drawRec, RenderMouseStartPos);
 	
 	if (!mouseInside) { checkboxPntr->mouseHasLeft = true; }
 	
@@ -245,12 +245,12 @@ void DrawCheckbox(Checkbox_t* checkboxPntr, RenderState_t* rs, Font_t* labelFont
 	Assert(checkboxPntr != nullptr);
 	Assert(rs != nullptr);
 	
-	bool mouseInside = IsInsideRectangle(RenderMousePos, checkboxPntr->drawRec);
-	bool mouseStartedInside = IsInsideRectangle(RenderMouseStartPos, checkboxPntr->drawRec);
+	bool mouseInside = IsInsideRec(checkboxPntr->drawRec, RenderMousePos);
+	bool mouseStartedInside = IsInsideRec(checkboxPntr->drawRec, RenderMouseStartPos);
 	
 	Assert(platform->programTime >= checkboxPntr->changeTime);
 	u64 timeSinceClick = platform->programTime - checkboxPntr->changeTime;
-	float animAmount = Clamp32((r32)timeSinceClick / GC->checkboxAnimTime, 0.0f, 1.0f);
+	r32 animAmount = ClampR32((r32)timeSinceClick / GC->checkboxAnimTime, 0.0f, 1.0f);
 	if (!checkboxPntr->checked)
 	{
 		animAmount = Ease(EasingStyle_CubicOut, animAmount);
@@ -271,7 +271,7 @@ void DrawCheckbox(Checkbox_t* checkboxPntr, RenderState_t* rs, Font_t* labelFont
 		if (mouseInside)
 		{
 			outlineColor = checkboxPntr->activeColor;
-			// if (ButtonDown(MouseButton_Left) && IsInsideRectangle(RenderMouseStartPos, checkboxPntr->drawRec))
+			// if (ButtonDown(MouseButton_Left) && IsInsideRec(RenderMouseStartPos, checkboxPntr->drawRec))
 			// {
 			// 	outlineColor = GC->colors.buttonPress;
 			// }

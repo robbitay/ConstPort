@@ -14,8 +14,6 @@ Date:   08\06\2017
 #ifndef _CONFIGURATION_HELPERS
 #define _CONFIGURATION_HELPERS
 
-#include "colors.h"
-#include "memoryArena.h"
 #define JSMN_PARENT_LINKS
 #include "jsmn.h"
 #include "jsmn.c"
@@ -199,7 +197,7 @@ i32 UnescapeJsonString(char* jsonString, i32 strLength)
 // +------------------------------------------------------------------+
 #define TokenLength(tokenPntr) ((tokenPntr)->end - (tokenPntr)->start)
 #define TokenIsNamed(jsonData, tokenPntr, compareString) (TokenLength(tokenPntr) == strlen(compareString) && strncmp(compareString, &(jsonData)->data[tokenPntr->start], TokenLength(tokenPntr)) == 0)
-#define TryGetTokenAsNumber(jsonData, tokenPntr, valueOut) TryParseInt32(&(jsonData)->data[(tokenPntr)->start], TokenLength(tokenPntr), valueOut)
+#define TryGetTokenAsNumber(jsonData, tokenPntr, valueOut) TryParseI32(&(jsonData)->data[(tokenPntr)->start], TokenLength(tokenPntr), valueOut)
 #define TryGetTokenAsBoolean(jsonData, tokenPntr, valueOut) TryParseBool(&(jsonData)->data[(tokenPntr)->start], TokenLength(tokenPntr), valueOut)
 
 i32 FindChildTokenByName(JsonData_t* jsonData, i32 parentIndex, const char* name)

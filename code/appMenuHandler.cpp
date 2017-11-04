@@ -21,13 +21,13 @@ void InitializeMenuHandler(MenuHandler_t* menuHandlerPntr, MemoryArena_t* memAre
 
 void UpdateMenuRecs(Menu_t* menu)
 {
-	menu->titleBarRec = NewRectangle(
+	menu->titleBarRec = NewRec(
 		menu->drawRec.x, 
 		menu->drawRec.y, 
 		menu->drawRec.width, 
 		menu->titleBarSize
 	);
-	menu->usableRec = NewRectangle(
+	menu->usableRec = NewRec(
 		menu->drawRec.x, 
 		menu->drawRec.y + menu->titleBarSize,
 		menu->drawRec.width - GC->menuBorderThickness*2,
@@ -80,7 +80,7 @@ Menu_t* GetMenuAtPoint(MenuHandler_t* menuHandlerPntr, v2 point)
 	{
 		Menu_t* menuPntr = (Menu_t*)LinkedListGetItem(&menuHandlerPntr->menuList, mIndex);
 		
-		if (menuPntr->alive && menuPntr->show && IsInsideRectangle(point, menuPntr->drawRec))
+		if (menuPntr->alive && menuPntr->show && IsInsideRec(menuPntr->drawRec, point))
 		{
 			return menuPntr;
 		}
@@ -98,12 +98,12 @@ void MenuHandlerUpdate(MenuHandler_t* menuHandler)
 		if (menuPntr->alive)
 		{
 			UpdateMenuRecs(menuPntr);
-			rec closeRec = NewRectangle(
+			rec closeRec = NewRec(
 				menuPntr->titleBarRec.x + menuPntr->titleBarRec.width - menuPntr->titleBarRec.height, 
 				menuPntr->titleBarRec.y,
 				menuPntr->titleBarRec.height,
 				menuPntr->titleBarRec.height);
-			closeRec = RectangleInflate(closeRec, -5);
+			closeRec = RecInflate(closeRec, -5);
 			
 			if (menuPntr->allowMovement)
 			{
@@ -115,7 +115,7 @@ void MenuHandlerUpdate(MenuHandler_t* menuHandler)
 					{
 						if (input->buttons[MouseButton_Left].transCount > 0)
 						{
-							if (IsInsideRectangle(RenderMousePos, menuPntr->titleBarRec))
+							if (IsInsideRec(menuPntr->titleBarRec, RenderMousePos))
 							{
 								menuHandler->movingMenu = true;
 								menuHandler->resizingMenuVert = false;
@@ -184,28 +184,28 @@ void MenuHandlerDrawMenus(RenderState_t* renderState, MenuHandler_t* menuHandler
 			UpdateMenuRecs(menuPntr);
 			
 			
-			renderState->DrawGradient(menuPntr->drawRec, GC->colors.windowBackground1, GC->colors.windowBackground2, Direction2D_Down);
+			renderState->DrawGradient(menuPntr->drawRec, GC->colors.windowBackground1, GC->colors.windowBackground2, Dir2_Down);
 			
 			renderState->DrawRectangle(menuPntr->titleBarRec, GC->colors.windowTitlebar);
 			
 			if (menuPntr->titleBarSize > 0)
 			{
-				rec closeRec = NewRectangle(
+				rec closeRec = NewRec(
 					menuPntr->titleBarRec.x + menuPntr->titleBarRec.width - menuPntr->titleBarRec.height, 
 					menuPntr->titleBarRec.y,
 					menuPntr->titleBarRec.height,
 					menuPntr->titleBarRec.height);
-				closeRec = RectangleInflate(closeRec, -5);
+				closeRec = RecInflate(closeRec, -5);
 				
 				Color_t exitButtonColor = GC->colors.windowExit;
-				if (IsInsideRectangle(RenderMousePos, closeRec))
+				if (IsInsideRec(closeRec, RenderMousePos))
 				{
 					exitButtonColor = ColorMultiply(exitButtonColor, {Color_LightGrey});
 				}
 				
 				renderState->DrawRectangle(closeRec, exitButtonColor);
 				
-				rec shrunkRec = RectangleInflate(closeRec, -2);
+				rec shrunkRec = RecInflate(closeRec, -2);
 				renderState->DrawLine(
 					NewVec2(shrunkRec.x, shrunkRec.y + shrunkRec.height),
 					NewVec2(shrunkRec.x + shrunkRec.width, shrunkRec.y),
@@ -220,32 +220,32 @@ void MenuHandlerDrawMenus(RenderState_t* renderState, MenuHandler_t* menuHandler
 				);
 			}
 			
-			renderState->DrawRectangle(NewRectangle(
+			renderState->DrawRectangle(NewRec(
 				menuPntr->drawRec.x,
 				menuPntr->drawRec.y + menuPntr->titleBarRec.height - GC->menuBorderThickness,
 				menuPntr->drawRec.width,
 				(r32)GC->menuBorderThickness),
 				GC->colors.windowTitlebar);
 			
-			renderState->DrawRectangle(NewRectangle(
+			renderState->DrawRectangle(NewRec(
 				menuPntr->drawRec.x,
 				menuPntr->drawRec.y,
 				menuPntr->drawRec.width,
 				(r32)GC->menuBorderThickness),
 				GC->colors.windowOutline);
-			renderState->DrawRectangle(NewRectangle(
+			renderState->DrawRectangle(NewRec(
 				menuPntr->drawRec.x,
 				menuPntr->drawRec.y,
 				(r32)GC->menuBorderThickness,
 				menuPntr->drawRec.height),
 				GC->colors.windowOutline);
-			renderState->DrawRectangle(NewRectangle(
+			renderState->DrawRectangle(NewRec(
 				menuPntr->drawRec.x,
 				menuPntr->drawRec.y + menuPntr->drawRec.height - GC->menuBorderThickness,
 				menuPntr->drawRec.width,
 				(r32)GC->menuBorderThickness),
 				GC->colors.windowOutline);
-			renderState->DrawRectangle(NewRectangle(
+			renderState->DrawRectangle(NewRec(
 				menuPntr->drawRec.x + menuPntr->drawRec.width - GC->menuBorderThickness,
 				menuPntr->drawRec.y,
 				(r32)GC->menuBorderThickness,

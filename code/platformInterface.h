@@ -9,26 +9,12 @@ Description:
 #ifndef _PLATFORM_INTERFACE_H
 #define _PLATFORM_INTERFACE_H
 
-#ifndef WINDOWS_COMPILATION
-#define WINDOWS_COMPILATION false
-#endif
-#ifndef OSX_COMPILATION
-#define OSX_COMPILATION false
-#endif
-#ifndef LINUX_COMPILATION
-#define LINUX_COMPILATION false
-#endif
-
-#if !WINDOWS_COMPILATION && !OSX_COMPILATION && !LINUX_COMPILATION
-#error WINDOWS_COMPILATION, OSX_COMPILATION, or LINUX_COMPILATION must be defined!
-#endif
+//NOTE: mylib.h checks for WIN32_COMPILATION, OSX_COMPILATION, and LINUX_COMPILATION defines
+#include "mylib.h"
 
 //TODO: How do we get rid of this??
 #if WINDOWS_COMPILATION
 #include <windows.h>
-#include "win32_defines.h"
-#include "win32_intrinsics.h"
-#include "win32_assert.h"
 
 #include "win32_helpers.h"
 #include "win32_com.h"
@@ -40,10 +26,6 @@ Description:
 #endif
 
 #if OSX_COMPILATION
-#include "osx_defines.h"
-#include "osx_intrinsics.h"
-#include "osx_assert.h"
-
 #include "osx_helpers.h"
 #include "osx_com.h"
 #include "osx_program.h"
@@ -63,11 +45,9 @@ Description:
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
-#include "myMath.h"
+#include "my_boundedStrList.h"
+
 #include "timeStructs.h"
-#include "memoryArena.h"
-#include "boundedStrList.h"
-#include "charClasses.h"
 
 // +--------------------------------------------------------------+
 // |                   Platform Layer Functions                   |

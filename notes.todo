@@ -65,7 +65,6 @@
 	[ ] Implement PlatformConfig in OSX platform layer
 	[ ] Put the appVersion.h info into the Info.plist in build.sh
 
-
 # Old TODO List Items
 	[X] Added CreateNewWindow to platform layer
 	[X] Added GetAbsolutePath to platform layer

@@ -30,7 +30,7 @@ if "%DebugBuild%"=="1" (
 	set DebugDependantLibraries=glew32.lib libboost_regex-vc140-mt-s-%BoostLibSuffix%.lib
 )
 
-set CompilerFlags=%DebugDependantFlags% -DWINDOWS_COMPILATION=1 /FC /Zi /EHsc /nologo /GS- /Gm- -GR- /EHa- /Fm /Od /Oi /WX /W4 /wd4201 /wd4100 /wd4189 /wd4996 /wd4127 /wd4505 /wd4101 /wd4702 /wd4458 /wd4324
+set CompilerFlags=%DebugDependantFlags% -DWINDOWS_COMPILATION /FC /Zi /EHsc /nologo /GS- /Gm- -GR- /EHa- /Fm /Od /Oi /WX /W4 /wd4201 /wd4100 /wd4189 /wd4996 /wd4127 /wd4505 /wd4101 /wd4702 /wd4458 /wd4324
 set LinkerFlags=-incremental:no
 set IncludeDirectories=/I"W:\lib\mylib" /I"W:\lib\glew-2.0.0\include" /I"W:\lib\glfw-3.2.1\include" /I"W:\lib\stb" /I"W:\lib\jsmn" /I"W:\lib\boost_%BoostVersion%"
 set LibraryDirectories=%DebugDependantPaths%

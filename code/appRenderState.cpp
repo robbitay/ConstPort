@@ -31,10 +31,10 @@ void InitializeRenderState(RenderState_t* renderState)
 	Color_t textureData = {Color_White};
 	renderState->dotTexture = CreateTexture((u8*)&textureData, 1, 1);
 	
-	renderState->viewport = NewRectangle(0, 0, (r32)RenderScreenSize.x, (r32)RenderScreenSize.y);
-	renderState->worldMatrix = Matrix4_Identity;
-	renderState->viewMatrix = Matrix4_Identity;
-	renderState->projectionMatrix = Matrix4_Identity;
+	renderState->viewport = NewRec(0, 0, (r32)RenderScreenSize.x, (r32)RenderScreenSize.y);
+	renderState->worldMatrix = Mat4_Identity;
+	renderState->viewMatrix = Mat4_Identity;
+	renderState->projectionMatrix = Mat4_Identity;
 }
 
 
@@ -182,7 +182,7 @@ void RenderState_t::BindFrameBuffer(const FrameBuffer_t* frameBuffer)
 // +==============================+
 // |        SetWorldMatrix        |
 // +==============================+
-void RenderState_t::SetWorldMatrix(const Matrix4_t& worldMatrix)
+void RenderState_t::SetWorldMatrix(const mat4& worldMatrix)
 {
 	this->worldMatrix = worldMatrix;
 	glUniformMatrix4fv(this->boundShader->worldMatrixLocation, 1, GL_FALSE, &worldMatrix.values[0][0]);
@@ -190,7 +190,7 @@ void RenderState_t::SetWorldMatrix(const Matrix4_t& worldMatrix)
 // +==============================+
 // |        SetViewMatrix         |
 // +==============================+
-void RenderState_t::SetViewMatrix(const Matrix4_t& viewMatrix)
+void RenderState_t::SetViewMatrix(const mat4& viewMatrix)
 {
 	this->viewMatrix = viewMatrix;
 	glUniformMatrix4fv(this->boundShader->viewMatrixLocation, 1, GL_FALSE, &viewMatrix.values[0][0]);
@@ -198,7 +198,7 @@ void RenderState_t::SetViewMatrix(const Matrix4_t& viewMatrix)
 // +==============================+
 // |     SetProjectionMatrix      |
 // +==============================+
-void RenderState_t::SetProjectionMatrix(const Matrix4_t& projectionMatrix)
+void RenderState_t::SetProjectionMatrix(const mat4& projectionMatrix)
 {
 	this->projectionMatrix = projectionMatrix;
 	glUniformMatrix4fv(this->boundShader->projectionMatrixLocation, 1, GL_FALSE, &projectionMatrix.values[0][0]);
@@ -275,11 +275,11 @@ void RenderState_t::SetCircleRadius(float radius, float innerRadius)
 void RenderState_t::DrawTexturedRec(rec rectangle, Color_t color)
 {
 	this->BindTexture(this->boundTexture);
-	this->SetSourceRectangle(NewRectangle(0, 0, 1, 1));
+	this->SetSourceRectangle(NewRec(0, 0, 1, 1));
 	this->SetColor(color);
-	m4 worldMatrix = Mat4Mult(
-		Matrix4Translate(NewVec3(rectangle.x, rectangle.y, 0.0f)),       //Position
-		Matrix4Scale(NewVec3(rectangle.width, rectangle.height, 1.0f))); //Scale
+	mat4 worldMatrix = Mat4Multiply(
+		Mat4Translate(NewVec3(rectangle.x, rectangle.y, 0.0f)),       //Position
+		Mat4Scale(NewVec3(rectangle.width, rectangle.height, 1.0f))); //Scale
 	this->SetWorldMatrix(worldMatrix);
 	this->BindBuffer(&this->squareBuffer);
 	glDrawArrays(GL_TRIANGLES, 0, this->squareBuffer.numVertices);
@@ -289,7 +289,7 @@ void RenderState_t::DrawTexturedRec(rec rectangle, Color_t color)
 // +==============================+
 void RenderState_t::DrawTexturedRec(rec rectangle, Color_t color, rec sourceRectangle)
 {
-	rec realSourceRec = NewRectangle(
+	rec realSourceRec = NewRec(
 		sourceRectangle.x / (r32)this->boundTexture->width,
 		sourceRectangle.y / (r32)this->boundTexture->height,
 		sourceRectangle.width / (r32)this->boundTexture->width,
@@ -297,9 +297,9 @@ void RenderState_t::DrawTexturedRec(rec rectangle, Color_t color, rec sourceRect
 	this->SetSourceRectangle(realSourceRec);
 	this->BindTexture(this->boundTexture);
 	this->SetColor(color);
-	m4 worldMatrix = Mat4Mult(
-		Matrix4Translate(NewVec3(rectangle.x, rectangle.y, 0.0f)),       //Position
-		Matrix4Scale(NewVec3(rectangle.width, rectangle.height, 1.0f))); //Scale
+	mat4 worldMatrix = Mat4Multiply(
+		Mat4Translate(NewVec3(rectangle.x, rectangle.y, 0.0f)),       //Position
+		Mat4Scale(NewVec3(rectangle.width, rectangle.height, 1.0f))); //Scale
 	this->SetWorldMatrix(worldMatrix);
 	this->BindBuffer(&this->squareBuffer);
 	glDrawArrays(GL_TRIANGLES, 0, this->squareBuffer.numVertices);
@@ -311,11 +311,11 @@ void RenderState_t::DrawTexturedRec(rec rectangle, Color_t color, rec sourceRect
 void RenderState_t::DrawRectangle(rec rectangle, Color_t color)
 {
 	this->BindTexture(&this->dotTexture);
-	this->SetSourceRectangle(NewRectangle(0, 0, 1, 1));
+	this->SetSourceRectangle(NewRec(0, 0, 1, 1));
 	this->SetColor(color);
-	m4 worldMatrix = Mat4Mult(
-		Matrix4Translate(NewVec3(rectangle.x, rectangle.y, 0.0f)),       //Position
-		Matrix4Scale(NewVec3(rectangle.width, rectangle.height, 1.0f))); //Scale
+	mat4 worldMatrix = Mat4Multiply(
+		Mat4Translate(NewVec3(rectangle.x, rectangle.y, 0.0f)),       //Position
+		Mat4Scale(NewVec3(rectangle.width, rectangle.height, 1.0f))); //Scale
 	this->SetWorldMatrix(worldMatrix);
 	this->BindBuffer(&this->squareBuffer);
 	glDrawArrays(GL_TRIANGLES, 0, this->squareBuffer.numVertices);
@@ -328,55 +328,55 @@ void RenderState_t::DrawButton(rec rectangle, Color_t backgroundColor, Color_t b
 {
 	this->DrawRectangle(rectangle, backgroundColor);
 	
-	this->DrawRectangle(NewRectangle(rectangle.x, rectangle.y, rectangle.width, borderWidth), borderColor);
-	this->DrawRectangle(NewRectangle(rectangle.x, rectangle.y, borderWidth, rectangle.height), borderColor);
-	this->DrawRectangle(NewRectangle(rectangle.x, rectangle.y + rectangle.height - borderWidth, rectangle.width, borderWidth), borderColor);
-	this->DrawRectangle(NewRectangle(rectangle.x + rectangle.width - borderWidth, rectangle.y, borderWidth, rectangle.height), borderColor);
+	this->DrawRectangle(NewRec(rectangle.x, rectangle.y, rectangle.width, borderWidth), borderColor);
+	this->DrawRectangle(NewRec(rectangle.x, rectangle.y, borderWidth, rectangle.height), borderColor);
+	this->DrawRectangle(NewRec(rectangle.x, rectangle.y + rectangle.height - borderWidth, rectangle.width, borderWidth), borderColor);
+	this->DrawRectangle(NewRec(rectangle.x + rectangle.width - borderWidth, rectangle.y, borderWidth, rectangle.height), borderColor);
 }
 
 // +==============================+
 // |         DrawGradient         |
 // +==============================+
-void RenderState_t::DrawGradient(rec rectangle, Color_t color1, Color_t color2, Direction2D_t direction)
+void RenderState_t::DrawGradient(rec rectangle, Color_t color1, Color_t color2, Dir2_t direction)
 {
 	this->BindTexture(&this->gradientTexture);
-	this->SetSourceRectangle(NewRectangle(0, 0, 1, 1));
+	this->SetSourceRectangle(NewRec(0, 0, 1, 1));
 	this->SetColor(color1);
 	this->SetSecondaryColor(color2);
 	this->SetGradientEnabled(true);
 	
-	m4 worldMatrix = Matrix4_Identity;
+	mat4 worldMatrix = Mat4_Identity;
 	switch (direction)
 	{
-		case Direction2D_Right:
+		case Dir2_Right:
 		default:
 		{
-			worldMatrix = Mat4Mult(
-				Matrix4Translate(NewVec3(rectangle.x, rectangle.y, 0.0f)),
-				Matrix4Scale(NewVec3(rectangle.width, rectangle.height, 1.0f)));
+			worldMatrix = Mat4Multiply(
+				Mat4Translate(NewVec3(rectangle.x, rectangle.y, 0.0f)),
+				Mat4Scale(NewVec3(rectangle.width, rectangle.height, 1.0f)));
 		} break;
 		
-		case Direction2D_Left:
+		case Dir2_Left:
 		{
-			worldMatrix = Mat4Mult(
-				Matrix4Translate(NewVec3(rectangle.x + rectangle.width, rectangle.y, 0.0f)),
-				Matrix4Scale(NewVec3(-rectangle.width, rectangle.height, 1.0f)));
+			worldMatrix = Mat4Multiply(
+				Mat4Translate(NewVec3(rectangle.x + rectangle.width, rectangle.y, 0.0f)),
+				Mat4Scale(NewVec3(-rectangle.width, rectangle.height, 1.0f)));
 		} break;
 		
-		case Direction2D_Down:
+		case Dir2_Down:
 		{
-			worldMatrix = Matrix4Multiply(
-				Matrix4Translate(NewVec3(rectangle.x + rectangle.width, rectangle.y, 0.0f)),
-				Matrix4RotateZ(ToRadians(90)),
-				Matrix4Scale(NewVec3(rectangle.height, rectangle.width, 1.0f)));
+			worldMatrix = Mat4Multiply(
+				Mat4Translate(NewVec3(rectangle.x + rectangle.width, rectangle.y, 0.0f)),
+				Mat4RotateZ(ToRadians(90)),
+				Mat4Scale(NewVec3(rectangle.height, rectangle.width, 1.0f)));
 		} break;
 		
-		case Direction2D_Up:
+		case Dir2_Up:
 		{
-			worldMatrix = Matrix4Multiply(
-				Matrix4Translate(NewVec3(rectangle.x + rectangle.width, rectangle.y + rectangle.height, 0.0f)),
-				Matrix4RotateZ(ToRadians(90)),
-				Matrix4Scale(NewVec3(-rectangle.height, rectangle.width, 1.0f)));
+			worldMatrix = Mat4Multiply(
+				Mat4Translate(NewVec3(rectangle.x + rectangle.width, rectangle.y + rectangle.height, 0.0f)),
+				Mat4RotateZ(ToRadians(90)),
+				Mat4Scale(NewVec3(-rectangle.height, rectangle.width, 1.0f)));
 		} break;
 	};
 	this->SetWorldMatrix(worldMatrix);
@@ -393,15 +393,15 @@ void RenderState_t::DrawGradient(rec rectangle, Color_t color1, Color_t color2, 
 void RenderState_t::DrawLine(v2 p1, v2 p2, r32 thickness, Color_t color)
 {
 	this->BindTexture(&this->dotTexture);
-	this->SetSourceRectangle(NewRectangle(0, 0, 1, 1));
+	this->SetSourceRectangle(NewRec(0, 0, 1, 1));
 	this->SetColor(color);
 	r32 length = Vec2Length(p2 - p1);
-	r32 rotation = Atan32(p2.y - p1.y, p2.x - p1.x); 
-	m4 worldMatrix = Matrix4_Identity;
-	worldMatrix = Mat4Mult(Matrix4Translate(NewVec3(0.0f, -0.5f, 0.0f)),   worldMatrix); //Centering
-	worldMatrix = Mat4Mult(Matrix4Scale(NewVec3(length, thickness, 1.0f)), worldMatrix); //Scale
-	worldMatrix = Mat4Mult(Matrix4RotateZ(rotation),                       worldMatrix); //Rotation
-	worldMatrix = Mat4Mult(Matrix4Translate(NewVec3(p1.x, p1.y, 0.0f)),    worldMatrix); //Position
+	r32 rotation = AtanR32(p2.y - p1.y, p2.x - p1.x); 
+	mat4 worldMatrix = Mat4_Identity;
+	worldMatrix = Mat4Multiply(Mat4Translate(NewVec3(0.0f, -0.5f, 0.0f)),   worldMatrix); //Centering
+	worldMatrix = Mat4Multiply(Mat4Scale(NewVec3(length, thickness, 1.0f)), worldMatrix); //Scale
+	worldMatrix = Mat4Multiply(Mat4RotateZ(rotation),                       worldMatrix); //Rotation
+	worldMatrix = Mat4Multiply(Mat4Translate(NewVec3(p1.x, p1.y, 0.0f)),    worldMatrix); //Position
 	this->SetWorldMatrix(worldMatrix);
 	this->BindBuffer(&this->squareBuffer);
 	glDrawArrays(GL_TRIANGLES, 0, this->squareBuffer.numVertices);
@@ -413,7 +413,7 @@ void RenderState_t::DrawLine(v2 p1, v2 p2, r32 thickness, Color_t color)
 void RenderState_t::DrawCircle(v2 center, r32 radius, Color_t color)
 {
 	this->SetCircleRadius(1.0f, 0.0f);
-	this->DrawRectangle(NewRectangle(center.x - radius, center.y - radius, radius*2, radius*2), color);
+	this->DrawRectangle(NewRec(center.x - radius, center.y - radius, radius*2, radius*2), color);
 	this->SetCircleRadius(0.0f, 0.0f);
 }
 
@@ -422,9 +422,9 @@ void RenderState_t::DrawCircle(v2 center, r32 radius, Color_t color)
 // +==============================+
 void RenderState_t::DrawDonut(v2 center, r32 radius, r32 innerRadius, Color_t color)
 {
-	r32 realInnerRadius = Clamp32(innerRadius / radius, 0.0f, 1.0f);
+	r32 realInnerRadius = ClampR32(innerRadius / radius, 0.0f, 1.0f);
 	this->SetCircleRadius(1.0f, realInnerRadius);
-	this->DrawRectangle(NewRectangle(center.x - radius, center.y - radius, radius*2, radius*2), color);
+	this->DrawRectangle(NewRec(center.x - radius, center.y - radius, radius*2, radius*2), color);
 	this->SetCircleRadius(0.0f, 0.0f);
 }
 
@@ -435,8 +435,8 @@ void RenderState_t::DrawCharacter(u32 charIndex, v2 bottomLeft, Color_t color, r
 {
 	const FontCharInfo_t* charInfo = &this->boundFont->chars[charIndex];
 	
-	rec sourceRectangle = NewRectangle((r32)charInfo->x, (r32)charInfo->y, (r32)charInfo->width, (r32)charInfo->height);
-	rec drawRectangle = NewRectangle(
+	rec sourceRectangle = NewRec((r32)charInfo->x, (r32)charInfo->y, (r32)charInfo->width, (r32)charInfo->height);
+	rec drawRectangle = NewRec(
 		bottomLeft.x + scale*charInfo->offset.x, 
 		bottomLeft.y + scale*charInfo->offset.y, 
 		scale*charInfo->width, 

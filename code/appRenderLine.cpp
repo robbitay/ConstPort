@@ -37,14 +37,14 @@ v2 RenderLine(Line_t* linePntr, v2 position, r32 viewWidth, bool sizeOnly = fals
 	if (!sizeOnly)
 	{
 		//NOTE: We need to shift the rectangle to be 1 down and 1 shorter so that
-		//		the IsInsideRectangle is never true for more than one line
-		rec backgroundRec = NewRectangle(
+		//		the IsInsideRec is never true for more than one line
+		rec backgroundRec = NewRec(
 			0,
 			position.y - app->mainFont.maxExtendUp + 1,
 			10000,
 			lineStringSize.y + (r32)GC->lineSpacing - 1
 		);
-		if (GC->highlightHoverLine && IsInsideRectangle(relMousePos, backgroundRec) && input->mouseInsideWindow && !ui->mouseInMenu)
+		if (GC->highlightHoverLine && IsInsideRec(backgroundRec, relMousePos) && input->mouseInsideWindow && !ui->mouseInMenu)
 		{
 			backgroundColor = GC->colors.hoverBackground;
 		}
@@ -96,7 +96,7 @@ v2 RenderLine(Line_t* linePntr, v2 position, r32 viewWidth, bool sizeOnly = fals
 					else
 					{
 						r32 halfAnimProgress = (linePntr->animProgress-0.5f) / 0.5f;
-						r32 bannerHeight = MaxReal32(MIN_BANNER_HEIGHT, GC->elapsedBannerHeight * EaseCubicOut(halfAnimProgress));
+						r32 bannerHeight = MaxR32(MIN_BANNER_HEIGHT, GC->elapsedBannerHeight * EaseCubicOut(halfAnimProgress));
 						result.y += bannerHeight;
 					}
 				}
@@ -167,7 +167,7 @@ void RenderLineGutter(const Line_t* linePntr, i32 lineIndex, v2 position)
 					{
 						r32 halfAnimProgress = linePntr->animProgress / 0.5f;
 						r32 bannerWidth = ui->viewRec.width * EaseCubicOut(halfAnimProgress);
-						rec bannerRec = NewRectangle(
+						rec bannerRec = NewRec(
 							ui->viewRec.x + ui->viewRec.width/2 - bannerWidth/2,
 							position.y - app->mainFont.maxExtendUp + lineStringSize.y,
 							bannerWidth,
@@ -179,14 +179,14 @@ void RenderLineGutter(const Line_t* linePntr, i32 lineIndex, v2 position)
 					else
 					{
 						r32 halfAnimProgress = (linePntr->animProgress-0.5f) / 0.5f;
-						bannerHeight = MaxReal32(MIN_BANNER_HEIGHT, GC->elapsedBannerHeight * EaseCubicOut(halfAnimProgress));
-						rec bannerRec = NewRectangle(
+						bannerHeight = MaxR32(MIN_BANNER_HEIGHT, GC->elapsedBannerHeight * EaseCubicOut(halfAnimProgress));
+						rec bannerRec = NewRec(
 							ui->viewRec.x,
 							position.y - app->mainFont.maxExtendUp + lineStringSize.y + GC->lineSpacing/2, 
 							ui->viewRec.width,
 							bannerHeight
 						);
-						rs->DrawGradient(bannerRec, GC->colors.banner1, GC->colors.banner2, Direction2D_Down);
+						rs->DrawGradient(bannerRec, GC->colors.banner1, GC->colors.banner2, Dir2_Down);
 						
 						if (linePntr->animProgress > 0.8f)
 						{
@@ -214,10 +214,10 @@ void RenderLineGutter(const Line_t* linePntr, i32 lineIndex, v2 position)
 	// |        Draw Line Mark        |
 	// +==============================+
 	if (IsFlagSet(linePntr->flags, LineFlag_MarkBelow) ||
-		(ButtonDown(MouseButton_Left) && IsInsideRectangle(RenderMouseStartPos, ui->gutterRec) && ui->markIndex != -1 && ui->markIndex == lineIndex))
+		(ButtonDown(MouseButton_Left) && IsInsideRec(ui->gutterRec, RenderMouseStartPos) && ui->markIndex != -1 && ui->markIndex == lineIndex))
 	{
 		if (bannerHeight > 0) bannerHeight += 2;
-		rec markRec = NewRectangle(
+		rec markRec = NewRec(
 			ui->gutterRec.x, 
 			position.y + app->mainFont.maxExtendDown + bannerHeight, 
 			ui->gutterRec.width + ui->viewRec.width,
@@ -234,7 +234,7 @@ void RenderLineGutter(const Line_t* linePntr, i32 lineIndex, v2 position)
 		bool drawButtonBelow = false;
 		#if 0
 		//TODO: Only do this check if this line is within the view bounds
-		if (IsInsideRectangle(RenderMousePos, ui->viewRec) &&
+		if (IsInsideRec(RenderMousePos, ui->viewRec) &&
 			ui->hoverLocation.lineNum >= 0)
 		{
 			if (ui->hoverLocation.lineNum <= lineIndex)
@@ -275,8 +275,8 @@ void RenderLineGutter(const Line_t* linePntr, i32 lineIndex, v2 position)
 		Color_t markColor1 = GC->colors.lineMark1;
 		Color_t markColor2 = GC->colors.lineMark2;
 		if (ui->markIndex == lineIndex &&
-			// IsInsideRectangle(RenderMouseStartPos, ui->gutterRec) &&
-			IsInsideRectangle(RenderMousePos, ui->gutterRec))
+			// IsInsideRec(RenderMouseStartPos, ui->gutterRec) &&
+			IsInsideRec(ui->gutterRec, RenderMousePos))
 		{
 			markColor1 = GC->colors.lineMarkHover;
 			markColor2 = GC->colors.lineMarkHover;
@@ -293,7 +293,7 @@ void RenderLineGutter(const Line_t* linePntr, i32 lineIndex, v2 position)
 			markColor2 = {Color_Yellow};
 		}
 		
-		rs->DrawGradient(markRec, markColor1, markColor2, Direction2D_Right);
+		rs->DrawGradient(markRec, markColor1, markColor2, Dir2_Right);
 	}
 }
 

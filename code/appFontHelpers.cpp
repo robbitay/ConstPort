@@ -69,7 +69,7 @@ inline i32 GetStringIndexForLocation(const Font_t* font, const char* inputStr, u
 		v2 stringSize = MeasureString(font, inputStr, cIndex+1);
 		if (stringSize.x > relativePos.x || cIndex == inputStrLength-1)
 		{
-			if (Abs32(relativePos.x - lastStringSize.x) < Abs32(relativePos.x - stringSize.x))
+			if (AbsR32(relativePos.x - lastStringSize.x) < AbsR32(relativePos.x - stringSize.x))
 			{
 				result = cIndex;
 			}

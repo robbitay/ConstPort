@@ -9,7 +9,7 @@ Date:   10\05\2017
 
 struct FileInfo_t
 {
-	uint32 size;
+	u32 size;
 	void* content;
 };
 

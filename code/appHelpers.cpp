@@ -49,7 +49,7 @@ Description:
 #define ButtonDown(button) (input->buttons[button].isDown)
 #define ButtonDownUnhandled(button) (app->buttonHandled[button] == false && input->buttons[button].isDown)
 
-#define ClickedOnRec(rectangle) (ButtonReleasedUnhandled(MouseButton_Left) && IsInsideRectangle(RenderMousePos, rectangle) && IsInsideRectangle(RenderMouseStartPos, rectangle))
+#define ClickedOnRec(rectangle) (ButtonReleasedUnhandled(MouseButton_Left) && IsInsideRec(rectangle, RenderMousePos) && IsInsideRec(rectangle, RenderMouseStartPos))
 
 #define IsActiveElement(elementPntr) (app->activeElement == elementPntr)
 
@@ -57,8 +57,8 @@ Description:
 #define ButtonColorChoice(buttonColor, textColor, borderColor, rectangle, isSelected, isReady) do \
 {                                                                                                 \
 	if (ButtonDown(MouseButton_Left) && input->mouseInsideWindow &&                               \
-		IsInsideRectangle(RenderMousePos, rectangle) &&                                           \
-		IsInsideRectangle(RenderMouseStartPos, rectangle))                                        \
+		IsInsideRec(rectangle, RenderMousePos) &&                                                 \
+		IsInsideRec(rectangle, RenderMouseStartPos))                                              \
 	{                                                                                             \
 		buttonColor = GC->colors.buttonPress;                                                     \
 		textColor   = GC->colors.buttonPressText;                                                 \
@@ -76,7 +76,7 @@ Description:
 		textColor   = GC->colors.buttonReadyText;                                                 \
 		borderColor = GC->colors.buttonReadyBorder;                                               \
 	}                                                                                             \
-	if (IsInsideRectangle(RenderMousePos, rectangle) && input->mouseInsideWindow &&               \
+	if (IsInsideRec(rectangle, RenderMousePos) && input->mouseInsideWindow &&                     \
 		!ButtonDown(MouseButton_Left))                                                            \
 	{                                                                                             \
 		buttonColor = ColorMultiply(buttonColor, GC->colors.buttonHover);                         \

@@ -76,8 +76,8 @@ u32 RemoveStringRegionInPlace(char* str, u32 strLength, u32 regionStartIndex, u3
 	Assert(regionEndIndex <= strLength);
 	if (regionStartIndex == regionEndIndex) { return strLength; } //nothing to remove
 	
-	u32 regionMin = (u32)MinInt32(regionStartIndex, regionEndIndex);
-	u32 regionMax = (u32)MaxInt32(regionStartIndex, regionEndIndex);
+	u32 regionMin = (u32)MinI32(regionStartIndex, regionEndIndex);
+	u32 regionMax = (u32)MaxI32(regionStartIndex, regionEndIndex);
 	
 	u32 fromIndex = 0;
 	u32 toIndex = 0;
@@ -181,8 +181,8 @@ void TextBoxUpdate(TextBox_t* tb, bool selected)
 {
 	Assert(tb != nullptr);
 	
-	u32 cursorMin = (u32)MinInt32(tb->cursorBegin, tb->cursorEnd);
-	u32 cursorMax = (u32)MaxInt32(tb->cursorBegin, tb->cursorEnd);
+	u32 cursorMin = (u32)MinI32(tb->cursorBegin, tb->cursorEnd);
+	u32 cursorMax = (u32)MaxI32(tb->cursorBegin, tb->cursorEnd);
 	
 	if (selected)
 	{
@@ -281,7 +281,7 @@ void TextBoxUpdate(TextBox_t* tb, bool selected)
 					//Remove the selected text before writing the characters
 					
 					tb->numChars = RemoveStringRegionInPlace(tb->chars, tb->numChars, tb->cursorBegin, tb->cursorEnd);
-					tb->cursorEnd = (u32)MinInt32(tb->cursorBegin, tb->cursorEnd);
+					tb->cursorEnd = (u32)MinI32(tb->cursorBegin, tb->cursorEnd);
 					tb->cursorBegin = tb->cursorEnd;
 				}
 				
@@ -331,7 +331,7 @@ void TextBoxUpdate(TextBox_t* tb, bool selected)
 			else
 			{
 				tb->numChars = RemoveStringRegionInPlace(tb->chars, tb->numChars, tb->cursorBegin, tb->cursorEnd);
-				tb->cursorEnd = (u32)MinInt32(tb->cursorBegin, tb->cursorEnd);
+				tb->cursorEnd = (u32)MinI32(tb->cursorBegin, tb->cursorEnd);
 				tb->cursorBegin = tb->cursorEnd;
 			}
 		}
@@ -367,7 +367,7 @@ void TextBoxUpdate(TextBox_t* tb, bool selected)
 		// +==============================+
 		// |       Mouse Selection        |
 		// +==============================+
-		if (input->mouseInsideWindow && IsInsideRectangle(RenderMouseStartPos, tb->drawRec))
+		if (input->mouseInsideWindow && IsInsideRec(tb->drawRec, RenderMouseStartPos))
 		{
 			v2 relativePos = NewVec2(RenderMousePos.x - (tb->drawRec.x + tb->leftPadding), 0);
 			i32 mouseIndex = GetStringIndexForLocation(tb->font, tb->chars, tb->numChars, relativePos);
@@ -407,7 +407,7 @@ void TextBoxUpdate(TextBox_t* tb, bool selected)
 						//Remove the selected text before writing the characters
 						
 						tb->numChars = RemoveStringRegionInPlace(tb->chars, tb->numChars, tb->cursorBegin, tb->cursorEnd);
-						tb->cursorEnd = (u32)MinInt32(tb->cursorBegin, tb->cursorEnd);
+						tb->cursorEnd = (u32)MinI32(tb->cursorBegin, tb->cursorEnd);
 						tb->cursorBegin = tb->cursorEnd;
 					}
 					
@@ -450,40 +450,40 @@ void TextBoxRender(TextBox_t* tb, RenderState_t* rs, bool selected)
 	Assert(tb != nullptr);
 	Assert(rs != nullptr);
 	
-	r32 colorLerp = (Sin32((platform->programTime/1000.0f)*6.0f) + 1.0f) / 2.0f;
+	r32 colorLerp = (SinR32((platform->programTime/1000.0f)*6.0f) + 1.0f) / 2.0f;
 	ColorState_t colorState = selected ? ColorState_Active : ColorState_Idle;
-	if (IsInsideRectangle(RenderMousePos, tb->drawRec) && input->mouseInsideWindow)
+	if (IsInsideRec(tb->drawRec, RenderMousePos) && input->mouseInsideWindow)
 	{
 		colorState = selected ? ColorState_ActiveHover : ColorState_Hover;
-		if (ButtonDown(MouseButton_Left) && IsInsideRectangle(RenderMouseStartPos, tb->drawRec))
+		if (ButtonDown(MouseButton_Left) && IsInsideRec(tb->drawRec, RenderMouseStartPos))
 		{
 			colorState = ColorState_Pressed;
 		}
 	}
 	
-	u32 cursorMin = (u32)MinInt32(tb->cursorBegin, tb->cursorEnd);
-	u32 cursorMax = (u32)MaxInt32(tb->cursorBegin, tb->cursorEnd);
+	u32 cursorMin = (u32)MinI32(tb->cursorBegin, tb->cursorEnd);
+	u32 cursorMax = (u32)MaxI32(tb->cursorBegin, tb->cursorEnd);
 	
 	v2 textSize = MeasureString(tb->font, tb->chars, tb->numChars);
 	v2 textPos = tb->drawRec.topLeft + NewVec2(tb->leftPadding, tb->drawRec.height/2.0f - textSize.y/2.0f + tb->font->maxExtendUp);
-	textPos.x = (r32)Round32(textPos.x);
-	textPos.y = (r32)Round32(textPos.y);
+	textPos.x = (r32)RoundR32(textPos.x);
+	textPos.y = (r32)RoundR32(textPos.y);
 	
-	r32 cursorOffset   = (r32)Round32(MeasureString(tb->font, tb->chars, tb->cursorEnd).x);
+	r32 cursorOffset   = (r32)RoundR32(MeasureString(tb->font, tb->chars, tb->cursorEnd).x);
 	r32 selectionStart = MeasureString(tb->font, tb->chars, cursorMin).x;
 	r32 selectionWidth = MeasureString(tb->font, &tb->chars[cursorMin], cursorMax-cursorMin).x;
 	
 	// +==============================+
 	// |     Draw the Background      |
 	// +==============================+
-	rs->DrawGradient(tb->drawRec, tb->colors.background1[colorState], tb->colors.background2[colorState], Direction2D_Down);
+	rs->DrawGradient(tb->drawRec, tb->colors.background1[colorState], tb->colors.background2[colorState], Dir2_Down);
 	rs->DrawButton(tb->drawRec, {Color_TransparentBlack}, tb->colors.border[colorState], 1);
 	
 	// +==============================+
 	// |      Draw the Selection      |
 	// +==============================+
 	{
-		Rectangle_t selectionRec = NewRectangle(
+		Rectangle_t selectionRec = NewRec(
 			textPos.x + selectionStart,
 			textPos.y - tb->font->maxExtendUp,
 			selectionWidth, tb->font->lineHeight
@@ -504,7 +504,7 @@ void TextBoxRender(TextBox_t* tb, RenderState_t* rs, bool selected)
 	// +==============================+
 	if (selected)
 	{
-		Rectangle_t cursorRec = NewRectangle(
+		Rectangle_t cursorRec = NewRec(
 			textPos.x + cursorOffset,
 			textPos.y - tb->font->maxExtendUp,
 			1, tb->font->lineHeight
