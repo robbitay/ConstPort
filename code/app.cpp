@@ -2057,14 +2057,14 @@ EXPORT AppInitialize_DEFINITION(App_Initialize)
 	char* testStr = StrReplaceChar(TempArena, NtStr("Hello World!"), 'l', '1');
 	DEBUG_PrintLine("testStr = \"%s\"", testStr);
 	
-	char* replaceStr = ArenaString(TempArena, "Hello World! This is a great World!");
+	char* replaceStr = ArenaString(TempArena, NtStr("Hello World! This is a great World!"));
 	StrReplaceInPlace(NtStr(replaceStr), "World", "12345", 5);
 	DEBUG_PrintLine("replaceStr = \"%s\"", replaceStr);
 	
 	char* spliceStr = StrSplice(TempArena, NtStr("Hello World!"), 5, 0, NtStr(" Hi"));
 	DEBUG_PrintLine("spliceStr = \"%s\"", spliceStr);
 	
-	spliceStr = ArenaString(TempArena, "Hello World!");
+	spliceStr = ArenaString(TempArena, NtStr("Hello World!"));
 	StrSpliceInPlace(NtStr(spliceStr), 0, 5, "12345");
 	DEBUG_PrintLine("spliceStr = \"%s\"", spliceStr);
 	#endif

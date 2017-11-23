@@ -168,7 +168,7 @@ GetAbsolutePath_DEFINITION(OSX_GetAbsolutePath)
 	}
 	else
 	{
-		return ArenaString(arenaPntr, relativePath);
+		return ArenaString(arenaPntr, NtStr(relativePath));
 	}
 	return nullptr;
 }
