@@ -4,7 +4,7 @@ Author: Taylor Robbins
 Date:   06\09\2017
 Description: 
 	** Handles mapping windows key codes to our own enumeration.
-	** Also contains functions for handling keyboard input in widows
+	** Also contains functions for handling keyboard input in windows
 
 #included from win32_main.cpp 
 */

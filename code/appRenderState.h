@@ -17,9 +17,9 @@ struct RenderState_t
 	const Texture_t* boundAlphaTexture;
 	const VertexBuffer_t* boundBuffer;
 	const FrameBuffer_t* boundFrameBuffer;
-	Matrix4_t worldMatrix;
-	Matrix4_t viewMatrix;
-	Matrix4_t projectionMatrix;
+	mat4 worldMatrix;
+	mat4 viewMatrix;
+	mat4 projectionMatrix;
 	
 	VertexBuffer_t squareBuffer;
 	Texture_t dotTexture;
@@ -39,9 +39,9 @@ struct RenderState_t
 	void DisableAlphaTexture();
 	void BindBuffer(const VertexBuffer_t* vertBuffer);
 	void BindFrameBuffer(const FrameBuffer_t* frameBuffer);
-	void SetWorldMatrix(const Matrix4_t& worldMatrix);
-	void SetViewMatrix(const Matrix4_t& viewMatrix);
-	void SetProjectionMatrix(const Matrix4_t& projectionMatrix);
+	void SetWorldMatrix(const mat4& worldMatrix);
+	void SetViewMatrix(const mat4& viewMatrix);
+	void SetProjectionMatrix(const mat4& projectionMatrix);
 	void SetViewport(rec viewport);
 	void SetColor(Color_t color);
 	void SetSecondaryColor(Color_t color);
