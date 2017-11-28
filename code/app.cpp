@@ -2469,7 +2469,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	// +==============================+
 	// |    Clear Console Shortcut    |
 	// +==============================+
-	if (ButtonDown(Button_Control) && ButtonPressed(Button_C) && !ButtonDown(Button_Shift))
+	if (ButtonDown(Button_Control) && ButtonDown(Button_Shift) && ButtonPressed(Button_C))
 	{
 		ClearConsole();
 	}

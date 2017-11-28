@@ -10,7 +10,7 @@ rem echo Time is %TimeString%
 
 set CompilePlatform=1
 set CompileApplication=1
-set DebugBuild=1
+set DebugBuild=0
 set ProjectName=ConstPort
 
 REM The boost regex library should be built using the b2 tool that comes
