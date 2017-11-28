@@ -2303,134 +2303,76 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 			}
 		}
 		
-		bool sendButtonPressed = false;
 		if (IsInsideRec(ui->sendButtonRec, RenderMousePos) && input->mouseInsideWindow && !ui->mouseInMenu)
 		{
 			AppOutput->cursorType = Cursor_Pointer;
 			if (ButtonReleased(MouseButton_Left) && IsInsideRec(ui->sendButtonRec, RenderMouseStartPos))
 			{
-				sendButtonPressed = true;
+				app->inputBox.chars[app->inputBox.numChars] = '\n';
+				app->inputBox.numChars++;
+				app->inputBox.chars[app->inputBox.numChars] = '\0';
 			}
 		}
 		
-		if (comMenu->show == false && (ButtonPressed(Button_Enter) || sendButtonPressed))
+		if (comMenu->show == false && app->inputBox.numChars > 0 && app->inputBox.chars[app->inputBox.numChars-1] == '\n' && IsActiveElement(&app->inputBox))
 		{
-			if (IsActiveElement(&app->inputBox))
+			bool outputNewLine = true;
+			
+			if (ButtonDown(Button_Control))
 			{
-				bool outputNewLine = true;
+				TempPushMark();
 				
-				if (app->inputBox.numChars > 0)
+				u32 numHexBytes = 0;
+				u8* hexBytes = GetHexForAsciiString(app->inputBox.chars, app->inputBox.numChars-1, &numHexBytes, TempArena); //NOTE: -1 on numChars is for /n in textbox when enter was pressed
+				if (hexBytes != nullptr && numHexBytes > 0)
 				{
-					if (ButtonDown(Button_Control))
+					DEBUG_Print("Writing %u HEX bytes: { ", numHexBytes);
+					for (u32 hIndex = 0; hIndex < numHexBytes; hIndex++)
 					{
-						TempPushMark();
-						
-						u32 numHexBytes = 0;
-						u8* hexBytes = GetHexForAsciiString(app->inputBox.chars, app->inputBox.numChars, &numHexBytes, TempArena);
-						if (hexBytes != nullptr && numHexBytes > 0)
-						{
-							DEBUG_Print("Writing %u HEX bytes: { ", numHexBytes);
-							for (u32 hIndex = 0; hIndex < numHexBytes; hIndex++)
-							{
-								DEBUG_Print("%02X ", hexBytes[hIndex]);
-							}
-							DEBUG_WriteLine("}");
-							
-							if (echoInput) { DataReceived((char*)hexBytes, numHexBytes); }
-							if (writeToComPort)
-							{
-								platform->WriteComPort(&app->comPort, (char*)hexBytes, numHexBytes);
-								app->txShiftRegister |= 0x80;
-							}
-							if (writeToProgram) { platform->WriteProgramInput(&app->programInstance, (char*)hexBytes, numHexBytes); }
-							
-							memcpy(app->lastInputText, app->inputBox.chars, app->inputBox.numChars);
-							app->lastInputTextLength = app->inputBox.numChars;
-							app->lastInputText[app->lastInputTextLength] = '\0';
-							
-							TextBoxClear(&app->inputBox);
-						}
-						else
-						{
-							StatusError("No hex value to send");
-						}
-						
-						TempPopMark();
-						
-						outputNewLine = false;
+						DEBUG_Print("%02X ", hexBytes[hIndex]);
 					}
-					else
+					DEBUG_WriteLine("}");
+					
+					if (echoInput) { DataReceived((char*)hexBytes, numHexBytes); }
+					if (writeToComPort)
 					{
-						DEBUG_PrintLine("Writing %u byte input: \"%.*s\"", app->inputBox.numChars, app->inputBox.numChars, app->inputBox.chars);
-						
-						if (echoInput) { DataReceived(app->inputBox.chars, app->inputBox.numChars); }
-						if (writeToComPort)
-						{
-							platform->WriteComPort(&app->comPort, app->inputBox.chars, app->inputBox.numChars);
-							app->txShiftRegister |= 0x80;
-						}
-						if (writeToProgram) { platform->WriteProgramInput(&app->programInstance, app->inputBox.chars, app->inputBox.numChars); }
-						
-						memcpy(app->lastInputText, app->inputBox.chars, app->inputBox.numChars);
-						app->lastInputTextLength = app->inputBox.numChars;
-						app->lastInputText[app->lastInputTextLength] = '\0';
-						
-						TextBoxClear(&app->inputBox);
+						platform->WriteComPort(&app->comPort, (char*)hexBytes, numHexBytes);
+						app->txShiftRegister |= 0x80;
 					}
+					if (writeToProgram) { platform->WriteProgramInput(&app->programInstance, (char*)hexBytes, numHexBytes); }
+					
+					memcpy(app->lastInputText, app->inputBox.chars, app->inputBox.numChars-1);
+					app->lastInputTextLength = app->inputBox.numChars-1;
+					app->lastInputText[app->lastInputTextLength] = '\0';
+					
+					TextBoxClear(&app->inputBox);
 				}
 				else
 				{
-					StatusInfo("Writing blank line");
+					StatusError("No hex value to send");
 				}
 				
-				if (outputNewLine) //Write new line after text input
-				{
-					const char* newLineStr = GC->newLineString;
-					if (newLineStr == nullptr) { newLineStr = "\n"; }
-					u32 newLineStrLength = (u32)strlen(newLineStr);
-					if (echoInput) { DataReceived(newLineStr, newLineStrLength); }
-					if (writeToComPort)
-					{
-						platform->WriteComPort(&app->comPort, newLineStr, newLineStrLength);
-						app->txShiftRegister |= 0x80;
-					}
-					if (writeToProgram) { platform->WriteProgramInput(&app->programInstance, newLineStr, newLineStrLength); }
-				}
+				TempPopMark();
+				
+				outputNewLine = false;
 			}
-			else if (IsActiveElement(&ui->viewRec))
+			else
 			{
-				DEBUG_WriteLine("Writing New Line");
+				DEBUG_PrintLine("Writing %u byte input: \"%.*s\"", app->inputBox.numChars, app->inputBox.numChars, app->inputBox.chars);
 				
-				const char* newLineStr = GC->newLineString;
-				if (newLineStr == nullptr) { newLineStr = "\n"; }
-				u32 newLineStrLength = (u32)strlen(newLineStr);
-				if (echoInput) { DataReceived(newLineStr, newLineStrLength); }
+				if (echoInput) { DataReceived(app->inputBox.chars, app->inputBox.numChars); }
 				if (writeToComPort)
 				{
-					platform->WriteComPort(&app->comPort, newLineStr, newLineStrLength);
+					platform->WriteComPort(&app->comPort, app->inputBox.chars, app->inputBox.numChars);
 					app->txShiftRegister |= 0x80;
 				}
-				if (writeToProgram) { platform->WriteProgramInput(&app->programInstance, newLineStr, newLineStrLength); }
-			}
-		}
-		
-		if (!comMenu->show && ButtonPressed(Button_Backspace))
-		{
-			if (IsActiveElement(&ui->viewRec))
-			{
-				DEBUG_WriteLine("Writing Backspace");
+				if (writeToProgram) { platform->WriteProgramInput(&app->programInstance, app->inputBox.chars, app->inputBox.numChars); }
 				
-				char newChar = '\b';
-				if (echoInput) { DataReceived("\b", 1); }
-				if (writeToComPort)
-				{
-					platform->WriteComPort(&app->comPort, &newChar, 1);
-					app->txShiftRegister |= 0x80;
-				}
-				if (writeToProgram)
-				{
-					platform->WriteProgramInput(&app->programInstance, &newChar, 1);
-				}
+				memcpy(app->lastInputText, app->inputBox.chars, app->inputBox.numChars-1);
+				app->lastInputTextLength = app->inputBox.numChars-1;
+				app->lastInputText[app->lastInputTextLength] = '\0';
+				
+				TextBoxClear(&app->inputBox);
 			}
 		}
 	

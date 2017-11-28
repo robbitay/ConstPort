@@ -276,48 +276,67 @@ void TextBoxUpdate(TextBox_t* tb, bool selected)
 			for (u32 cIndex = 0; cIndex < input->textInputLength; cIndex++)
 			{
 				char newChar = input->textInput[cIndex];
-				if (tb->cursorBegin != tb->cursorEnd)
-				{
-					//Remove the selected text before writing the characters
-					
-					tb->numChars = RemoveStringRegionInPlace(tb->chars, tb->numChars, tb->cursorBegin, tb->cursorEnd);
-					tb->cursorEnd = (u32)MinI32(tb->cursorBegin, tb->cursorEnd);
-					tb->cursorBegin = tb->cursorEnd;
-				}
 				
-				if (tb->numChars+1 < tb->maxNumChars)
+				// +==============================+
+				// |          Backspace           |
+				// +==============================+
+				if (newChar == '\b')
 				{
-					tb->numChars = InsertStringInPlace(tb->chars, tb->numChars, tb->maxNumChars, tb->cursorEnd, &newChar, 1);
-					tb->cursorEnd++;
-					tb->cursorBegin++;
+					if (tb->cursorBegin == tb->cursorEnd)
+					{
+						if (tb->cursorEnd > 0)
+						{
+							u32 wordEndIndex = tb->cursorEnd-1;
+							if (ButtonDown(Button_Control))
+							{
+								wordEndIndex = FindWordBound(tb->chars, tb->numChars, tb->cursorEnd, false);
+							}
+							
+							tb->numChars = RemoveStringRegionInPlace(tb->chars, tb->numChars, tb->cursorEnd, wordEndIndex);
+							tb->cursorEnd = wordEndIndex;
+							tb->cursorBegin = tb->cursorEnd;
+						}
+					}
+					else
+					{
+						tb->numChars = RemoveStringRegionInPlace(tb->chars, tb->numChars, tb->cursorBegin, tb->cursorEnd);
+						tb->cursorEnd = (u32)MinI32(tb->cursorBegin, tb->cursorEnd);
+						tb->cursorBegin = tb->cursorEnd;
+					}
 				}
-				else
+				else //all other regular characters
 				{
-					StatusError("Input text box is full");
+					if (tb->cursorBegin != tb->cursorEnd)
+					{
+						//Remove the selected text before writing the characters
+						
+						tb->numChars = RemoveStringRegionInPlace(tb->chars, tb->numChars, tb->cursorBegin, tb->cursorEnd);
+						tb->cursorEnd = (u32)MinI32(tb->cursorBegin, tb->cursorEnd);
+						tb->cursorBegin = tb->cursorEnd;
+					}
+					
+					if (tb->numChars+1 < tb->maxNumChars)
+					{
+						tb->numChars = InsertStringInPlace(tb->chars, tb->numChars, tb->maxNumChars, tb->cursorEnd, &newChar, 1);
+						tb->cursorEnd++;
+						tb->cursorBegin++;
+					}
+					else
+					{
+						StatusError("Input text box is full");
+					}
 				}
 			}
 		}
 		
 		// +==============================+
-		// |          Backspace           |
+		// |            Delete            |
 		// +==============================+
-		if (ButtonPressed(Button_Backspace) || ButtonPressed(Button_Delete))
+		if (ButtonPressed(Button_Delete))
 		{
 			if (tb->cursorBegin == tb->cursorEnd)
 			{
-				if (ButtonPressed(Button_Backspace) && tb->cursorEnd > 0)
-				{
-					u32 wordEndIndex = tb->cursorEnd-1;
-					if (ButtonDown(Button_Control))
-					{
-						wordEndIndex = FindWordBound(tb->chars, tb->numChars, tb->cursorEnd, false);
-					}
-					
-					tb->numChars = RemoveStringRegionInPlace(tb->chars, tb->numChars, tb->cursorEnd, wordEndIndex);
-					tb->cursorEnd = wordEndIndex;
-					tb->cursorBegin = tb->cursorEnd;
-				}
-				else if (ButtonPressed(Button_Delete) && tb->cursorEnd < tb->numChars)
+				if (tb->cursorEnd < tb->numChars)
 				{
 					u32 wordEndIndex = tb->cursorEnd+1;
 					if (ButtonDown(Button_Control))

@@ -48,11 +48,25 @@ void GlfwKeyPressedCallback(GLFWwindow* window, i32 key, i32 scanCode, i32 actio
 	// Win32_PrintLine("KeyPress %d %d %s (%d)", key, scanCode, actionStr, modifiers);
 	AppInput_t* currentInput = (AppInput_t*)glfwGetWindowUserPointer(window);
 	
-	//TODO: Handle repeated keys?
-	if (action == GLFW_REPEAT)
-		return;
+	HandleKeyEvent(window, currentInput, key, action);
 	
-	HandleKeyEvent(window, currentInput, key, action == GLFW_PRESS);
+	//Push enter, tab, and backspace characters onto the textInput
+	if (action == GLFW_PRESS || action == GLFW_REPEAT)
+	{
+		if (key == GLFW_KEY_ENTER || key == GLFW_KEY_TAB || key == GLFW_KEY_BACKSPACE)
+		{
+			char newChar = '?';
+			if (key == GLFW_KEY_ENTER)     { newChar = '\n'; }
+			if (key == GLFW_KEY_TAB)       { newChar = '\t'; }
+			if (key == GLFW_KEY_BACKSPACE) { newChar = '\b'; }
+			
+			if (currentInput->textInputLength < ArrayCount(currentInput->textInput))
+			{
+				currentInput->textInput[currentInput->textInputLength] = newChar;
+				currentInput->textInputLength++;
+			}
+		}
+	}
 }
 void GlfwCharPressedCallback(GLFWwindow* window, u32 codepoint)
 {

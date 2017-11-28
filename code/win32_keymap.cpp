@@ -303,9 +303,11 @@ void HandleMouseEvent(GLFWwindow* window, AppInput_t* currentInput, i32 glfwButt
 	}
 }
 
-void HandleKeyEvent(GLFWwindow* window, AppInput_t* currentInput, i32 glfwKeyCode, bool pressed)
+void HandleKeyEvent(GLFWwindow* window, AppInput_t* currentInput, i32 glfwKeyCode, i32 action)
 {
 	Buttons_t button = AppButtonForKey(glfwKeyCode);
+	bool pressed = (action == GLFW_PRESS || action == GLFW_REPEAT);
+	bool repeated = (action == GLFW_REPEAT);
 	
 	if (button == Buttons_NumButtons) return; //No keymap
 	
@@ -318,6 +320,7 @@ void HandleKeyEvent(GLFWwindow* window, AppInput_t* currentInput, i32 glfwKeyCod
 			//NOTE: If the key is being pressed then all we care about is the 
 			//		first key pressed when isDown is false
 			buttonState->transCount++;
+			buttonState->pressCount++;
 			buttonState->isDown = true;
 		}
 		else
@@ -360,5 +363,9 @@ void HandleKeyEvent(GLFWwindow* window, AppInput_t* currentInput, i32 glfwKeyCod
 				buttonState->isDown = false;
 			}
 		}
+	}
+	else if (repeated)
+	{
+		buttonState->pressCount++;
 	}
 }

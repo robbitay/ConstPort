@@ -396,6 +396,7 @@ int WINAPI WinMain(HINSTANCE hInstance,
 		for (uint32_t bIndex = 0; bIndex < ArrayCount(currentInput->buttons); bIndex++)
 		{
 			currentInput->buttons[bIndex].transCount = 0;
+			currentInput->buttons[bIndex].pressCount = 0;
 		}
 		
 		platformInfo.windowResized = false;

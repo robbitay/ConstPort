@@ -379,10 +379,9 @@ typedef enum : u8
 
 struct ButtonState_t
 {
-	//Transition count since last frame
-	u32  transCount;
-	//Whether or not the button ended down on this frame
-	bool isDown;
+	u32  transCount; //Transition count since last frame
+	u32  pressCount; //Number of times the button was pressed (including holding key messages)
+	bool isDown; //Whether or not the button ended down on this frame
 };
 
 struct AppInput_t

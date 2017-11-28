@@ -3,9 +3,9 @@
 	[ ] Add an wrap indent option to the line formatting functions
 	[ ] Add a function that writes to a single option in the configuration file so we can have program written configuration options?
 	[ ] Make a line wrap enabled checkbox
-	[ ] Repeated key presses when holding backspace/space in editable fields
 	[ ] Test making a viewport option in the renderstate where we can crop anything that gets drawn outside of a specific rectangle on the screen
 	[ ] Text box view scrolling left and right
+	[ ] Merge osx/win32_keymap and osx/win32_callbacks (also maybe osx/win32_clipboard)
 	
 	[ ] Keep a history of sent messages and allow up arrow to recall messages
 	[ ] An option to perserve invalid ASCII characters when saving to a file
@@ -46,7 +46,6 @@
 
 # Win32 Platform Layer TODO List
 	[?] Change Win32_CopyToClipboard and Win32_CopyFromCipboard to use glfw calls like OSX?
-	[!] Add support for key hold trigger count
 	[!] Make Win32_GetAbsolutePath work when the executable is in another directory
 	[ ] Make startup time faster for new window?
 	[ ] Add checking for COM port errors and whether or not we are still connected
@@ -66,6 +65,8 @@
 	[ ] Put the appVersion.h info into the Info.plist in build.sh
 
 # Old TODO List Items
+	[X] Add support for key hold trigger count
+	[X] Repeated key presses when holding backspace/space in editable fields
 	[X] Added CreateNewWindow to platform layer
 	[X] Added GetAbsolutePath to platform layer
 	[X] Disable DLL copying in release mode
