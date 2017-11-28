@@ -313,7 +313,7 @@ char* GetRegexCaptureFormatString(const char* expressionStr, const char* target,
 		{
 			if (cIndex+1 < matches.size())
 			{
-				captureStrs[cIndex] = ArenaString(TempArena, matches[cIndex+1].str().c_str());
+				captureStrs[cIndex] = ArenaString(TempArena, NtStr(matches[cIndex+1].str().c_str()));
 			}
 			else { break; }
 		}
