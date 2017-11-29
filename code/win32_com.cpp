@@ -13,6 +13,8 @@ const char* GetComPortFileName(const char* portName)
 	Assert(portName != nullptr);
 	u32 portNameLength = (u32)strlen(portName);
 	
+	static char returnBuffer[16] = {};
+	
 	if (portNameLength == 4)
 	{
 		if (portName[0] == 'C' && portName[1] == 'O' && portName[2] == 'M' &&
@@ -30,25 +32,9 @@ const char* GetComPortFileName(const char* portName)
 		if (portName[0] == 'C' && portName[1] == 'O' && portName[2] == 'M' &&
 			portName[3] >= '1' && portName[3] <= '9' && portName[4] >= '0' && portName[4] <= '9')
 		{
-			     if (portName[3] == '1' && portName[4] == '0') { return "\\\\.\\COM10"; }
-			else if (portName[3] == '1' && portName[4] == '1') { return "\\\\.\\COM11"; }
-			else if (portName[3] == '1' && portName[4] == '2') { return "\\\\.\\COM12"; }
-			else if (portName[3] == '1' && portName[4] == '3') { return "\\\\.\\COM13"; }
-			else if (portName[3] == '1' && portName[4] == '4') { return "\\\\.\\COM14"; }
-			else if (portName[3] == '1' && portName[4] == '5') { return "\\\\.\\COM15"; }
-			else if (portName[3] == '1' && portName[4] == '6') { return "\\\\.\\COM16"; }
-			else if (portName[3] == '1' && portName[4] == '7') { return "\\\\.\\COM17"; }
-			else if (portName[3] == '1' && portName[4] == '8') { return "\\\\.\\COM18"; }
-			else if (portName[3] == '1' && portName[4] == '9') { return "\\\\.\\COM19"; }
-			else if (portName[3] == '2' && portName[4] == '0') { return "\\\\.\\COM20"; }
-			else if (portName[3] == '2' && portName[4] == '1') { return "\\\\.\\COM21"; }
-			else if (portName[3] == '2' && portName[4] == '2') { return "\\\\.\\COM22"; }
-			else if (portName[3] == '2' && portName[4] == '3') { return "\\\\.\\COM23"; }
-			else if (portName[3] == '2' && portName[4] == '4') { return "\\\\.\\COM24"; }
-			else
-			{
-				return "Unknown";
-			}
+			snprintf(returnBuffer, ArrayCount(returnBuffer)-1, "\\\\.\\%s", portName);
+			returnBuffer[ArrayCount(returnBuffer)-1] = '\0';
+			return returnBuffer;
 		}
 		else
 		{
@@ -77,7 +63,7 @@ GetComPortList_DEFINITION(Win32_GetComPortList)
 		ComPortIndex_t comIndex = (ComPortIndex_t)cIndex;
 		const char* portName = GetComPortReadableName(comIndex);
 		
-		// Win32_PrintLine("Trying to open %s...", portName);
+		Win32_PrintLine("Trying to open %s...", portName);
 		
 		HANDLE comHandle = CreateFileA(GetComPortFileName(portName), GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
 		

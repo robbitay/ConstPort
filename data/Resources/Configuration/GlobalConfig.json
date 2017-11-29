@@ -71,15 +71,15 @@
 	
 	"port_names":
 	{
-		"COM1":  "System 1",
-		"COM3":  "App Right",
-		"COM4":  "Radio Right",
-		"COM6":  "App Left",
-		"COM7":  "Radio Left",
-		"COM9":  "PIC32MZ (COM9)",
-		"COM12": "RS485 Cable 1",
-		"COM13": "Radio Right",
-		"COM14": "RS485 Cable 2",
+		"COM1":  "[1] System 1",
+		"COM3":  "[3] App Right",
+		"COM4":  "[4] Radio Right",
+		"COM6":  "[6] App Left",
+		"COM7":  "[7] Radio Left",
+		"COM12": "[12] RS485 Cable 1",
+		"COM13": "[13] Radio Right",
+		"COM14": "[14] RS485 Cable 2",
+		"COM60": "[60] PIC32MZ",
 		
 		// "tty.lpss-serial1": "Lpss Serial1",
 		// "tty.lpss-serial2": "Lpss Serial2",
