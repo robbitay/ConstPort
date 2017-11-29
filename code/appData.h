@@ -87,6 +87,8 @@ struct AppData_t
 	
 	TextBox_t inputBox;
 	TextBox_t testTextBox;
+	
+	ComMenu_t comMenu;
 };
 
 #endif // _APP_DATA_H

@@ -1,4 +1,5 @@
 # Application TODO List
+	[ ] Redesign the COM Menu to support long lists of available ports and better use of vertical space
 	[ ] Horizontal Scrollbar (only shows up if needed)
 	[ ] Add an wrap indent option to the line formatting functions
 	[ ] Add a function that writes to a single option in the configuration file so we can have program written configuration options?

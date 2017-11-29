@@ -42,6 +42,7 @@ AppOutput_t* appOutput = nullptr;
 #include "appUiHandler.h"
 #include "appRegularExpressions.h"
 #include "appConfiguration.h"
+#include "appComMenu.h"
 #include "appData.h"
 
 // +--------------------------------------------------------------+
@@ -139,6 +140,7 @@ char* SanatizeStringAdvanced(const char* strPntr, u32 numChars, MemoryArena_t* a
 #include "appTextBox.cpp"
 #include "appUiHandler.cpp"
 #include "appRegularExpressions.cpp"
+#include "appComMenu.cpp"
 
 const char* GetPortUserName(const char* portName)
 {
@@ -193,7 +195,7 @@ void RefreshComPortList()
 	}
 }
 
-void HideComMenu()
+void OldHideComMenu()
 {
 	Menu_t* comMenu = GetMenuByName(&app->menuHandler, "COM Menu");
 	if (comMenu->show)
@@ -212,7 +214,7 @@ void HideComMenu()
 	}
 }
 
-void ShowComMenu()
+void OldShowComMenu()
 {
 	Menu_t* comMenu = GetMenuByName(&app->menuHandler, "COM Menu");
 	if (comMenu->show == false)
@@ -260,14 +262,14 @@ bool OpenComPort(const char* comPortName, ComSettings_t settings)
 	}
 }
 
-void ComMenuUpdate(MenuHandler_t* menuHandler, Menu_t* menuPntr)
+void OldComMenuUpdate(MenuHandler_t* menuHandler, Menu_t* menuPntr)
 {
 	if (menuPntr->show)
 	{
 		if (ButtonPressedUnhandled(Button_Escape))
 		{
 			HandleButton(Button_Escape);
-			HideComMenu();
+			OldHideComMenu();
 		}
 		
 		u32 numTabs = app->availablePorts.count + ((app->comPort.isOpen && !IsComAvailable(app->comPort.name)) ? 1 : 0);
@@ -457,7 +459,7 @@ void ComMenuUpdate(MenuHandler_t* menuHandler, Menu_t* menuPntr)
 		{
 			if (OpenComPort(app->comMenuOptions.name, app->comMenuOptions.settings))
 			{
-				HideComMenu();
+				OldHideComMenu();
 			}
 		}
 		
@@ -484,7 +486,7 @@ void ComMenuUpdate(MenuHandler_t* menuHandler, Menu_t* menuPntr)
 						HandleButton(MouseButton_Left);
 						PopupError("Closed \"%s\"", app->comPort.name);
 						platform->CloseComPort(&app->mainHeap, &app->comPort);
-						HideComMenu();
+						OldHideComMenu();
 						ClearConsole();
 					}
 				}
@@ -492,7 +494,7 @@ void ComMenuUpdate(MenuHandler_t* menuHandler, Menu_t* menuPntr)
 		}
 	}
 }
-void ComMenuRender(RenderState_t* renderState, MenuHandler_t* menuHandler, Menu_t* menuPntr)
+void OldComMenuRender(RenderState_t* renderState, MenuHandler_t* menuHandler, Menu_t* menuPntr)
 {
 	if (menuPntr->show)
 	{
@@ -1970,7 +1972,7 @@ EXPORT AppInitialize_DEFINITION(App_Initialize)
 	DEBUG_WriteLine("Creating menus");
 	
 	Menu_t* comMenu = AddMenu(&app->menuHandler, "COM Menu", NewRec((r32)RenderScreenSize.x / 2 - 50, (r32)RenderScreenSize.y / 2 - 150, 400, 300),
-		ComMenuUpdate, ComMenuRender);
+		OldComMenuUpdate, OldComMenuRender);
 	comMenu->show = false;
 	Menu_t* contextMenu = AddMenu(&app->menuHandler, "Context Menu", NewRec(0, 0, 100, 100),
 		ContextMenuUpdate, ContextMenuRender);
@@ -2019,6 +2021,7 @@ EXPORT AppInitialize_DEFINITION(App_Initialize)
 	app->comPort.settings.numBits = 8;
 	
 	RefreshComPortList();
+	ComMenuInitialize(&app->comMenu);
 	
 	// +==============================+
 	// |   Auto-Start Python Script   |
@@ -2092,8 +2095,8 @@ EXPORT AppReloaded_DEFINITION(App_Reloaded)
 	//Make sure our callbacks still match the location of the functions in the new DLL
 	Menu_t* menuPntr = GetMenuByName(&app->menuHandler, "COM Menu");
 	menuPntr->specialPntr = nullptr;
-	menuPntr->updateFunctionPntr = (void*)ComMenuUpdate;
-	menuPntr->renderFunctionPntr = (void*)ComMenuRender;
+	menuPntr->updateFunctionPntr = (void*)OldComMenuUpdate;
+	menuPntr->renderFunctionPntr = (void*)OldComMenuRender;
 	menuPntr = GetMenuByName(&app->menuHandler, "Context Menu");
 	menuPntr->specialPntr = nullptr;
 	menuPntr->updateFunctionPntr = (void*)ContextMenuUpdate;
@@ -2428,6 +2431,11 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 			RenderScreenSize.y / 2 - comMenu->drawRec.height/2);
 	}
 	
+	if (ButtonPressed(Button_F4))
+	{
+		ComMenuToggle(&app->comMenu);
+	}
+	
 	//+================================+
 	//|         Show COM Menu          |
 	//+================================+
@@ -2437,14 +2445,16 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		
 		if (comMenu->show)
 		{
-			HideComMenu();
+			OldHideComMenu();
 		}
 		else
 		{
 			RefreshComPortList();
-			ShowComMenu();
+			OldShowComMenu();
 		}
 	}
+	
+	ComMenuUpdate(&app->comMenu);
 	
 	// +==============================+
 	// | Copy Selection to Clipboard  |
@@ -2572,7 +2582,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		
 		if (quickComSelection != nullptr)
 		{
-			if (comMenu->show) HideComMenu();
+			if (comMenu->show) OldHideComMenu();
 			
 			RefreshComPortList();
 			
@@ -2857,12 +2867,12 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 						{
 							if (comMenu->show)
 							{
-								HideComMenu();
+								OldHideComMenu();
 							}
 							else
 							{
 								RefreshComPortList();
-								ShowComMenu();
+								OldShowComMenu();
 							}
 						} break;
 						
@@ -3746,6 +3756,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	}
 	
 	MenuHandlerDrawMenus(&app->renderState, &app->menuHandler);
+	ComMenuDraw(&app->comMenu);
 	
 	DrawPopupOverlay(&app->renderState);
 	
