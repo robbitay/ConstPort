@@ -3152,10 +3152,10 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	RsClearColorBuffer(GC->colors.textBackground);
 	RsClearDepthBuffer(1.0f);
 	
-	mat4 projMatrix;
-	projMatrix = Mat4Scale(NewVec3(2.0f/RenderScreenSize.x, -2.0f/RenderScreenSize.y, 1.0f));
-	projMatrix = Mat4Multiply(projMatrix, Mat4Translate(NewVec3(-RenderScreenSize.x/2.0f, -RenderScreenSize.y/2.0f, 0.0f)));
-	RsSetProjectionMatrix(projMatrix);
+	// mat4 projMatrix;
+	// projMatrix = Mat4Scale(NewVec3(2.0f/RenderScreenSize.x, -2.0f/RenderScreenSize.y, 1.0f));
+	// projMatrix = Mat4Multiply(projMatrix, Mat4Translate(NewVec3(-RenderScreenSize.x/2.0f, -RenderScreenSize.y/2.0f, 0.0f)));
+	// RsSetProjectionMatrix(projMatrix);
 	
 	// RsDrawGradient(NewRec(0, 0, 300, 300), color1, color2, Dir2_Right);
 	

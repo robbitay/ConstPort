@@ -468,6 +468,9 @@ void TextBoxRender(TextBox_t* tb, bool selected)
 {
 	Assert(tb != nullptr);
 	
+	rec originalViewport = renderState->viewport;
+	RsSetViewport(tb->drawRec);
+	
 	r32 colorLerp = (SinR32((platform->programTime/1000.0f)*6.0f) + 1.0f) / 2.0f;
 	ColorState_t colorState = selected ? ColorState_Active : ColorState_Idle;
 	if (IsInsideRec(tb->drawRec, RenderMousePos) && input->mouseInsideWindow)
@@ -531,6 +534,8 @@ void TextBoxRender(TextBox_t* tb, bool selected)
 		Color_t cursorColor = ColorLerp(tb->colors.cursor1[colorState], tb->colors.cursor2[colorState], colorLerp);
 		RsDrawRectangle(cursorRec, cursorColor);
 	}
+	
+	RsSetViewport(originalViewport);
 }
 
 

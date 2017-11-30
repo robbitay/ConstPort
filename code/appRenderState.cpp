@@ -192,10 +192,16 @@ void RsSetViewport(rec viewport)
 	
 	glViewport(
 		(i32)renderState->viewport.x, 
-		(i32)renderState->viewport.y, 
+		(i32)(RenderScreenSize.y - renderState->viewport.height - renderState->viewport.y), 
 		(i32)renderState->viewport.width, 
 		(i32)renderState->viewport.height
 	);
+	
+	mat4 projMatrix;
+	projMatrix = Mat4Scale(NewVec3(2.0f/viewport.width, -2.0f/viewport.height, 1.0f));
+	projMatrix = Mat4Multiply(projMatrix, Mat4Translate(NewVec3(-viewport.width/2.0f, -viewport.height/2.0f, 0.0f)));
+	projMatrix = Mat4Multiply(projMatrix, Mat4Translate(NewVec3(-renderState->viewport.x, -renderState->viewport.y, 0.0f)));
+	RsSetProjectionMatrix(projMatrix);
 }
 
 void RsSetColor(Color_t color)
