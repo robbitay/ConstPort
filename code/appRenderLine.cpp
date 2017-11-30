@@ -49,15 +49,15 @@ v2 RenderLine(Line_t* linePntr, v2 position, r32 viewWidth, bool sizeOnly = fals
 			backgroundColor = GC->colors.hoverBackground;
 		}
 		backgroundRec.y -= 1; backgroundRec.height += 1;
-		app->renderState.DrawRectangle(backgroundRec, backgroundColor);
+		RsDrawRectangle(backgroundRec, backgroundColor);
 		
 		if (GC->lineWrapEnabled)
 		{
-			app->renderState.DrawFormattedString(linePntr->chars, position, viewWidth, color, Alignment_Left, GC->lineWrapPreserveWords);
+			RsDrawFormattedString(linePntr->chars, position, viewWidth, color, Alignment_Left, GC->lineWrapPreserveWords);
 		}
 		else
 		{
-			app->renderState.DrawString(linePntr->chars, position, color, 1.0f);
+			RsDrawString(linePntr->chars, position, color, 1.0f);
 		}
 	}
 	result = lineStringSize;
@@ -120,7 +120,6 @@ v2 RenderLine(Line_t* linePntr, v2 position, r32 viewWidth, bool sizeOnly = fals
 void RenderLineGutter(const Line_t* linePntr, i32 lineIndex, v2 position)
 {
 	UiElements_t* ui = &app->uiElements;
-	RenderState_t* rs = &app->renderState;
 	i32 lineNumber = lineIndex + app->lineList.firstLineNum;
 	
 	v2 lineStringSize = Vec2_Zero;
@@ -142,7 +141,7 @@ void RenderLineGutter(const Line_t* linePntr, i32 lineIndex, v2 position)
 	// +==============================+
 	if (GC->showLineNumbers)
 	{
-		rs->PrintString(NewVec2(position.x, position.y), GC->colors.lineNumbers, 1.0f, "%u", lineNumber);
+		RsPrintString(NewVec2(position.x, position.y), GC->colors.lineNumbers, 1.0f, "%u", lineNumber);
 	}
 	
 	// +==============================+
@@ -174,7 +173,7 @@ void RenderLineGutter(const Line_t* linePntr, i32 lineIndex, v2 position)
 							2
 						);
 						bannerHeight = bannerRec.height;
-						rs->DrawRectangle(bannerRec, GC->colors.banner1);
+						RsDrawRectangle(bannerRec, GC->colors.banner1);
 					}
 					else
 					{
@@ -186,7 +185,7 @@ void RenderLineGutter(const Line_t* linePntr, i32 lineIndex, v2 position)
 							ui->viewRec.width,
 							bannerHeight
 						);
-						rs->DrawGradient(bannerRec, GC->colors.banner1, GC->colors.banner2, Dir2_Down);
+						RsDrawGradient(bannerRec, GC->colors.banner1, GC->colors.banner2, Dir2_Down);
 						
 						if (linePntr->animProgress > 0.8f)
 						{
@@ -200,9 +199,9 @@ void RenderLineGutter(const Line_t* linePntr, i32 lineIndex, v2 position)
 							Color_t stringColor = GC->colors.bannerText;
 							stringColor.a = (u8)(stringOpacity*255);
 							
-							rs->BindFont(&app->uiFont);
-							rs->DrawString(timespanStr, stringDrawPos, stringColor);
-							rs->BindFont(&app->mainFont);
+							RsBindFont(&app->uiFont);
+							RsDrawString(timespanStr, stringDrawPos, stringColor);
+							RsBindFont(&app->mainFont);
 						}
 					}
 				}
@@ -293,14 +292,13 @@ void RenderLineGutter(const Line_t* linePntr, i32 lineIndex, v2 position)
 			markColor2 = {Color_Yellow};
 		}
 		
-		rs->DrawGradient(markRec, markColor1, markColor2, Dir2_Right);
+		RsDrawGradient(markRec, markColor1, markColor2, Dir2_Right);
 	}
 }
 
 v2 MeasureLines(LineList_t* lineList, r32 viewWidth)
 {
 	v2 result = Vec2_Zero;
-	RenderState_t* rs = &app->renderState;
 	Line_t* linePntr = lineList->firstLine;
 	u32 numCharsMax = 0;
 	i32 lineIndex = 0;

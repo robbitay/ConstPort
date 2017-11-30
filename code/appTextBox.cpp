@@ -464,10 +464,9 @@ void TextBoxUpdate(TextBox_t* tb, bool selected)
 	}
 }
 
-void TextBoxRender(TextBox_t* tb, RenderState_t* rs, bool selected)
+void TextBoxRender(TextBox_t* tb, bool selected)
 {
 	Assert(tb != nullptr);
-	Assert(rs != nullptr);
 	
 	r32 colorLerp = (SinR32((platform->programTime/1000.0f)*6.0f) + 1.0f) / 2.0f;
 	ColorState_t colorState = selected ? ColorState_Active : ColorState_Idle;
@@ -495,8 +494,8 @@ void TextBoxRender(TextBox_t* tb, RenderState_t* rs, bool selected)
 	// +==============================+
 	// |     Draw the Background      |
 	// +==============================+
-	rs->DrawGradient(tb->drawRec, tb->colors.background1[colorState], tb->colors.background2[colorState], Dir2_Down);
-	rs->DrawButton(tb->drawRec, {Color_TransparentBlack}, tb->colors.border[colorState], 1);
+	RsDrawGradient(tb->drawRec, tb->colors.background1[colorState], tb->colors.background2[colorState], Dir2_Down);
+	RsDrawButton(tb->drawRec, {Color_TransparentBlack}, tb->colors.border[colorState], 1);
 	
 	// +==============================+
 	// |      Draw the Selection      |
@@ -508,15 +507,15 @@ void TextBoxRender(TextBox_t* tb, RenderState_t* rs, bool selected)
 			selectionWidth, tb->font->lineHeight
 		);
 		Color_t selectionColor = ColorLerp(tb->colors.selection1[colorState], tb->colors.selection2[colorState], colorLerp);
-		rs->DrawRectangle(selectionRec, selectionColor);
+		RsDrawRectangle(selectionRec, selectionColor);
 	}
 	
 	// +==============================+
 	// |        Draw the Text         |
 	// +==============================+
-	rs->BindFont(tb->font);
-	rs->DrawString(tb->chars, tb->numChars, textPos, tb->colors.text[colorState]);
-	rs->BindFont(&app->mainFont);
+	RsBindFont(tb->font);
+	RsDrawString(tb->chars, tb->numChars, textPos, tb->colors.text[colorState]);
+	RsBindFont(&app->mainFont);
 	
 	// +==============================+
 	// |       Draw the Cursor        |
@@ -530,7 +529,7 @@ void TextBoxRender(TextBox_t* tb, RenderState_t* rs, bool selected)
 		);
 		
 		Color_t cursorColor = ColorLerp(tb->colors.cursor1[colorState], tb->colors.cursor2[colorState], colorLerp);
-		rs->DrawRectangle(cursorRec, cursorColor);
+		RsDrawRectangle(cursorRec, cursorColor);
 	}
 }
 

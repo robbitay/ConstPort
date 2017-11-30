@@ -92,27 +92,26 @@ void ComMenuUpdate(ComMenu_t* comMenu)
 void ComMenuDraw(ComMenu_t* comMenu)
 {
 	Assert(comMenu != nullptr);
-	RenderState_t* rs = &app->renderState;
 	
 	if (comMenu->animPercent > 0)
 	{
 		Color_t menuBackColor1 = GC->colors.windowBackground1;
 		Color_t menuBackColor2 = GC->colors.windowBackground2;
 		Color_t menuBorderColor = GC->colors.windowOutline;
-		// rs->DrawRectangle(comMenu->drawRec, menuBackColor);
-		rs->DrawGradient(comMenu->drawRec, menuBackColor1, menuBackColor2, Dir2_Down);
+		// RsDrawRectangle(comMenu->drawRec, menuBackColor);
+		RsDrawGradient(comMenu->drawRec, menuBackColor1, menuBackColor2, Dir2_Down);
 		rec dropShadowRec = comMenu->drawRec;
 		dropShadowRec.height = 15;
 		dropShadowRec.y = comMenu->drawRec.y + comMenu->drawRec.height;
-		rs->DrawGradient(dropShadowRec, ColorTransparent(NewColor(Color_Black), 0.5f), NewColor(Color_TransparentBlack), Dir2_Down);
+		RsDrawGradient(dropShadowRec, ColorTransparent(NewColor(Color_Black), 0.5f), NewColor(Color_TransparentBlack), Dir2_Down);
 		dropShadowRec.y = comMenu->drawRec.y - dropShadowRec.height;
-		rs->DrawGradient(dropShadowRec, ColorTransparent(NewColor(Color_Black), 0.5f), NewColor(Color_TransparentBlack), Dir2_Up);
+		RsDrawGradient(dropShadowRec, ColorTransparent(NewColor(Color_Black), 0.5f), NewColor(Color_TransparentBlack), Dir2_Up);
 		
 		rec comListRec = comMenu->drawRec;
 		comListRec.width = (r32)RoundR32(2*comListRec.width/5);
 		comListRec.x -= 1;
-		rs->DrawButton(comListRec, GC->colors.textBackground, GC->colors.windowOutline, 1.0f);
+		RsDrawButton(comListRec, GC->colors.textBackground, GC->colors.windowOutline, 1.0f);
 		
-		rs->DrawButton(RecInflateX(comMenu->drawRec, 1), NewColor(Color_TransparentBlack), menuBorderColor, 1.0f);
+		RsDrawButton(RecInflateX(comMenu->drawRec, 1), NewColor(Color_TransparentBlack), menuBorderColor, 1.0f);
 	}
 }

@@ -1,10 +1,12 @@
 # Application TODO List
-	[ ] Redesign the COM Menu to support long lists of available ports and better use of vertical space
+	[!] Test making a viewport option in the renderstate where we can crop anything that gets drawn outside of a specific rectangle on the screen
+	[!] Render the list of COM ports in new Com Menu
+	[!] Add a selection for baud rate option that can be scrolled through
+	[!] Add connect and disconnect buttons
 	[ ] Horizontal Scrollbar (only shows up if needed)
 	[ ] Add an wrap indent option to the line formatting functions
 	[ ] Add a function that writes to a single option in the configuration file so we can have program written configuration options?
 	[ ] Make a line wrap enabled checkbox
-	[ ] Test making a viewport option in the renderstate where we can crop anything that gets drawn outside of a specific rectangle on the screen
 	[ ] Text box view scrolling left and right
 	[ ] Merge osx/win32_keymap and osx/win32_callbacks (also maybe osx/win32_clipboard)
 	
@@ -66,6 +68,7 @@
 	[ ] Put the appVersion.h info into the Info.plist in build.sh
 
 # Old TODO List Items
+	[X] Translate RenderState_t into standalone functions instead of a class-like structure
 	[X] Add support for key hold trigger count
 	[X] Repeated key presses when holding backspace/space in editable fields
 	[X] Added CreateNewWindow to platform layer

@@ -43,6 +43,6 @@ struct MenuHandler_t
 };
 
 typedef void MenuUpdate_f(MenuHandler_t* menuHandler, Menu_t* menu);
-typedef void MenuRender_f(RenderState_t* renderState, MenuHandler_t* menuHandler, Menu_t* menu);
+typedef void MenuRender_f(MenuHandler_t* menuHandler, Menu_t* menu);
 
 #endif // _APP_MENU_HANDLER_H
