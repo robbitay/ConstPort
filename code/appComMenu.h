@@ -9,9 +9,20 @@ Date:   11\28\2017
 
 struct ComMenu_t
 {
-	rec drawRec;
 	r32 animPercent;
 	bool open;
+	
+	rec drawRec;
+	rec comListRec;
+	rec baudRatesRec;
+	rec connectRec;
+	rec diconnectRec;
+	
+	u32 numComListItems;
+	i32 comListSelectedIndex;
+	r32 comListHeight;
+	r32 comListScroll;
+	r32 comListScrollGoto;
 };
 
 #endif //  _APP_COM_MENU_H

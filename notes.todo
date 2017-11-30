@@ -1,5 +1,4 @@
 # Application TODO List
-	[!] Render the list of COM ports in new Com Menu
 	[!] Add a selection for baud rate option that can be scrolled through
 	[!] Add connect and disconnect buttons
 	[ ] Horizontal Scrollbar (only shows up if needed)
@@ -67,6 +66,7 @@
 	[ ] Put the appVersion.h info into the Info.plist in build.sh
 
 # Old TODO List Items
+	[X] Render the list of COM ports in new Com Menu
 	[X] Test making a viewport option in the renderstate where we can crop anything that gets drawn outside of a specific rectangle on the screen
 	[X] Translate RenderState_t into standalone functions instead of a class-like structure
 	[X] Add support for key hold trigger count

@@ -143,34 +143,6 @@ char* SanatizeStringAdvanced(const char* strPntr, u32 numChars, MemoryArena_t* a
 #include "appRegularExpressions.cpp"
 #include "appComMenu.cpp"
 
-const char* GetPortUserName(const char* portName)
-{
-	for (u32 nIndex = 0; nIndex < GC->comNameKeys.count; nIndex++)
-	{
-		Assert(nIndex < GC->comNameValues.count);
-		
-		if (strcmp(GC->comNameKeys[nIndex], portName) == 0)
-		{
-			return GC->comNameValues[nIndex];
-		}
-	}
-	
-	return portName;
-}
-
-bool IsComAvailable(const char* comName)
-{
-	for (u32 cIndex = 0; cIndex < app->availablePorts.count; cIndex++)
-	{
-		if (strcmp(app->availablePorts[cIndex], comName) == 0)
-		{
-			return true;
-		}
-	}
-	
-	return false;
-}
-
 void ClearConsole()
 {
 	DEBUG_WriteLine("Clearing Console");
@@ -2166,7 +2138,10 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	
 	RecalculateUiElements(ui, true);
 	TextBoxRellocate(&app->inputBox, ui->textInputRec);
-	ui->mouseInMenu = (hoverMenu != nullptr && hoverMenu != contextMenu);
+	ui->mouseInMenu = (
+		(hoverMenu != nullptr && hoverMenu != contextMenu) ||
+		(input->mouseInsideWindow && IsInsideRec(app->comMenu.drawRec, RenderMousePos))
+	);
 	
 	//+================================+
 	//|  Context Menu Showing/Filling  |
@@ -2435,6 +2410,10 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	
 	if (ButtonPressed(Button_F4))
 	{
+		if (!app->comMenu.open)
+		{
+			RefreshComPortList();
+		}
 		ComMenuToggle(&app->comMenu);
 	}
 	
@@ -3151,13 +3130,6 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	
 	RsClearColorBuffer(GC->colors.textBackground);
 	RsClearDepthBuffer(1.0f);
-	
-	// mat4 projMatrix;
-	// projMatrix = Mat4Scale(NewVec3(2.0f/RenderScreenSize.x, -2.0f/RenderScreenSize.y, 1.0f));
-	// projMatrix = Mat4Multiply(projMatrix, Mat4Translate(NewVec3(-RenderScreenSize.x/2.0f, -RenderScreenSize.y/2.0f, 0.0f)));
-	// RsSetProjectionMatrix(projMatrix);
-	
-	// RsDrawGradient(NewRec(0, 0, 300, 300), color1, color2, Dir2_Right);
 	
 	//+--------------------------------------+
 	//|            Render Lines              |
