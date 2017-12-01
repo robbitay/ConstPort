@@ -1,5 +1,6 @@
 # Application TODO List
 	[!] Enter to connect to com port in ComMenu also gets routed to text box as a new-line
+	[!] Add a refresh com list button in the new ComMenu
 	[ ] Add arrow key up/down controls to the ComMenu using the active element functionality
 	[ ] Horizontal Scrollbar (only shows up if needed)
 	[ ] Add an wrap indent option to the line formatting functions
