@@ -143,31 +143,6 @@ char* SanatizeStringAdvanced(const char* strPntr, u32 numChars, MemoryArena_t* a
 #include "appRegularExpressions.cpp"
 #include "appComMenu.cpp"
 
-void ClearConsole()
-{
-	DEBUG_WriteLine("Clearing Console");
-	DestroyLineList(&app->lineList);
-	InitializeLineList(&app->lineList, app->inputArenaBase, app->inputArenaSize);
-	
-	app->selectionStart = NewTextLocation(0, 0);
-	app->selectionEnd = NewTextLocation(0, 0);
-	app->uiElements.mouseTextLocation = NewTextLocation(0, 0);
-	
-	app->genericCounter = 0;
-}
-
-void RefreshComPortList()
-{
-	BoundedStrListDestroy(&app->availablePorts, &app->mainHeap);
-	app->availablePorts = platform->GetComPortList(&app->mainHeap);
-	
-	StatusDebug("Found %u COM ports", app->availablePorts.count);
-	for (u32 cIndex = 0; cIndex < app->availablePorts.count; cIndex++)
-	{
-		DEBUG_PrintLine("\"%s\"Available!", app->availablePorts[cIndex]);
-	}
-}
-
 void OldHideComMenu()
 {
 	Menu_t* comMenu = GetMenuByName(&app->menuHandler, "COM Menu");
@@ -201,38 +176,6 @@ void OldShowComMenu()
 	}
 	
 	ChangeActiveElement(nullptr);
-}
-
-bool OpenComPort(const char* comPortName, ComSettings_t settings)
-{
-	if (app->comPort.isOpen && strcmp(app->comPort.name, comPortName) == 0)
-	{
-		//NOTE: If we want to open the same port again we have to close it first before opening it
-		//      Otherwise we will try to open and only close the port if the open succeeds
-		StatusError("Closed %s", app->comPort.name);
-		platform->CloseComPort(&app->mainHeap, &app->comPort);
-	}
-	
-	ComPort_t newComPort = platform->OpenComPort(&app->mainHeap, comPortName, settings);
-	
-	if (newComPort.isOpen)
-	{
-		if (app->comPort.isOpen)
-		{
-			StatusError("Closed %s", app->comPort.name);
-			platform->CloseComPort(&app->mainHeap, &app->comPort);
-		}
-		ClearConsole();
-		app->comPort = newComPort;
-		
-		PopupSuccess("\"%s\" Opened Successfully", comPortName);
-		return true;
-	}
-	else
-	{
-		PopupError("Couldn't open \"%s\"!", comPortName);
-		return false;
-	}
 }
 
 void OldComMenuUpdate(MenuHandler_t* menuHandler, Menu_t* menuPntr)
@@ -1995,6 +1938,7 @@ EXPORT AppInitialize_DEFINITION(App_Initialize)
 	
 	RefreshComPortList();
 	ComMenuInitialize(&app->comMenu);
+	ComMenuShow(&app->comMenu);
 	
 	// +==============================+
 	// |   Auto-Start Python Script   |
@@ -2408,31 +2352,40 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 			RenderScreenSize.y / 2 - comMenu->drawRec.height/2);
 	}
 	
-	if (ButtonPressed(Button_F4))
+	// +==============================+
+	// |       Close Shortcuts        |
+	// +==============================+
+	if (ButtonPressed(Button_W) && ButtonDown(Button_Control))
 	{
-		if (!app->comMenu.open)
+		if (ButtonDown(Button_Shift))
 		{
-			RefreshComPortList();
+			AppOutput->closeWindow = true;
 		}
-		ComMenuToggle(&app->comMenu);
+		else
+		{
+			if (app->comPort.isOpen)
+			{
+				char* tempComName = ArenaString(TempArena, NtStr(app->comPort.name));
+				platform->CloseComPort(&app->mainHeap, &app->comPort);
+				ClearConsole();
+				RefreshComPortList();
+				app->comMenu.comListSelectedIndex = app->availablePorts.count;
+				PopupError("Closed \"%s\"", tempComName);
+			}
+		}
 	}
 	
 	//+================================+
 	//|         Show COM Menu          |
 	//+================================+
-	if (ButtonPressed(Button_O) && ButtonDown(Button_Control))
+	if ((ButtonPressed(Button_O) || ButtonPressed(Button_D)) && ButtonDown(Button_Control))
 	{
-		Assert(comMenu != nullptr);
+		ComMenuToggle(&app->comMenu);
 		
-		if (comMenu->show)
-		{
-			OldHideComMenu();
-		}
-		else
-		{
-			RefreshComPortList();
-			OldShowComMenu();
-		}
+	}
+	if (app->comMenu.open && ButtonPressedUnhandled(Button_Escape))
+	{
+		ComMenuHide(&app->comMenu);
 	}
 	
 	ComMenuUpdate(&app->comMenu);
@@ -2846,15 +2799,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 					{
 						case Button_ComPort:
 						{
-							if (comMenu->show)
-							{
-								OldHideComMenu();
-							}
-							else
-							{
-								RefreshComPortList();
-								OldShowComMenu();
-							}
+							ComMenuToggle(&app->comMenu);
 						} break;
 						
 						case Button_Settings:
@@ -3100,27 +3045,6 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	if (IsInsideRec(ui->viewRec, RenderMousePos) && !ui->mouseInMenu && GC->showTextCursor)
 	{
 		AppOutput->cursorType = Cursor_Text;
-	}
-	
-	// +==============================+
-	// |       Close Shortcuts        |
-	// +==============================+
-	if (ButtonPressed(Button_W) && ButtonDown(Button_Control))
-	{
-		if (ButtonDown(Button_Shift))
-		{
-			AppOutput->closeWindow = true;
-		}
-		else
-		{
-			if (app->comPort.isOpen)
-			{
-				PopupError("Closed \"%s\"", app->comPort.name);
-				platform->CloseComPort(&app->mainHeap, &app->comPort);
-				comMenu->show = false;
-				ClearConsole();
-			}
-		}
 	}
 	
 	// +--------------------------------------------------------------+

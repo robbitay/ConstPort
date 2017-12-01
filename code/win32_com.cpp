@@ -84,19 +84,19 @@ GetComPortList_DEFINITION(Win32_GetComPortList)
 	BoundedStrListAdd(&result, "Test1");
 	BoundedStrListAdd(&result, "Test2");
 	BoundedStrListAdd(&result, "Test3");
-	BoundedStrListAdd(&result, "Test4");
-	BoundedStrListAdd(&result, "Test5");
-	BoundedStrListAdd(&result, "Test6");
-	BoundedStrListAdd(&result, "Test7");
-	BoundedStrListAdd(&result, "Test8");
-	BoundedStrListAdd(&result, "Test9");
-	BoundedStrListAdd(&result, "Test10");
-	BoundedStrListAdd(&result, "Test11");
-	BoundedStrListAdd(&result, "Test12");
-	BoundedStrListAdd(&result, "Test13");
-	BoundedStrListAdd(&result, "Test14");
-	BoundedStrListAdd(&result, "Test15");
-	BoundedStrListAdd(&result, "Test16");
+	// BoundedStrListAdd(&result, "Test4");
+	// BoundedStrListAdd(&result, "Test5");
+	// BoundedStrListAdd(&result, "Test6");
+	// BoundedStrListAdd(&result, "Test7");
+	// BoundedStrListAdd(&result, "Test8");
+	// BoundedStrListAdd(&result, "Test9");
+	// BoundedStrListAdd(&result, "Test10");
+	// BoundedStrListAdd(&result, "Test11");
+	// BoundedStrListAdd(&result, "Test12");
+	// BoundedStrListAdd(&result, "Test13");
+	// BoundedStrListAdd(&result, "Test14");
+	// BoundedStrListAdd(&result, "Test15");
+	// BoundedStrListAdd(&result, "Test16");
 	#endif
 	#endif
 	
