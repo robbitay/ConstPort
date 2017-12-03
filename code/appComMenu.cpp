@@ -220,6 +220,10 @@ void ComMenuUpdate(ComMenu_t* comMenu)
 	comMenu->comListRec = comMenu->drawRec;
 	comMenu->comListRec.width = (r32)RoundR32(2*comMenu->comListRec.width/5);
 	
+	comMenu->refreshRec = NewRec(comMenu->comListRec.topLeft, NewVec2(REFRESH_BUTTON_SIZE));
+	comMenu->refreshRec.x += comMenu->comListRec.width - comMenu->refreshRec.width - 2;
+	comMenu->refreshRec.y += 2;
+	
 	comMenu->connectRec = NewRec(comMenu->drawRec.topLeft + comMenu->drawRec.size, Vec2_Zero);
 	const char* connectStr = "Connect";
 	if (comMenu->comListSelectedIndex >= 0 && comMenu->comListSelectedIndex == comMenu->comListOpenIndex) { connectStr = "Reconnect"; }
@@ -298,6 +302,23 @@ void ComMenuUpdate(ComMenu_t* comMenu)
 		ClearConsole();
 		RefreshComPortList();
 		comMenu->comListSelectedIndex = app->availablePorts.count;
+	}
+	
+	// +==============================+
+	// | Check Refresh Button Pressed |
+	// +==============================+
+	bool refreshButtonPressed = false;
+	if (comMenu->refreshRec.height > 0 && input->mouseInsideWindow && IsInsideRec(comMenu->refreshRec, RenderMousePos))
+	{
+		if (ButtonReleasedUnhandled(MouseButton_Left) && IsInsideRec(comMenu->refreshRec, RenderMouseStartPos))
+		{
+			HandleButton(MouseButton_Left);
+			refreshButtonPressed = true;
+		}
+	}
+	if (refreshButtonPressed)
+	{
+		RefreshComPortList();
 	}
 	
 	// +==============================+
@@ -422,7 +443,7 @@ void ComMenuUpdate(ComMenu_t* comMenu)
 	if (comMenu->comListRec.height > 0)
 	{
 		comMenu->comListOpenIndex = -1;
-		r32 yOffset = -(r32)RoundR32(comMenu->comListScroll);
+		r32 yOffset = REFRESH_BUTTON_SIZE - (r32)RoundR32(comMenu->comListScroll);
 		for (u32 cIndex = 0; cIndex < comMenu->numComListItems; cIndex++)
 		{
 			rec itemRec = NewRec(comMenu->comListRec.x, comMenu->comListRec.y + yOffset, comMenu->comListRec.width, 0);
@@ -446,7 +467,7 @@ void ComMenuUpdate(ComMenu_t* comMenu)
 				comMenu->comListOpenIndex = (i32)cIndex;
 			}
 			
-			if (input->mouseInsideWindow && IsInsideRec(itemRec, RenderMousePos) && !IsInsideRec(comMenu->disconnectRec, RenderMousePos))
+			if (input->mouseInsideWindow && IsInsideRec(itemRec, RenderMousePos) && !IsInsideRec(comMenu->disconnectRec, RenderMousePos) && !IsInsideRec(comMenu->refreshRec, RenderMousePos))
 			{
 				// AppOutput->cursorType = Cursor_Pointer;
 				if (ButtonReleasedUnhandled(MouseButton_Left))
@@ -528,7 +549,7 @@ void ComMenuDraw(ComMenu_t* comMenu)
 			RsDrawButton(RecInflate(comMenu->comListRec, 1), GC->colors.textBackground, GC->colors.windowOutline, 1.0f);
 			RsSetViewport(comMenu->comListRec);
 			
-			r32 yOffset = -(r32)RoundR32(comMenu->comListScroll);
+			r32 yOffset = REFRESH_BUTTON_SIZE - (r32)RoundR32(comMenu->comListScroll);
 			for (u32 cIndex = 0; cIndex < comMenu->numComListItems; cIndex++)
 			{
 				rec itemRec = NewRec(comMenu->comListRec.x, comMenu->comListRec.y + yOffset, comMenu->comListRec.width, 0);
@@ -549,7 +570,7 @@ void ComMenuDraw(ComMenu_t* comMenu)
 				itemRec.height = textSize.height + subTextSize.height + (COM_LIST_ITEM_PADDING*2);
 				
 				bool isOpenPort     = (comMenu->comListOpenIndex != -1 && cIndex == (u32)comMenu->comListOpenIndex);
-				bool hovering       = (input->mouseInsideWindow && IsInsideRec(itemRec, RenderMousePos) && !IsInsideRec(comMenu->disconnectRec, RenderMousePos));
+				bool hovering       = (input->mouseInsideWindow && IsInsideRec(itemRec, RenderMousePos) && !IsInsideRec(comMenu->disconnectRec, RenderMousePos) && !IsInsideRec(comMenu->refreshRec, RenderMousePos));
 				bool isSelectedItem = (comMenu->comListSelectedIndex >= 0 && cIndex == (u32)comMenu->comListSelectedIndex);
 				if (isOpenPort && isSelectedItem)
 				{
@@ -723,6 +744,25 @@ void ComMenuDraw(ComMenu_t* comMenu)
 			RsBindFont(&app->uiFont);
 			RsDrawString(disconnectStr, textPos, btnColorText, 1.0f, Alignment_Center);
 			RsBindFont(&app->mainFont);
+		}
+		
+		// +==============================+
+		// |   Draw the Refresh Button    |
+		// +==============================+
+		if (comMenu->refreshRec.height > 0)
+		{
+			Color_t iconColor = ColorTransparent(0.4f);
+			if (input->mouseInsideWindow && IsInsideRec(comMenu->refreshRec, RenderMousePos))
+			{
+				iconColor = NewColor(Color_White);
+				if (ButtonDown(MouseButton_Left) && IsInsideRec(comMenu->refreshRec, RenderMouseStartPos))
+				{
+					iconColor = GC->colors.buttonSelected;
+				}
+			}
+			
+			RsBindTexture(&app->refreshSprite);
+			RsDrawTexturedRec(comMenu->refreshRec, iconColor);
 		}
 		
 		RsDrawButton(RecInflateX(comMenu->drawRec, 1), NewColor(Color_TransparentBlack), menuBorderColor, 1.0f);

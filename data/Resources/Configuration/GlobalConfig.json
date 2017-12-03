@@ -71,6 +71,7 @@
 	
 	"port_names":
 	{
+		"COM1":  "12345678901234567890",
 		"COM3":  "App Right",
 		"COM4":  "Radio Right",
 		"COM6":  "App Left",

@@ -20,6 +20,7 @@ struct ComMenu_t
 	rec stopBitsRec;
 	rec connectRec;
 	rec disconnectRec;
+	rec refreshRec;
 	
 	u32 numComListItems;
 	i32 comListOpenIndex;

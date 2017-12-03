@@ -1913,6 +1913,7 @@ EXPORT AppInitialize_DEFINITION(App_Initialize)
 	app->scrollBarEndcapTexture = LoadTexture("Resources/Sprites/scrollBarEndcap.png", false, false);
 	app->crappyLogo = LoadTexture("Resources/Sprites/crappyLogo.png", false, false);
 	app->pythonIcon = LoadTexture("Resources/Sprites/python.png", false, false);
+	app->refreshSprite = LoadTexture("Resources/Sprites/refresh.png");
 	
 	LoadApplicationFonts();
 	
