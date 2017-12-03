@@ -1,5 +1,4 @@
 # Application TODO List
-	[!] Enter to connect to com port in ComMenu also gets routed to text box as a new-line
 	[!] Add a refresh com list button in the new ComMenu
 	[ ] Add arrow key up/down controls to the ComMenu using the active element functionality
 	[ ] Horizontal Scrollbar (only shows up if needed)
@@ -67,6 +66,7 @@
 	[ ] Put the appVersion.h info into the Info.plist in build.sh
 
 # Old TODO List Items
+	[X] Enter to connect to com port in ComMenu also gets routed to text box as a new-line
 	[X] Add a selection for baud rate option that can be scrolled through
 	[X] Add connect and disconnect buttons
 	[X] Render the list of COM ports in new Com Menu

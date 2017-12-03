@@ -304,7 +304,7 @@ void TextBoxUpdate(TextBox_t* tb, bool selected)
 						tb->cursorBegin = tb->cursorEnd;
 					}
 				}
-				else //all other regular characters
+				else if (!(newChar == '\n' && IsButtonHandled(Button_Enter))) //all other regular characters
 				{
 					if (tb->cursorBegin != tb->cursorEnd)
 					{

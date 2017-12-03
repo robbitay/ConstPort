@@ -321,10 +321,12 @@ void ComMenuUpdate(ComMenu_t* comMenu)
 			}
 		}
 		
-		if (connectButtonPressed || ButtonPressed(Button_Enter))
+		if (connectButtonPressed || ButtonPressedUnhandled(Button_Enter))
 		{
 			if (comMenu->comListSelectedIndex >= 0 && (u32)comMenu->comListSelectedIndex < comMenu->numComListItems)
 			{
+				if (ButtonPressedUnhandled(Button_Enter)) { HandleButton(Button_Enter); }
+				
 				const char* selectedPortName = nullptr;
 				if ((u32)comMenu->comListSelectedIndex < app->availablePorts.count) { selectedPortName = app->availablePorts[comMenu->comListSelectedIndex]; }
 				else { selectedPortName = app->comPort.name; }

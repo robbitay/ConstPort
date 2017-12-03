@@ -82,8 +82,8 @@ GetComPortList_DEFINITION(Win32_GetComPortList)
 	#if 1
 	#if DEBUG
 	BoundedStrListAdd(&result, "Test1");
-	BoundedStrListAdd(&result, "Test2");
-	BoundedStrListAdd(&result, "Test3");
+	// BoundedStrListAdd(&result, "Test2");
+	// BoundedStrListAdd(&result, "Test3");
 	// BoundedStrListAdd(&result, "Test4");
 	// BoundedStrListAdd(&result, "Test5");
 	// BoundedStrListAdd(&result, "Test6");

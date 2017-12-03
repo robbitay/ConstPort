@@ -932,6 +932,7 @@
 		],
 		"custom_functions":
 		[
+			"#define IsButtonHandled(button)",
 			"Checkbox_t NewCheckbox(rec drawRec, const char* label, Color_t activeColor)",
 			"ColorHSV_t ColorHSVFromRGB(Color_t color)",
 			"Color_t ColorFromHSV(u16 hue, r32 saturation, r32 value)",
