@@ -39,6 +39,7 @@ AppOutput_t* appOutput = nullptr;
 #include "appRenderState.h"
 #include "appTextBox.h"
 #include "appCombobox.h"
+#include "appCheckbox.h"
 #include "appMenuHandler.h"
 #include "appUiHandler.h"
 #include "appRegularExpressions.h"
@@ -141,6 +142,7 @@ char* SanatizeStringAdvanced(const char* strPntr, u32 numChars, MemoryArena_t* a
 #include "appRenderLine.cpp"
 #include "appTextBox.cpp"
 #include "appCombobox.cpp"
+#include "appCheckbox.cpp"
 #include "appUiHandler.cpp"
 #include "appRegularExpressions.cpp"
 #include "appComMenu.cpp"
@@ -1944,6 +1946,9 @@ EXPORT AppInitialize_DEFINITION(App_Initialize)
 	ComMenuInitialize(&app->comMenu);
 	ComMenuShow(&app->comMenu);
 	
+	InitializeCheckbox(&app->lineWrapCheckbox, NewRec(100, 10, 10, 10), &app->mainHeap, "Line Wrap", NewColor(Color_White));
+	CheckboxSet(&app->lineWrapCheckbox, GC->lineWrapEnabled);
+	
 	// +==============================+
 	// |   Auto-Start Python Script   |
 	// +==============================+
@@ -2332,6 +2337,14 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 			
 			TempPopMark();
 		}
+	}
+	
+	// +==============================+
+	// |       Toggle Line Wrap       |
+	// +==============================+
+	if (app->lineWrapCheckbox.checked != GC->lineWrapEnabled)
+	{
+		GC->lineWrapEnabled = app->lineWrapCheckbox.checked;
 	}
 	
 	// +==============================+
@@ -3018,6 +3031,9 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		ui->scrollOffsetGoto.y = ui->maxScrollOffset.y;
 	}
 	TextBoxUpdate(&app->inputBox, IsActiveElement(&app->inputBox) && platform->windowHasFocus);
+	rec lastButtonRec = ui->buttonRecs[ArrayCount(ui->buttonRecs)-1];
+	app->lineWrapCheckbox.drawRec = NewRec(lastButtonRec.x + lastButtonRec.width + 5, 10, 15, 15);
+	CheckboxUpdate(&app->lineWrapCheckbox);
 	
 	// +==============================+
 	// |      Text Box Selection      |
@@ -3500,6 +3516,8 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		RsDrawTexturedRec(buttonRec, iconColor);
 		mainMenuButtonsRight = buttonRec.x + buttonRec.width;
 	}
+	
+	CheckboxRender(&app->lineWrapCheckbox, &app->uiFont);
 	
 	// +================================+
 	// |         Rx and Tx LEDs         |
