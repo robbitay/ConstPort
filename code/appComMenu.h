@@ -22,6 +22,10 @@ struct ComMenu_t
 	rec disconnectRec;
 	rec refreshRec;
 	
+	Combobox_t numBitsCombo;
+	Combobox_t parityCombo;
+	Combobox_t stopBitsCombo;
+	
 	u32 numComListItems;
 	i32 comListOpenIndex;
 	i32 comListSelectedIndex;
@@ -33,10 +37,6 @@ struct ComMenu_t
 	r32 baudRatesHeight;
 	r32 baudRateScroll;
 	r32 baudRateScrollGoto;
-	
-	u32 numBitsSelection;
-	u32 paritySelection;
-	u32 stopBitsSelection;
 };
 
 #endif //  _APP_COM_MENU_H

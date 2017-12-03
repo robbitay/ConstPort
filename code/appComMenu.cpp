@@ -105,7 +105,122 @@ void ComMenuInitialize(ComMenu_t* comMenu)
 	Assert(comMenu != nullptr);
 	ClearPointer(comMenu);
 	
+	BoundedStrList_t numBitsComboOptions;
+	BoundedStrListCreate(&numBitsComboOptions, 2, 2, TempArena);
+	BoundedStrListAdd(&numBitsComboOptions, "8");
+	BoundedStrListAdd(&numBitsComboOptions, "7");
+	InitializeCombobox(&comMenu->numBitsCombo, NewRec(10, 10, 100, 20), &app->mainHeap, &numBitsComboOptions);
+	ComboboxSetSelectedIndex(&comMenu->numBitsCombo, 0);
 	
+	BoundedStrList_t parityComboOptions;
+	BoundedStrListCreate(&parityComboOptions, 5, 5, TempArena);
+	BoundedStrListAdd(&parityComboOptions, "None");
+	BoundedStrListAdd(&parityComboOptions, "Even");
+	BoundedStrListAdd(&parityComboOptions, "Odd");
+	BoundedStrListAdd(&parityComboOptions, "Mark");
+	BoundedStrListAdd(&parityComboOptions, "Space");
+	InitializeCombobox(&comMenu->parityCombo, NewRec(10, 10, 100, 20), &app->mainHeap, &parityComboOptions);
+	ComboboxSetSelectedIndex(&comMenu->parityCombo, 0);
+	
+	BoundedStrList_t stopBitsComboOptions;
+	BoundedStrListCreate(&stopBitsComboOptions, 3, 4, TempArena);
+	BoundedStrListAdd(&stopBitsComboOptions, "2");
+	BoundedStrListAdd(&stopBitsComboOptions, "1.5");
+	BoundedStrListAdd(&stopBitsComboOptions, "1");
+	InitializeCombobox(&comMenu->stopBitsCombo, NewRec(10, 10, 100, 20), &app->mainHeap, &stopBitsComboOptions);
+	ComboboxSetSelectedIndex(&comMenu->stopBitsCombo, 2);
+}
+
+void ComMenuSetSettings(ComMenu_t* comMenu, ComSettings_t settings)
+{
+	Assert(comMenu != nullptr);
+	
+	comMenu->baudRateSelection = (u32)settings.baudRate;
+	
+	switch (settings.numBits)
+	{
+		case 8: ComboboxSetSelectedIndex(&comMenu->numBitsCombo, 0); break;
+		case 7: ComboboxSetSelectedIndex(&comMenu->numBitsCombo, 1); break;
+		default:
+		{
+			DEBUG_PrintLine("Unknown numBits setting %u", settings.numBits);
+			Assert(false);
+		} break;
+	}
+	
+	switch (settings.parity)
+	{
+		case Parity_None:  ComboboxSetSelectedIndex(&comMenu->parityCombo, 0); break;
+		case Parity_Odd:   ComboboxSetSelectedIndex(&comMenu->parityCombo, 1); break;
+		case Parity_Even:  ComboboxSetSelectedIndex(&comMenu->parityCombo, 2); break;
+		case Parity_Mark:  ComboboxSetSelectedIndex(&comMenu->parityCombo, 3); break;
+		case Parity_Space: ComboboxSetSelectedIndex(&comMenu->parityCombo, 4); break;
+		default:
+		{
+			DEBUG_PrintLine("Unknown parity setting %u", settings.parity);
+			Assert(false);
+		} break;
+	}
+	
+	switch (settings.stopBits)
+	{
+		case StopBits_2:   ComboboxSetSelectedIndex(&comMenu->stopBitsCombo, 0); break;
+		case StopBits_1_5: ComboboxSetSelectedIndex(&comMenu->stopBitsCombo, 1); break;
+		case StopBits_1:   ComboboxSetSelectedIndex(&comMenu->stopBitsCombo, 2); break;
+		default:
+		{
+			DEBUG_PrintLine("Unknown stopBits setting %u", settings.stopBits);
+			Assert(false);
+		} break;
+	}
+}
+
+ComSettings_t ComMenuGetSettings(ComMenu_t* comMenu)
+{
+	Assert(comMenu != nullptr);
+	
+	ComSettings_t result = {};
+	
+	result.baudRate = (BaudRate_t)comMenu->baudRateSelection;
+	
+	switch (comMenu->numBitsCombo.selectedIndex)
+	{
+		case 0: result.numBits = 8; break;
+		case 1: result.numBits = 7; break;
+		default:
+		{
+			DEBUG_PrintLine("Unknown numBits selection %d", comMenu->numBitsCombo.selectedIndex);
+			Assert(false);
+		} break;
+	}
+	
+	switch (comMenu->parityCombo.selectedIndex)
+	{
+		case 0: result.parity = Parity_None; break;
+		case 1: result.parity = Parity_Odd; break;
+		case 2: result.parity = Parity_Even; break;
+		case 3: result.parity = Parity_Mark; break;
+		case 4: result.parity = Parity_Space; break;
+		default:
+		{
+			DEBUG_PrintLine("Unknown parity selection %d", comMenu->parityCombo.selectedIndex);
+			Assert(false);
+		} break;
+	}
+	
+	switch (comMenu->stopBitsCombo.selectedIndex)
+	{
+		case 0: result.stopBits = StopBits_2; break;
+		case 1: result.stopBits = StopBits_1_5; break;
+		case 2: result.stopBits = StopBits_1; break;
+		default:
+		{
+			DEBUG_PrintLine("Unknown stopBits selection %d", comMenu->stopBitsCombo.selectedIndex);
+			Assert(false);
+		} break;
+	}
+	
+	return result;
 }
 
 void ComMenuShow(ComMenu_t* comMenu)
@@ -121,10 +236,7 @@ void ComMenuShow(ComMenu_t* comMenu)
 		comMenu->comListOpenIndex = -1;
 		if (app->comPort.isOpen)
 		{
-			comMenu->baudRateSelection = (u32)app->comPort.settings.baudRate;
-			comMenu->numBitsSelection = app->comPort.settings.numBits;
-			comMenu->paritySelection = (u32)app->comPort.settings.parity;
-			comMenu->stopBitsSelection = (u32)app->comPort.settings.stopBits;
+			ComMenuSetSettings(comMenu, app->comPort.settings);
 			for (u32 cIndex = 0; cIndex < app->availablePorts.count; cIndex++)
 			{
 				if (strcmp(app->availablePorts[cIndex], app->comPort.name) == 0)
@@ -136,10 +248,12 @@ void ComMenuShow(ComMenu_t* comMenu)
 		}
 		else
 		{
-			comMenu->baudRateSelection = (u32)BaudRate_115200;
-			comMenu->numBitsSelection = 8;
-			comMenu->paritySelection = (u32)Parity_None;
-			comMenu->stopBitsSelection = (u32)StopBits_1;
+			ComSettings_t defaultSettings = {};
+			defaultSettings.baudRate = BaudRate_115200;
+			defaultSettings.numBits = 8;
+			defaultSettings.parity = Parity_None;
+			defaultSettings.stopBits = StopBits_1;
+			ComMenuSetSettings(comMenu, defaultSettings);
 		}
 		
 		ChangeActiveElement(comMenu);
@@ -283,6 +397,31 @@ void ComMenuUpdate(ComMenu_t* comMenu)
 		comMenu->stopBitsRec.height = 0;
 	}
 	
+	{
+		r32 minComboWidth = ComboboxMeasureMinWidth(&comMenu->numBitsCombo) + 15;
+		if (comMenu->numBitsRec.width > minComboWidth)
+		{
+			comMenu->numBitsRec.width = minComboWidth;
+		}
+		ComboboxRelocate(&comMenu->numBitsCombo, comMenu->numBitsRec);
+	}
+	{
+		r32 minComboWidth = ComboboxMeasureMinWidth(&comMenu->parityCombo) + 15;
+		if (comMenu->parityRec.width > minComboWidth)
+		{
+			comMenu->parityRec.width = minComboWidth;
+		}
+		ComboboxRelocate(&comMenu->parityCombo, comMenu->parityRec);
+	}
+	{
+		r32 minComboWidth = ComboboxMeasureMinWidth(&comMenu->stopBitsCombo) + 15;
+		if (comMenu->stopBitsRec.width > minComboWidth)
+		{
+			comMenu->stopBitsRec.width = minComboWidth;
+		}
+		ComboboxRelocate(&comMenu->stopBitsCombo, comMenu->stopBitsRec);
+	}
+	
 	// +==================================+
 	// | Check Disconnect Button Pressed  |
 	// +==================================+
@@ -352,12 +491,7 @@ void ComMenuUpdate(ComMenu_t* comMenu)
 				if ((u32)comMenu->comListSelectedIndex < app->availablePorts.count) { selectedPortName = app->availablePorts[comMenu->comListSelectedIndex]; }
 				else { selectedPortName = app->comPort.name; }
 				selectedPortName = ArenaString(TempArena, NtStr(selectedPortName));
-				ComSettings_t comSettings = {};
-				comSettings.baudRate = (BaudRate_t)comMenu->baudRateSelection;
-				comSettings.numBits = (u8)comMenu->numBitsSelection;
-				comSettings.parity = (Parity_t)comMenu->paritySelection;
-				comSettings.stopBits = (StopBits_t)comMenu->stopBitsSelection;
-				comSettings.flowControlEnabled = false;
+				ComSettings_t comSettings = ComMenuGetSettings(comMenu);
 				
 				DEBUG_PrintLine("Opening %s...", selectedPortName);
 				if (OpenComPort(selectedPortName, comSettings))
@@ -512,6 +646,10 @@ void ComMenuUpdate(ComMenu_t* comMenu)
 		}
 		comMenu->baudRatesHeight = yOffset + comMenu->baudRateScroll;
 	}
+	
+	ComboboxUpdate(&comMenu->numBitsCombo, true);
+	ComboboxUpdate(&comMenu->parityCombo, true);
+	ComboboxUpdate(&comMenu->stopBitsCombo, true);
 }
 
 void ComMenuDraw(ComMenu_t* comMenu)
@@ -677,7 +815,9 @@ void ComMenuDraw(ComMenu_t* comMenu)
 		if (comMenu->numBitsRec.height > 0)
 		{
 			RsDrawString("# Bits", comMenu->numBitsRec.topLeft + NewVec2(0, -app->uiFont.maxExtendDown), NewColor(Color_White), 1.0f, Alignment_Left);
-			RsDrawButton(comMenu->numBitsRec, NewColor(Color_White), NewColor(Color_Black), 1.0f);
+			// RsDrawButton(comMenu->numBitsRec, NewColor(Color_White), NewColor(Color_Black), 1.0f);
+			
+			ComboboxRender(&comMenu->numBitsCombo, true);
 		}
 		
 		// +==============================+
@@ -686,7 +826,9 @@ void ComMenuDraw(ComMenu_t* comMenu)
 		if (comMenu->parityRec.height > 0)
 		{
 			RsDrawString("Parity", comMenu->parityRec.topLeft + NewVec2(0, -app->uiFont.maxExtendDown), NewColor(Color_White), 1.0f, Alignment_Left);
-			RsDrawButton(comMenu->parityRec, NewColor(Color_White), NewColor(Color_Black), 1.0f);
+			// RsDrawButton(comMenu->parityRec, NewColor(Color_White), NewColor(Color_Black), 1.0f);
+			
+			ComboboxRender(&comMenu->parityCombo, true);
 		}
 		
 		// +==============================+
@@ -695,7 +837,9 @@ void ComMenuDraw(ComMenu_t* comMenu)
 		if (comMenu->stopBitsRec.height > 0)
 		{
 			RsDrawString("Stop Bits", comMenu->stopBitsRec.topLeft + NewVec2(0, -app->uiFont.maxExtendDown), NewColor(Color_White), 1.0f, Alignment_Left);
-			RsDrawButton(comMenu->stopBitsRec, NewColor(Color_White), NewColor(Color_Black), 1.0f);
+			// RsDrawButton(comMenu->stopBitsRec, NewColor(Color_White), NewColor(Color_Black), 1.0f);
+			
+			ComboboxRender(&comMenu->stopBitsCombo, true);
 		}
 		
 		// +==============================+

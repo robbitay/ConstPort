@@ -38,6 +38,7 @@ AppOutput_t* appOutput = nullptr;
 #include "appLineList.h"
 #include "appRenderState.h"
 #include "appTextBox.h"
+#include "appCombobox.h"
 #include "appMenuHandler.h"
 #include "appUiHandler.h"
 #include "appRegularExpressions.h"
@@ -139,6 +140,7 @@ char* SanatizeStringAdvanced(const char* strPntr, u32 numChars, MemoryArena_t* a
 #include "appMenuHandler.cpp"
 #include "appRenderLine.cpp"
 #include "appTextBox.cpp"
+#include "appCombobox.cpp"
 #include "appUiHandler.cpp"
 #include "appRegularExpressions.cpp"
 #include "appComMenu.cpp"
@@ -1914,6 +1916,7 @@ EXPORT AppInitialize_DEFINITION(App_Initialize)
 	app->crappyLogo = LoadTexture("Resources/Sprites/crappyLogo.png", false, false);
 	app->pythonIcon = LoadTexture("Resources/Sprites/python.png", false, false);
 	app->refreshSprite = LoadTexture("Resources/Sprites/refresh.png");
+	app->arrowSprite = LoadTexture("Resources/Sprites/arrow.png");
 	
 	LoadApplicationFonts();
 	

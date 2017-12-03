@@ -27,6 +27,7 @@ struct AppData_t
 	Texture_t crappyLogo;
 	Texture_t pythonIcon;
 	Texture_t refreshSprite;
+	Texture_t arrowSprite;
 	Font_t mainFont;
 	Font_t uiFont;
 	FrameBuffer_t frameBuffer;
