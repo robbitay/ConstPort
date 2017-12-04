@@ -65,7 +65,7 @@ void GlfwCursorPosCallback(GLFWwindow* window, real64 mouseX, real64 mouseY)
 	// OSX_PrintLine("Received GlfwCursorPosCallback: (%f, %f)", mouseX, mouseY);
 	AppInput_t* currentInput = (AppInput_t*)glfwGetWindowUserPointer(window);
 	
-	#if DOUBLE_RESOLUTION
+	#if DOUBLE_MOUSE_POS
 	currentInput->mousePos = NewVec2((r32)mouseX*2, (r32)mouseY*2);
 	#else
 	currentInput->mousePos = NewVec2((r32)mouseX, (r32)mouseY);
