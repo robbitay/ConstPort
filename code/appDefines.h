@@ -38,6 +38,10 @@ Date:   06\08\2017
 #define POPUP_MESSAGE_PADDING      4 //px
 #define POPUP_MAX_WIDTH            200 //px
 
+#define COM_MENU_OPEN_SPEED        0.025f //per frame anim
+#define COM_LIST_ITEM_PADDING      4
+#define REFRESH_BUTTON_SIZE        16 //px
+
 #define STATUS_MESSAGE_BUFFER_SIZE 128//bytes
 #define POPUP_MESSAGE_BUFFER_SIZE  512//bytes
 #define INPUT_TEXT_BUFFER_SIZE     256//bytes

@@ -41,6 +41,7 @@ Description:
 } while (0)
 
 #define HandleButton(button) do { app->buttonHandled[button] = true; } while(0)
+#define IsButtonHandled(button) app->buttonHandled[button]
 
 #define ButtonPressed(button) ((input->buttons[button].isDown && input->buttons[button].transCount > 0) || input->buttons[button].transCount >= 2)
 #define ButtonPressedUnhandled(button) (app->buttonHandled[button] == false && ((input->buttons[button].isDown && input->buttons[button].transCount > 0) || input->buttons[button].transCount >= 2))

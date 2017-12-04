@@ -57,23 +57,26 @@ struct Shader_t
 	
 	GLuint vertexArray;
 	
-	GLint positionAttribLocation;
-	GLint colorAttribLocation;
-	GLint texCoordAttribLocation;
-	
-	GLint worldMatrixLocation;
-	GLint viewMatrixLocation;
-	GLint projectionMatrixLocation;
-	GLint diffuseTextureLocation;
-	GLint alphaTextureLocation;
-	GLint diffuseColorLocation;
-	GLint secondaryColorLocation;
-	GLint doGrayscaleGradientLocation;
-	GLint useAlphaTextureLocation;
-	GLint sourceRectangleLocation;
-	GLint textureSizeLocation;
-	GLint circleRadiusLocation;
-	GLint circleInnerRadiusLocation;
+	struct
+	{
+		GLint positionAttrib;
+		GLint colorAttrib;
+		GLint texCoordAttrib;
+		
+		GLint worldMatrix;
+		GLint viewMatrix;
+		GLint projectionMatrix;
+		GLint diffuseTexture;
+		GLint alphaTexture;
+		GLint diffuseColor;
+		GLint secondaryColor;
+		GLint doGrayscaleGradient;
+		GLint useAlphaTexture;
+		GLint sourceRectangle;
+		GLint textureSize;
+		GLint circleRadius;
+		GLint circleInnerRadius;
+	} locations;
 };
 
 struct VertexBuffer_t

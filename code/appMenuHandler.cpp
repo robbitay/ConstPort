@@ -173,7 +173,7 @@ void MenuHandlerUpdate(MenuHandler_t* menuHandler)
 	}
 }
 
-void MenuHandlerDrawMenus(RenderState_t* renderState, MenuHandler_t* menuHandler)
+void MenuHandlerDrawMenus(MenuHandler_t* menuHandler)
 {
 	for (i32 mIndex = 0; mIndex < menuHandler->menuList.numItems; mIndex++)
 	{
@@ -184,9 +184,9 @@ void MenuHandlerDrawMenus(RenderState_t* renderState, MenuHandler_t* menuHandler
 			UpdateMenuRecs(menuPntr);
 			
 			
-			renderState->DrawGradient(menuPntr->drawRec, GC->colors.windowBackground1, GC->colors.windowBackground2, Dir2_Down);
+			RsDrawGradient(menuPntr->drawRec, GC->colors.windowBackground1, GC->colors.windowBackground2, Dir2_Down);
 			
-			renderState->DrawRectangle(menuPntr->titleBarRec, GC->colors.windowTitlebar);
+			RsDrawRectangle(menuPntr->titleBarRec, GC->colors.windowTitlebar);
 			
 			if (menuPntr->titleBarSize > 0)
 			{
@@ -203,16 +203,16 @@ void MenuHandlerDrawMenus(RenderState_t* renderState, MenuHandler_t* menuHandler
 					exitButtonColor = ColorMultiply(exitButtonColor, {Color_LightGrey});
 				}
 				
-				renderState->DrawRectangle(closeRec, exitButtonColor);
+				RsDrawRectangle(closeRec, exitButtonColor);
 				
 				rec shrunkRec = RecInflate(closeRec, -2);
-				renderState->DrawLine(
+				RsDrawLine(
 					NewVec2(shrunkRec.x, shrunkRec.y + shrunkRec.height),
 					NewVec2(shrunkRec.x + shrunkRec.width, shrunkRec.y),
 					2,
 					GC->colors.windowExitIcon
 				);
-				renderState->DrawLine(
+				RsDrawLine(
 					NewVec2(shrunkRec.x, shrunkRec.y),
 					NewVec2(shrunkRec.x + shrunkRec.width, shrunkRec.y + shrunkRec.height),
 					2,
@@ -220,32 +220,32 @@ void MenuHandlerDrawMenus(RenderState_t* renderState, MenuHandler_t* menuHandler
 				);
 			}
 			
-			renderState->DrawRectangle(NewRec(
+			RsDrawRectangle(NewRec(
 				menuPntr->drawRec.x,
 				menuPntr->drawRec.y + menuPntr->titleBarRec.height - GC->menuBorderThickness,
 				menuPntr->drawRec.width,
 				(r32)GC->menuBorderThickness),
 				GC->colors.windowTitlebar);
 			
-			renderState->DrawRectangle(NewRec(
+			RsDrawRectangle(NewRec(
 				menuPntr->drawRec.x,
 				menuPntr->drawRec.y,
 				menuPntr->drawRec.width,
 				(r32)GC->menuBorderThickness),
 				GC->colors.windowOutline);
-			renderState->DrawRectangle(NewRec(
+			RsDrawRectangle(NewRec(
 				menuPntr->drawRec.x,
 				menuPntr->drawRec.y,
 				(r32)GC->menuBorderThickness,
 				menuPntr->drawRec.height),
 				GC->colors.windowOutline);
-			renderState->DrawRectangle(NewRec(
+			RsDrawRectangle(NewRec(
 				menuPntr->drawRec.x,
 				menuPntr->drawRec.y + menuPntr->drawRec.height - GC->menuBorderThickness,
 				menuPntr->drawRec.width,
 				(r32)GC->menuBorderThickness),
 				GC->colors.windowOutline);
-			renderState->DrawRectangle(NewRec(
+			RsDrawRectangle(NewRec(
 				menuPntr->drawRec.x + menuPntr->drawRec.width - GC->menuBorderThickness,
 				menuPntr->drawRec.y,
 				(r32)GC->menuBorderThickness,
@@ -254,7 +254,7 @@ void MenuHandlerDrawMenus(RenderState_t* renderState, MenuHandler_t* menuHandler
 			
 			if (menuPntr->renderFunctionPntr != nullptr)
 			{
-				((MenuRender_f*)menuPntr->renderFunctionPntr)(renderState, menuHandler, menuPntr);
+				((MenuRender_f*)menuPntr->renderFunctionPntr)(menuHandler, menuPntr);
 			}
 		}
 	}

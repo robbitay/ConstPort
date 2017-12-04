@@ -1,9 +1,9 @@
 # Application TODO List
+	[ ] Add arrow key up/down controls to the ComMenu using the active element functionality
 	[ ] Horizontal Scrollbar (only shows up if needed)
 	[ ] Add an wrap indent option to the line formatting functions
 	[ ] Add a function that writes to a single option in the configuration file so we can have program written configuration options?
 	[ ] Make a line wrap enabled checkbox
-	[ ] Test making a viewport option in the renderstate where we can crop anything that gets drawn outside of a specific rectangle on the screen
 	[ ] Text box view scrolling left and right
 	[ ] Merge osx/win32_keymap and osx/win32_callbacks (also maybe osx/win32_clipboard)
 	
@@ -20,6 +20,7 @@
 	[ ] Keep old configuration options if new configuration file is unparsable (only on reload)
 	[ ] Add an option to enable commands that can be sent from the python script and interpreted by ConstPort to provide extra functionality
 	[ ] Turn the links in the about menu into clickable links (also maybe for uses other places)
+	[ ] Fix RsSetViewport messing up a pixel on the right side? (one too big or small?)
 
 # Application Wish List
 	[ ] Auto-reload configuration files when saved
@@ -65,6 +66,14 @@
 	[ ] Put the appVersion.h info into the Info.plist in build.sh
 
 # Old TODO List Items
+	[X] Create a combobox class for new com menu
+	[X] Add a refresh com list button in the new ComMenu
+	[X] Enter to connect to com port in ComMenu also gets routed to text box as a new-line
+	[X] Add a selection for baud rate option that can be scrolled through
+	[X] Add connect and disconnect buttons
+	[X] Render the list of COM ports in new Com Menu
+	[X] Test making a viewport option in the renderstate where we can crop anything that gets drawn outside of a specific rectangle on the screen
+	[X] Translate RenderState_t into standalone functions instead of a class-like structure
 	[X] Add support for key hold trigger count
 	[X] Repeated key presses when holding backspace/space in editable fields
 	[X] Added CreateNewWindow to platform layer

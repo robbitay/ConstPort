@@ -240,10 +240,9 @@ void UpdateCheckbox(Checkbox_t* checkboxPntr)
 	
 }
 
-void DrawCheckbox(Checkbox_t* checkboxPntr, RenderState_t* rs, Font_t* labelFont)
+void DrawCheckbox(Checkbox_t* checkboxPntr, Font_t* labelFont)
 {
 	Assert(checkboxPntr != nullptr);
-	Assert(rs != nullptr);
 	
 	bool mouseInside = IsInsideRec(checkboxPntr->drawRec, RenderMousePos);
 	bool mouseStartedInside = IsInsideRec(checkboxPntr->drawRec, RenderMouseStartPos);
@@ -295,32 +294,32 @@ void DrawCheckbox(Checkbox_t* checkboxPntr, RenderState_t* rs, Font_t* labelFont
 	
 	if (animAmount > 0)
 	{
-		rs->SetCircleRadius(animAmount*1.1f, 0.0f);
-		rs->DrawRectangle(checkboxPntr->drawRec, currentColor);
-		rs->SetCircleRadius(0.0f, 0.0f);
+		RsSetCircleRadius(animAmount*1.1f, 0.0f);
+		RsDrawRectangle(checkboxPntr->drawRec, currentColor);
+		RsSetCircleRadius(0.0f, 0.0f);
 	}
 	if (checkboxPntr->enabled)
 	{
-		rs->DrawButton(checkboxPntr->drawRec, {Color_TransparentBlack}, outlineColor, 1);
+		RsDrawButton(checkboxPntr->drawRec, {Color_TransparentBlack}, outlineColor, 1);
 	}
 	else
 	{
-		rs->DrawRectangle(checkboxPntr->drawRec, outlineColor);
+		RsDrawRectangle(checkboxPntr->drawRec, outlineColor);
 	}
 	
-	const Font_t* actualFont = rs->boundFont;
-	const Font_t* originalFont = rs->boundFont;
+	const Font_t* actualFont = renderState->boundFont;
+	const Font_t* originalFont = renderState->boundFont;
 	if (labelFont != nullptr)
 	{
 		actualFont = labelFont;
-		rs->BindFont(labelFont);
+		RsBindFont(labelFont);
 	}
 	
 	v2 labelPos = NewVec2(
 		checkboxPntr->drawRec.x + checkboxPntr->drawRec.width + 5,
 		checkboxPntr->drawRec.y + checkboxPntr->drawRec.height/2 + actualFont->lineHeight/2 - actualFont->maxExtendDown
 	);
-	rs->DrawString(checkboxPntr->label, labelPos, textColor, 1.0f, Alignment_Left);
+	RsDrawString(checkboxPntr->label, labelPos, textColor, 1.0f, Alignment_Left);
 	
-	rs->BindFont(originalFont);
+	RsBindFont(originalFont);
 }

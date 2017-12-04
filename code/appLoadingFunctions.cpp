@@ -148,29 +148,29 @@ Shader_t LoadShader(const char* vertShaderFileName, const char* fragShaderFileNa
 		DEBUG_PrintLine("Log: \"%s\"", logBuffer);
 	}
 	
-	result.positionAttribLocation      = glGetAttribLocation(result.programId, "inPosition");
-	result.colorAttribLocation         = glGetAttribLocation(result.programId, "inColor");
-	result.texCoordAttribLocation      = glGetAttribLocation(result.programId, "inTexCoord");
+	result.locations.positionAttrib      = glGetAttribLocation(result.programId, "inPosition");
+	result.locations.colorAttrib         = glGetAttribLocation(result.programId, "inColor");
+	result.locations.texCoordAttrib      = glGetAttribLocation(result.programId, "inTexCoord");
 	
-	result.worldMatrixLocation         = glGetUniformLocation(result.programId, "WorldMatrix");
-	result.viewMatrixLocation          = glGetUniformLocation(result.programId, "ViewMatrix");
-	result.projectionMatrixLocation    = glGetUniformLocation(result.programId, "ProjectionMatrix");
-	result.diffuseTextureLocation      = glGetUniformLocation(result.programId, "DiffuseTexture");
-	result.alphaTextureLocation        = glGetUniformLocation(result.programId, "AlphaTexture");
-	result.diffuseColorLocation        = glGetUniformLocation(result.programId, "DiffuseColor");
-	result.secondaryColorLocation      = glGetUniformLocation(result.programId, "SecondaryColor");
-	result.doGrayscaleGradientLocation = glGetUniformLocation(result.programId, "DoGrayscaleGradient");
-	result.sourceRectangleLocation     = glGetUniformLocation(result.programId, "SourceRectangle");
-	result.useAlphaTextureLocation     = glGetUniformLocation(result.programId, "UseAlphaTexture");
-	result.textureSizeLocation         = glGetUniformLocation(result.programId, "TextureSize");
-	result.circleRadiusLocation        = glGetUniformLocation(result.programId, "CircleRadius");
-	result.circleInnerRadiusLocation   = glGetUniformLocation(result.programId, "CircleInnerRadius");
+	result.locations.worldMatrix         = glGetUniformLocation(result.programId, "WorldMatrix");
+	result.locations.viewMatrix          = glGetUniformLocation(result.programId, "ViewMatrix");
+	result.locations.projectionMatrix    = glGetUniformLocation(result.programId, "ProjectionMatrix");
+	result.locations.diffuseTexture      = glGetUniformLocation(result.programId, "DiffuseTexture");
+	result.locations.alphaTexture        = glGetUniformLocation(result.programId, "AlphaTexture");
+	result.locations.diffuseColor        = glGetUniformLocation(result.programId, "DiffuseColor");
+	result.locations.secondaryColor      = glGetUniformLocation(result.programId, "SecondaryColor");
+	result.locations.doGrayscaleGradient = glGetUniformLocation(result.programId, "DoGrayscaleGradient");
+	result.locations.sourceRectangle     = glGetUniformLocation(result.programId, "SourceRectangle");
+	result.locations.useAlphaTexture     = glGetUniformLocation(result.programId, "UseAlphaTexture");
+	result.locations.textureSize         = glGetUniformLocation(result.programId, "TextureSize");
+	result.locations.circleRadius        = glGetUniformLocation(result.programId, "CircleRadius");
+	result.locations.circleInnerRadius   = glGetUniformLocation(result.programId, "CircleInnerRadius");
 	
 	glGenVertexArrays(1, &result.vertexArray);
 	glBindVertexArray(result.vertexArray);
-	glEnableVertexAttribArray(result.positionAttribLocation);
-	glEnableVertexAttribArray(result.colorAttribLocation);
-	glEnableVertexAttribArray(result.texCoordAttribLocation);
+	glEnableVertexAttribArray(result.locations.positionAttrib);
+	glEnableVertexAttribArray(result.locations.colorAttrib);
+	glEnableVertexAttribArray(result.locations.texCoordAttrib);
 	
 	return result;
 }

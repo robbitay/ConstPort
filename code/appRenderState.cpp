@@ -9,8 +9,9 @@ Description:
 #included from app.cpp 
 */
 
-void InitializeRenderState(RenderState_t* renderState)
+void InitializeRenderState()
 {
+	Assert(renderState != nullptr);
 	ClearPointer(renderState);
 	
 	Vertex_t squareVertices[] =
@@ -35,139 +36,129 @@ void InitializeRenderState(RenderState_t* renderState)
 	renderState->worldMatrix = Mat4_Identity;
 	renderState->viewMatrix = Mat4_Identity;
 	renderState->projectionMatrix = Mat4_Identity;
+	renderState->doGrayscaleGradient = false;
+	renderState->useAlphaTexture = false;
+	renderState->sourceRectangle = NewRec(0, 0, 1, 1);
+	renderState->depth = 1.0f;
+	renderState->circleRadius = 0.0f;
+	renderState->circleInnerRadius = 0.0f;
+	renderState->color = NewColor(Color_White);
+	renderState->secondaryColor = NewColor(Color_White);
 }
 
 
 //+================================================================+
 //|                     State Change Functions                     |
 //+================================================================+
-// +==============================+
-// |          BindShader          |
-// +==============================+
-void RenderState_t::BindShader(const Shader_t* shaderPntr)
+void RsUpdateShader()
 {
-	this->boundShader = shaderPntr;
+	Assert(renderState->boundShader != nullptr);
 	
-	glUseProgram(shaderPntr->programId);
-}
-
-// +==============================+
-// |         UpdateShader         |
-// +==============================+
-void RenderState_t::UpdateShader()
-{
-	Assert(this->boundShader != nullptr);
-	
-	if (this->boundBuffer != nullptr)
+	if (renderState->boundBuffer != nullptr)
 	{
-		glBindVertexArray(this->boundShader->vertexArray);
-		glBindBuffer(GL_ARRAY_BUFFER, this->boundBuffer->id);
-		glVertexAttribPointer(this->boundShader->positionAttribLocation, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex_t), (void*)0);
-		glVertexAttribPointer(this->boundShader->colorAttribLocation,    4, GL_FLOAT, GL_FALSE, sizeof(Vertex_t), (void*)sizeof(v3));
-		glVertexAttribPointer(this->boundShader->texCoordAttribLocation, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex_t), (void*)(sizeof(v3)+sizeof(v4)));
+		glBindVertexArray(renderState->boundShader->vertexArray);
+		glBindBuffer(GL_ARRAY_BUFFER, renderState->boundBuffer->id);
+		glVertexAttribPointer(renderState->boundShader->locations.positionAttrib, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex_t), (void*)0);
+		glVertexAttribPointer(renderState->boundShader->locations.colorAttrib,    4, GL_FLOAT, GL_FALSE, sizeof(Vertex_t), (void*)sizeof(v3));
+		glVertexAttribPointer(renderState->boundShader->locations.texCoordAttrib, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex_t), (void*)(sizeof(v3)+sizeof(v4)));
 	}
-	if (this->boundTexture != nullptr)
+	
+	if (renderState->boundTexture != nullptr)
 	{
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, this->boundTexture->id);
-		glUniform1i(this->boundShader->diffuseTextureLocation, 0);
-		glUniform2f(this->boundShader->textureSizeLocation, (r32)this->boundTexture->width, (r32)this->boundTexture->height);
+		glBindTexture(GL_TEXTURE_2D, renderState->boundTexture->id);
+		glUniform1i(renderState->boundShader->locations.diffuseTexture, 0);
+		glUniform2f(renderState->boundShader->locations.textureSize, (r32)renderState->boundTexture->width, (r32)renderState->boundTexture->height);
 	}
-	if (this->boundAlphaTexture != nullptr)
+	
+	if (renderState->boundAlphaTexture != nullptr)
 	{
 		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, this->boundAlphaTexture->id);
-		glUniform1i(this->boundShader->alphaTextureLocation, 1);
-		glUniform1i(this->boundShader->useAlphaTextureLocation, 1);
+		glBindTexture(GL_TEXTURE_2D, renderState->boundAlphaTexture->id);
+		glUniform1i(renderState->boundShader->locations.alphaTexture, 1);
+		glUniform1i(renderState->boundShader->locations.useAlphaTexture, 1);
 	}
 	else
 	{
-		glUniform1i(this->boundShader->useAlphaTextureLocation, 0);
+		glUniform1i(renderState->boundShader->locations.useAlphaTexture, 0);
 	}
-	if (this->boundFrameBuffer != nullptr)
+	
+	if (renderState->boundFrameBuffer != nullptr)
 	{
-		glBindFramebuffer(GL_FRAMEBUFFER, this->boundFrameBuffer->id);
+		glBindFramebuffer(GL_FRAMEBUFFER, renderState->boundFrameBuffer->id);
 	}
 	else
 	{
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 	
-	glViewport(
-		(i32)this->viewport.x, 
-		(i32)this->viewport.y, 
-		(i32)this->viewport.width, 
-		(i32)this->viewport.height
-	);
+	glUniformMatrix4fv(renderState->boundShader->locations.worldMatrix,      1, GL_FALSE, &renderState->worldMatrix.values[0][0]);
+	glUniformMatrix4fv(renderState->boundShader->locations.viewMatrix,       1, GL_FALSE, &renderState->viewMatrix.values[0][0]);
+	glUniformMatrix4fv(renderState->boundShader->locations.projectionMatrix, 1, GL_FALSE, &renderState->projectionMatrix.values[0][0]);
 	
-	glUniformMatrix4fv(this->boundShader->worldMatrixLocation,      1, GL_FALSE, &this->worldMatrix.values[0][0]);
-	glUniformMatrix4fv(this->boundShader->viewMatrixLocation,       1, GL_FALSE, &this->viewMatrix.values[0][0]);
-	glUniformMatrix4fv(this->boundShader->projectionMatrixLocation, 1, GL_FALSE, &this->projectionMatrix.values[0][0]);
+	glUniform1i(renderState->boundShader->locations.doGrayscaleGradient, renderState->doGrayscaleGradient ? 1 : 0);
+	glUniform4f(renderState->boundShader->locations.sourceRectangle, renderState->sourceRectangle.x, renderState->sourceRectangle.y, renderState->sourceRectangle.width, renderState->sourceRectangle.height);
+	glUniform1f(renderState->boundShader->locations.circleRadius, renderState->circleRadius);
+	glUniform1f(renderState->boundShader->locations.circleInnerRadius, renderState->circleInnerRadius);
+	
+	v4 colorVec = NewVec4(renderState->color);
+	glUniform4f(renderState->boundShader->locations.diffuseColor, colorVec.r, colorVec.g, colorVec.b, colorVec.a);
+	colorVec = NewVec4(renderState->secondaryColor);
+	glUniform4f(renderState->boundShader->locations.secondaryColor, colorVec.r, colorVec.g, colorVec.b, colorVec.a);
 }
 
-// +==============================+
-// |           BindFont           |
-// +==============================+
-void RenderState_t::BindFont(const Font_t* fontPntr)
+void RsBindShader(const Shader_t* shaderPntr)
 {
-	this->boundFont = fontPntr;
+	renderState->boundShader = shaderPntr;
+	
+	glUseProgram(shaderPntr->programId);
 }
 
-// +==============================+
-// |         BindTexture          |
-// +==============================+
-void RenderState_t::BindTexture(const Texture_t* texturePntr)
+void RsBindFont(const Font_t* fontPntr)
 {
-	this->boundTexture = texturePntr;
+	renderState->boundFont = fontPntr;
+}
+
+void RsBindTexture(const Texture_t* texturePntr)
+{
+	renderState->boundTexture = texturePntr;
 	
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, this->boundTexture->id);
-	glUniform1i(this->boundShader->diffuseTextureLocation, 0);
-	glUniform2f(this->boundShader->textureSizeLocation, (r32)this->boundTexture->width, (r32)this->boundTexture->height);
+	glBindTexture(GL_TEXTURE_2D, renderState->boundTexture->id);
+	glUniform1i(renderState->boundShader->locations.diffuseTexture, 0);
+	glUniform2f(renderState->boundShader->locations.textureSize, (r32)renderState->boundTexture->width, (r32)renderState->boundTexture->height);
 }
 
-// +==============================+
-// |       BindAlphaTexture       |
-// +==============================+
-void RenderState_t::BindAlphaTexture(const Texture_t* texturePntr)
+void RsBindAlphaTexture(const Texture_t* texturePntr)
 {
-	this->boundAlphaTexture = texturePntr;
+	renderState->boundAlphaTexture = texturePntr;
 	
 	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, this->boundAlphaTexture->id);
-	glUniform1i(this->boundShader->alphaTextureLocation, 1);
-	glUniform1i(this->boundShader->useAlphaTextureLocation, 1);
+	glBindTexture(GL_TEXTURE_2D, renderState->boundAlphaTexture->id);
+	glUniform1i(renderState->boundShader->locations.alphaTexture, 1);
+	glUniform1i(renderState->boundShader->locations.useAlphaTexture, 1);
 }
-// +==============================+
-// |     DisableAlphaTexture      |
-// +==============================+
-void RenderState_t::DisableAlphaTexture()
+void RsDisableAlphaTexture()
 {
-	this->boundAlphaTexture = nullptr;
+	renderState->boundAlphaTexture = nullptr;
 	
-	glUniform1i(this->boundShader->useAlphaTextureLocation, 0);
+	glUniform1i(renderState->boundShader->locations.useAlphaTexture, 0);
 }
 
-// +==============================+
-// |          BindBuffer          |
-// +==============================+
-void RenderState_t::BindBuffer(const VertexBuffer_t* vertBufferPntr)
+void RsBindBuffer(const VertexBuffer_t* vertBufferPntr)
 {
-	this->boundBuffer = vertBufferPntr;
+	renderState->boundBuffer = vertBufferPntr;
 	
-	glBindVertexArray(this->boundShader->vertexArray);
+	glBindVertexArray(renderState->boundShader->vertexArray);
 	glBindBuffer(GL_ARRAY_BUFFER, vertBufferPntr->id);
-	glVertexAttribPointer(this->boundShader->positionAttribLocation, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex_t), (void*)0);
-	glVertexAttribPointer(this->boundShader->colorAttribLocation,    4, GL_FLOAT, GL_FALSE, sizeof(Vertex_t), (void*)sizeof(v3));
-	glVertexAttribPointer(this->boundShader->texCoordAttribLocation, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex_t), (void*)(sizeof(v3)+sizeof(v4)));
+	glVertexAttribPointer(renderState->boundShader->locations.positionAttrib, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex_t), (void*)0);
+	glVertexAttribPointer(renderState->boundShader->locations.colorAttrib,    4, GL_FLOAT, GL_FALSE, sizeof(Vertex_t), (void*)sizeof(v3));
+	glVertexAttribPointer(renderState->boundShader->locations.texCoordAttrib, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex_t), (void*)(sizeof(v3)+sizeof(v4)));
 }
 
-// +==============================+
-// |       BindFrameBuffer        |
-// +==============================+
-void RenderState_t::BindFrameBuffer(const FrameBuffer_t* frameBuffer)
+void RsBindFrameBuffer(const FrameBuffer_t* frameBuffer)
 {
-	this->boundFrameBuffer = frameBuffer;
+	renderState->boundFrameBuffer = frameBuffer;
 	
 	if (frameBuffer == nullptr)
 	{
@@ -179,171 +170,197 @@ void RenderState_t::BindFrameBuffer(const FrameBuffer_t* frameBuffer)
 	}
 }
 
-// +==============================+
-// |        SetWorldMatrix        |
-// +==============================+
-void RenderState_t::SetWorldMatrix(const mat4& worldMatrix)
+void RsSetWorldMatrix(const mat4& worldMatrix)
 {
-	this->worldMatrix = worldMatrix;
-	glUniformMatrix4fv(this->boundShader->worldMatrixLocation, 1, GL_FALSE, &worldMatrix.values[0][0]);
+	renderState->worldMatrix = worldMatrix;
+	glUniformMatrix4fv(renderState->boundShader->locations.worldMatrix, 1, GL_FALSE, &worldMatrix.values[0][0]);
 }
-// +==============================+
-// |        SetViewMatrix         |
-// +==============================+
-void RenderState_t::SetViewMatrix(const mat4& viewMatrix)
+void RsSetViewMatrix(const mat4& viewMatrix)
 {
-	this->viewMatrix = viewMatrix;
-	glUniformMatrix4fv(this->boundShader->viewMatrixLocation, 1, GL_FALSE, &viewMatrix.values[0][0]);
+	renderState->viewMatrix = viewMatrix;
+	glUniformMatrix4fv(renderState->boundShader->locations.viewMatrix, 1, GL_FALSE, &viewMatrix.values[0][0]);
 }
-// +==============================+
-// |     SetProjectionMatrix      |
-// +==============================+
-void RenderState_t::SetProjectionMatrix(const mat4& projectionMatrix)
+void RsSetProjectionMatrix(const mat4& projectionMatrix)
 {
-	this->projectionMatrix = projectionMatrix;
-	glUniformMatrix4fv(this->boundShader->projectionMatrixLocation, 1, GL_FALSE, &projectionMatrix.values[0][0]);
+	renderState->projectionMatrix = projectionMatrix;
+	glUniformMatrix4fv(renderState->boundShader->locations.projectionMatrix, 1, GL_FALSE, &projectionMatrix.values[0][0]);
 }
 
-// +==============================+
-// |         SetViewport          |
-// +==============================+
-void RenderState_t::SetViewport(rec viewport)
+void RsSetViewport(rec viewport)
 {
-	this->viewport = viewport;
+	renderState->viewport = viewport;
 	
-	if (platform->platformType == Platform_OSX)
-	{
-		// this->viewport.width  /= 2;
-		// this->viewport.height /= 2;
-	}
+	#if DOUBLE_RESOLUTION
 	glViewport(
-		(i32)this->viewport.x, 
-		(i32)this->viewport.y, 
-		(i32)this->viewport.width, 
-		(i32)this->viewport.height
+		(i32)renderState->viewport.x*2, 
+		(i32)(RenderScreenSize.y*2 - renderState->viewport.height*2 - renderState->viewport.y*2), 
+		(i32)renderState->viewport.width*2, 
+		(i32)renderState->viewport.height*2
 	);
+	#else
+	glViewport(
+		(i32)renderState->viewport.x, 
+		(i32)(RenderScreenSize.y - renderState->viewport.height - renderState->viewport.y), 
+		(i32)renderState->viewport.width, 
+		(i32)renderState->viewport.height
+	);
+	#endif
+	
+	mat4 projMatrix;
+	projMatrix = Mat4Scale(NewVec3(2.0f/viewport.width, -2.0f/viewport.height, 1.0f));
+	projMatrix = Mat4Multiply(projMatrix, Mat4Translate(NewVec3(-viewport.width/2.0f, -viewport.height/2.0f, 0.0f)));
+	projMatrix = Mat4Multiply(projMatrix, Mat4Translate(NewVec3(-renderState->viewport.x, -renderState->viewport.y, 0.0f)));
+	RsSetProjectionMatrix(projMatrix);
 }
 
-// +==============================+
-// |           SetColor           |
-// +==============================+
-void RenderState_t::SetColor(Color_t color)
+void RsSetColor(Color_t color)
 {
+	renderState->color = color;
+	
 	v4 colorVec = NewVec4(color);
-	glUniform4f(this->boundShader->diffuseColorLocation, colorVec.r, colorVec.g, colorVec.b, colorVec.a);
+	glUniform4f(renderState->boundShader->locations.diffuseColor, colorVec.r, colorVec.g, colorVec.b, colorVec.a);
 }
-// +==============================+
-// |      SetSecondaryColor       |
-// +==============================+
-void RenderState_t::SetSecondaryColor(Color_t color)
+void RsSetSecondaryColor(Color_t color)
 {
+	renderState->secondaryColor = color;
+	
 	v4 colorVec = NewVec4(color);
-	glUniform4f(this->boundShader->secondaryColorLocation, colorVec.r, colorVec.g, colorVec.b, colorVec.a);
+	glUniform4f(renderState->boundShader->locations.secondaryColor, colorVec.r, colorVec.g, colorVec.b, colorVec.a);
 }
 
-// +==============================+
-// |      SetSourceRectangle      |
-// +==============================+
-void RenderState_t::SetSourceRectangle(rec sourceRectangle)
+void RsSetSourceRectangle(rec sourceRectangle)
 {
-	glUniform4f(this->boundShader->sourceRectangleLocation, sourceRectangle.x, sourceRectangle.y, sourceRectangle.width, sourceRectangle.height);
+	renderState->sourceRectangle = sourceRectangle;
+	
+	glUniform4f(renderState->boundShader->locations.sourceRectangle, sourceRectangle.x, sourceRectangle.y, sourceRectangle.width, sourceRectangle.height);
 }
 
-// +==============================+
-// |      SetGradientEnabled      |
-// +==============================+
-void RenderState_t::SetGradientEnabled(bool doGradient)
+void RsSetGradientEnabled(bool doGradient)
 {
-	glUniform1i(this->boundShader->doGrayscaleGradientLocation, doGradient ? 1 : 0);
+	renderState->doGrayscaleGradient = doGradient;
+	
+	glUniform1i(renderState->boundShader->locations.doGrayscaleGradient, doGradient ? 1 : 0);
 }
 
-// +==============================+
-// |       SetCircleRadius        |
-// +==============================+
-void RenderState_t::SetCircleRadius(float radius, float innerRadius)
+void RsSetCircleRadius(r32 radius, r32 innerRadius = 0.0f)
 {
-	glUniform1f(this->boundShader->circleRadiusLocation, radius);
-	glUniform1f(this->boundShader->circleInnerRadiusLocation, innerRadius);
+	renderState->circleRadius = radius;
+	renderState->circleInnerRadius = innerRadius;
+	
+	glUniform1f(renderState->boundShader->locations.circleRadius, radius);
+	glUniform1f(renderState->boundShader->locations.circleInnerRadius, innerRadius);
 }
 
-//+================================================================+
-//|                       Drawing Functions                        |
-//+================================================================+
-// +==============================+
-// |       DrawTexturedRec        |
-// +==============================+
-void RenderState_t::DrawTexturedRec(rec rectangle, Color_t color)
+void RsSetDepth(r32 depth)
 {
-	this->BindTexture(this->boundTexture);
-	this->SetSourceRectangle(NewRec(0, 0, 1, 1));
-	this->SetColor(color);
+	renderState->depth = depth;
+}
+
+void RsBegin(const Shader_t* startShader, const Font_t* startFont, rec viewport)
+{
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_BLEND);
+	
+	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LEQUAL);
+	
+	glEnable(GL_ALPHA_TEST);
+	glAlphaFunc(GL_GEQUAL, 0.1f);
+	
+	RsBindShader(startShader);
+	RsBindFont(startFont);
+	RsBindTexture(&renderState->dotTexture);
+	RsBindBuffer(&renderState->squareBuffer);
+	RsBindFrameBuffer(nullptr);
+	RsDisableAlphaTexture();
+	
+	RsSetWorldMatrix(Matrix4_Identity);
+	RsSetViewMatrix(Matrix4_Identity);
+	RsSetProjectionMatrix(Matrix4_Identity);
+	RsSetViewport(viewport);
+	RsSetColor(NewColor(Color_White));
+	RsSetSecondaryColor(NewColor(Color_White));
+	RsSetSourceRectangle(NewRec(0, 0, 1, 1));
+	RsSetGradientEnabled(false);
+	RsSetCircleRadius(0.0f, 0.0f);
+	RsSetDepth(1.0f);
+}
+
+// +--------------------------------------------------------------+
+// |                      Drawing Functions                       |
+// +--------------------------------------------------------------+
+void RsClearColorBuffer(Color_t clearColor)
+{
+	v4 clearColorVec = NewVec4(clearColor);
+	glClearColor(clearColorVec.x, clearColorVec.y, clearColorVec.z, clearColorVec.w);
+	glClear(GL_COLOR_BUFFER_BIT);
+}
+void RsClearDepthBuffer(r32 clearDepth)
+{
+	glClearDepth(clearDepth);
+	glClear(GL_DEPTH_BUFFER_BIT);
+}
+
+void RsDrawTexturedRec(rec rectangle, Color_t color)
+{
+	RsBindTexture(renderState->boundTexture);
+	RsSetSourceRectangle(NewRec(0, 0, 1, 1));
+	RsSetColor(color);
 	mat4 worldMatrix = Mat4Multiply(
-		Mat4Translate(NewVec3(rectangle.x, rectangle.y, 0.0f)),       //Position
+		Mat4Translate(NewVec3(rectangle.x, rectangle.y, renderState->depth)), //Position
 		Mat4Scale(NewVec3(rectangle.width, rectangle.height, 1.0f))); //Scale
-	this->SetWorldMatrix(worldMatrix);
-	this->BindBuffer(&this->squareBuffer);
-	glDrawArrays(GL_TRIANGLES, 0, this->squareBuffer.numVertices);
+	RsSetWorldMatrix(worldMatrix);
+	RsBindBuffer(&renderState->squareBuffer);
+	glDrawArrays(GL_TRIANGLES, 0, renderState->squareBuffer.numVertices);
 }
-// +==============================+
-// |       DrawTexturedRec        |
-// +==============================+
-void RenderState_t::DrawTexturedRec(rec rectangle, Color_t color, rec sourceRectangle)
+void RsDrawTexturedRec(rec rectangle, Color_t color, rec sourceRectangle)
 {
 	rec realSourceRec = NewRec(
-		sourceRectangle.x / (r32)this->boundTexture->width,
-		sourceRectangle.y / (r32)this->boundTexture->height,
-		sourceRectangle.width / (r32)this->boundTexture->width,
-		sourceRectangle.height / (r32)this->boundTexture->height);
-	this->SetSourceRectangle(realSourceRec);
-	this->BindTexture(this->boundTexture);
-	this->SetColor(color);
+		sourceRectangle.x / (r32)renderState->boundTexture->width,
+		sourceRectangle.y / (r32)renderState->boundTexture->height,
+		sourceRectangle.width / (r32)renderState->boundTexture->width,
+		sourceRectangle.height / (r32)renderState->boundTexture->height);
+	RsSetSourceRectangle(realSourceRec);
+	RsBindTexture(renderState->boundTexture);
+	RsSetColor(color);
 	mat4 worldMatrix = Mat4Multiply(
-		Mat4Translate(NewVec3(rectangle.x, rectangle.y, 0.0f)),       //Position
+		Mat4Translate(NewVec3(rectangle.x, rectangle.y, renderState->depth)), //Position
 		Mat4Scale(NewVec3(rectangle.width, rectangle.height, 1.0f))); //Scale
-	this->SetWorldMatrix(worldMatrix);
-	this->BindBuffer(&this->squareBuffer);
-	glDrawArrays(GL_TRIANGLES, 0, this->squareBuffer.numVertices);
+	RsSetWorldMatrix(worldMatrix);
+	RsBindBuffer(&renderState->squareBuffer);
+	glDrawArrays(GL_TRIANGLES, 0, renderState->squareBuffer.numVertices);
 }
 
-// +==============================+
-// |        DrawRectangle         |
-// +==============================+
-void RenderState_t::DrawRectangle(rec rectangle, Color_t color)
+void RsDrawRectangle(rec rectangle, Color_t color)
 {
-	this->BindTexture(&this->dotTexture);
-	this->SetSourceRectangle(NewRec(0, 0, 1, 1));
-	this->SetColor(color);
+	RsBindTexture(&renderState->dotTexture);
+	RsSetSourceRectangle(NewRec(0, 0, 1, 1));
+	RsSetColor(color);
 	mat4 worldMatrix = Mat4Multiply(
-		Mat4Translate(NewVec3(rectangle.x, rectangle.y, 0.0f)),       //Position
+		Mat4Translate(NewVec3(rectangle.x, rectangle.y, renderState->depth)), //Position
 		Mat4Scale(NewVec3(rectangle.width, rectangle.height, 1.0f))); //Scale
-	this->SetWorldMatrix(worldMatrix);
-	this->BindBuffer(&this->squareBuffer);
-	glDrawArrays(GL_TRIANGLES, 0, this->squareBuffer.numVertices);
+	RsSetWorldMatrix(worldMatrix);
+	RsBindBuffer(&renderState->squareBuffer);
+	glDrawArrays(GL_TRIANGLES, 0, renderState->squareBuffer.numVertices);
 }
 
-// +==============================+
-// |          DrawButton          |
-// +==============================+
-void RenderState_t::DrawButton(rec rectangle, Color_t backgroundColor, Color_t borderColor, r32 borderWidth)
+void RsDrawButton(rec rectangle, Color_t backgroundColor, Color_t borderColor, r32 borderWidth = 1.0f)
 {
-	this->DrawRectangle(rectangle, backgroundColor);
+	RsDrawRectangle(rectangle, backgroundColor);
 	
-	this->DrawRectangle(NewRec(rectangle.x, rectangle.y, rectangle.width, borderWidth), borderColor);
-	this->DrawRectangle(NewRec(rectangle.x, rectangle.y, borderWidth, rectangle.height), borderColor);
-	this->DrawRectangle(NewRec(rectangle.x, rectangle.y + rectangle.height - borderWidth, rectangle.width, borderWidth), borderColor);
-	this->DrawRectangle(NewRec(rectangle.x + rectangle.width - borderWidth, rectangle.y, borderWidth, rectangle.height), borderColor);
+	RsDrawRectangle(NewRec(rectangle.x, rectangle.y, rectangle.width, borderWidth), borderColor);
+	RsDrawRectangle(NewRec(rectangle.x, rectangle.y, borderWidth, rectangle.height), borderColor);
+	RsDrawRectangle(NewRec(rectangle.x, rectangle.y + rectangle.height - borderWidth, rectangle.width, borderWidth), borderColor);
+	RsDrawRectangle(NewRec(rectangle.x + rectangle.width - borderWidth, rectangle.y, borderWidth, rectangle.height), borderColor);
 }
 
-// +==============================+
-// |         DrawGradient         |
-// +==============================+
-void RenderState_t::DrawGradient(rec rectangle, Color_t color1, Color_t color2, Dir2_t direction)
+void RsDrawGradient(rec rectangle, Color_t color1, Color_t color2, Dir2_t direction)
 {
-	this->BindTexture(&this->gradientTexture);
-	this->SetSourceRectangle(NewRec(0, 0, 1, 1));
-	this->SetColor(color1);
-	this->SetSecondaryColor(color2);
-	this->SetGradientEnabled(true);
+	RsBindTexture(&renderState->gradientTexture);
+	RsSetSourceRectangle(NewRec(0, 0, 1, 1));
+	RsSetColor(color1);
+	RsSetSecondaryColor(color2);
+	RsSetGradientEnabled(true);
 	
 	mat4 worldMatrix = Mat4_Identity;
 	switch (direction)
@@ -352,21 +369,21 @@ void RenderState_t::DrawGradient(rec rectangle, Color_t color1, Color_t color2, 
 		default:
 		{
 			worldMatrix = Mat4Multiply(
-				Mat4Translate(NewVec3(rectangle.x, rectangle.y, 0.0f)),
+				Mat4Translate(NewVec3(rectangle.x, rectangle.y, renderState->depth)),
 				Mat4Scale(NewVec3(rectangle.width, rectangle.height, 1.0f)));
 		} break;
 		
 		case Dir2_Left:
 		{
 			worldMatrix = Mat4Multiply(
-				Mat4Translate(NewVec3(rectangle.x + rectangle.width, rectangle.y, 0.0f)),
+				Mat4Translate(NewVec3(rectangle.x + rectangle.width, rectangle.y, renderState->depth)),
 				Mat4Scale(NewVec3(-rectangle.width, rectangle.height, 1.0f)));
 		} break;
 		
 		case Dir2_Down:
 		{
 			worldMatrix = Mat4Multiply(
-				Mat4Translate(NewVec3(rectangle.x + rectangle.width, rectangle.y, 0.0f)),
+				Mat4Translate(NewVec3(rectangle.x + rectangle.width, rectangle.y, renderState->depth)),
 				Mat4RotateZ(ToRadians(90)),
 				Mat4Scale(NewVec3(rectangle.height, rectangle.width, 1.0f)));
 		} break;
@@ -374,66 +391,54 @@ void RenderState_t::DrawGradient(rec rectangle, Color_t color1, Color_t color2, 
 		case Dir2_Up:
 		{
 			worldMatrix = Mat4Multiply(
-				Mat4Translate(NewVec3(rectangle.x + rectangle.width, rectangle.y + rectangle.height, 0.0f)),
+				Mat4Translate(NewVec3(rectangle.x + rectangle.width, rectangle.y + rectangle.height, renderState->depth)),
 				Mat4RotateZ(ToRadians(90)),
 				Mat4Scale(NewVec3(-rectangle.height, rectangle.width, 1.0f)));
 		} break;
 	};
-	this->SetWorldMatrix(worldMatrix);
+	RsSetWorldMatrix(worldMatrix);
 	
-	this->BindBuffer(&this->squareBuffer);
-	glDrawArrays(GL_TRIANGLES, 0, this->squareBuffer.numVertices);
+	RsBindBuffer(&renderState->squareBuffer);
+	glDrawArrays(GL_TRIANGLES, 0, renderState->squareBuffer.numVertices);
 	
-	this->SetGradientEnabled(false);
+	RsSetGradientEnabled(false);
 }
 
-// +==============================+
-// |           DrawLine           |
-// +==============================+
-void RenderState_t::DrawLine(v2 p1, v2 p2, r32 thickness, Color_t color)
+void RsDrawLine(v2 p1, v2 p2, r32 thickness, Color_t color)
 {
-	this->BindTexture(&this->dotTexture);
-	this->SetSourceRectangle(NewRec(0, 0, 1, 1));
-	this->SetColor(color);
+	RsBindTexture(&renderState->dotTexture);
+	RsSetSourceRectangle(NewRec(0, 0, 1, 1));
+	RsSetColor(color);
 	r32 length = Vec2Length(p2 - p1);
 	r32 rotation = AtanR32(p2.y - p1.y, p2.x - p1.x); 
 	mat4 worldMatrix = Mat4_Identity;
-	worldMatrix = Mat4Multiply(Mat4Translate(NewVec3(0.0f, -0.5f, 0.0f)),   worldMatrix); //Centering
-	worldMatrix = Mat4Multiply(Mat4Scale(NewVec3(length, thickness, 1.0f)), worldMatrix); //Scale
-	worldMatrix = Mat4Multiply(Mat4RotateZ(rotation),                       worldMatrix); //Rotation
-	worldMatrix = Mat4Multiply(Mat4Translate(NewVec3(p1.x, p1.y, 0.0f)),    worldMatrix); //Position
-	this->SetWorldMatrix(worldMatrix);
-	this->BindBuffer(&this->squareBuffer);
-	glDrawArrays(GL_TRIANGLES, 0, this->squareBuffer.numVertices);
+	worldMatrix = Mat4Multiply(Mat4Translate(NewVec3(0.0f, -0.5f, 0.0f)),              worldMatrix); //Centering
+	worldMatrix = Mat4Multiply(Mat4Scale(NewVec3(length, thickness, 1.0f)),            worldMatrix); //Scale
+	worldMatrix = Mat4Multiply(Mat4RotateZ(rotation),                                  worldMatrix); //Rotation
+	worldMatrix = Mat4Multiply(Mat4Translate(NewVec3(p1.x, p1.y, renderState->depth)), worldMatrix); //Position
+	RsSetWorldMatrix(worldMatrix);
+	RsBindBuffer(&renderState->squareBuffer);
+	glDrawArrays(GL_TRIANGLES, 0, renderState->squareBuffer.numVertices);
 }
 
-// +==============================+
-// |          DrawCircle          |
-// +==============================+
-void RenderState_t::DrawCircle(v2 center, r32 radius, Color_t color)
+void RsDrawCircle(v2 center, r32 radius, Color_t color)
 {
-	this->SetCircleRadius(1.0f, 0.0f);
-	this->DrawRectangle(NewRec(center.x - radius, center.y - radius, radius*2, radius*2), color);
-	this->SetCircleRadius(0.0f, 0.0f);
+	RsSetCircleRadius(1.0f, 0.0f);
+	RsDrawRectangle(NewRec(center.x - radius, center.y - radius, radius*2, radius*2), color);
+	RsSetCircleRadius(0.0f, 0.0f);
 }
 
-// +==============================+
-// |           DrawDonut          |
-// +==============================+
-void RenderState_t::DrawDonut(v2 center, r32 radius, r32 innerRadius, Color_t color)
+void RsDrawDonut(v2 center, r32 radius, r32 innerRadius, Color_t color)
 {
 	r32 realInnerRadius = ClampR32(innerRadius / radius, 0.0f, 1.0f);
-	this->SetCircleRadius(1.0f, realInnerRadius);
-	this->DrawRectangle(NewRec(center.x - radius, center.y - radius, radius*2, radius*2), color);
-	this->SetCircleRadius(0.0f, 0.0f);
+	RsSetCircleRadius(1.0f, realInnerRadius);
+	RsDrawRectangle(NewRec(center.x - radius, center.y - radius, radius*2, radius*2), color);
+	RsSetCircleRadius(0.0f, 0.0f);
 }
 
-// +==============================+
-// |        DrawCharacter         |
-// +==============================+
-void RenderState_t::DrawCharacter(u32 charIndex, v2 bottomLeft, Color_t color, r32 scale)
+void RsDrawCharacter(u32 charIndex, v2 bottomLeft, Color_t color, r32 scale = 1.0f)
 {
-	const FontCharInfo_t* charInfo = &this->boundFont->chars[charIndex];
+	const FontCharInfo_t* charInfo = &renderState->boundFont->chars[charIndex];
 	
 	rec sourceRectangle = NewRec((r32)charInfo->x, (r32)charInfo->y, (r32)charInfo->width, (r32)charInfo->height);
 	rec drawRectangle = NewRec(
@@ -442,22 +447,19 @@ void RenderState_t::DrawCharacter(u32 charIndex, v2 bottomLeft, Color_t color, r
 		scale*charInfo->width, 
 		scale*charInfo->height);
 	
-	if (this->boundTexture != &this->boundFont->bitmap)
+	if (renderState->boundTexture != &renderState->boundFont->bitmap)
 	{
-		this->BindTexture(&this->boundFont->bitmap);
+		RsBindTexture(&renderState->boundFont->bitmap);
 	}
 	
-	this->DrawTexturedRec(drawRectangle, color, sourceRectangle);
+	RsDrawTexturedRec(drawRectangle, color, sourceRectangle);
 }
 
-// +==============================+
-// |          DrawString          |
-// +==============================+
-void RenderState_t::DrawString(const char* string, u32 numCharacters, v2 position, Color_t color, r32 scale, Alignment_t alignment)
+void RsDrawString(const char* string, u32 numCharacters, v2 position, Color_t color, r32 scale = 1.0f, Alignment_t alignment = Alignment_Left)
 {
-	this->BindTexture(&this->boundFont->bitmap);
+	RsBindTexture(&renderState->boundFont->bitmap);
 	
-	v2 stringSize = MeasureString(this->boundFont, string, numCharacters);
+	v2 stringSize = MeasureString(renderState->boundFont, string, numCharacters);
 	
 	v2 currentPos = position;
 	switch (alignment)
@@ -471,8 +473,8 @@ void RenderState_t::DrawString(const char* string, u32 numCharacters, v2 positio
 	{
 		if (string[cIndex] == '\t')
 		{
-			u32 spaceIndex = GetFontCharIndex(this->boundFont, ' ');
-			currentPos.x += this->boundFont->chars[spaceIndex].advanceX * GC->tabWidth * scale;
+			u32 spaceIndex = GetFontCharIndex(renderState->boundFont, ' ');
+			currentPos.x += renderState->boundFont->chars[spaceIndex].advanceX * GC->tabWidth * scale;
 		}
 		else if (IsCharClassPrintable(string[cIndex]) == false)
 		{
@@ -480,25 +482,19 @@ void RenderState_t::DrawString(const char* string, u32 numCharacters, v2 positio
 		}
 		else
 		{
-			u32 charIndex = GetFontCharIndex(this->boundFont, string[cIndex]);
-			this->DrawCharacter(charIndex, currentPos, color, scale);
-			currentPos.x += this->boundFont->chars[charIndex].advanceX * scale;
+			u32 charIndex = GetFontCharIndex(renderState->boundFont, string[cIndex]);
+			RsDrawCharacter(charIndex, currentPos, color, scale);
+			currentPos.x += renderState->boundFont->chars[charIndex].advanceX * scale;
 		}
 	}
 }
 
-// +==============================+
-// |          DrawString          |
-// +==============================+
-void RenderState_t::DrawString(const char* nullTermString, v2 position, Color_t color, r32 scale, Alignment_t alignment)
+void RsDrawString(const char* nullTermString, v2 position, Color_t color, r32 scale = 1.0f, Alignment_t alignment = Alignment_Left)
 {
-	this->DrawString(nullTermString, (u32)strlen(nullTermString), position, color, scale, alignment);
+	RsDrawString(nullTermString, (u32)strlen(nullTermString), position, color, scale, alignment);
 }
 
-// +==============================+
-// |         PrintString          |
-// +==============================+
-void RenderState_t::PrintString(v2 position, Color_t color, r32 scale, const char* formatString, ...)
+void RsPrintString(v2 position, Color_t color, r32 scale, const char* formatString, ...)
 {
 	char printBuffer[256] = {};
 	va_list args;
@@ -507,19 +503,16 @@ void RenderState_t::PrintString(v2 position, Color_t color, r32 scale, const cha
 	u32 length = (u32)vsnprintf(printBuffer, 256-1, formatString, args);
 	va_end(args);
 	
-	this->DrawString(printBuffer, length, position, color, scale);
+	RsDrawString(printBuffer, length, position, color, scale);
 }
 
-// +==============================+
-// |     DrawFormattedString      |
-// +==============================+
-void RenderState_t::DrawFormattedString(const char* string, u32 numCharacters, v2 position, r32 maxWidth, Color_t color, Alignment_t alignment, bool preserveWords)
+void RsDrawFormattedString(const char* string, u32 numCharacters, v2 position, r32 maxWidth, Color_t color, Alignment_t alignment = Alignment_Left, bool preserveWords = true)
 {
 	u32 cIndex = 0;
 	v2 drawPos = position;
 	while (cIndex < numCharacters)
 	{
-		u32 numChars = FindNextFormatChunk(this->boundFont, &string[cIndex], numCharacters - cIndex, maxWidth, preserveWords);
+		u32 numChars = FindNextFormatChunk(renderState->boundFont, &string[cIndex], numCharacters - cIndex, maxWidth, preserveWords);
 		if (numChars == 0) { numChars = 1; }
 		
 		while (numChars > 1 && IsCharClassWhitespace(string[cIndex + numChars-1]))
@@ -527,7 +520,7 @@ void RenderState_t::DrawFormattedString(const char* string, u32 numCharacters, v
 			numChars--;
 		}
 		
-		this->DrawString(&string[cIndex], numChars, drawPos, color, 1.0f, alignment);
+		RsDrawString(&string[cIndex], numChars, drawPos, color, 1.0f, alignment);
 		
 		if (cIndex+numChars < numCharacters && string[cIndex+numChars] == '\r')
 		{
@@ -541,17 +534,14 @@ void RenderState_t::DrawFormattedString(const char* string, u32 numCharacters, v
 		{
 			numChars++;
 		}
-		drawPos.y += this->boundFont->lineHeight;
+		drawPos.y += renderState->boundFont->lineHeight;
 		cIndex += numChars;
 	}
 }
 
-// +==============================+
-// |     DrawFormattedString      |
-// +==============================+
-void RenderState_t::DrawFormattedString(const char* nullTermString, v2 position, r32 maxWidth, Color_t color, Alignment_t alignment, bool preserveWords)
+void RsDrawFormattedString(const char* nullTermString, v2 position, r32 maxWidth, Color_t color, Alignment_t alignment = Alignment_Left, bool preserveWords = true)
 {
 	u32 numCharacters = (u32)strlen(nullTermString);
-	this->DrawFormattedString(nullTermString, numCharacters, position, maxWidth, color, alignment, preserveWords);
+	RsDrawFormattedString(nullTermString, numCharacters, position, maxWidth, color, alignment, preserveWords);
 }
 

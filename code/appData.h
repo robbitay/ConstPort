@@ -26,6 +26,8 @@ struct AppData_t
 	Texture_t scrollBarEndcapTexture;
 	Texture_t crappyLogo;
 	Texture_t pythonIcon;
+	Texture_t refreshSprite;
+	Texture_t arrowSprite;
 	Font_t mainFont;
 	Font_t uiFont;
 	FrameBuffer_t frameBuffer;
@@ -87,6 +89,8 @@ struct AppData_t
 	
 	TextBox_t inputBox;
 	TextBox_t testTextBox;
+	
+	ComMenu_t comMenu;
 };
 
 #endif // _APP_DATA_H
