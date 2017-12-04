@@ -40,10 +40,13 @@ v2 RenderLine(Line_t* linePntr, v2 position, r32 viewWidth, bool sizeOnly = fals
 		//		the IsInsideRec is never true for more than one line
 		rec backgroundRec = NewRec(
 			0,
-			position.y - app->mainFont.maxExtendUp + 1,
+			position.y - app->mainFont.maxExtendUp,
 			10000,
-			lineStringSize.y + (r32)GC->lineSpacing - 1
+			lineStringSize.y + (r32)GC->lineSpacing
 		);
+		app->renderState.DrawRectangle(backgroundRec, backgroundColor);
+		
+		backgroundRec.y += 1; backgroundRec.height -= 1;
 		if (GC->highlightHoverLine && IsInsideRec(backgroundRec, relMousePos) && input->mouseInsideWindow && !ui->mouseInMenu)
 		{
 			backgroundColor = GC->colors.hoverBackground;
