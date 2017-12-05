@@ -190,12 +190,21 @@ void RsSetViewport(rec viewport)
 {
 	renderState->viewport = viewport;
 	
+	#if DOUBLE_RESOLUTION
+	glViewport(
+		(i32)renderState->viewport.x*2, 
+		(i32)(RenderScreenSize.y*2 - renderState->viewport.height*2 - renderState->viewport.y*2), 
+		(i32)renderState->viewport.width*2, 
+		(i32)renderState->viewport.height*2
+	);
+	#else
 	glViewport(
 		(i32)renderState->viewport.x, 
 		(i32)(RenderScreenSize.y - renderState->viewport.height - renderState->viewport.y), 
 		(i32)renderState->viewport.width, 
 		(i32)renderState->viewport.height
 	);
+	#endif
 	
 	mat4 projMatrix;
 	projMatrix = Mat4Scale(NewVec3(2.0f/viewport.width, -2.0f/viewport.height, 1.0f));

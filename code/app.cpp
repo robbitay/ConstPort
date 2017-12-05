@@ -2096,6 +2096,17 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		(input->mouseInsideWindow && IsInsideRec(app->comMenu.drawRec, RenderMousePos))
 	);
 	
+	if (ButtonDown(Button_Control) && ButtonPressed(Button_QuestionMark))
+	{
+		DEBUG_PrintLine("RenderScreenSize = (%f, %f)", RenderScreenSize.width, RenderScreenSize.height);
+		GLint dims[4] = {0};
+		glGetIntegerv(GL_VIEWPORT, dims);
+		GLint frameWidth = dims[2];
+		GLint frameHeight = dims[3];
+		DEBUG_PrintLine("FrameBufferSize = (%d, %d)", frameWidth, frameHeight);
+		DEBUG_PrintLine("Mouse Pos = (%f, %f)", RenderMousePos.x, RenderMousePos.y);
+	}
+	
 	//+================================+
 	//|  Context Menu Showing/Filling  |
 	//+================================+
