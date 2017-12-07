@@ -388,7 +388,7 @@ void TextBoxUpdate(TextBox_t* tb, bool selected)
 		// +==============================+
 		if (input->mouseInsideWindow && IsInsideRec(tb->drawRec, RenderMouseStartPos))
 		{
-			v2 relativePos = NewVec2(RenderMousePos.x - (tb->drawRec.x + tb->leftPadding), 0);
+			v2 relativePos = NewVec2(RenderMousePos.x - (tb->drawRec.x + tb->leftPadding) + tb->drawOffset, 0);
 			i32 mouseIndex = GetStringIndexForLocation(tb->font, tb->chars, tb->numChars, relativePos);
 			if (mouseIndex < 0) { mouseIndex = 0; }
 			if ((u32)mouseIndex > tb->numChars) { mouseIndex = (i32)tb->numChars; }
@@ -462,6 +462,41 @@ void TextBoxUpdate(TextBox_t* tb, bool selected)
 			}
 		}
 	}
+	
+	// +==============================+
+	// |      Update Text Offset      |
+	// +==============================+
+	{
+		r32 viewRecWidth = tb->drawRec.width-2;
+		r32 fullStrWidth = MeasureString(tb->font, tb->chars, tb->numChars).width;
+		r32 maxOffset = fullStrWidth + viewRecWidth/4 - viewRecWidth;
+		r32 cursorOffset = MeasureString(tb->font, tb->chars, tb->cursorEnd).width;
+		
+		if (fullStrWidth < viewRecWidth)
+		{
+			tb->drawOffsetGoto = 0;
+		}
+		
+		if (cursorOffset <= tb->drawOffsetGoto)
+		{
+			tb->drawOffsetGoto -= viewRecWidth/4;
+			if (tb->drawOffsetGoto < 0) { tb->drawOffsetGoto = 0; }
+		}
+		else if (cursorOffset+20 >= tb->drawOffsetGoto+viewRecWidth)
+		{
+			tb->drawOffsetGoto += viewRecWidth/4;
+			if (tb->drawOffsetGoto > maxOffset) { tb->drawOffsetGoto = maxOffset; }
+		}
+		
+		if (AbsR32(tb->drawOffset - tb->drawOffsetGoto) > 1.0f)
+		{
+			tb->drawOffset += (tb->drawOffsetGoto - tb->drawOffset) / GC->viewSpeedDivider;
+		}
+		else
+		{
+			tb->drawOffset = tb->drawOffsetGoto;
+		}
+	}
 }
 
 void TextBoxRender(TextBox_t* tb, bool selected)
@@ -487,6 +522,7 @@ void TextBoxRender(TextBox_t* tb, bool selected)
 	
 	v2 textSize = MeasureString(tb->font, tb->chars, tb->numChars);
 	v2 textPos = tb->drawRec.topLeft + NewVec2(tb->leftPadding, tb->drawRec.height/2.0f - textSize.y/2.0f + tb->font->maxExtendUp);
+	textPos.x -= tb->drawOffset;
 	textPos.x = (r32)RoundR32(textPos.x);
 	textPos.y = (r32)RoundR32(textPos.y);
 	

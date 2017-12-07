@@ -17,6 +17,7 @@ struct TextBox_t
 	
 	rec drawRec;
 	r32 drawOffset;
+	r32 drawOffsetGoto;
 	r32 leftPadding;
 	const Font_t* font;
 	u32 maxNumChars;

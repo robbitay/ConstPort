@@ -1,5 +1,6 @@
 # Application TODO List
-	[ ] Text box view scrolling left and right
+	[!] Add checkboxes to toggle gutters
+	[!] Add ctrl+scroll shortcut to change font size
 	[ ] Merge osx/win32_keymap and osx/win32_callbacks (also maybe osx/win32_clipboard)
 	
 	[ ] Add a function that writes to a single option in the configuration file so we can have program written configuration options?
@@ -64,6 +65,7 @@
 	[ ] Put the appVersion.h info into the Info.plist in build.sh
 
 # Old TODO List Items
+	[X] Text box view scrolling left and right
 	[X] Save last few string inputs for the text box
 	[X] Fix the selection rendering
 	[X] Make a line wrap enabled checkbox

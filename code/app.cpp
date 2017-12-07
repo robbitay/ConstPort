@@ -1293,7 +1293,7 @@ void PushInputHistory(const char* inputStr, u32 inputStrLength)
 {
 	Assert(inputStrLength <= INPUT_TEXT_BUFFER_SIZE);
 	
-	if (app->numHistoryItems > 0 && strncmp(&app->inputHistory[0][0], inputStr, inputStrLength) == 0)
+	if (app->numHistoryItems > 0 && strcmp(&app->inputHistory[0][0], inputStr) == 0)
 	{
 		DEBUG_WriteLine("Ignoring duplicate input history item");
 		return;
