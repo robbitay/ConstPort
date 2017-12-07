@@ -253,11 +253,11 @@ bool TestRegularExpression(const char* expressionStr, const char* target, u32 ta
 	
 	if (boost::regex_search(target, target + targetLength, matches, expression))
 	{
-		DEBUG_PrintLine("Found %d captured regions:", matches.size());
-		for (u32 mIndex = 0; mIndex < matches.size(); mIndex++)
-		{
-			DEBUG_PrintLine("[%u] = \"%s\"", mIndex, matches[mIndex].str().c_str());
-		}
+		// DEBUG_PrintLine("Found %d captured regions:", matches.size());
+		// for (u32 mIndex = 0; mIndex < matches.size(); mIndex++)
+		// {
+		// 	DEBUG_PrintLine("[%u] = \"%s\"", mIndex, matches[mIndex].str().c_str());
+		// }
 		return true;
 	}
 	else
@@ -327,7 +327,7 @@ char* GetRegexCaptureFormatString(const char* expressionStr, const char* target,
 				u32 captureNumber = (u32)(formatStr[cIndex+1] - '0');
 				if (captureStrs[captureNumber] != nullptr)
 				{
-					DEBUG_PrintLine("We will replace $%u with \"%s\"", captureNumber, captureStrs[captureNumber]);
+					// DEBUG_PrintLine("We will replace $%u with \"%s\"", captureNumber, captureStrs[captureNumber]);
 					resultLength += (u32)strlen(captureStrs[captureNumber]);
 					cIndex++;
 				}

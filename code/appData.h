@@ -94,6 +94,8 @@ struct AppData_t
 	TextBox_t inputBox;
 	TextBox_t testTextBox;
 	Checkbox_t lineWrapCheckbox;
+	Checkbox_t lineNumbersCheckbox;
+	Checkbox_t elapsedBannersCheckbox;
 	
 	ComMenu_t comMenu;
 };

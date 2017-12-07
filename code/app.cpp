@@ -773,7 +773,7 @@ void ReplaceLineWithCaptureFormatString(Line_t* linePntr, const char* regexStr, 
 	TempPushMark();
 	
 	char* tempString = GetRegexCaptureFormatString(regexStr, linePntr->chars, linePntr->numChars, formatStr, TempArena);
-	DEBUG_PrintLine("Captured formatted replacement: \"%s\"", tempString);
+	// DEBUG_PrintLine("Captured formatted replacement: \"%s\"", tempString);
 	LineListReplaceLine(&app->lineList, tempString, (u32)strlen(tempString));
 	
 	TempPopMark();
@@ -1293,7 +1293,9 @@ void PushInputHistory(const char* inputStr, u32 inputStrLength)
 {
 	Assert(inputStrLength <= INPUT_TEXT_BUFFER_SIZE);
 	
-	if (app->numHistoryItems > 0 && strcmp(&app->inputHistory[0][0], inputStr) == 0)
+	u32 lastInputLength = (u32)strlen(&app->inputHistory[0][0]);
+	i32 compareLength = MinI32(inputStrLength, lastInputLength);
+	if (app->numHistoryItems > 0 && strncmp(&app->inputHistory[0][0], inputStr, inputStrLength) == 0 && app->inputHistory[0][compareLength] == '\0')
 	{
 		DEBUG_WriteLine("Ignoring duplicate input history item");
 		return;
@@ -1445,6 +1447,10 @@ EXPORT AppInitialize_DEFINITION(App_Initialize)
 	
 	InitializeCheckbox(&app->lineWrapCheckbox, NewRec(100, 10, 10, 10), &app->mainHeap, "Line Wrap", NewColor(Color_White));
 	CheckboxSet(&app->lineWrapCheckbox, GC->lineWrapEnabled);
+	InitializeCheckbox(&app->lineNumbersCheckbox, NewRec(100, 10, 10, 10), &app->mainHeap, "Gutters", NewColor(Color_White));
+	CheckboxSet(&app->lineNumbersCheckbox, GC->showLineNumbers);
+	InitializeCheckbox(&app->elapsedBannersCheckbox, NewRec(100, 10, 10, 10), &app->mainHeap, "Elapsed Banners", NewColor(Color_White));
+	CheckboxSet(&app->elapsedBannersCheckbox, GC->elapsedBannerEnabled);
 	
 	// +==============================+
 	// |   Auto-Start Python Script   |
@@ -1599,6 +1605,19 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		DEBUG_PrintLine("Mouse Pos = (%f, %f)", RenderMousePos.x, RenderMousePos.y);
 	}
 	
+	// +==================================+
+	// | Font Scaling Using Scroll Wheel  |
+	// +==================================+
+	if (ButtonDown(Button_Control) && input->scrollDelta.y != 0)
+	{
+		ui->scrollOffsetGoto.y -= input->scrollDelta.y * (r32)GC->scrollMultiplier;
+		GC->mainFontSize += (i32)(input->scrollDelta.y);
+		if (GC->mainFontSize < 10) { GC->mainFontSize = 10; }
+		if (GC->mainFontSize > 64) { GC->mainFontSize = 64; }
+		
+		LoadApplicationFonts();
+	}
+	
 	//+================================+
 	//|  Context Menu Showing/Filling  |
 	//+================================+
@@ -1646,7 +1665,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 			readResult = platform->ReadComPort(&app->comPort, buffer, ArrayCount(buffer)-1);
 			if (readResult > 0)
 			{
-				DEBUG_PrintLine("Read %d bytes \"%.*s\"", readResult, readResult, buffer);
+				// DEBUG_PrintLine("Read %d bytes \"%.*s\"", readResult, readResult, buffer);
 				
 				if (app->programInstance.isOpen == false ||
 					GC->sendComDataToPython == false ||
@@ -1694,7 +1713,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 			
 			if (numBytesRead > 0)
 			{
-				DEBUG_PrintLine("Read %u bytes from program: \"%.*s\"", numBytesRead, numBytesRead, readBuffer);
+				// DEBUG_PrintLine("Read %u bytes from program: \"%.*s\"", numBytesRead, numBytesRead, readBuffer);
 				
 				if (GC->showPythonOutput)
 				{
@@ -1846,6 +1865,25 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	if (app->lineWrapCheckbox.checked != GC->lineWrapEnabled)
 	{
 		GC->lineWrapEnabled = app->lineWrapCheckbox.checked;
+	}
+	
+	// +==============================+
+	// |     Toggle Line Numbers      |
+	// +==============================+
+	if (app->lineNumbersCheckbox.checked != GC->showLineNumbers)
+	{
+		GC->showLineNumbers  = app->lineNumbersCheckbox.checked;
+		GC->scrollbarWidth   = app->lineNumbersCheckbox.checked ? 12 : 0;
+		GC->scrollbarPadding = app->lineNumbersCheckbox.checked ? 3 : 0;
+		GC->minGutterWidth   = app->lineNumbersCheckbox.checked ? 40 : 0;
+	}
+	
+	// +==============================+
+	// |    Toggle Elapsed Banners    |
+	// +==============================+
+	if (app->elapsedBannersCheckbox.checked != GC->elapsedBannerEnabled)
+	{
+		GC->elapsedBannerEnabled = app->elapsedBannersCheckbox.checked;
 	}
 	
 	// +==============================+
@@ -2178,25 +2216,28 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	// +==============================+
 	// | Mouse Scroll Wheel Handling  |
 	// +==============================+
-	if (input->scrollDelta.y != 0)
+	if (!ButtonDown(Button_Control))
 	{
-		if (ButtonDown(Button_Shift))
+		if (input->scrollDelta.y != 0)
 		{
-			ui->scrollOffsetGoto.x -= input->scrollDelta.y * (r32)GC->scrollMultiplier;
-		}
-		else
-		{
-			ui->scrollOffsetGoto.y -= input->scrollDelta.y * (r32)GC->scrollMultiplier;
-			
-			if (input->scrollDelta.y > 0)
+			if (ButtonDown(Button_Shift))
 			{
-				ui->followingEndOfFile = false;
+				ui->scrollOffsetGoto.x -= input->scrollDelta.y * (r32)GC->scrollMultiplier;
+			}
+			else
+			{
+				ui->scrollOffsetGoto.y -= input->scrollDelta.y * (r32)GC->scrollMultiplier;
+				
+				if (input->scrollDelta.y > 0)
+				{
+					ui->followingEndOfFile = false;
+				}
 			}
 		}
-	}
-	if (input->scrollDelta.x != 0)
-	{
+		if (input->scrollDelta.x != 0)
+		{
 		ui->scrollOffsetGoto.x -= input->scrollDelta.x * (r32)GC->scrollMultiplier;
+		}
 	}
 	
 	// +==============================+
@@ -2537,8 +2578,15 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	}
 	TextBoxUpdate(&app->inputBox, IsActiveElement(&app->inputBox) && platform->windowHasFocus);
 	rec lastButtonRec = ui->buttonRecs[ArrayCount(ui->buttonRecs)-1];
-	app->lineWrapCheckbox.drawRec = NewRec(lastButtonRec.x + lastButtonRec.width + 5, 10, 15, 15);
+	rec checkboxRec = NewRec(lastButtonRec.x + lastButtonRec.width + 5, 5, 15, 15);;
+	app->lineWrapCheckbox.drawRec = checkboxRec;
+	checkboxRec.y += checkboxRec.height + 2;
+	app->lineNumbersCheckbox.drawRec = checkboxRec;
+	checkboxRec.y += checkboxRec.height + 2;
+	app->elapsedBannersCheckbox.drawRec = checkboxRec;
 	CheckboxUpdate(&app->lineWrapCheckbox);
+	CheckboxUpdate(&app->lineNumbersCheckbox);
+	CheckboxUpdate(&app->elapsedBannersCheckbox);
 	
 	// +==============================+
 	// |      Text Box Selection      |
@@ -3022,7 +3070,13 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		mainMenuButtonsRight = buttonRec.x + buttonRec.width;
 	}
 	
+	rec mainMenuSettingsRec = NewRec(lastButtonRec.x + lastButtonRec.width, ui->mainMenuRec.y, 0, ui->mainMenuRec.height);
+	mainMenuSettingsRec.width = ui->clearButtonRec.x - mainMenuSettingsRec.x;
+	RsSetViewport(mainMenuSettingsRec);
 	CheckboxRender(&app->lineWrapCheckbox, &app->uiFont);
+	CheckboxRender(&app->lineNumbersCheckbox, &app->uiFont);
+	CheckboxRender(&app->elapsedBannersCheckbox, &app->uiFont);
+	RsSetViewport(NewRec(Vec2_Zero, NewVec2(platform->screenSize)));
 	
 	// +================================+
 	// |         Rx and Tx LEDs         |
