@@ -1289,6 +1289,38 @@ void ChangeActiveElement(const void* elementPntr)
 	app->activeElement = elementPntr;
 }
 
+void PushInputHistory(const char* inputStr, u32 inputStrLength)
+{
+	Assert(inputStrLength <= INPUT_TEXT_BUFFER_SIZE);
+	
+	if (app->numHistoryItems > 0 && strncmp(&app->inputHistory[0][0], inputStr, inputStrLength) == 0)
+	{
+		DEBUG_WriteLine("Ignoring duplicate input history item");
+		return;
+	}
+	
+	//Shift all the history items up one
+	for (u32 hIndex = MAX_INPUT_HISTORY-1; hIndex > 0; hIndex--)
+	{
+		memcpy(&app->inputHistory[hIndex], &app->inputHistory[hIndex-1], INPUT_TEXT_BUFFER_SIZE+1);
+	}
+	
+	memcpy(&app->inputHistory[0], inputStr, inputStrLength);
+	app->inputHistory[0][inputStrLength] = '\0';
+	
+	if (app->numHistoryItems < MAX_INPUT_HISTORY)
+	{
+		app->numHistoryItems++;
+	}
+}
+
+char* GetInputHistory(u32 historyIndex)
+{
+	Assert(historyIndex < MAX_INPUT_HISTORY);
+	
+	return &app->inputHistory[historyIndex][0];
+}
+
 //+================================================================+
 //|                       App Get Version                          |
 //+================================================================+
@@ -1745,9 +1777,8 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 					}
 					if (writeToProgram) { platform->WriteProgramInput(&app->programInstance, (char*)hexBytes, numHexBytes); }
 					
-					memcpy(app->lastInputText, app->inputBox.chars, app->inputBox.numChars-1);
-					app->lastInputTextLength = app->inputBox.numChars-1;
-					app->lastInputText[app->lastInputTextLength] = '\0';
+					PushInputHistory(app->inputBox.chars, app->inputBox.numChars-1);
+					app->inputHistoryIndex = 0;
 					
 					TextBoxClear(&app->inputBox);
 				}
@@ -1772,9 +1803,8 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 				}
 				if (writeToProgram) { platform->WriteProgramInput(&app->programInstance, app->inputBox.chars, app->inputBox.numChars); }
 				
-				memcpy(app->lastInputText, app->inputBox.chars, app->inputBox.numChars-1);
-				app->lastInputTextLength = app->inputBox.numChars-1;
-				app->lastInputText[app->lastInputTextLength] = '\0';
+				PushInputHistory(app->inputBox.chars, app->inputBox.numChars-1);
+				app->inputHistoryIndex = 0;
 				
 				TextBoxClear(&app->inputBox);
 			}
@@ -1823,11 +1853,27 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	// +==============================+
 	if (GC->showInputTextBox && ButtonPressed(Button_Up))
 	{
-		TextBoxSet(&app->inputBox, app->lastInputText, app->lastInputTextLength);
+		if (app->inputHistoryIndex < app->numHistoryItems)
+		{
+			app->inputHistoryIndex++;
+			DEBUG_PrintLine("Pull history %u", app->inputHistoryIndex);
+			TextBoxSet(&app->inputBox, NtStr(&app->inputHistory[app->inputHistoryIndex-1][0]));
+		}
 	}
 	if (GC->showInputTextBox && ButtonPressed(Button_Down))
 	{
-		TextBoxClear(&app->inputBox);
+		if (app->inputHistoryIndex > 1)
+		{
+			app->inputHistoryIndex--;
+			DEBUG_PrintLine("Pull history %u", app->inputHistoryIndex);
+			TextBoxSet(&app->inputBox, NtStr(&app->inputHistory[app->inputHistoryIndex-1][0]));
+		}
+		else
+		{
+			app->inputHistoryIndex = 0;
+			DEBUG_PrintLine("Pull history %u", app->inputHistoryIndex);
+			TextBoxClear(&app->inputBox);
+		}
 	}
 	
 	// +==============================+

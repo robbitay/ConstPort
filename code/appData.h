@@ -82,8 +82,12 @@ struct AppData_t
 	
 	bool buttonHandled[Buttons_NumButtons];
 	
-	char lastInputText[INPUT_TEXT_BUFFER_SIZE];
-	u32  lastInputTextLength;
+	// char lastInputText[INPUT_TEXT_BUFFER_SIZE];
+	// u32  lastInputTextLength;
+	
+	u32 inputHistoryIndex;
+	u32 numHistoryItems;
+	char inputHistory[MAX_INPUT_HISTORY][INPUT_TEXT_BUFFER_SIZE+1];
 	
 	const void* activeElement;
 	
