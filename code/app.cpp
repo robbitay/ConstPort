@@ -2600,7 +2600,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	}
 	
 	RsBindFrameBuffer(&app->frameBuffer);
-	RsClearColorBuffer(NewColor(Color_Black));
+	RsClearColorBuffer(NewColor(Color_TransparentBlack));
 	RsClearDepthBuffer(1.0f);
 	
 	//+--------------------------------------+
