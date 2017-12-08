@@ -60,11 +60,19 @@ static Version_t PlatformVersion = {
 #include "win32_helpers.cpp"
 #include "win32_configuration.cpp"
 #include "win32_appLoading.cpp"
-#include "win32_keymap.cpp"
-#include "win32_callbacks.cpp"
+// #include "win32_keymap.cpp"
+// #include "win32_callbacks.cpp"
 #include "win32_com.cpp"
 #include "win32_clipboard.cpp"
 #include "win32_program.cpp"
+
+#define DEBUG_Write(formatStr)          Win32_Write(formatStr)
+#define DEBUG_WriteLine(formatStr)      Win32_WriteLine(formatStr)
+#define DEBUG_Print(formatStr, ...)     Win32_Print(formatStr, __VA_ARGS__);
+#define DEBUG_PrintLine(formatStr, ...) Win32_PrintLine(formatStr, __VA_ARGS__);
+
+#include "plat_keymap.cpp"
+#include "plat_callbacks.cpp"
 
 //+================================================================+
 //|                      Windows Entry Point                       |

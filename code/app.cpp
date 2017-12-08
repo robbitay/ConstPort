@@ -1804,6 +1804,14 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 				else
 				{
 					StatusError("No hex value to send");
+					
+					while (app->inputBox.numChars > 0 && app->inputBox.chars[app->inputBox.numChars-1] == '\n')
+					{
+						app->inputBox.chars[app->inputBox.numChars-1] = '\0';
+						app->inputBox.numChars--;
+						if (app->inputBox.cursorBegin > app->inputBox.numChars) { app->inputBox.cursorBegin = app->inputBox.numChars; }
+						if (app->inputBox.cursorEnd > app->inputBox.numChars) { app->inputBox.cursorEnd = app->inputBox.numChars; }
+					}
 				}
 				
 				TempPopMark();

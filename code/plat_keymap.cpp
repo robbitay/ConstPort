@@ -1,10 +1,10 @@
 /*
-File:   win32_keymap.cpp
+File:   plat_keymap.cpp
 Author: Taylor Robbins
 Date:   06\09\2017
 Description: 
 	** Handles mapping windows key codes to our own enumeration.
-	** Also contains functions for handling keyboard input in windows
+	** Also contains functions for handling keyboard input
 
 #included from win32_main.cpp 
 */
@@ -76,12 +76,29 @@ Buttons_t AppButtonForKey(i32 glfwKeyCode)
 		case GLFW_KEY_TAB:           return Button_Tab;
 		case GLFW_KEY_CAPS_LOCK:     return Button_CapsLock;
 		
+		#if WINDOWS_COMPILATION
+		
 		case GLFW_KEY_LEFT_CONTROL:
 		case GLFW_KEY_RIGHT_CONTROL: return Button_Control;
 		case GLFW_KEY_LEFT_ALT:
 		case GLFW_KEY_RIGHT_ALT:     return Button_Alt;
 		case GLFW_KEY_LEFT_SHIFT:
 		case GLFW_KEY_RIGHT_SHIFT:   return Button_Shift;
+		
+		#elif OSX_COMPILATION
+		
+		case GLFW_KEY_LEFT_SUPER:
+		case GLFW_KEY_RIGHT_SUPER:   return Button_Control;
+		case GLFW_KEY_LEFT_CONTROL:
+		case GLFW_KEY_RIGHT_CONTROL: return Button_Alt;
+		case GLFW_KEY_LEFT_SHIFT:
+		case GLFW_KEY_RIGHT_SHIFT:   return Button_Shift;
+		
+		#elif LINUX_COMPILATION
+		
+		//TODO: Linux keymapping?
+		
+		#endif
 		
 		case GLFW_KEY_RIGHT:         return Button_Right;
 		case GLFW_KEY_LEFT:          return Button_Left;
@@ -173,9 +190,23 @@ u8 GetKeysForButton(Buttons_t button, i32* keyBuffer)
 		case Button_Tab:          keyBuffer[0] = GLFW_KEY_TAB; return 1;
 		case Button_CapsLock:     keyBuffer[0] = GLFW_KEY_CAPS_LOCK; return 1;
 		
+		#if WINDOWS_COMPILATION
+		
 		case Button_Control:      keyBuffer[0] = GLFW_KEY_LEFT_CONTROL; keyBuffer[1] = GLFW_KEY_RIGHT_CONTROL; return 2;
-		case Button_Alt:          keyBuffer[0] = GLFW_KEY_LEFT_ALT;     keyBuffer[1] = GLFW_KEY_RIGHT_ALT; return 2;  
+		case Button_Alt:          keyBuffer[0] = GLFW_KEY_LEFT_ALT;     keyBuffer[1] = GLFW_KEY_RIGHT_ALT;     return 2;
+		case Button_Shift:        keyBuffer[0] = GLFW_KEY_LEFT_SHIFT;   keyBuffer[1] = GLFW_KEY_RIGHT_SHIFT;   return 2;
+		
+		#elif OSX_COMPILATION
+		
+		case Button_Control:      keyBuffer[0] = GLFW_KEY_LEFT_SUPER;   keyBuffer[1] = GLFW_KEY_RIGHT_SUPER; return 2;
+		case Button_Alt:          keyBuffer[0] = GLFW_KEY_LEFT_CONTROL; keyBuffer[1] = GLFW_KEY_RIGHT_CONTROL; return 2;  
 		case Button_Shift:        keyBuffer[0] = GLFW_KEY_LEFT_SHIFT;   keyBuffer[1] = GLFW_KEY_RIGHT_SHIFT; return 2;
+		
+		#elif LINUX_COMPILATION
+		
+		//TODO: Linux keymapping?
+		
+		#endif
 		
 		case Button_Right:        keyBuffer[0] = GLFW_KEY_RIGHT; return 1;
 		case Button_Left:         keyBuffer[0] = GLFW_KEY_LEFT; return 1;
@@ -208,7 +239,6 @@ Buttons_t AppButtonForMouse(i32 glfwButtonCode)
 		case GLFW_MOUSE_BUTTON_RIGHT:  return MouseButton_Right;
 		case GLFW_MOUSE_BUTTON_MIDDLE: return MouseButton_Middle;
 		
-		
 		default:                       return Buttons_NumButtons;
 	};
 }
@@ -220,7 +250,6 @@ u8 GetMouseBtnsForButton(Buttons_t button, i32* keyBuffer)
 		case MouseButton_Left:   keyBuffer[0] = GLFW_MOUSE_BUTTON_LEFT; return 1;
 		case MouseButton_Right:  keyBuffer[0] = GLFW_MOUSE_BUTTON_RIGHT; return 1;
 		case MouseButton_Middle: keyBuffer[0] = GLFW_MOUSE_BUTTON_MIDDLE; return 1;
-		
 		
 		default: return 0;
 	};
@@ -272,7 +301,7 @@ void HandleMouseEvent(GLFWwindow* window, AppInput_t* currentInput, i32 glfwButt
 			{
 				if (keys[keyIndex] != glfwButtonCode && glfwGetMouseButton(window, keys[keyIndex]) == GLFW_PRESS)
 				{
-					Win32_WriteLine("Other mouse button held, ignoring button release");
+					DEBUG_WriteLine("Other mouse button held, ignoring button release");
 					
 					foundPressedKey = true;
 					break;
@@ -286,7 +315,7 @@ void HandleMouseEvent(GLFWwindow* window, AppInput_t* currentInput, i32 glfwButt
 				{
 					if (glfwGetKey(window, keys[keyIndex]) == GLFW_PRESS)
 					{
-						Win32_WriteLine("Other key held, ignoring button release");
+						DEBUG_WriteLine("Other key held, ignoring button release");
 						
 						foundPressedKey = true;
 						break;
@@ -335,7 +364,7 @@ void HandleKeyEvent(GLFWwindow* window, AppInput_t* currentInput, i32 glfwKeyCod
 			{
 				if (glfwGetMouseButton(window, keys[keyIndex]) == GLFW_PRESS)
 				{
-					Win32_WriteLine("Other mouse button held, ignoring key release");
+					DEBUG_WriteLine("Other mouse button held, ignoring key release");
 					
 					foundPressedKey = true;
 					break;
@@ -349,7 +378,7 @@ void HandleKeyEvent(GLFWwindow* window, AppInput_t* currentInput, i32 glfwKeyCod
 				{
 					if (keys[keyIndex] != glfwKeyCode && glfwGetKey(window, keys[keyIndex]) == GLFW_PRESS)
 					{
-						Win32_WriteLine("Other key held, ignoring key release");
+						DEBUG_WriteLine("Other key held, ignoring key release");
 						
 						foundPressedKey = true;
 						break;

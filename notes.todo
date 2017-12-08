@@ -1,5 +1,6 @@
 # Application TODO List
 	[ ] Merge osx/win32_keymap and osx/win32_callbacks (also maybe osx/win32_clipboard)
+	
 	[ ] Add a function that writes to a single option in the configuration file so we can have program written configuration options?
 	[ ] Horizontal Scrollbar (only shows up if needed)
 	[ ] Add an wrap indent option to the line formatting functions
