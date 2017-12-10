@@ -45,13 +45,13 @@ Description:
 //+================================================================+
 //|                    Platform Layer Globals                      |
 //+================================================================+
-static bool WindowResized;
-static PlatformInfo_t* GL_PlatformInfo;
-static Version_t PlatformVersion = {
+PlatformInfo_t PlatformInfo = {};
+Version_t PlatformVersion = {
 	PLATFORM_VERSION_MAJOR, 
 	PLATFORM_VERSION_MINOR, 
 	PLATFORM_VERSION_BUILD
 };
+const char* WorkingDirectory = nullptr;
 
 //+================================================================+
 //|                Platform Layer Implementations                  |
@@ -91,8 +91,7 @@ int WINAPI WinMain(HINSTANCE hInstance,
 	char exePath[MAX_PATH] = {};
 	char appDllFullPath[MAX_PATH] = {};
 	char tempDllFullPath[MAX_PATH] = {};
-	PlatformInfo_t platformInfo = {};
-	GL_PlatformInfo = &platformInfo;
+	PlatformInfo = {};
 	LoadedApp_t loadedApp = {};
 	AppMemory_t appMemory = {};
 	AppInput_t inputRingBuffer[2] = {};

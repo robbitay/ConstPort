@@ -23,8 +23,8 @@ void GlfwWindowSizeCallback(GLFWwindow* window, i32 screenWidth, i32 screenHeigh
 {
 	DEBUG_PrintLine("Resized: %dx%d", screenWidth, screenHeight);
 	
-	GL_PlatformInfo->screenSize = NewVec2i(screenWidth, screenHeight);
-	GL_PlatformInfo->windowResized = true;
+	PlatformInfo.screenSize = NewVec2i(screenWidth, screenHeight);
+	PlatformInfo.windowResized = true;
 }
 void GlfwWindowMoveCallback(GLFWwindow* window, i32 posX, i32 posY)
 {
@@ -33,12 +33,12 @@ void GlfwWindowMoveCallback(GLFWwindow* window, i32 posX, i32 posY)
 void GlfwWindowMinimizeCallback(GLFWwindow* window, i32 isMinimized)
 {
 	DEBUG_PrintLine("Window %s", isMinimized ? "Minimized" : "Restored");
-	GL_PlatformInfo->windowIsMinimized = (isMinimized > 0);
+	PlatformInfo.windowIsMinimized = (isMinimized > 0);
 }
 void GlfwWindowFocusCallback(GLFWwindow* window, i32 isFocused)
 {
 	DEBUG_PrintLine("Window %s focus!", isFocused ? "Gained" : "Lost");
-	GL_PlatformInfo->windowHasFocus = (isFocused > 0);
+	PlatformInfo.windowHasFocus = (isFocused > 0);
 }
 void GlfwKeyPressedCallback(GLFWwindow* window, i32 key, i32 scanCode, i32 action, i32 modifiers)
 {
@@ -84,7 +84,11 @@ void GlfwCursorPosCallback(GLFWwindow* window, real64 mouseX, real64 mouseY)
 	// DEBUG_PrintLine("Received GlfwCursorPosCallback: (%f, %f)", mouseX, mouseY);
 	AppInput_t* currentInput = (AppInput_t*)glfwGetWindowUserPointer(window);
 	
+	#if DOUBLE_MOUSE_POS
+	currentInput->mousePos = NewVec2((r32)mouseX*2, (r32)mouseY*2);
+	#else
 	currentInput->mousePos = NewVec2((r32)mouseX, (r32)mouseY);
+	#endif
 	
 	if (currentInput->buttons[MouseButton_Left].isDown)
 	{

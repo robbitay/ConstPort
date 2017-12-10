@@ -1283,7 +1283,7 @@
 			"RenderScreenSize",
 			"TempArena",
 			"WindowOpen",
-			"WindowResized",
+			"WorkingDirectory",
 			"app",
 			"appData",
 			"appOutput",

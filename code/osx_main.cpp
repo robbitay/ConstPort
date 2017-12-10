@@ -30,7 +30,12 @@ Description:
 #include "platformInterface.h"
 #include "osx_version.h"
 
-PlatformInfo_t PlatformInfo;
+PlatformInfo_t PlatformInfo = {};
+Version_t PlatformVersion = {
+	PLATFORM_VERSION_MAJOR,
+	PLATFORM_VERSION_MINOR,
+	PLATFORM_VERSION_BUILD
+};
 const char* WorkingDirectory = nullptr;
 
 #include "osx_helpers.cpp"
@@ -38,10 +43,16 @@ const char* WorkingDirectory = nullptr;
 #include "osx_clipboard.cpp"
 #include "osx_com.cpp"
 #include "osx_files.cpp"
-#include "osx_keymap.cpp"
-#include "osx_callbacks.cpp"
 #include "osx_appLoading.cpp"
 #include "osx_program.cpp"
+
+#define DEBUG_Write(formatStr)          OSX_Write(formatStr)
+#define DEBUG_WriteLine(formatStr)      OSX_WriteLine(formatStr)
+#define DEBUG_Print(formatStr, ...)     OSX_Print(formatStr, __VA_ARGS__);
+#define DEBUG_PrintLine(formatStr, ...) OSX_PrintLine(formatStr, __VA_ARGS__);
+
+#include "plat_keymap.cpp"
+#include "plat_callbacks.cpp"
 
 // +--------------------------------------------------------------+
 // |                    Platform Layer Defines                    |
