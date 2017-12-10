@@ -48,15 +48,12 @@ of the debug behavior can be toggled on/off by changing -DDEBUG=1 to -DDEBUG=0
 
 
 # Controls
-Ctrl + A:         Select/Deselect All
-Ctrl + C:         Copy selected text to clipboard
 Ctrl + Shift + C: Clear console of all text
-Ctrl + O:         Show the COM menu
-Ctrl + [1-9]:     Connected to COM port that is at a specific index in the list of available COM ports
+Ctrl + D:         Show the COM menu
 Home:             Goto to beginning
 End:              Goto end
 Page Up:          Move up a page
 Page Down:        Move down a page
-Up/Down Arrows:   Move the view up/down (Shift to increase speed)
+Up Arrow:         Recall previous entries to the input text box
 Scroll Wheel:     Move the view up/down
 Hold Cntrl:       Shows receive time of line being hovered over (Hold shift for alternate format)
