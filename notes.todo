@@ -1,5 +1,4 @@
 # Application TODO List
-	[ ] Merge osx/win32_keymap and osx/win32_callbacks (also maybe osx/win32_clipboard)
 	
 	[ ] Add a function that writes to a single option in the configuration file so we can have program written configuration options?
 	[ ] Horizontal Scrollbar (only shows up if needed)
@@ -63,6 +62,7 @@
 	[ ] Put the appVersion.h info into the Info.plist in build.sh
 
 # Old TODO List Items
+	[X] Merge osx/win32_keymap and osx/win32_callbacks (also maybe osx/win32_clipboard)
 	[X] Add ctrl+scroll shortcut to change font size
 	[X] Add checkboxes to toggle gutters and elapsed banners
 	[X] Text box view scrolling left and right

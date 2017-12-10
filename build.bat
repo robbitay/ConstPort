@@ -30,11 +30,15 @@ if "%DebugBuild%"=="1" (
 	set DebugDependantLibraries=glew32.lib libboost_regex-vc140-mt-s-%BoostLibSuffix%.lib
 )
 
-set CompilerFlags=%DebugDependantFlags% -DWINDOWS_COMPILATION /FC /Zi /EHsc /nologo /GS- /Gm- -GR- /EHa- /Fm /Od /Oi /WX /W4 /wd4201 /wd4100 /wd4189 /wd4996 /wd4127 /wd4505 /wd4101 /wd4702 /wd4458 /wd4324
-set LinkerFlags=-incremental:no
+set Definitions=-DWINDOWS_COMPILATION -DDOUBLE_RESOLUTION=0 -DDOUBLE_MOUSE_POS=0
+set IgnoredWarnings=/wd4201 /wd4100 /wd4189 /wd4996 /wd4127 /wd4505 /wd4101 /wd4702 /wd4458 /wd4324
 set IncludeDirectories=/I"W:\lib\mylib" /I"W:\lib\glew-2.0.0\include" /I"W:\lib\glfw-3.2.1\include" /I"W:\lib\stb" /I"W:\lib\jsmn" /I"W:\lib\boost_%BoostVersion%"
+set CompilerFlags=/FC /Zi /EHsc /nologo /GS- /Gm- -GR- /EHa- /Fm /Od /Oi /WX /W4 %DebugDependantFlags% %Definitions% %IgnoredWarnings% %IncludeDirectories%
+
 set LibraryDirectories=%DebugDependantPaths%
 set Libraries=gdi32.lib User32.lib Shell32.lib opengl32.lib glfw3.lib Shlwapi.lib %DebugDependantLibraries%
+set LinkerFlags=-incremental:no %LibraryDirectories% %Libraries%
+
 set AppExports=/EXPORT:App_GetVersion /EXPORT:App_Initialize /EXPORT:App_Update /EXPORT:App_GetSoundSamples /EXPORT:App_Closing /EXPORT:App_Reloaded
 
 rem echo [Building...]
@@ -49,7 +53,7 @@ if "%CompilePlatform%"=="1" (
 	
 	python ..\IncrementVersionNumber.py ..\code\win32_version.h
 	
-	cl /Fe%ProjectName%.exe %CompilerFlags% %IncludeDirectories% ..\code\win32_main.cpp /link %LibraryDirectories% %LinkerFlags% %Libraries% kernel32.lib ..\code\resources.res
+	cl /Fe%ProjectName%.exe %CompilerFlags% %IncludeDirectories% ..\code\win32_main.cpp /link %LinkerFlags% kernel32.lib ..\code\resources.res
 
 	if "%ERRORLEVEL%"=="0" (
 		echo [Platform Build Succeeded!]
@@ -63,7 +67,7 @@ if "%CompileApplication%"=="1" (
 	
 	python ..\IncrementVersionNumber.py ..\code\appVersion.h
 	
-	cl /Fe%ProjectName%.dll %CompilerFlags% %IncludeDirectories% ..\code\app.cpp /link %LibraryDirectories% %LinkerFlags% %Libraries% %AppExports% /DLL /PDB:"%ProjectName%_%TimeString%.pdb"
+	cl /Fe%ProjectName%.dll %CompilerFlags% %IncludeDirectories% ..\code\app.cpp /link %LinkerFlags% %AppExports% /DLL /PDB:"%ProjectName%_%TimeString%.pdb"
 
 	if "%ERRORLEVEL%"=="0" (
 		echo [Application Build Succeeded!]

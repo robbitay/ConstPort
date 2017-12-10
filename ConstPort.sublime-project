@@ -1283,11 +1283,11 @@
 			"RenderScreenSize",
 			"TempArena",
 			"WindowOpen",
-			"WorkingDirectory",
+			"WindowResized",
 			"app",
 			"appData",
-			"appOutput",
 			"input",
+			"output",
 			"platform",
 			"renderState"
 		],

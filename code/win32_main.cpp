@@ -251,39 +251,39 @@ int WINAPI WinMain(HINSTANCE hInstance,
 	//+--------------------------------------+
 	//|        Fill Platform Info            |
 	//+--------------------------------------+
-	platformInfo.platformType             = Platform_Windows;
-	platformInfo.version.major            = PLATFORM_VERSION_MAJOR;
-	platformInfo.version.minor            = PLATFORM_VERSION_MINOR;
-	platformInfo.version.build            = PLATFORM_VERSION_BUILD;
-	platformInfo.screenSize               = NewVec2i(screenWidth, screenHeight);
-	platformInfo.windowHasFocus           = true;
-	platformInfo.window                   = window;
+	PlatformInfo.platformType             = Platform_Windows;
+	PlatformInfo.version.major            = PLATFORM_VERSION_MAJOR;
+	PlatformInfo.version.minor            = PLATFORM_VERSION_MINOR;
+	PlatformInfo.version.build            = PLATFORM_VERSION_BUILD;
+	PlatformInfo.screenSize               = NewVec2i(screenWidth, screenHeight);
+	PlatformInfo.windowHasFocus           = true;
+	PlatformInfo.window                   = window;
 	
-	platformInfo.DebugWrite           = Win32_Write;
-	platformInfo.DebugWriteLine       = Win32_WriteLine;
-	platformInfo.DebugPrint           = Win32_Print;
-	platformInfo.DebugPrintLine       = Win32_PrintLine;
-	platformInfo.FreeFileMemory       = Win32_FreeFileMemory;
-	platformInfo.ReadEntireFile       = Win32_ReadEntireFile;
-	platformInfo.WriteEntireFile      = Win32_WriteEntireFile;
-	platformInfo.OpenFile             = Win32_OpenFile;
-	platformInfo.AppendFile           = Win32_AppendFile;
-	platformInfo.CloseFile            = Win32_CloseFile;
-	platformInfo.LaunchFile           = Win32_LaunchFile;
-	platformInfo.GetComPortList       = Win32_GetComPortList;
-	platformInfo.OpenComPort          = Win32_OpenComPort;
-	platformInfo.CloseComPort         = Win32_CloseComPort;
-	platformInfo.ReadComPort          = Win32_ReadComPort;
-	platformInfo.WriteComPort         = Win32_WriteComPort;
-	platformInfo.CopyToClipboard      = Win32_CopyToClipboard;
-	platformInfo.CopyFromClipboard    = Win32_CopyFromClipboard;
-	platformInfo.StartProgramInstance = Win32_StartProgramInstance;
-	platformInfo.GetProgramStatus     = Win32_GetProgramStatus;
-	platformInfo.ReadProgramOutput    = Win32_ReadProgramOutput;
-	platformInfo.WriteProgramInput    = Win32_WriteProgramInput;
-	platformInfo.CloseProgramInstance = Win32_CloseProgramInstance;
-	platformInfo.CreateNewWindow      = Win32_CreateNewWindow;
-	platformInfo.GetAbsolutePath      = Win32_GetAbsolutePath;
+	PlatformInfo.DebugWrite           = Win32_Write;
+	PlatformInfo.DebugWriteLine       = Win32_WriteLine;
+	PlatformInfo.DebugPrint           = Win32_Print;
+	PlatformInfo.DebugPrintLine       = Win32_PrintLine;
+	PlatformInfo.FreeFileMemory       = Win32_FreeFileMemory;
+	PlatformInfo.ReadEntireFile       = Win32_ReadEntireFile;
+	PlatformInfo.WriteEntireFile      = Win32_WriteEntireFile;
+	PlatformInfo.OpenFile             = Win32_OpenFile;
+	PlatformInfo.AppendFile           = Win32_AppendFile;
+	PlatformInfo.CloseFile            = Win32_CloseFile;
+	PlatformInfo.LaunchFile           = Win32_LaunchFile;
+	PlatformInfo.GetComPortList       = Win32_GetComPortList;
+	PlatformInfo.OpenComPort          = Win32_OpenComPort;
+	PlatformInfo.CloseComPort         = Win32_CloseComPort;
+	PlatformInfo.ReadComPort          = Win32_ReadComPort;
+	PlatformInfo.WriteComPort         = Win32_WriteComPort;
+	PlatformInfo.CopyToClipboard      = Win32_CopyToClipboard;
+	PlatformInfo.CopyFromClipboard    = Win32_CopyFromClipboard;
+	PlatformInfo.StartProgramInstance = Win32_StartProgramInstance;
+	PlatformInfo.GetProgramStatus     = Win32_GetProgramStatus;
+	PlatformInfo.ReadProgramOutput    = Win32_ReadProgramOutput;
+	PlatformInfo.WriteProgramInput    = Win32_WriteProgramInput;
+	PlatformInfo.CloseProgramInstance = Win32_CloseProgramInstance;
+	PlatformInfo.CreateNewWindow      = Win32_CreateNewWindow;
+	PlatformInfo.GetAbsolutePath      = Win32_GetAbsolutePath;
 	
 	//+--------------------------------------+
 	//|         Application Memory           |
@@ -331,7 +331,7 @@ int WINAPI WinMain(HINSTANCE hInstance,
 	
 	UpdateWindowTitle(window, WINDOW_TITLE, &PlatformVersion, &loadedApp.version);
 	
-	loadedApp.AppInitializePntr(&platformInfo, &appMemory);
+	loadedApp.AppInitializePntr(&PlatformInfo, &appMemory);
 	
 	// +==============================+
 	// |   Fill Initial AppInput_t    |
@@ -340,7 +340,7 @@ int WINAPI WinMain(HINSTANCE hInstance,
 		r64 mousePosX, mousePosY;
 		glfwGetCursorPos(window, &mousePosX, &mousePosY);
 		currentInput->mousePos = NewVec2((r32)mousePosX, (r32)mousePosY);
-		currentInput->mouseInsideWindow = (mousePosX >= 0 && mousePosY >= 0 && mousePosX < platformInfo.screenSize.x && mousePosY < platformInfo.screenSize.y);
+		currentInput->mouseInsideWindow = (mousePosX >= 0 && mousePosY >= 0 && mousePosX < PlatformInfo.screenSize.x && mousePosY < PlatformInfo.screenSize.y);
 	}
 	
 	//+--------------------------------------+
@@ -374,11 +374,11 @@ int WINAPI WinMain(HINSTANCE hInstance,
 						//TODO: Find a way to reset the opengl context or
 						//		maybe re-open the window altogether
 						
-						loadedApp.AppInitializePntr(&platformInfo, &appMemory);
+						loadedApp.AppInitializePntr(&PlatformInfo, &appMemory);
 					}
 					else
 					{
-						loadedApp.AppReloadedPntr(&platformInfo, &appMemory);
+						loadedApp.AppReloadedPntr(&PlatformInfo, &appMemory);
 					}
 				}
 				else
@@ -406,7 +406,7 @@ int WINAPI WinMain(HINSTANCE hInstance,
 			currentInput->buttons[bIndex].pressCount = 0;
 		}
 		
-		platformInfo.windowResized = false;
+		PlatformInfo.windowResized = false;
 		
 		// Set the user pointer on the window so we can access 
 		// the input from the callbacks
@@ -419,36 +419,36 @@ int WINAPI WinMain(HINSTANCE hInstance,
 		
 		glfwGetFramebufferSize(window, &screenWidth, &screenHeight);
 		glViewport(0, 0, screenWidth, screenHeight);
-		platformInfo.screenSize = NewVec2i(screenWidth, screenHeight);
+		PlatformInfo.screenSize = NewVec2i(screenWidth, screenHeight);
 		
-		u64 lastTime = platformInfo.programTime;
-		platformInfo.programTime = (u64)(glfwGetTime() * 1000);
-		platformInfo.timeDelta = (r64)(platformInfo.programTime - lastTime) / (1000 / glfwModePntr->refreshRate);
+		u64 lastTime = PlatformInfo.programTime;
+		PlatformInfo.programTime = (u64)(glfwGetTime() * 1000);
+		PlatformInfo.timeDelta = (r64)(PlatformInfo.programTime - lastTime) / (1000 / glfwModePntr->refreshRate);
 		
 		SYSTEMTIME systemTime = {};
 		SYSTEMTIME localTime = {};
 		GetSystemTime(&systemTime);
 		GetLocalTime(&localTime);
 		
-		platformInfo.systemTime = {};
-		platformInfo.systemTime.year        = systemTime.wYear;
-		platformInfo.systemTime.month       = (systemTime.wMonth-1);
-		platformInfo.systemTime.day         = (systemTime.wDay-1);
-		platformInfo.systemTime.hour        = systemTime.wHour;
-		platformInfo.systemTime.minute      = systemTime.wMinute;
-		platformInfo.systemTime.second      = systemTime.wSecond;
-		platformInfo.systemTime.millisecond = systemTime.wMilliseconds;
-		platformInfo.localTime = {};
-		platformInfo.localTime.year         = localTime.wYear;
-		platformInfo.localTime.month        = (localTime.wMonth-1);
-		platformInfo.localTime.day          = (localTime.wDay-1);
-		platformInfo.localTime.hour         = localTime.wHour;
-		platformInfo.localTime.minute       = localTime.wMinute;
-		platformInfo.localTime.second       = localTime.wSecond;
-		platformInfo.localTime.millisecond  = localTime.wMilliseconds;
+		PlatformInfo.systemTime = {};
+		PlatformInfo.systemTime.year        = systemTime.wYear;
+		PlatformInfo.systemTime.month       = (systemTime.wMonth-1);
+		PlatformInfo.systemTime.day         = (systemTime.wDay-1);
+		PlatformInfo.systemTime.hour        = systemTime.wHour;
+		PlatformInfo.systemTime.minute      = systemTime.wMinute;
+		PlatformInfo.systemTime.second      = systemTime.wSecond;
+		PlatformInfo.systemTime.millisecond = systemTime.wMilliseconds;
+		PlatformInfo.localTime = {};
+		PlatformInfo.localTime.year         = localTime.wYear;
+		PlatformInfo.localTime.month        = (localTime.wMonth-1);
+		PlatformInfo.localTime.day          = (localTime.wDay-1);
+		PlatformInfo.localTime.hour         = localTime.wHour;
+		PlatformInfo.localTime.minute       = localTime.wMinute;
+		PlatformInfo.localTime.second       = localTime.wSecond;
+		PlatformInfo.localTime.millisecond  = localTime.wMilliseconds;
 		
 		ClearStruct(appOutput);
-		loadedApp.AppUpdatePntr(&platformInfo, &appMemory, currentInput, &appOutput);
+		loadedApp.AppUpdatePntr(&PlatformInfo, &appMemory, currentInput, &appOutput);
 		
 		glfwSwapBuffers(window);
 		

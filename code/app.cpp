@@ -25,7 +25,7 @@ Description:
 // +--------------------------------------------------------------+
 const PlatformInfo_t* platform = nullptr;
 const AppInput_t* input = nullptr;
-AppOutput_t* appOutput = nullptr;
+AppOutput_t* output = nullptr;
 
 #include "appHelpers.cpp"
 
@@ -1346,15 +1346,15 @@ EXPORT AppGetVersion_DEFINITION(App_GetVersion)
 //+================================================================+
 //|                       App Initialize                           |
 //+================================================================+
-// void App_Initialize(const PlatformInfo_t* PlatformInfo, const AppMemory_t* AppMemory)
+// void App_Initialize(const PlatformInfo_t* platformInfo, const AppMemory_t* appMemory)
 EXPORT AppInitialize_DEFINITION(App_Initialize)
 {
-	platform = PlatformInfo;
-	app = (AppData_t*)AppMemory->permanantPntr;
+	platform = platformInfo;
+	app = (AppData_t*)appMemory->permanantPntr;
 	GC = &app->globalConfig;
 	TempArena = &app->tempArena;
 	RenderScreenSize = NewVec2((r32)platform->screenSize.x / GUI_SCALE, (r32)platform->screenSize.y / GUI_SCALE);
-	appOutput = nullptr;
+	output = nullptr;
 	renderState = &app->renderState;
 	
 	DEBUG_WriteLine("Initializing Game...");
@@ -1362,20 +1362,20 @@ EXPORT AppInitialize_DEFINITION(App_Initialize)
 	// +==================================+
 	// |          Memory Arenas           |
 	// +==================================+
-	Assert(AppMemory->permanantSize > INPUT_ARENA_SIZE);
+	Assert(appMemory->permanantSize > INPUT_ARENA_SIZE);
 	ClearPointer(app);
 	
 	app->inputArenaBase = (char*)(app + 1);
 	app->inputArenaSize = INPUT_ARENA_SIZE;
 	
-	u32 mainHeapSize = AppMemory->permanantSize - sizeof(AppData_t) - INPUT_ARENA_SIZE;
+	u32 mainHeapSize = appMemory->permanantSize - sizeof(AppData_t) - INPUT_ARENA_SIZE;
 	InitializeMemoryArenaHeap(&app->mainHeap, app->inputArenaBase + app->inputArenaSize, mainHeapSize);
 	
-	InitializeMemoryArenaTemp(&app->tempArena, AppMemory->transientPntr, AppMemory->transientSize, TRANSIENT_MAX_NUMBER_MARKS);
+	InitializeMemoryArenaTemp(&app->tempArena, appMemory->transientPntr, appMemory->transientSize, TRANSIENT_MAX_NUMBER_MARKS);
 	
 	DEBUG_PrintLine("Input Arena: %u bytes", INPUT_ARENA_SIZE);
 	DEBUG_PrintLine("Main Heap:   %u bytes", mainHeapSize);
-	DEBUG_PrintLine("Temp Arena:  %u bytes", AppMemory->transientSize);
+	DEBUG_PrintLine("Temp Arena:  %u bytes", appMemory->transientSize);
 	
 	TempPushMark();
 	
@@ -1510,11 +1510,11 @@ EXPORT AppInitialize_DEFINITION(App_Initialize)
 //+================================================================+
 //|                        App Reloaded                            |
 //+================================================================+
-// void App_Reloaded(const PlatformInfo_t* PlatformInfo, const AppMemory_t* AppMemory)
+// void App_Reloaded(const PlatformInfo_t* platformInfo, const AppMemory_t* appMemory)
 EXPORT AppReloaded_DEFINITION(App_Reloaded)
 {
-	platform = PlatformInfo;
-	app = (AppData_t*)AppMemory->permanantPntr;
+	platform = platformInfo;
+	app = (AppData_t*)appMemory->permanantPntr;
 	GC = &app->globalConfig;
 	TempArena = &app->tempArena;
 	RenderScreenSize = NewVec2((r32)platform->screenSize.x / GUI_SCALE, (r32)platform->screenSize.y / GUI_SCALE);
@@ -1536,19 +1536,19 @@ EXPORT AppReloaded_DEFINITION(App_Reloaded)
 //+================================================================+
 //|                         App Update                             |
 //+================================================================+
-// void App_Update(const PlatformInfo_t* PlatformInfo, const AppMemory_t* AppMemory, const AppInput_t* AppInput, AppOutput_t* AppOutput)
+// void App_Update(const PlatformInfo_t* platformInfo, const AppMemory_t* appMemory, const AppInput_t* appInput, AppOutput_t* appOutput)
 EXPORT AppUpdate_DEFINITION(App_Update)
 {
-	platform = PlatformInfo;
-	input = AppInput;
-	appOutput = AppOutput;
-	app = (AppData_t*)AppMemory->permanantPntr;
+	platform = platformInfo;
+	input = appInput;
+	appOutput = appOutput;
+	app = (AppData_t*)appMemory->permanantPntr;
 	GC = &app->globalConfig;
 	TempArena = &app->tempArena;
 	RenderScreenSize = NewVec2((r32)platform->screenSize.x / GUI_SCALE, (r32)platform->screenSize.y / GUI_SCALE);
 	RenderMousePos = NewVec2(input->mousePos.x, input->mousePos.y) / (r32)GUI_SCALE;
 	RenderMouseStartPos = NewVec2(input->mouseStartPos[MouseButton_Left].x, input->mouseStartPos[MouseButton_Left].y) / (r32)GUI_SCALE;
-	AppOutput->cursorType = Cursor_Default;
+	appOutput->cursorType = Cursor_Default;
 	renderState = &app->renderState;
 	
 	UiElements_t* ui = &app->uiElements;
@@ -1575,15 +1575,15 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	// +==============================+
 	// |     Set the Window Title     |
 	// +==============================+
-	ClearArray(AppOutput->windowTitle);
+	ClearArray(appOutput->windowTitle);
 	if (app->comPort.isOpen)
 	{
-		snprintf(AppOutput->windowTitle, sizeof(AppOutput->windowTitle)-1,
+		snprintf(appOutput->windowTitle, sizeof(appOutput->windowTitle)-1,
 			"%s - Const Port", GetPortUserName(app->comPort.name));
 	}
 	else
 	{
-		snprintf(AppOutput->windowTitle, sizeof(AppOutput->windowTitle)-1,
+		snprintf(appOutput->windowTitle, sizeof(appOutput->windowTitle)-1,
 			"Const Port [Disconnected]");
 	}
 	
@@ -1760,7 +1760,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		
 		if (IsInsideRec(ui->sendButtonRec, RenderMousePos) && input->mouseInsideWindow && !ui->mouseInMenu)
 		{
-			AppOutput->cursorType = Cursor_Pointer;
+			appOutput->cursorType = Cursor_Pointer;
 			if (ButtonReleased(MouseButton_Left) && IsInsideRec(ui->sendButtonRec, RenderMouseStartPos))
 			{
 				app->inputBox.chars[app->inputBox.numChars] = '\n';
@@ -1929,7 +1929,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	{
 		if (ButtonDown(Button_Shift))
 		{
-			AppOutput->closeWindow = true;
+			appOutput->closeWindow = true;
 		}
 		else
 		{
@@ -2254,7 +2254,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	bool gotoEndButtonPressed = false;
 	if (IsInsideRec(ui->gotoEndButtonRec, RenderMousePos) && input->mouseInsideWindow && !ui->mouseInMenu)
 	{
-		AppOutput->cursorType = Cursor_Pointer;
+		appOutput->cursorType = Cursor_Pointer;
 		if (ButtonReleased(MouseButton_Left) && IsInsideRec(ui->gotoEndButtonRec, RenderMouseStartPos))
 		{
 			gotoEndButtonPressed = true;
@@ -2362,7 +2362,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 			r32 buttonRadius = ui->buttonRecs[bIndex].width/2.0f;
 			if (Vec2Length(RenderMousePos - buttonCenter) <= buttonRadius)
 			{
-				AppOutput->cursorType = Cursor_Pointer;
+				appOutput->cursorType = Cursor_Pointer;
 				
 				if (ButtonReleased(MouseButton_Left) && Vec2Length(RenderMouseStartPos - buttonCenter) <= buttonRadius)
 				{
@@ -2421,7 +2421,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	//+================================+
 	if (IsInsideRec(ui->clearButtonRec, RenderMousePos) && input->mouseInsideWindow && !ui->mouseInMenu)
 	{
-		AppOutput->cursorType = Cursor_Pointer;
+		appOutput->cursorType = Cursor_Pointer;
 		if (ButtonReleased(MouseButton_Left) &&
 			IsInsideRec(ui->clearButtonRec, RenderMouseStartPos))
 		{
@@ -2435,7 +2435,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	bool saveButtonPressed = false;
 	if (IsInsideRec(ui->saveButtonRec, RenderMousePos) && input->mouseInsideWindow && !ui->mouseInMenu)
 	{
-		AppOutput->cursorType = Cursor_Pointer;
+		appOutput->cursorType = Cursor_Pointer;
 		if (ButtonReleased(MouseButton_Left) && IsInsideRec(ui->saveButtonRec, RenderMouseStartPos))
 		{
 			saveButtonPressed = true;
@@ -2625,7 +2625,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	// +==============================+
 	if (IsInsideRec(ui->viewRec, RenderMousePos) && !ui->mouseInMenu && GC->showTextCursor)
 	{
-		AppOutput->cursorType = Cursor_Text;
+		appOutput->cursorType = Cursor_Text;
 	}
 	
 	// +--------------------------------------------------------------+
@@ -3319,12 +3319,12 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 //+================================================================+
 //|                   App Get Sound Samples                        |
 //+================================================================+
-// void App_GetSoundSamples(const PlatformInfo_t* PlatformInfo, const AppMemory_t* AppMemory, const AppInput_t* AppInput)
+// void App_GetSoundSamples(const PlatformInfo_t* platformInfo, const AppMemory_t* appMemory, const AppInput_t* appInput)
 EXPORT AppGetSoundSamples_DEFINITION(App_GetSoundSamples)
 {
-	platform = PlatformInfo;
-	input = AppInput;
-	app = (AppData_t*)AppMemory->permanantPntr;
+	platform = platformInfo;
+	input = appInput;
+	app = (AppData_t*)appMemory->permanantPntr;
 	GC = &app->globalConfig;
 	TempArena = &app->tempArena;
 	RenderScreenSize = NewVec2((r32)platform->screenSize.x / GUI_SCALE, (r32)platform->screenSize.y / GUI_SCALE);
@@ -3338,11 +3338,11 @@ EXPORT AppGetSoundSamples_DEFINITION(App_GetSoundSamples)
 //+================================================================+
 //|                        App Closing                             |
 //+================================================================+
-// void App_Closing(const PlatformInfo_t* PlatformInfo, const AppMemory_t* AppMemory)
+// void App_Closing(const PlatformInfo_t* platformInfo, const AppMemory_t* appMemory)
 EXPORT AppClosing_DEFINITION(App_Closing)
 {
-	platform = PlatformInfo;
-	app = (AppData_t*)AppMemory->permanantPntr;
+	platform = platformInfo;
+	app = (AppData_t*)appMemory->permanantPntr;
 	GC = &app->globalConfig;
 	TempArena = &app->tempArena;
 	RenderScreenSize = NewVec2((r32)platform->screenSize.x / GUI_SCALE, (r32)platform->screenSize.y / GUI_SCALE);

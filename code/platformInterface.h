@@ -431,19 +431,19 @@ struct AppOutput_t
 #define AppGetVersion_DEFINITION(functionName)      Version_t functionName(bool* resetApplication)
 typedef AppGetVersion_DEFINITION(AppGetVersion_f);
 
-#define AppInitialize_DEFINITION(functionName)      void functionName(const PlatformInfo_t* PlatformInfo, const AppMemory_t* AppMemory)
+#define AppInitialize_DEFINITION(functionName)      void functionName(const PlatformInfo_t* platformInfo, const AppMemory_t* appMemory)
 typedef AppInitialize_DEFINITION(AppInitialize_f);
 
-#define AppReloaded_DEFINITION(functionName)        void functionName(const PlatformInfo_t* PlatformInfo, const AppMemory_t* AppMemory)
+#define AppReloaded_DEFINITION(functionName)        void functionName(const PlatformInfo_t* platformInfo, const AppMemory_t* appMemory)
 typedef AppReloaded_DEFINITION(AppReloaded_f);
 
-#define AppUpdate_DEFINITION(functionName)          void functionName(const PlatformInfo_t* PlatformInfo, const AppMemory_t* AppMemory, const AppInput_t* AppInput, AppOutput_t* AppOutput)
+#define AppUpdate_DEFINITION(functionName)          void functionName(const PlatformInfo_t* platformInfo, const AppMemory_t* appMemory, const AppInput_t* appInput, AppOutput_t* appOutput)
 typedef AppUpdate_DEFINITION(AppUpdate_f);
 
-#define AppGetSoundSamples_DEFINITION(functionName) void functionName(const PlatformInfo_t* PlatformInfo, const AppMemory_t* AppMemory, const AppInput_t* AppInput)
+#define AppGetSoundSamples_DEFINITION(functionName) void functionName(const PlatformInfo_t* platformInfo, const AppMemory_t* appMemory, const AppInput_t* appInput)
 typedef AppGetSoundSamples_DEFINITION(AppGetSoundSamples_f);
 
-#define AppClosing_DEFINITION(functionName)         void functionName(const PlatformInfo_t* PlatformInfo, const AppMemory_t* AppMemory)
+#define AppClosing_DEFINITION(functionName)         void functionName(const PlatformInfo_t* platformInfo, const AppMemory_t* appMemory)
 typedef AppClosing_DEFINITION(AppClosing_f);
 
 #endif
