@@ -13,6 +13,8 @@ Description:
 //void CopyToClipboard(const void* dataPntr, u32 dataSize)
 CopyToClipboard_DEFINITION(Win32_CopyToClipboard)
 {
+	#if 0
+	
 	HWND windowHandle = GetActiveWindow();
 	
 	HGLOBAL globalCopy = GlobalAlloc(GMEM_MOVEABLE, dataSize); 
@@ -41,6 +43,18 @@ CopyToClipboard_DEFINITION(Win32_CopyToClipboard)
 	SetClipboardData(CF_TEXT, globalCopy);
 	
 	CloseClipboard();
+	
+	#else
+	
+	char* tempSpace = (char*)malloc(dataSize+1);
+	memcpy(tempSpace, dataPntr, dataSize);
+	tempSpace[dataSize] = '\0';
+	
+	glfwSetClipboardString(PlatformInfo.window, tempSpace);
+	
+	free(tempSpace);
+	
+	#endif
 }
 
 // +==============================+
@@ -49,6 +63,8 @@ CopyToClipboard_DEFINITION(Win32_CopyToClipboard)
 //void* CopyFromClipboard(MemoryArena_t* arenaPntr, u32* dataLengthOut)
 CopyFromClipboard_DEFINITION(Win32_CopyFromClipboard)
 {
+	#if 0
+	
 	void* result = nullptr;
 	if (dataLengthOut != nullptr) { *dataLengthOut = 0; }
 	
@@ -82,4 +98,17 @@ CopyFromClipboard_DEFINITION(Win32_CopyFromClipboard)
 	}
 	
 	return result;
+	
+	#else
+	
+	*dataLengthOut = 0;
+	
+	const char* contents = glfwGetClipboardString(PlatformInfo.window);
+	if (contents == nullptr) { return nullptr; }
+	
+	*dataLengthOut = (u32)strlen(contents);
+
+	return (void*)contents;
+	
+	#endif
 }

@@ -414,8 +414,37 @@ int WINAPI WinMain(HINSTANCE hInstance,
 		
 		glfwPollEvents();
 		
-		//TODO: Should we do some sort of polling keyboard input
-		//		periodically to make sure we didn't miss a key release?
+		// +==============================+
+		// |        Poll Some Keys        |
+		// +==============================+
+		//TODO: glfwGetKey is not any more useful than the events.
+		//		Can we find a system call that will perform better?
+		for (u32 bIndex = 0; bIndex < Buttons_NumButtons; bIndex++)
+		{
+			ButtonState_t* btnState = &currentInput->buttons[bIndex];
+			if (ButtonIsPolling((Buttons_t)bIndex))
+			{
+				i32 glfwKeys[4] = {};
+				u8 numGlfwKeys = GetKeysForButton((Buttons_t)bIndex, glfwKeys);
+				bool keyDown = false;
+				for (u32 gIndex = 0; gIndex < numGlfwKeys; gIndex++)
+				{
+					if (glfwGetKey(window, glfwKeys[gIndex]) == GLFW_PRESS)
+					{
+						keyDown = true;
+						break;
+					}
+				}
+				
+				if (btnState->isDown != keyDown)
+				{
+					Win32_PrintLine("Button %s polling transition", GetButtonName((Buttons_t)bIndex));
+					btnState->transCount++;
+					if (keyDown) { btnState->pressCount++; }
+					btnState->isDown = keyDown;
+				}
+			}
+		}
 		
 		glfwGetFramebufferSize(window, &screenWidth, &screenHeight);
 		glViewport(0, 0, screenWidth, screenHeight);

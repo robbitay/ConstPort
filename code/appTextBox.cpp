@@ -304,7 +304,11 @@ void TextBoxUpdate(TextBox_t* tb, bool selected)
 						tb->cursorBegin = tb->cursorEnd;
 					}
 				}
-				else if (!(newChar == '\n' && IsButtonHandled(Button_Enter))) //all other regular characters
+				else if (newChar == '\n' && !IsButtonHandled(Button_Enter)) //Handle enter
+				{
+					HandleTextBoxEnter(tb);
+				}
+				else if (newChar != '\n') //all other regular characters
 				{
 					if (tb->cursorBegin != tb->cursorEnd)
 					{
@@ -415,7 +419,7 @@ void TextBoxUpdate(TextBox_t* tb, bool selected)
 			
 			if (clipbardData != nullptr)
 			{
-				char* sanatized = SanatizeStringAdvanced(clipbardData, clipboardDataSize, TempArena, true, false, true);
+				char* sanatized = SanatizeStringAdvanced(clipbardData, clipboardDataSize, TempArena, false, false, true);
 				u32 sanatizedLength = (u32)strlen(sanatized);
 				
 				for (u32 cIndex = 0; cIndex < sanatizedLength; cIndex++)

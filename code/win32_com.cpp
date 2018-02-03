@@ -47,6 +47,111 @@ const char* GetComPortFileName(const char* portName)
 	}
 }
 
+const char* GetRegistryTypeStr(DWORD typeCode)
+{
+	switch (typeCode)
+	{
+		case REG_BINARY:              return "BINARY";
+		// case REG_DWORD:               return "DWORD";
+		case REG_DWORD_LITTLE_ENDIAN: return "DWORD_LITTLE_ENDIAN";
+		case REG_DWORD_BIG_ENDIAN:    return "DWORD_BIG_ENDIAN";
+		case REG_EXPAND_SZ:           return "EXPAND_SZ";
+		case REG_LINK:                return "LINK";
+		case REG_MULTI_SZ:            return "MULTI_SZ";
+		case REG_NONE:                return "NONE";
+		case REG_QWORD:               return "QWORD";
+		case REG_SZ:                  return "SZ";
+		default: return "Unknown";
+	};
+}
+
+bool Win32_OpenComRegister(HKEY* keyOut)
+{
+	if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, "HARDWARE\\DEVICEMAP\\SERIALCOMM", 0, KEY_READ, keyOut) == ERROR_SUCCESS)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+bool Win32_DoesComPortRegisterExist(HKEY regHandle, const char* portName)
+{
+	DWORD classNameLength = MAX_PATH;
+	TCHAR classNameBuffer[MAX_PATH] = {};
+	DWORD numSubkeys = 0;
+	DWORD maxSubkeyLength = 0;
+	DWORD maxClassLength = 0;
+	DWORD numValues = 0;
+	DWORD maxValueLength = 0;
+	DWORD maxDataLength = 0;
+	DWORD securityDescriptor;
+	FILETIME lastWriteTime;
+	
+	// Get the class name and the value count. 
+	DWORD returnCode = RegQueryInfoKey(regHandle,
+		classNameBuffer, &classNameLength,
+		NULL, &numSubkeys, &maxSubkeyLength, &maxClassLength,
+		&numValues, &maxValueLength, &maxDataLength,
+		&securityDescriptor, &lastWriteTime
+	);
+	
+	if (returnCode != ERROR_SUCCESS)
+	{
+		Win32_PrintLine("RegQueryInfoKey returned: %d", returnCode);
+		return true;//we can't tell if it exists
+	}
+	
+	DWORD valueLength;
+	TCHAR valueBuffer[256];
+	DWORD dataType;
+	DWORD dataLength;
+	BYTE dataBuffer[256];
+	
+	Assert(maxDataLength <= ArrayCount(dataBuffer));
+	
+	for (DWORD vIndex = 0; vIndex < numValues; vIndex++)
+	{
+		valueLength = ArrayCount(valueBuffer);
+		ClearArray(valueBuffer);
+		
+		dataType = REG_NONE;
+		dataLength = ArrayCount(dataBuffer);
+		ClearArray(dataBuffer);
+		
+		returnCode = RegEnumValue(regHandle, vIndex, 
+			valueBuffer, &valueLength, 
+			NULL, //reserved
+			&dataType, dataBuffer, &dataLength
+		);
+		
+		dataBuffer[ArrayCount(dataBuffer)-1] = '\0';
+		
+		if (returnCode == ERROR_SUCCESS)
+		{
+			if (dataType == REG_SZ) //string
+			{
+				if (strcmp((char*)&dataBuffer[0], portName) == 0)
+				{
+					return true;
+				}
+			}
+			else
+			{
+				Win32_PrintLine("Reg value[%d] type was %s not REG_SZ", vIndex, GetRegistryTypeStr(dataType));
+			}
+		}
+		else
+		{
+			Win32_PrintLine("RegEnumValue[%d] returned: %d", vIndex, returnCode);
+		}
+	}
+	
+	return false;
+}
+
 // +==============================+
 // |     Win32_GetComPortList     |
 // +==============================+
@@ -55,6 +160,9 @@ GetComPortList_DEFINITION(Win32_GetComPortList)
 {
 	Assert(memArena != nullptr);
 	
+	HKEY regHandle;
+	bool regOpened = Win32_OpenComRegister(&regHandle);
+	
 	BoundedStrList_t result = {};
 	BoundedStrListCreate(&result, NumComPorts, MAX_COM_PORT_NAME_LENGTH, memArena);
 	
@@ -62,10 +170,16 @@ GetComPortList_DEFINITION(Win32_GetComPortList)
 	{
 		ComPortIndex_t comIndex = (ComPortIndex_t)cIndex;
 		const char* portName = GetComPortReadableName(comIndex);
+		const char* portFileName = GetComPortFileName(portName);
+		
+		if (regOpened && !Win32_DoesComPortRegisterExist(regHandle, portName))
+		{
+			continue;
+		}
 		
 		Win32_PrintLine("Trying to open %s...", portName);
 		
-		HANDLE comHandle = CreateFileA(GetComPortFileName(portName), GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
+		HANDLE comHandle = CreateFileA(portFileName, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
 		
 		if (comHandle != INVALID_HANDLE_VALUE)
 		{
@@ -79,24 +193,9 @@ GetComPortList_DEFINITION(Win32_GetComPortList)
 		}
 	}
 	
-	#if 1
+	#if 0
 	#if DEBUG
 	BoundedStrListAdd(&result, "Test1");
-	// BoundedStrListAdd(&result, "Test2");
-	// BoundedStrListAdd(&result, "Test3");
-	// BoundedStrListAdd(&result, "Test4");
-	// BoundedStrListAdd(&result, "Test5");
-	// BoundedStrListAdd(&result, "Test6");
-	// BoundedStrListAdd(&result, "Test7");
-	// BoundedStrListAdd(&result, "Test8");
-	// BoundedStrListAdd(&result, "Test9");
-	// BoundedStrListAdd(&result, "Test10");
-	// BoundedStrListAdd(&result, "Test11");
-	// BoundedStrListAdd(&result, "Test12");
-	// BoundedStrListAdd(&result, "Test13");
-	// BoundedStrListAdd(&result, "Test14");
-	// BoundedStrListAdd(&result, "Test15");
-	// BoundedStrListAdd(&result, "Test16");
 	#endif
 	#endif
 	
@@ -254,12 +353,12 @@ ReadComPort_DEFINITION(Win32_ReadComPort)
 	bool32 readResult = ReadFile(comPortPntr->handle, outputBuffer, outputBufferLength, &numBytesTransferred, 0);
 	if (readResult)
 	{
-		// Win32_PrintLine("Read Result: %d", readResult);
 		return numBytesTransferred;
 	}
 	else
 	{
-		return 0;
+		Win32_PrintLine("Read Result: %d", readResult);
+		return -1;
 	}
 }
 

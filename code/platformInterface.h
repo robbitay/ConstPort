@@ -369,6 +369,17 @@ inline const char* GetButtonName(Buttons_t button)
 	};
 }
 
+bool ButtonIsPolling(Buttons_t button)
+{
+	switch (button)
+	{
+		case Button_Shift: return true;
+		case Button_Control: return true;
+		case Button_Alt: return true;
+	};
+	return false;
+}
+
 typedef enum : u8
 {
 	Modifier_Ctrl     = 0x01,

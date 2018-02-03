@@ -129,6 +129,7 @@ char* GetElapsedString(u64 timespan)
 void ChangeActiveElement(const void* elementPntr);
 char* SanatizeStringAdvanced(const char* strPntr, u32 numChars, MemoryArena_t* arenaPntr,
 	bool keepNewLines = true, bool keepBackspaces = false, bool convertInvalidToHex = false);
+void HandleTextBoxEnter(TextBox_t* textBox);
 
 // +--------------------------------------------------------------+
 // |                   Application Source Files                   |
@@ -336,10 +337,10 @@ char* SanatizeStringAdvanced(const char* strPntr, u32 numChars, MemoryArena_t* a
 			{
 				if (result != nullptr)
 				{
-					result[toIndex+0] = '0';
-					result[toIndex+1] = 'x';
-					result[toIndex+2] = UpperHexChar(c);
-					result[toIndex+3] = LowerHexChar(c);
+					result[toIndex+0] = '[';
+					result[toIndex+1] = UpperHexChar(c);
+					result[toIndex+2] = LowerHexChar(c);
+					result[toIndex+3] = ']';
 				}
 				toIndex += 4;
 			}
@@ -865,7 +866,7 @@ void DataReceived(const char* dataBuffer, i32 numBytes)
 	for (i32 cIndex = 0; cIndex < numBytes; cIndex++)
 	{
 		char newChar = dataBuffer[cIndex];
-		if (newChar == '\n')
+		if (newChar == '\n' || newChar == '\r')
 		{
 			Line_t* finishedLine = lastLine;
 			
@@ -1323,6 +1324,99 @@ char* GetInputHistory(u32 historyIndex)
 	return &app->inputHistory[historyIndex][0];
 }
 
+void HandleTextBoxEnter(TextBox_t* textBox)
+{
+	// +==============================+
+	// |   Send Input Text Box Text   |
+	// +==============================+
+	if (textBox == &app->inputBox)
+	{
+		bool writeToComPort = (app->comPort.isOpen && (app->programInstance.isOpen == false || GC->sendInputToPython == false || GC->alsoSendInputToCom));
+		bool writeToProgram = (app->programInstance.isOpen && GC->sendInputToPython);
+		bool echoInput = GC->autoEchoInput;
+		bool outputNewLine = true;
+		
+		if (ButtonDown(Button_Control))
+		{
+			if (app->inputBox.numChars > 0)
+			{
+				TempPushMark();
+				
+				u32 numHexBytes = 0;
+				u8* hexBytes = GetHexForAsciiString(app->inputBox.chars, app->inputBox.numChars, &numHexBytes, TempArena);
+				if (hexBytes != nullptr && numHexBytes > 0)
+				{
+					DEBUG_Print("Writing %u HEX bytes: { ", numHexBytes);
+					for (u32 hIndex = 0; hIndex < numHexBytes; hIndex++)
+					{
+						DEBUG_Print("%02X ", hexBytes[hIndex]);
+					}
+					DEBUG_WriteLine("}");
+					
+					if (echoInput) { DataReceived((char*)hexBytes, numHexBytes); }
+					if (writeToComPort)
+					{
+						platform->WriteComPort(&app->comPort, (char*)hexBytes, numHexBytes);
+						app->txShiftRegister |= 0x80;
+					}
+					if (writeToProgram) { platform->WriteProgramInput(&app->programInstance, (char*)hexBytes, numHexBytes); }
+					
+					PushInputHistory(app->inputBox.chars, app->inputBox.numChars);
+					app->inputHistoryIndex = 0;
+					
+					TextBoxClear(&app->inputBox);
+				}
+				else
+				{
+					StatusError("No hex value to send");
+				}
+				
+				TempPopMark();
+			}
+			
+			outputNewLine = false;
+		}
+		else
+		{
+			if (app->inputBox.numChars > 0)
+			{
+				DEBUG_PrintLine("Writing %u byte input: \"%.*s\"", app->inputBox.numChars, app->inputBox.numChars, app->inputBox.chars);
+				
+				if (echoInput) { DataReceived(app->inputBox.chars, app->inputBox.numChars); }
+				if (writeToComPort)
+				{
+					platform->WriteComPort(&app->comPort, app->inputBox.chars, app->inputBox.numChars);
+					app->txShiftRegister |= 0x80;
+				}
+				if (writeToProgram) { platform->WriteProgramInput(&app->programInstance, app->inputBox.chars, app->inputBox.numChars); }
+				
+				PushInputHistory(app->inputBox.chars, app->inputBox.numChars);
+				app->inputHistoryIndex = 0;
+				
+				TextBoxClear(&app->inputBox);
+			}
+		}
+		
+		if (outputNewLine)
+		{
+			const char* newLineStr = GC->newLineString;
+			if (newLineStr == nullptr)
+			{
+				newLineStr = platform->platformType == Platform_Windows ? "\r\n" : "\n";
+			}
+			u32 newLineStrLength = (u32)strlen(newLineStr);
+			
+			if (echoInput) { DataReceived(newLineStr, newLineStrLength); }
+			if (writeToComPort)
+			{
+				platform->WriteComPort(&app->comPort, newLineStr, newLineStrLength);
+				app->txShiftRegister |= 0x80;
+			}
+			if (writeToProgram) { platform->WriteProgramInput(&app->programInstance, newLineStr, newLineStrLength); }
+		}
+	}
+}
+
 //+================================================================+
 //|                       App Get Version                          |
 //+================================================================+
@@ -1485,7 +1579,7 @@ EXPORT AppInitialize_DEFINITION(App_Initialize)
 	// +==============================+
 	// |         Testing Area         |
 	// +==============================+
-	#if 1
+	#if 0
 	char* testStr = StrReplaceChar(TempArena, NtStr("Hello World!"), 'l', '1');
 	DEBUG_PrintLine("testStr = \"%s\"", testStr);
 	
@@ -1687,7 +1781,12 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 			}
 			else if (readResult < 0)
 			{
-				DEBUG_PrintLine("COM port read Error!: %d", readResult);
+				char* tempComName = ArenaString(TempArena, NtStr(app->comPort.name));
+				platform->CloseComPort(&app->mainHeap, &app->comPort);
+				ClearConsole();
+				RefreshComPortList();
+				app->comMenu.comListSelectedIndex = app->availablePorts.count;
+				PopupError("Disconnected from \"%s\"", tempComName);
 			}
 			
 			readCount++;
@@ -1771,70 +1870,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		
 		if (!app->comMenu.open && app->inputBox.numChars > 0 && app->inputBox.chars[app->inputBox.numChars-1] == '\n' && IsActiveElement(&app->inputBox))
 		{
-			bool outputNewLine = true;
 			
-			if (ButtonDown(Button_Control))
-			{
-				TempPushMark();
-				
-				u32 numHexBytes = 0;
-				u8* hexBytes = GetHexForAsciiString(app->inputBox.chars, app->inputBox.numChars-1, &numHexBytes, TempArena); //NOTE: -1 on numChars is for /n in textbox when enter was pressed
-				if (hexBytes != nullptr && numHexBytes > 0)
-				{
-					DEBUG_Print("Writing %u HEX bytes: { ", numHexBytes);
-					for (u32 hIndex = 0; hIndex < numHexBytes; hIndex++)
-					{
-						DEBUG_Print("%02X ", hexBytes[hIndex]);
-					}
-					DEBUG_WriteLine("}");
-					
-					if (echoInput) { DataReceived((char*)hexBytes, numHexBytes); }
-					if (writeToComPort)
-					{
-						platform->WriteComPort(&app->comPort, (char*)hexBytes, numHexBytes);
-						app->txShiftRegister |= 0x80;
-					}
-					if (writeToProgram) { platform->WriteProgramInput(&app->programInstance, (char*)hexBytes, numHexBytes); }
-					
-					PushInputHistory(app->inputBox.chars, app->inputBox.numChars-1);
-					app->inputHistoryIndex = 0;
-					
-					TextBoxClear(&app->inputBox);
-				}
-				else
-				{
-					StatusError("No hex value to send");
-					
-					while (app->inputBox.numChars > 0 && app->inputBox.chars[app->inputBox.numChars-1] == '\n')
-					{
-						app->inputBox.chars[app->inputBox.numChars-1] = '\0';
-						app->inputBox.numChars--;
-						if (app->inputBox.cursorBegin > app->inputBox.numChars) { app->inputBox.cursorBegin = app->inputBox.numChars; }
-						if (app->inputBox.cursorEnd > app->inputBox.numChars) { app->inputBox.cursorEnd = app->inputBox.numChars; }
-					}
-				}
-				
-				TempPopMark();
-				
-				outputNewLine = false;
-			}
-			else
-			{
-				DEBUG_PrintLine("Writing %u byte input: \"%.*s\"", app->inputBox.numChars, app->inputBox.numChars, app->inputBox.chars);
-				
-				if (echoInput) { DataReceived(app->inputBox.chars, app->inputBox.numChars); }
-				if (writeToComPort)
-				{
-					platform->WriteComPort(&app->comPort, app->inputBox.chars, app->inputBox.numChars);
-					app->txShiftRegister |= 0x80;
-				}
-				if (writeToProgram) { platform->WriteProgramInput(&app->programInstance, app->inputBox.chars, app->inputBox.numChars); }
-				
-				PushInputHistory(app->inputBox.chars, app->inputBox.numChars-1);
-				app->inputHistoryIndex = 0;
-				
-				TextBoxClear(&app->inputBox);
-			}
 		}
 	
 		// +==============================+
@@ -1963,7 +1999,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	// +==============================+
 	// | Copy Selection to Clipboard  |
 	// +==============================+
-	if (IsActiveElement(&ui->viewRec) && ButtonDown(Button_Control) && ButtonPressed(Button_C) && !ButtonDown(Button_Shift))
+	if ((IsActiveElement(&ui->viewRec) || (GC->showInputTextBox && IsActiveElement(&app->inputBox))) && ButtonDown(Button_Control) && ButtonPressed(Button_C) && !ButtonDown(Button_Shift))
 	{
 		u32 selectionSize = GetSelection(app->selectionStart, app->selectionEnd, false);
 		if (selectionSize != 0)
@@ -2110,7 +2146,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	// +==============================+
 	// |         Debug Popups         |
 	// +==============================+
-	#if 1
+	#if 0
 	#if DEBUG
 	{
 		if (ButtonPressed(Button_1))
@@ -2192,7 +2228,6 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	}
 	#endif
 	#endif
-	
 	
 	RecalculateUiElements(ui, false);
 	TextBoxRellocate(&app->inputBox, ui->textInputRec);
@@ -3253,8 +3288,8 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		RsBindFont(&app->uiFont);
 		
 		RsPrintString(textPos, {Color_White}, 1.0f, "AppData Size: %u/%u (%.3f%%)",
-			sizeof(AppData_t), AppMemory->permanantSize,
-			(r32)sizeof(AppData_t) / (r32)AppMemory->permanantSize * 100.0f);
+			sizeof(AppData_t), appMemory->permanantSize,
+			(r32)sizeof(AppData_t) / (r32)appMemory->permanantSize * 100.0f);
 		textPos.y += app->uiFont.lineHeight;
 		
 		RsPrintString(textPos, {Color_White}, 1.0f, "Input Arena: %u/%u (%.3f%%)",

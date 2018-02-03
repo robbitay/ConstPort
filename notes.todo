@@ -1,5 +1,5 @@
 # Application TODO List
-	
+	{ } Make the new line checking in DataReceived work with the newLineString configuration option
 	[ ] Add a function that writes to a single option in the configuration file so we can have program written configuration options?
 	[ ] Horizontal Scrollbar (only shows up if needed)
 	[ ] Add an wrap indent option to the line formatting functions
@@ -36,7 +36,6 @@
 	[ ] Try to auto-connect to last opened COM port on startup
 	[ ] Automatically add marks to lines when a certain amount of time has passed between characters receives
 	[?] Fix scrollbar so that it doesn't keep sliding when we have grabbed it
-	[ ] Better way to detect open COM ports
 	[ ] Search functionality
 	[ ] Changeable key mappings
 	[ ] Look into what it would take to make certain core mechanics asynchronous so they are always running even if the main thread is doing a frame flip or locked processing something
@@ -44,8 +43,8 @@
 # Win32 Platform Layer TODO List
 	[?] Change Win32_CopyToClipboard and Win32_CopyFromCipboard to use glfw calls like OSX?
 	[!] Make Win32_GetAbsolutePath work when the executable is in another directory
+	{ } Find a platform call to query key states even when we don't have focus 
 	[ ] Make startup time faster for new window?
-	[ ] Add checking for COM port errors and whether or not we are still connected
 	[ ] Fix the WIN32_LaunchFile and WIN32_StartProgramInstance support for non-relative paths
 	[ ] Make sure the program can run when started from any current directory
 	[ ] Save to file using Windows File Dialog
@@ -62,6 +61,13 @@
 	[ ] Put the appVersion.h info into the Info.plist in build.sh
 
 # Old TODO List Items
+	[X] Make the GetComList function use the Windows registers to determine if a port exists
+	[-] \n\r makes two new lines
+	[X] Add checking for COM port errors and whether or not we are still connected
+	[X] Implement a check for disconnection from the port
+	[-] Check modifier keys down even when we don't have focus
+	[X] Enter in the middle of the line in the input text box doesn't work
+	[X] Copy text doesn't work!
 	@1.6
 	[X] Merge osx/win32_keymap and osx/win32_callbacks (also maybe osx/win32_clipboard)
 	[X] Add ctrl+scroll shortcut to change font size

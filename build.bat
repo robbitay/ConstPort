@@ -8,9 +8,9 @@ rem mkdir build > NUL 2> NUL
 rem echo Running from %cd%
 rem echo Time is %TimeString%
 
-set CompilePlatform=1
+set CompilePlatform=0
 set CompileApplication=1
-set DebugBuild=0
+set DebugBuild=1
 set ProjectName=ConstPort
 
 REM The boost regex library should be built using the b2 tool that comes
@@ -36,7 +36,7 @@ set IncludeDirectories=/I"W:\lib\mylib" /I"W:\lib\glew-2.0.0\include" /I"W:\lib\
 set CompilerFlags=/FC /Zi /EHsc /nologo /GS- /Gm- -GR- /EHa- /Fm /Od /Oi /WX /W4 %DebugDependantFlags% %Definitions% %IgnoredWarnings% %IncludeDirectories%
 
 set LibraryDirectories=%DebugDependantPaths%
-set Libraries=gdi32.lib User32.lib Shell32.lib opengl32.lib glfw3.lib Shlwapi.lib %DebugDependantLibraries%
+set Libraries=gdi32.lib User32.lib Shell32.lib opengl32.lib glfw3.lib Shlwapi.lib Advapi32.lib %DebugDependantLibraries%
 set LinkerFlags=-incremental:no %LibraryDirectories% %Libraries%
 
 set AppExports=/EXPORT:App_GetVersion /EXPORT:App_Initialize /EXPORT:App_Update /EXPORT:App_GetSoundSamples /EXPORT:App_Closing /EXPORT:App_Reloaded
