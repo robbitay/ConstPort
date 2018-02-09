@@ -98,6 +98,8 @@ struct AppData_t
 	Checkbox_t elapsedBannersCheckbox;
 	
 	ComMenu_t comMenu;
+	
+	AppThread_t testThread;
 };
 
 #endif // _APP_DATA_H

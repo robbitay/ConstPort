@@ -18,12 +18,12 @@ struct LoadedApp_t
 	HMODULE module;
 	FILETIME lastWriteTime;
 	
-	AppGetVersion_f*      AppGetVersionPntr;
-	AppReloaded_f*        AppReloadedPntr;
-	AppInitialize_f*      AppInitializePntr;
-	AppUpdate_f*          AppUpdatePntr;
-	AppGetSoundSamples_f* AppGetSoundSamplesPntr;
-	AppClosing_f*         AppClosingPntr;
+	AppGetVersion_f*      AppGetVersion;
+	AppReloading_f*       AppReloading;
+	AppReloaded_f*        AppReloaded;
+	AppInitialize_f*      AppInitialize;
+	AppUpdate_f*          AppUpdate;
+	AppClosing_f*         AppClosing;
 };
 
 //+================================================================+
@@ -38,15 +38,15 @@ AppInitialize_DEFINITION(AppInitialize_Stub)
 {
 	
 }
+AppReloading_DEFINITION(AppReloading_Stub)
+{
+	
+}
 AppReloaded_DEFINITION(AppReloaded_Stub)
 {
 	
 }
 AppUpdate_DEFINITION(AppUpdate_Stub)
-{
-	
-}
-AppGetSoundSamples_DEFINITION(AppGetSoundSamples_Stub)
 {
 	
 }
@@ -91,34 +91,34 @@ bool LoadDllCode(const char* appDllName, const char* tempDllName, LoadedApp_t* l
 	
 	if (loadedApp->module != 0)
 	{
-		loadedApp->AppGetVersionPntr =      (AppGetVersion_f*)      GetProcAddress(loadedApp->module, "App_GetVersion");
-		loadedApp->AppInitializePntr =      (AppInitialize_f*)      GetProcAddress(loadedApp->module, "App_Initialize");
-		loadedApp->AppReloadedPntr =        (AppReloaded_f*)        GetProcAddress(loadedApp->module, "App_Reloaded");
-		loadedApp->AppUpdatePntr =          (AppUpdate_f*)          GetProcAddress(loadedApp->module, "App_Update");
-		loadedApp->AppGetSoundSamplesPntr = (AppGetSoundSamples_f*) GetProcAddress(loadedApp->module, "App_GetSoundSamples");
-		loadedApp->AppClosingPntr =         (AppClosing_f*)         GetProcAddress(loadedApp->module, "App_Closing");
+		loadedApp->AppGetVersion = (AppGetVersion_f*) GetProcAddress(loadedApp->module, "App_GetVersion");
+		loadedApp->AppInitialize = (AppInitialize_f*) GetProcAddress(loadedApp->module, "App_Initialize");
+		loadedApp->AppReloading  = (AppReloading_f*)  GetProcAddress(loadedApp->module, "App_Reloading");
+		loadedApp->AppReloaded   = (AppReloaded_f*)   GetProcAddress(loadedApp->module, "App_Reloaded");
+		loadedApp->AppUpdate     = (AppUpdate_f*)     GetProcAddress(loadedApp->module, "App_Update");
+		loadedApp->AppClosing    = (AppClosing_f*)    GetProcAddress(loadedApp->module, "App_Closing");
 		
 		loadedApp->isValid = (
-			loadedApp->AppGetVersionPntr != nullptr &&
-			loadedApp->AppInitializePntr != nullptr &&
-			loadedApp->AppReloadedPntr != nullptr &&
-			loadedApp->AppUpdatePntr != nullptr &&
-			loadedApp->AppGetSoundSamplesPntr != nullptr &&
-			loadedApp->AppClosingPntr != nullptr
+			loadedApp->AppGetVersion != nullptr &&
+			loadedApp->AppInitialize != nullptr &&
+			loadedApp->AppReloading != nullptr &&
+			loadedApp->AppReloaded != nullptr &&
+			loadedApp->AppUpdate != nullptr &&
+			loadedApp->AppClosing != nullptr
 		);
 	}
 	
 	if (!loadedApp->isValid)
 	{
-		loadedApp->AppGetVersionPntr =      AppGetVersion_Stub;
-		loadedApp->AppInitializePntr =      AppInitialize_Stub;
-		loadedApp->AppReloadedPntr =        AppReloaded_Stub;
-		loadedApp->AppUpdatePntr =          AppUpdate_Stub;
-		loadedApp->AppGetSoundSamplesPntr = AppGetSoundSamples_Stub;
-		loadedApp->AppClosingPntr =         AppClosing_Stub;
+		loadedApp->AppGetVersion = AppGetVersion_Stub;
+		loadedApp->AppInitialize = AppInitialize_Stub;
+		loadedApp->AppReloading  = AppReloading_Stub;
+		loadedApp->AppReloaded   = AppReloaded_Stub;
+		loadedApp->AppUpdate     = AppUpdate_Stub;
+		loadedApp->AppClosing    = AppClosing_Stub;
 	}
 	
-	loadedApp->version = loadedApp->AppGetVersionPntr(nullptr);
+	loadedApp->version = loadedApp->AppGetVersion(nullptr);
 	
 	return loadedApp->isValid;
 }

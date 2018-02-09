@@ -147,6 +147,7 @@ void HandleTextBoxEnter(TextBox_t* textBox);
 #include "appUiHandler.cpp"
 #include "appRegularExpressions.cpp"
 #include "appComMenu.cpp"
+#include "appFifo.cpp"
 
 void ContextMenuUpdate(MenuHandler_t* menuHandler, Menu_t* menu)
 {
@@ -1602,32 +1603,6 @@ EXPORT AppInitialize_DEFINITION(App_Initialize)
 }
 
 //+================================================================+
-//|                        App Reloaded                            |
-//+================================================================+
-// void App_Reloaded(const PlatformInfo_t* platformInfo, const AppMemory_t* appMemory)
-EXPORT AppReloaded_DEFINITION(App_Reloaded)
-{
-	platform = platformInfo;
-	app = (AppData_t*)appMemory->permanantPntr;
-	GC = &app->globalConfig;
-	TempArena = &app->tempArena;
-	RenderScreenSize = NewVec2((r32)platform->screenSize.x / GUI_SCALE, (r32)platform->screenSize.y / GUI_SCALE);
-	renderState = &app->renderState;
-	
-	PopupSuccess("App Reloaded");
-	
-	//Make sure our callbacks still match the location of the functions in the new DLL
-	Menu_t* menuPntr = GetMenuByName(&app->menuHandler, "Context Menu");
-	menuPntr->specialPntr = nullptr;
-	menuPntr->updateFunctionPntr = (void*)ContextMenuUpdate;
-	menuPntr->renderFunctionPntr = (void*)ContextMenuRender;
-	menuPntr = GetMenuByName(&app->menuHandler, "About Menu");
-	menuPntr->specialPntr = nullptr;
-	menuPntr->updateFunctionPntr = (void*)AboutMenuUpdate;
-	menuPntr->renderFunctionPntr = (void*)AboutMenuRender;
-}
-
-//+================================================================+
 //|                         App Update                             |
 //+================================================================+
 // void App_Update(const PlatformInfo_t* platformInfo, const AppMemory_t* appMemory, const AppInput_t* appInput, AppOutput_t* appOutput)
@@ -1665,6 +1640,36 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	// | Temp Arena Update Loop Push  |
 	// +==============================+
 	TempPushMark();
+	
+	// +==============================+
+	// |      Start Test Thread       |
+	// +==============================+
+	if (ButtonPressed(Button_F2) && app->testThread.started == false)
+	{
+		app->testThread = platform->StartThread(TestThreadFunction, app, nullptr);
+		if (app->testThread.started)
+		{
+			DEBUG_WriteLine("Thread Started!");
+		}
+	}
+	
+	// +==============================+
+	// |     Check on Test Thread     |
+	// +==============================+
+	if (app->testThread.started)
+	{
+		AppThreadStatus_t threadStatus = platform->GetThreadStatus(&app->testThread);
+		if (threadStatus == AppThreadStatus_Finished)
+		{
+			DEBUG_WriteLine("Thread Finished!");
+			platform->CloseThread(&app->testThread, true);
+		}
+		else if (threadStatus == AppThreadStatus_Error)
+		{
+			DEBUG_WriteLine("Thread Failed!");
+			platform->CloseThread(&app->testThread, true);
+		}
+	}
 	
 	// +==============================+
 	// |     Set the Window Title     |
@@ -1834,7 +1839,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	}
 	
 	// +============================================+
-	// | Read Keyboard Input and Route Accordingly  |
+	// | Read Various Inputs and Route Accordingly  |
 	// +============================================+
 	if (true)
 	{
@@ -1872,7 +1877,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		{
 			
 		}
-	
+		
 		// +==============================+
 		// |     Paste from Clipboard     |
 		// +==============================+
@@ -1900,6 +1905,44 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 			}
 			
 			TempPopMark();
+		}
+		
+		// +==============================+
+		// |    Drag and Dropped Files    |
+		// +==============================+
+		if (input->numDroppedFiles > 0)
+		{
+			for (u32 fIndex = 0; fIndex < input->numDroppedFiles; fIndex++)
+			{
+				const char* filePath = input->droppedFiles[fIndex];
+				
+				FileInfo_t fileInfo = platform->ReadEntireFile(filePath);
+				if (fileInfo.content != nullptr)
+				{
+					StatusInfo("Writing %u bytes from dropped file", fileInfo.size);
+					
+					const char* dataToWrite = (const char*)fileInfo.content;
+					u32 dataSize = fileInfo.size;
+					
+					if (echoInput)
+					{
+						DataReceived(dataToWrite, dataSize);
+					}
+					if (writeToComPort)
+					{
+						platform->WriteComPort(&app->comPort, dataToWrite, dataSize);
+						app->txShiftRegister |= 0x80;
+					}
+					if (writeToProgram)
+					{
+						platform->WriteProgramInput(&app->programInstance, dataToWrite, dataSize);
+					}
+				}
+				else
+				{
+					PopupError("Failed to open dropped file \"%s\"", filePath);
+				}
+			}
 		}
 	}
 	
@@ -3351,14 +3394,13 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	if (ButtonPressed(Button_T) && ButtonDown(Button_Control)) { ArenaResetHighWaterMark(TempArena); }
 }
 
-//+================================================================+
-//|                   App Get Sound Samples                        |
-//+================================================================+
-// void App_GetSoundSamples(const PlatformInfo_t* platformInfo, const AppMemory_t* appMemory, const AppInput_t* appInput)
-EXPORT AppGetSoundSamples_DEFINITION(App_GetSoundSamples)
+// +--------------------------------------------------------------+
+// |                        App Reloading                         |
+// +--------------------------------------------------------------+
+// void App_Reloading(const PlatformInfo_t* platformInfo, const AppMemory_t* appMemory)
+EXPORT AppReloading_DEFINITION(App_Reloading)
 {
 	platform = platformInfo;
-	input = appInput;
 	app = (AppData_t*)appMemory->permanantPntr;
 	GC = &app->globalConfig;
 	TempArena = &app->tempArena;
@@ -3367,12 +3409,41 @@ EXPORT AppGetSoundSamples_DEFINITION(App_GetSoundSamples)
 	RenderMouseStartPos = NewVec2(input->mouseStartPos[MouseButton_Left].x, input->mouseStartPos[MouseButton_Left].y) / (r32)GUI_SCALE;
 	renderState = &app->renderState;
 	
-	//TODO: Output Sound?
+	if (app->testThread.started)
+	{
+		platform->CloseThread(&app->testThread, false);
+	}
 }
 
-//+================================================================+
-//|                        App Closing                             |
-//+================================================================+
+// +--------------------------------------------------------------+
+// |                         App Reloaded                         |
+// +--------------------------------------------------------------+
+// void App_Reloaded(const PlatformInfo_t* platformInfo, const AppMemory_t* appMemory)
+EXPORT AppReloaded_DEFINITION(App_Reloaded)
+{
+	platform = platformInfo;
+	app = (AppData_t*)appMemory->permanantPntr;
+	GC = &app->globalConfig;
+	TempArena = &app->tempArena;
+	RenderScreenSize = NewVec2((r32)platform->screenSize.x / GUI_SCALE, (r32)platform->screenSize.y / GUI_SCALE);
+	renderState = &app->renderState;
+	
+	PopupSuccess("App Reloaded");
+	
+	//Make sure our callbacks still match the location of the functions in the new DLL
+	Menu_t* menuPntr = GetMenuByName(&app->menuHandler, "Context Menu");
+	menuPntr->specialPntr = nullptr;
+	menuPntr->updateFunctionPntr = (void*)ContextMenuUpdate;
+	menuPntr->renderFunctionPntr = (void*)ContextMenuRender;
+	menuPntr = GetMenuByName(&app->menuHandler, "About Menu");
+	menuPntr->specialPntr = nullptr;
+	menuPntr->updateFunctionPntr = (void*)AboutMenuUpdate;
+	menuPntr->renderFunctionPntr = (void*)AboutMenuRender;
+}
+
+// +--------------------------------------------------------------+
+// |                         App Closing                          |
+// +--------------------------------------------------------------+
 // void App_Closing(const PlatformInfo_t* platformInfo, const AppMemory_t* appMemory)
 EXPORT AppClosing_DEFINITION(App_Closing)
 {
@@ -3388,6 +3459,11 @@ EXPORT AppClosing_DEFINITION(App_Closing)
 	if (app->programInstance.isOpen)
 	{
 		platform->CloseProgramInstance(&app->programInstance);
+	}
+	
+	if (app->testThread.started)
+	{
+		platform->CloseThread(&app->testThread, false);
 	}
 }
 

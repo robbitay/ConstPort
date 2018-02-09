@@ -65,6 +65,7 @@ const char* WorkingDirectory = nullptr;
 #include "win32_com.cpp"
 #include "win32_clipboard.cpp"
 #include "win32_program.cpp"
+#include "win32_threading.cpp"
 
 #define DEBUG_Write(formatStr)          Win32_Write(formatStr)
 #define DEBUG_WriteLine(formatStr)      Win32_WriteLine(formatStr)
@@ -247,6 +248,7 @@ int WINAPI WinMain(HINSTANCE hInstance,
 	glfwSetMouseButtonCallback(window,     GlfwMousePressCallback);
 	glfwSetScrollCallback(window,          GlfwMouseScrollCallback);
 	glfwSetCursorEnterCallback(window,     GlfwCursorEnteredCallback);
+	glfwSetDropCallback(window,            GlfwDropCallback);
 	
 	//+--------------------------------------+
 	//|        Fill Platform Info            |
@@ -284,6 +286,9 @@ int WINAPI WinMain(HINSTANCE hInstance,
 	PlatformInfo.CloseProgramInstance = Win32_CloseProgramInstance;
 	PlatformInfo.CreateNewWindow      = Win32_CreateNewWindow;
 	PlatformInfo.GetAbsolutePath      = Win32_GetAbsolutePath;
+	PlatformInfo.StartThread          = Win32_StartThread;
+	PlatformInfo.CloseThread          = Win32_CloseThread;
+	PlatformInfo.GetThreadStatus      = Win32_GetThreadStatus;
 	
 	//+--------------------------------------+
 	//|         Application Memory           |
@@ -331,7 +336,7 @@ int WINAPI WinMain(HINSTANCE hInstance,
 	
 	UpdateWindowTitle(window, WINDOW_TITLE, &PlatformVersion, &loadedApp.version);
 	
-	loadedApp.AppInitializePntr(&PlatformInfo, &appMemory);
+	loadedApp.AppInitialize(&PlatformInfo, &appMemory);
 	
 	// +==============================+
 	// |   Fill Initial AppInput_t    |
@@ -355,6 +360,7 @@ int WINAPI WinMain(HINSTANCE hInstance,
 			FILETIME newDllFiletime = GetFileWriteTime(appDllFullPath);
 			if (CompareFileTime(&newDllFiletime, &loadedApp.lastWriteTime) != 0)
 			{
+				loadedApp.AppReloading(&PlatformInfo, &appMemory);
 				FreeDllCode(&loadedApp);
 				
 				if (LoadDllCode(appDllFullPath, tempDllFullPath, &loadedApp))
@@ -363,7 +369,7 @@ int WINAPI WinMain(HINSTANCE hInstance,
 						loadedApp.version.major, loadedApp.version.minor, loadedApp.version.build);
 					
 					bool resetApplication = false;
-					loadedApp.AppGetVersionPntr(&resetApplication);
+					loadedApp.AppGetVersion(&resetApplication);
 					if (resetApplication)
 					{
 						Win32_WriteLine("Resetting application");
@@ -374,11 +380,11 @@ int WINAPI WinMain(HINSTANCE hInstance,
 						//TODO: Find a way to reset the opengl context or
 						//		maybe re-open the window altogether
 						
-						loadedApp.AppInitializePntr(&PlatformInfo, &appMemory);
+						loadedApp.AppInitialize(&PlatformInfo, &appMemory);
 					}
 					else
 					{
-						loadedApp.AppReloadedPntr(&PlatformInfo, &appMemory);
+						loadedApp.AppReloaded(&PlatformInfo, &appMemory);
 					}
 				}
 				else
@@ -405,6 +411,15 @@ int WINAPI WinMain(HINSTANCE hInstance,
 			currentInput->buttons[bIndex].transCount = 0;
 			currentInput->buttons[bIndex].pressCount = 0;
 		}
+		//Free the dropped file paths that were malloc'd in the DropCallback
+		for (uint32_t fIndex = 0; fIndex < currentInput->numDroppedFiles; fIndex++)
+		{
+			if (currentInput->droppedFiles[fIndex] != nullptr)
+			{
+				free((char*)currentInput->droppedFiles[fIndex]);
+			}
+		}
+		currentInput->numDroppedFiles = 0;
 		
 		PlatformInfo.windowResized = false;
 		
@@ -477,7 +492,7 @@ int WINAPI WinMain(HINSTANCE hInstance,
 		PlatformInfo.localTime.millisecond  = localTime.wMilliseconds;
 		
 		ClearStruct(appOutput);
-		loadedApp.AppUpdatePntr(&PlatformInfo, &appMemory, currentInput, &appOutput);
+		loadedApp.AppUpdate(&PlatformInfo, &appMemory, currentInput, &appOutput);
 		
 		glfwSwapBuffers(window);
 		
@@ -489,6 +504,8 @@ int WINAPI WinMain(HINSTANCE hInstance,
 			currentCursor = appOutput.cursorType;
 		}
 	}
+	
+	loadedApp.AppClosing(&PlatformInfo, &appMemory);
 	
 	glfwTerminate();
 	

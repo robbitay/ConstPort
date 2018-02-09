@@ -20,6 +20,7 @@ Description:
 #include "win32_com.h"
 #include "win32_program.h"
 #include "win32_clipboard.h"
+#include "win32_threading.h"
 
 #define EXPORT __declspec(dllexport)
 #define IMPORT __declspec(dllimport)
@@ -166,6 +167,10 @@ struct PlatformInfo_t
 	ReadProgramOutput_f*    ReadProgramOutput;
 	WriteProgramInput_f*    WriteProgramInput;
 	CloseProgramInstance_f* CloseProgramInstance;
+	
+	StartThread_f*     StartThread;
+	CloseThread_f*     CloseThread;
+	GetThreadStatus_f* GetThreadStatus;
 	
 	r64 timeDelta;
 	u64 programTime;
@@ -410,6 +415,9 @@ struct AppInput_t
 	
 	uint8_t textInputLength;
 	char textInput[64];
+	
+	u8 numDroppedFiles;
+	const char* droppedFiles[4];
 };
 
 typedef enum
@@ -445,14 +453,14 @@ typedef AppGetVersion_DEFINITION(AppGetVersion_f);
 #define AppInitialize_DEFINITION(functionName)      void functionName(const PlatformInfo_t* platformInfo, const AppMemory_t* appMemory)
 typedef AppInitialize_DEFINITION(AppInitialize_f);
 
+#define AppReloading_DEFINITION(functionName)       void functionName(const PlatformInfo_t* platformInfo, const AppMemory_t* appMemory)
+typedef AppReloading_DEFINITION(AppReloading_f);
+
 #define AppReloaded_DEFINITION(functionName)        void functionName(const PlatformInfo_t* platformInfo, const AppMemory_t* appMemory)
 typedef AppReloaded_DEFINITION(AppReloaded_f);
 
 #define AppUpdate_DEFINITION(functionName)          void functionName(const PlatformInfo_t* platformInfo, const AppMemory_t* appMemory, const AppInput_t* appInput, AppOutput_t* appOutput)
 typedef AppUpdate_DEFINITION(AppUpdate_f);
-
-#define AppGetSoundSamples_DEFINITION(functionName) void functionName(const PlatformInfo_t* platformInfo, const AppMemory_t* appMemory, const AppInput_t* appInput)
-typedef AppGetSoundSamples_DEFINITION(AppGetSoundSamples_f);
 
 #define AppClosing_DEFINITION(functionName)         void functionName(const PlatformInfo_t* platformInfo, const AppMemory_t* appMemory)
 typedef AppClosing_DEFINITION(AppClosing_f);

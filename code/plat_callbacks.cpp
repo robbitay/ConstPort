@@ -143,4 +143,29 @@ void GlfwCursorEnteredCallback(GLFWwindow* window, i32 entered)
 	AppInput_t* currentInput = (AppInput_t*)glfwGetWindowUserPointer(window);
 	currentInput->mouseInsideWindow = (entered > 0);
 }
+void GlfwDropCallback(GLFWwindow* window, i32 numPaths, const char** paths)
+{
+	AppInput_t* currentInput = (AppInput_t*)glfwGetWindowUserPointer(window);
+	
+	DEBUG_PrintLine("Dropped %d paths", numPaths);
+	for (i32 pIndex = 0; pIndex < numPaths; pIndex++)
+	{
+		const char* path = paths[pIndex];
+		DEBUG_PrintLine("[%d]: \"%s\"", pIndex, path);
+		
+		if (currentInput->numDroppedFiles < ArrayCount(currentInput->droppedFiles))
+		{
+			u32 pathLength = (u32)strlen(path);
+			char* tempLocation = (char*)malloc(pathLength+1);
+			memcpy(tempLocation, path, pathLength);
+			tempLocation[pathLength] = '\0';
+			currentInput->droppedFiles[currentInput->numDroppedFiles] = tempLocation;
+			currentInput->numDroppedFiles++;
+		}
+		else
+		{
+			DEBUG_WriteLine("No space for more files in the droppedFiles input buffer");
+		}
+	}
+}
 
