@@ -184,4 +184,63 @@ char* FormattedTimeStr(u64 timestamp)
 	return FormattedTimeStr(realTime);
 }
 
+u8* GetHexForAsciiString(const char* inputStr, u32 inputStrLength, u32* numBytesOut, MemoryArena_t* arenaPntr)
+{
+	u32 numBytes = 0;
+	
+	for (u32 cIndex = 0; cIndex+1 < inputStrLength; /*Nothing*/)
+	{
+		char c = inputStr[cIndex];
+		char nextChar = inputStr[cIndex+1];
+		
+		if (IsCharClassHexChar(c) && IsCharClassHexChar(nextChar))
+		{
+			numBytes++;
+			cIndex += 2;
+		}
+		else
+		{
+			//The character does not generate a hex value
+			cIndex++;
+		}
+	}
+	
+	*numBytesOut = numBytes;
+	if (numBytes == 0) { return nullptr; }
+	
+	u8* result = PushArray(arenaPntr, u8, numBytes);
+	u8* bytePntr = result;
+	
+	for (u32 cIndex = 0; cIndex+1 < inputStrLength; /*Nothing*/)
+	{
+		char c = inputStr[cIndex];
+		char nextChar = inputStr[cIndex+1];
+		
+		if (IsCharClassHexChar(c) && IsCharClassHexChar(nextChar))
+		{
+			Assert(bytePntr >= result && bytePntr < result + numBytes);
+			u8 upper = GetHexCarValue(c);
+			u8 lower = GetHexCarValue(nextChar);
+			*bytePntr = (upper << 4) + (lower);
+			// DEBUG_PrintLine("Convert %c and %c to %u (%u+%u)", c, nextChar, *bytePntr, upper, lower);
+			bytePntr++;
+			
+			numBytes++;
+			cIndex += 2; //Skip forward 2
+		}
+		else
+		{
+			//The character does not generate a hex value
+			cIndex++;
+		}
+	}
+	
+	return result;
+}
+
+u8* GetHexForAsciiString(const char* nulltermString, u32* numBytesOut, MemoryArena_t* arenaPntr)
+{
+	u32 strLength = (u32)strlen(nulltermString);
+	return GetHexForAsciiString(nulltermString, strLength, numBytesOut, arenaPntr);
+}
 

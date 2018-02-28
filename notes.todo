@@ -1,4 +1,10 @@
 # Application TODO List
+	{!} Fix the where the cursor position resolves to when hovering on top of the elapsed banner
+	(!) Fix the send button
+	{!} Fix the way line endings work (both receiving and sending) so any type of line ending comes in, gets saves as \n and a configurable type of line ending can go out to the port
+	{ } Quick selection short cuts in output view (double click to select word, shift select to change the end of the selection, etc.)
+	{ } 
+	
 	{ } Make the new line checking in DataReceived work with the newLineString configuration option
 	[ ] Add a function that writes to a single option in the configuration file so we can have program written configuration options?
 	[ ] Horizontal Scrollbar (only shows up if needed)

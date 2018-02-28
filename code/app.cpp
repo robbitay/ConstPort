@@ -148,6 +148,7 @@ void HandleTextBoxEnter(TextBox_t* textBox);
 #include "appRegularExpressions.cpp"
 #include "appComMenu.cpp"
 #include "appFifo.cpp"
+#include "appDataHandler.cpp"
 
 void ContextMenuUpdate(MenuHandler_t* menuHandler, Menu_t* menu)
 {
@@ -173,36 +174,6 @@ void ContextMenuRender(MenuHandler_t* menuHandler, Menu_t* menu)
 		RsBindFont(&app->mainFont);
 	}
 }
-
-const char testMessage[] = "Hello world!\n"
-	"This message is intended to be used to test the capabilities of the application without having a COM port to connect to\n"
-	"It will be a really long message with not a lot of\n"
-	"actual\n"
-	"content\n"
-	"One thing that this program can do is process a lot of data at once\n"
-	"without missing or dropping any bytes\n"
-	"This is important so that the user can be confident that what they see is what was actually sent\n"
-	"We need to add a few more lines to make this message even taller\n"
-	"We will\n"
-	"do that\n"
-	"by typing\n"
-	"two words\n"
-	"at a\n"
-	"time into\n"
-	"each line\n"
-	"in this\n"
-	"lame sentence.\n"
-	"AAAAAAAA";
-
-#define REAL_LOGO_HEIGHT 75
-#define ABOUT_INFO_TEXT_PADDING 20
-#define ABOUT_INFO_FORMAT_STRING "Const Port is an application written by me, Taylor Robbins. "                      \
-	"It's primarily been developed for my own purposes at work while developing embedded firmware applications.\n\n" \
-	"I release it under an open source license in the hope that others might also find it useful.\n\n"               \
-	"If you find any bugs or have any suggestions you can email me at robbitay@gmail.com.\n\n"                       \
-	"Latest releases can be found on the development blog:\nhttps://www.SilTutorials.com/blog\n\n"                   \
-	"More info on the HMN project page:\nhttps://ConstPort.Handmade.Network/\n\n"                                    \
-	"Application Version %u.%u (build %u)\nPlatform Version %u.%u (build %u)\n"
 
 void AboutMenuUpdate(MenuHandler_t* menuHandler, Menu_t* menu)
 {
@@ -247,759 +218,6 @@ void AboutMenuRender(MenuHandler_t* menuHandler, Menu_t* menu)
 		GC->colors.uiText, Alignment_Center, true
 	);
 	RsBindFont(&app->mainFont);
-}
-
-u32 SanatizeString(const char* charPntr, u32 numChars, char* outputBuffer = nullptr)
-{
-	u32 result = 0;
-	
-	char* outPntr = outputBuffer;
-	for (u32 cIndex = 0; cIndex < numChars; cIndex++)
-	{
-		if (charPntr[cIndex] < ' ') 
-		{
-			//Ignore these characters
-		}
-		else
-		{
-			result++;
-			if (outputBuffer != nullptr)
-			{
-				*outPntr = charPntr[cIndex];
-				outPntr++;
-			}
-		}
-	}
-	
-	return result;
-}
-
-char* SanatizeStringAdvanced(const char* strPntr, u32 numChars, MemoryArena_t* arenaPntr,
-	bool keepNewLines, bool keepBackspaces, bool convertInvalidToHex)
-{
-	char* result = nullptr;
-	u32 resultLength = 0;
-	
-	for (u8 round = 0; round < 2; round++)
-	{
-		Assert(round == 0 || result != nullptr);
-		
-		//Run this code twice, once to measure and once to actually copy into buffer
-		u32 fromIndex = 0;
-		u32 toIndex = 0;
-		while (fromIndex < numChars)
-		{
-			char c = strPntr[fromIndex];
-			char lastChar = '\0';
-			if (fromIndex > 0) { lastChar = strPntr[fromIndex-1]; }
-			char nextChar = strPntr[fromIndex+1];
-			
-			bool charHandled = false;
-			if (c == '\n')
-			{
-				if (keepNewLines)
-				{
-					if (result != nullptr) { result[toIndex] = '\n'; }
-					toIndex++;
-					charHandled = true;
-				}
-			}
-			else if (c == '\r')
-			{
-				if (nextChar == '\n' || lastChar == '\n')
-				{
-					//Drop the \r character
-					charHandled = true;
-				}
-				else if (keepNewLines)
-				{
-					if (result != nullptr) { result[toIndex] = '\n'; }
-					toIndex++;
-					charHandled = true;
-				}
-			}
-			else if (c == '\b')
-			{
-				if (keepBackspaces)
-				{
-					if (result != nullptr) { result[toIndex] = '\b'; }
-					toIndex++;
-					charHandled = true;
-				}
-			}
-			else if (IsCharClassPrintable(c) || c == '\t')
-			{
-				if (result != nullptr) { result[toIndex] = c; }
-				toIndex++;
-				charHandled = true;
-			}
-			
-			if (charHandled == false && convertInvalidToHex)
-			{
-				if (result != nullptr)
-				{
-					result[toIndex+0] = '[';
-					result[toIndex+1] = UpperHexChar(c);
-					result[toIndex+2] = LowerHexChar(c);
-					result[toIndex+3] = ']';
-				}
-				toIndex += 4;
-			}
-			
-			fromIndex++;
-		}
-		
-		resultLength = toIndex;
-		if (resultLength == 0) { break; }
-		if (round == 0)
-		{
-			result = (char*)ArenaPush_(arenaPntr, resultLength+1);
-		}
-		result[resultLength] = '\0';
-	}
-	
-	return result;
-}
-
-//NOTE: This function serves as a measuring function AS WELL AS
-//		a buffer filling function if not passed nullptr for bufferOutput
-u32 GetSelection(TextLocation_t location1, TextLocation_t location2, bool insertTimestamps, char* bufferOutput = nullptr)
-{
-	TextLocation_t minLocation = TextLocationMin(location1, location2);
-	TextLocation_t maxLocation = TextLocationMax(location1, location2);
-	
-	if (minLocation.lineIndex == maxLocation.lineIndex &&
-		minLocation.charIndex == maxLocation.charIndex)
-	{
-		//No selection made
-		return 0;
-	}
-	
-	u8 newLineSize = (platform->platformType == Platform_Windows) ? 2 : 1;
-	char newLine[2] = {};
-	if (platform->platformType == Platform_Windows)
-	{
-		newLine[0] = '\r';
-		newLine[1] = '\n';
-	}
-	else
-	{
-		newLine[0] = '\n';
-	}
-	u32 bufferLength = 0;
-	char* outputPntr = bufferOutput;
-	
-	if (minLocation.lineIndex == maxLocation.lineIndex)
-	{
-		Line_t* linePntr = LineListGetItemAt(&app->lineList, minLocation.lineIndex);
-		
-		if (insertTimestamps)
-		{
-			TempPushMark();
-			u64 lineTimestamp = linePntr->timestamp;
-			char* timeString = FormattedTimeStr(lineTimestamp);
-			u32 timeStringLength = (u32)strlen(timeString);
-			if (bufferOutput != nullptr)
-			{
-				*outputPntr = '['; outputPntr++;
-				memcpy(outputPntr, timeString, timeStringLength);
-				outputPntr += timeStringLength;
-				*outputPntr = ']'; outputPntr++;
-				*outputPntr = ' '; outputPntr++;
-			}
-			bufferLength += timeStringLength + 3;
-			TempPopMark();
-		}
-		
-		bufferLength += maxLocation.charIndex - minLocation.charIndex;
-		if (bufferOutput != nullptr)
-		{
-			memcpy(outputPntr, &linePntr->chars[minLocation.charIndex], bufferLength);
-			outputPntr += bufferLength;
-		}
-	}
-	else
-	{
-		{ //First Line
-			Line_t* minLinePntr = LineListGetItemAt(&app->lineList, minLocation.lineIndex);
-			
-			if (insertTimestamps)
-			{
-				TempPushMark();
-				u64 lineTimestamp = minLinePntr->timestamp;
-				char* timeString = FormattedTimeStr(lineTimestamp);
-				u32 timeStringLength = (u32)strlen(timeString);
-				if (bufferOutput != nullptr)
-				{
-					*outputPntr = '['; outputPntr++;
-					memcpy(outputPntr, timeString, timeStringLength);
-					outputPntr += timeStringLength;
-					*outputPntr = ']'; outputPntr++;
-					*outputPntr = ' '; outputPntr++;
-				}
-				bufferLength += timeStringLength + 3;
-				TempPopMark();
-			}
-			
-			bufferLength += SanatizeString(&minLinePntr->chars[minLocation.charIndex], minLinePntr->numChars - minLocation.charIndex);
-			bufferLength += newLineSize;
-			if (bufferOutput != nullptr)
-			{
-				outputPntr += SanatizeString(&minLinePntr->chars[minLocation.charIndex], minLinePntr->numChars - minLocation.charIndex, outputPntr);
-				memcpy(outputPntr, newLine, newLineSize);
-				outputPntr += newLineSize;
-			}
-		}
-		
-		//In Between Lines
-		for (i32 lineIndex = minLocation.lineIndex+1; lineIndex < maxLocation.lineIndex && lineIndex < app->lineList.numLines; lineIndex++)
-		{
-			Line_t* linePntr = LineListGetItemAt(&app->lineList, lineIndex);
-			
-			if (insertTimestamps)
-			{
-				TempPushMark();
-				u64 lineTimestamp = linePntr->timestamp;
-				char* timeString = FormattedTimeStr(lineTimestamp);
-				u32 timeStringLength = (u32)strlen(timeString);
-				if (bufferOutput != nullptr)
-				{
-					*outputPntr = '['; outputPntr++;
-					memcpy(outputPntr, timeString, timeStringLength);
-					outputPntr += timeStringLength;
-					*outputPntr = ']'; outputPntr++;
-					*outputPntr = ' '; outputPntr++;
-				}
-				bufferLength += timeStringLength + 3;
-				TempPopMark();
-			}
-			
-			bufferLength += SanatizeString(linePntr->chars, linePntr->numChars);
-			bufferLength += newLineSize;
-			if (bufferOutput != nullptr)
-			{
-				outputPntr += SanatizeString(linePntr->chars, linePntr->numChars, outputPntr);
-				memcpy(outputPntr, newLine, newLineSize);
-				outputPntr += newLineSize;
-			}
-		}
-		
-		{ //Last Line
-			Line_t* maxLinePntr = LineListGetItemAt(&app->lineList, maxLocation.lineIndex);
-			
-			if (insertTimestamps)
-			{
-				TempPushMark();
-				u64 lineTimestamp = maxLinePntr->timestamp;
-				char* timeString = FormattedTimeStr(lineTimestamp);
-				u32 timeStringLength = (u32)strlen(timeString);
-				if (bufferOutput != nullptr)
-				{
-					*outputPntr = '['; outputPntr++;
-					memcpy(outputPntr, timeString, timeStringLength);
-					outputPntr += timeStringLength;
-					*outputPntr = ']'; outputPntr++;
-					*outputPntr = ' '; outputPntr++;
-				}
-				bufferLength += timeStringLength + 3;
-				TempPopMark();
-			}
-			
-			bufferLength += SanatizeString(maxLinePntr->chars, maxLocation.charIndex);
-			if (bufferOutput != nullptr)
-			{
-				outputPntr += SanatizeString(maxLinePntr->chars, maxLocation.charIndex, outputPntr);
-			}
-		}
-	}
-	
-	bufferLength += 1; //For null terminator
-	if (bufferOutput != nullptr)
-	{
-		*outputPntr = '\0';
-	}
-	
-	return bufferLength;
-}
-
-void SaveSelectionToFile(TextLocation_t start, TextLocation_t end, bool openFile = false)
-{
-	char* fileName = TempPrint("ConstPortSave_%02u-%02u-%u_%u-%02u-%02u.txt",
-		platform->localTime.year, platform->localTime.month, platform->localTime.day,
-		platform->localTime.hour, platform->localTime.minute, platform->localTime.second
-	);
-	
-	u32 selectionSize = GetSelection(start, end, GC->saveTimesToFile, nullptr);
-	if (selectionSize > 0)
-	{
-		TempPushMark();
-		
-		char* fileBuffer = TempString(selectionSize);
-		GetSelection(start, end, GC->saveTimesToFile, fileBuffer);
-		
-		//NOTE: GetSelection adds a \0 on the end so need to remove it
-		DEBUG_PrintLine("Saving %u bytes to %s", selectionSize-1, fileName);
-		platform->WriteEntireFile(fileName, fileBuffer, selectionSize-1);
-		DEBUG_WriteLine("Done!");
-		
-		TempPopMark();
-		
-		if (openFile)
-		{
-			if (platform->LaunchFile(fileName))
-			{
-				DEBUG_WriteLine("Opened output file for viewing");
-			}
-			else
-			{
-				DEBUG_WriteLine("Could not open output file");
-			}
-		}
-		
-		StatusSuccess("Saved to %s", fileName);
-	}
-}
-
-struct TriggerResults_t
-{
-	bool addLineToBuffer;
-	bool createNewLine;
-	bool clearScreen;
-};
-
-TriggerResults_t ApplyTriggerEffects(Line_t* newLine, RegexTrigger_t* trigger)
-{
-	TriggerResults_t result = {};
-	result.addLineToBuffer = true;
-	
-	for (u32 eIndex = 0; eIndex < trigger->numEffects; eIndex++)
-	{
-		const char* effectStr = trigger->effects[eIndex];
-		
-		if (strcmp(effectStr, "mark") == 0)
-		{
-			newLine->flags |= LineFlag_MarkBelow;
-		}
-		else if (strcmp(effectStr, "thick_mark") == 0)
-		{
-			newLine->flags |= LineFlag_MarkBelow | LineFlag_ThickMark;
-		}
-		else if (strcmp(effectStr, "mark_above") == 0)
-		{
-			if (newLine->previous != nullptr)
-			{
-				FlagSet(newLine->previous->flags, LineFlag_MarkBelow);
-			}
-		}
-		else if (strcmp(effectStr, "thick_mark_above") == 0)
-		{
-			if (newLine->previous != nullptr)
-			{
-				FlagSet(newLine->previous->flags, LineFlag_MarkBelow | LineFlag_ThickMark);
-			}
-		}
-		else if (strcmp(effectStr, "clear_screen") == 0)
-		{
-			result.clearScreen = true;
-		}
-		else if (strcmp(effectStr, "new_line") == 0)
-		{
-			result.createNewLine = true;
-		}
-		else if (strcmp(effectStr, "clear_line") == 0)
-		{
-			result.addLineToBuffer = false;
-		}
-		else if (strcmp(effectStr, "count") == 0)
-		{
-			app->genericCounter++;
-		}
-		else if (strstr(effectStr, "=") != nullptr)
-		{
-			char* nameStr = nullptr;
-			char* valueStr = nullptr;
-			
-			bool foundEquals = false;
-			u32 valueStartIndex = 0;
-			for (u32 cIndex = 0; effectStr[cIndex] != '\0'; cIndex++)
-			{
-				char c = effectStr[cIndex];
-				if (!foundEquals)
-				{
-					if (IsCharClassWhitespace(c) || c == '=')
-					{
-						if (nameStr == nullptr)
-						{
-							nameStr = TempString(cIndex+1);
-							memcpy(nameStr, &effectStr[0], cIndex);
-							nameStr[cIndex] = '\0';
-						}
-					}
-					if (c == '=') { foundEquals = true; }
-				}
-				else
-				{
-					if (IsCharClassWhitespace(c) == false)
-					{
-						valueStartIndex = cIndex;
-						break;
-					}
-				}
-			}
-			Assert(foundEquals);
-			
-			if (valueStartIndex != 0)
-			{
-				u32 valueStrLength = (u32)strlen(effectStr) - valueStartIndex;
-				valueStr = TempString(valueStrLength+1);
-				memcpy(valueStr, &effectStr[valueStartIndex], valueStrLength);
-				valueStr[valueStrLength] = '\0';
-			}
-			
-			if (nameStr == nullptr || nameStr[0] == '\0')
-			{
-				DEBUG_PrintLine("No name found in effect: \"%s\"", effectStr);
-			}
-			else if (valueStr == nullptr || valueStr[0] == '\0')
-			{
-				DEBUG_PrintLine("No value found in effect: \"%s\"", effectStr);
-			}
-			else
-			{
-				if (strcmp(nameStr, "background_color") == 0 ||
-					strcmp(nameStr, "foreground_color") == 0)
-				{
-					Color_t colorValue = {};
-					if (TryParseColor(valueStr, (u32)strlen(valueStr), &colorValue) == ConfigError_None)
-					{
-						if (strcmp(nameStr, "background_color") == 0)
-						{
-							// DEBUG_PrintLine("Background = %s", valueStr);
-							newLine->backgroundColor = colorValue;
-						}
-						else if (strcmp(nameStr, "foreground_color") == 0)
-						{
-							// DEBUG_PrintLine("Foreground = %s", valueStr);
-							newLine->matchColor = colorValue;
-						}
-					}
-					else
-					{
-						DEBUG_PrintLine("Could not parse color in effect: %s = \"%s\"", nameStr, valueStr);
-					}
-				}
-				else if (strcmp(nameStr, "status") == 0)
-				{
-					StatusInfo(valueStr);
-				}
-				else if (strcmp(nameStr, "status_debug") == 0)
-				{
-					StatusDebug(valueStr);
-				}
-				else if (strcmp(nameStr, "status_info") == 0)
-				{
-					StatusInfo(valueStr);
-				}
-				else if (strcmp(nameStr, "status_success") == 0)
-				{
-					StatusSuccess(valueStr);
-				}
-				else if (strcmp(nameStr, "status_error") == 0)
-				{
-					StatusError(valueStr);
-				}
-				else if (strcmp(nameStr, "popup") == 0)
-				{
-					PopupInfo(valueStr);
-				}
-				else if (strcmp(nameStr, "popup_debug") == 0)
-				{
-					PopupDebug(valueStr);
-				}
-				else if (strcmp(nameStr, "popup_info") == 0)
-				{
-					PopupInfo(valueStr);
-				}
-				else if (strcmp(nameStr, "popup_success") == 0)
-				{
-					PopupSuccess(valueStr);
-				}
-				else if (strcmp(nameStr, "popup_error") == 0)
-				{
-					PopupError(valueStr);
-				}
-				else if (strcmp(nameStr, "save") == 0)
-				{
-					i32 numLinesOffset = 0;
-					if (TryParseI32(valueStr, (u32)strlen(valueStr), &numLinesOffset) && numLinesOffset >= 0)
-					{
-						i32 lineIndex = app->lineList.numLines - numLinesOffset;
-						if (lineIndex < 0) { lineIndex = 0; }
-						Assert(lineIndex < app->lineList.numLines);
-						
-						SaveSelectionToFile(NewTextLocation(lineIndex, 0), NewTextLocation(app->lineList.numLines-1, app->lineList.lastLine->numChars), DEBUG);
-					}
-					else
-					{
-						PopupError("Couldn't parse effect value as integer: \"%s\" in save effect", valueStr);
-					}
-				}
-				else
-				{
-					DEBUG_PrintLine("Unknown effect in regex trigger: \"%s\"", nameStr);
-				}
-			}
-		}
-		else
-		{
-			DEBUG_PrintLine("Unknown effect in regex trigger: \"%s\"", effectStr);
-		}
-	}
-	
-	return result;
-}
-
-void ReplaceLineWithCapture(Line_t* linePntr, const char* regexStr)
-{
-	TempPushMark();
-	
-	char* tempString = GetRegexCaptureString(regexStr, linePntr->chars, linePntr->numChars, TempArena);
-	DEBUG_PrintLine("Captured replacement: \"%s\"", tempString);
-	LineListReplaceLine(&app->lineList, tempString, (u32)strlen(tempString));
-	
-	TempPopMark();
-}
-
-void ReplaceLineWithCaptureFormatString(Line_t* linePntr, const char* regexStr, const char* formatStr)
-{
-	TempPushMark();
-	
-	char* tempString = GetRegexCaptureFormatString(regexStr, linePntr->chars, linePntr->numChars, formatStr, TempArena);
-	// DEBUG_PrintLine("Captured formatted replacement: \"%s\"", tempString);
-	LineListReplaceLine(&app->lineList, tempString, (u32)strlen(tempString));
-	
-	TempPopMark();
-}
-
-#define CheckRegularExpression(perCharacter, addLineToBuffer, createNewLine, clearScreen, linePntr) do             \
-{                                                                                                                  \
-	for (u32 rIndex = 0; rIndex < GC->numTriggers; rIndex++)                                                       \
-	{                                                                                                              \
-		RegexTrigger_t* trigger = &GC->triggers[rIndex];                                                           \
-		if (perCharacter == false || trigger->runPerCharacter)                                                     \
-		{                                                                                                          \
-			bool appliedToThisComPort = (trigger->numComPorts == 0 || app->comPort.isOpen == false);               \
-			if (appliedToThisComPort == false)                                                                     \
-			{                                                                                                      \
-				for (u32 comListIndex = 0; comListIndex < trigger->numComPorts; comListIndex++)                    \
-				{                                                                                                  \
-					const char* supportedName = trigger->comPorts[comListIndex];                                   \
-					if (strcmp(supportedName, app->comPort.name) == 0 ||                                           \
-						strcmp(supportedName, GetPortUserName(app->comPort.name)) == 0)                            \
-					{                                                                                              \
-						appliedToThisComPort = true;                                                               \
-						break;                                                                                     \
-					}                                                                                              \
-				}                                                                                                  \
-			}                                                                                                      \
-			if (appliedToThisComPort)                                                                              \
-			{                                                                                                      \
-				const char* regexStr = nullptr;                                                                    \
-				if (trigger->expression != nullptr)                                                                \
-				{                                                                                                  \
-					regexStr = trigger->expression;                                                                \
-				}                                                                                                  \
-				else if (trigger->expressionName != nullptr)                                                       \
-				{                                                                                                  \
-					regexStr = GetRegularExpression(&app->regexList, trigger->expressionName);                     \
-				}                                                                                                  \
-				if (regexStr != nullptr)                                                                           \
-				{                                                                                                  \
-					bool expressionMatched = TestRegularExpression(regexStr, linePntr->chars, linePntr->numChars); \
-					if (expressionMatched)                                                                         \
-					{                                                                                              \
-						if (trigger->showOnlyCaptured)                                                             \
-						{                                                                                          \
-							ReplaceLineWithCapture(linePntr, regexStr);                                            \
-						}                                                                                          \
-						if (trigger->replaceStr != nullptr)                                                        \
-						{                                                                                          \
-							ReplaceLineWithCaptureFormatString(linePntr, regexStr, trigger->replaceStr);           \
-						}                                                                                          \
-						TriggerResults_t results = ApplyTriggerEffects(linePntr, trigger);                         \
-						if (!results.addLineToBuffer) { createNewLine = true; }                                    \
-						if (results.createNewLine) { createNewLine = true; }                                       \
-						if (results.clearScreen) { clearScreen = true; }                                           \
-					}                                                                                              \
-				}                                                                                                  \
-			}                                                                                                      \
-		}                                                                                                          \
-	}                                                                                                              \
-} while(0)
-
-void DropCharData(u32 targetSize)
-{
-	StatusInfo("Resizing %u bytes down to %u bytes", app->lineList.charDataSize, targetSize);
-	u32 numLinesRemoved = 0;
-	r32 heightRemoved = LineListDownsize(&app->lineList, targetSize, &numLinesRemoved);
-	app->uiElements.scrollOffset.y = MaxR32(0, app->uiElements.scrollOffset.y - heightRemoved);
-	app->uiElements.scrollOffsetGoto.y = MaxR32(0, app->uiElements.scrollOffsetGoto.y - heightRemoved);
-	app->selectionStart.lineIndex -= numLinesRemoved;
-	if (app->selectionStart.lineIndex < 0)
-	{
-		app->selectionStart.lineIndex = 0;
-		app->selectionStart.charIndex = 0;
-	}
-	app->selectionEnd.lineIndex -= numLinesRemoved;
-	if (app->selectionEnd.lineIndex < 0)
-	{
-		app->selectionEnd.lineIndex = 0;
-		app->selectionEnd.charIndex = 0;
-	}
-	
-	PopupError("Dropped %u line(s) due to space requirements", numLinesRemoved);
-}
-
-void DataReceived(const char* dataBuffer, i32 numBytes)
-{
-	Line_t* lastLine = app->lineList.lastLine;
-	
-	for (i32 cIndex = 0; cIndex < numBytes; cIndex++)
-	{
-		char newChar = dataBuffer[cIndex];
-		if (newChar == '\n' || newChar == '\r')
-		{
-			Line_t* finishedLine = lastLine;
-			
-			if (finishedLine->timestamp == 0)
-			{
-				finishedLine->timestamp = GetTimestamp(platform->localTime);
-			}
-			
-			if (app->writeToFile)
-			{
-				//Write the line to the outputFile
-				
-				char timestampBuffer[256]; ClearArray(timestampBuffer);
-				RealTime_t lineTime = RealTimeAt(finishedLine->timestamp);
-				u32 timestampLength = snprintf(timestampBuffer, sizeof(timestampBuffer)-1,
-					"[%s %02u:%02u:%02u%s (%s %s, %04u)] ",
-					GetDayOfWeekStr(GetDayOfWeek(lineTime)),
-					Convert24HourTo12Hour(lineTime.hour), lineTime.minute, lineTime.second,
-					IsPostMeridian(lineTime.hour) ? "pm" : "am",
-					GetMonthStr((Month_t)lineTime.month), GetDayOfMonthString(lineTime.day), lineTime.year);
-				
-				platform->AppendFile(&app->outputFile, timestampBuffer, timestampLength);
-				
-				for (u32 cIndex2 = 0; cIndex2 < finishedLine->numChars; cIndex2++)
-				{
-					if (finishedLine->chars[cIndex2] == 0x01)
-					{
-						finishedLine->chars[cIndex2] = ' ';
-					}
-					if (finishedLine->chars[cIndex2] == 0x02)
-					{
-						finishedLine->chars[cIndex2] = ' ';
-					}
-					if (finishedLine->chars[cIndex2] == 0x03)
-					{
-						finishedLine->chars[cIndex2] = ' ';
-					}
-					if (finishedLine->chars[cIndex2] == 0x04)
-					{
-						finishedLine->chars[cIndex2] = ' ';
-					}
-					if (finishedLine->chars[cIndex2] == 0x05)
-					{
-						finishedLine->chars[cIndex2] = ' ';
-					}
-				}
-				platform->AppendFile(&app->outputFile, finishedLine->chars, finishedLine->numChars);
-				platform->AppendFile(&app->outputFile, "\r\n", 2);
-				
-				LineListClearLine(&app->lineList);
-			}
-			else
-			{
-				//Throw the line on the end of the list
-				
-				// +====================================+
-				// | Check Line Against Regex Triggers  |
-				// +====================================+
-				bool addLineToBuffer = true;
-				bool createNewLine = false;
-				bool clearScreen = false;
-				CheckRegularExpression(false, addLineToBuffer, createNewLine, clearScreen, lastLine);
-				
-				if (clearScreen)
-				{
-					ClearConsole();
-					lastLine = app->lineList.lastLine;
-				}
-				else
-				{
-					if (addLineToBuffer)
-					{
-						lastLine = LineListPushLine(&app->lineList);
-					}
-					else
-					{
-						LineListClearLine(&app->lineList);
-					}
-				}
-			}
-		}
-		else if (newChar == '\b')
-		{
-			bool charRemoved = LineListPopCharacter(&app->lineList);
-		}
-		else
-		{
-			LineListAppendData(&app->lineList, &newChar, 1);
-			
-			// +====================================+
-			// | Check Per Character Regex Triggers |
-			// +====================================+
-			bool addLineToBuffer = true;
-			bool createNewLine = false;
-			bool clearScreen = false;
-			CheckRegularExpression(true, addLineToBuffer, createNewLine, clearScreen, lastLine);
-			
-			if (createNewLine)
-			{
-				CheckRegularExpression(false, addLineToBuffer, createNewLine, clearScreen, lastLine);
-				
-				if (clearScreen)
-				{
-					ClearConsole();
-					lastLine = app->lineList.lastLine;
-				}
-				else
-				{
-					if (addLineToBuffer)
-					{
-						lastLine = LineListPushLine(&app->lineList);
-					}
-					else
-					{
-						LineListClearLine(&app->lineList);
-					}
-				}
-			}
-		}
-		
-		// +==============================+
-		// |        Drop Char Data        |
-		// +==============================+
-		u32 inputArenaMax        = (u32)(app->inputArenaSize/100.f * 98);
-		u32 targetInputArenaSize = (u32)(app->inputArenaSize/100.f * 90);
-		if (app->lineList.charDataSize >= inputArenaMax)
-		{
-			DropCharData(targetInputArenaSize);
-		}
-	}
-	
-	app->rxShiftRegister |= 0x80;
 }
 
 void LoadApplicationFonts()
@@ -1221,66 +439,6 @@ void DrawSelectionOnFormattedLine(Line_t* linePntr, v2 position, u32 startIndex,
 	}
 }
 
-u8* GetHexForAsciiString(const char* inputStr, u32 inputStrLength, u32* numBytesOut, MemoryArena_t* arenaPntr)
-{
-	u32 numBytes = 0;
-	
-	for (u32 cIndex = 0; cIndex+1 < inputStrLength; /*Nothing*/)
-	{
-		char c = inputStr[cIndex];
-		char nextChar = inputStr[cIndex+1];
-		
-		if (IsCharClassHexChar(c) && IsCharClassHexChar(nextChar))
-		{
-			numBytes++;
-			cIndex += 2;
-		}
-		else
-		{
-			//The character does not generate a hex value
-			cIndex++;
-		}
-	}
-	
-	*numBytesOut = numBytes;
-	if (numBytes == 0) { return nullptr; }
-	
-	u8* result = PushArray(arenaPntr, u8, numBytes);
-	u8* bytePntr = result;
-	
-	for (u32 cIndex = 0; cIndex+1 < inputStrLength; /*Nothing*/)
-	{
-		char c = inputStr[cIndex];
-		char nextChar = inputStr[cIndex+1];
-		
-		if (IsCharClassHexChar(c) && IsCharClassHexChar(nextChar))
-		{
-			Assert(bytePntr >= result && bytePntr < result + numBytes);
-			u8 upper = GetHexCarValue(c);
-			u8 lower = GetHexCarValue(nextChar);
-			*bytePntr = (upper << 4) + (lower);
-			// DEBUG_PrintLine("Convert %c and %c to %u (%u+%u)", c, nextChar, *bytePntr, upper, lower);
-			bytePntr++;
-			
-			numBytes++;
-			cIndex += 2; //Skip forward 2
-		}
-		else
-		{
-			//The character does not generate a hex value
-			cIndex++;
-		}
-	}
-	
-	return result;
-}
-
-u8* GetHexForAsciiString(const char* nulltermString, u32* numBytesOut, MemoryArena_t* arenaPntr)
-{
-	u32 strLength = (u32)strlen(nulltermString);
-	return GetHexForAsciiString(nulltermString, strLength, numBytesOut, arenaPntr);
-}
-
 void ChangeActiveElement(const void* elementPntr)
 {
 	if (app->activeElement == &app->inputBox)
@@ -1332,13 +490,9 @@ void HandleTextBoxEnter(TextBox_t* textBox)
 	// +==============================+
 	if (textBox == &app->inputBox)
 	{
-		bool writeToComPort = (app->comPort.isOpen && (app->programInstance.isOpen == false || GC->sendInputToPython == false || GC->alsoSendInputToCom));
-		bool writeToProgram = (app->programInstance.isOpen && GC->sendInputToPython);
-		bool echoInput = GC->autoEchoInput;
-		bool outputNewLine = true;
-		
 		if (ButtonDown(Button_Control))
 		{
+			//Convert HEX input into raw data
 			if (app->inputBox.numChars > 0)
 			{
 				TempPushMark();
@@ -1354,14 +508,7 @@ void HandleTextBoxEnter(TextBox_t* textBox)
 					}
 					DEBUG_WriteLine("}");
 					
-					if (echoInput) { DataReceived((char*)hexBytes, numHexBytes); }
-					if (writeToComPort)
-					{
-						platform->WriteComPort(&app->comPort, (char*)hexBytes, numHexBytes);
-						app->txShiftRegister |= 0x80;
-					}
-					if (writeToProgram) { platform->WriteProgramInput(&app->programInstance, (char*)hexBytes, numHexBytes); }
-					
+					ProcessInputData((const char*)hexBytes, numHexBytes, false);
 					PushInputHistory(app->inputBox.chars, app->inputBox.numChars);
 					app->inputHistoryIndex = 0;
 					
@@ -1374,46 +521,20 @@ void HandleTextBoxEnter(TextBox_t* textBox)
 				
 				TempPopMark();
 			}
-			
-			outputNewLine = false;
 		}
 		else
 		{
+			//Send the data in the input textbox
+			DEBUG_PrintLine("Writing %u byte input: \"%.*s\"", app->inputBox.numChars, app->inputBox.numChars, app->inputBox.chars);
+			
 			if (app->inputBox.numChars > 0)
 			{
-				DEBUG_PrintLine("Writing %u byte input: \"%.*s\"", app->inputBox.numChars, app->inputBox.numChars, app->inputBox.chars);
-				
-				if (echoInput) { DataReceived(app->inputBox.chars, app->inputBox.numChars); }
-				if (writeToComPort)
-				{
-					platform->WriteComPort(&app->comPort, app->inputBox.chars, app->inputBox.numChars);
-					app->txShiftRegister |= 0x80;
-				}
-				if (writeToProgram) { platform->WriteProgramInput(&app->programInstance, app->inputBox.chars, app->inputBox.numChars); }
-				
+				ProcessInputData(app->inputBox.chars, app->inputBox.numChars, true);
 				PushInputHistory(app->inputBox.chars, app->inputBox.numChars);
 				app->inputHistoryIndex = 0;
-				
 				TextBoxClear(&app->inputBox);
 			}
-		}
-		
-		if (outputNewLine)
-		{
-			const char* newLineStr = GC->newLineString;
-			if (newLineStr == nullptr)
-			{
-				newLineStr = platform->platformType == Platform_Windows ? "\r\n" : "\n";
-			}
-			u32 newLineStrLength = (u32)strlen(newLineStr);
-			
-			if (echoInput) { DataReceived(newLineStr, newLineStrLength); }
-			if (writeToComPort)
-			{
-				platform->WriteComPort(&app->comPort, newLineStr, newLineStrLength);
-				app->txShiftRegister |= 0x80;
-			}
-			if (writeToProgram) { platform->WriteProgramInput(&app->programInstance, newLineStr, newLineStrLength); }
+			ProcessInputData("\n", 1, true);
 		}
 	}
 }
@@ -1751,131 +872,83 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		}
 	}
 	
-	// +==============================+
-	// |    Read From The COM Port    |
-	// +==============================+
-	if (app->comPort.isOpen)
+	// +--------------------------------------------------------------+
+	// |      Process Inputs from COM port, Python, and AppInput      |
+	// +--------------------------------------------------------------+
 	{
-		i32 readResult = 1;
-		u32 readCount = 0;
-		while (readResult > 0)
+		// +==============================+
+		// |    Read From The COM Port    |
+		// +==============================+
+		if (app->comPort.isOpen)
 		{
 			char buffer[4096] = {};
-			readResult = platform->ReadComPort(&app->comPort, buffer, ArrayCount(buffer)-1);
-			if (readResult > 0)
+			u32 readCount = 0;
+			while (readCount < MAX_COM_READ_LOOPS)
 			{
-				// DEBUG_PrintLine("Read %d bytes \"%.*s\"", readResult, readResult, buffer);
-				
-				if (app->programInstance.isOpen == false ||
-					GC->sendComDataToPython == false ||
-					GC->alsoShowComData == true)
+				i32 readResult = platform->ReadComPort(&app->comPort, buffer, ArrayCount(buffer));
+				if (readResult > 0)
 				{
-					DataReceived(buffer, readResult);
+					// DEBUG_PrintLine("Read %d bytes \"%.*s\"", readResult, readResult, buffer);
+					ProcessComData(buffer, readResult, true);
+				}
+				else if (readResult < 0)
+				{
+					char* tempComName = ArenaString(TempArena, NtStr(app->comPort.name));
+					platform->CloseComPort(&app->mainHeap, &app->comPort);
+					// ClearConsole();
+					RefreshComPortList();
+					app->comMenu.comListSelectedIndex = app->availablePorts.count;
+					PopupError("Disconnected from \"%s\"", tempComName);
+					break;
+				}
+				else //No more bytes to read
+				{
+					break;
 				}
 				
-				if (app->programInstance.isOpen && GC->sendComDataToPython)
-				{
-					DEBUG_PrintLine("Writing to program instance \"%.*s\"", readResult, buffer);
-					
-					u32 numBytesWritten = platform->WriteProgramInput(&app->programInstance, &buffer[0], readResult);
-					if ((i32)numBytesWritten != readResult)
-					{
-						DEBUG_PrintLine("Only wrote %u/%u bytes to program instance", numBytesWritten, readResult);
-					}
-				}
-			}
-			else if (readResult < 0)
-			{
-				char* tempComName = ArenaString(TempArena, NtStr(app->comPort.name));
-				platform->CloseComPort(&app->mainHeap, &app->comPort);
-				ClearConsole();
-				RefreshComPortList();
-				app->comMenu.comListSelectedIndex = app->availablePorts.count;
-				PopupError("Disconnected from \"%s\"", tempComName);
+				readCount++;
 			}
 			
-			readCount++;
 			if (readCount >= MAX_COM_READ_LOOPS)
 			{
 				StatusError("Too much information recieved in a single frame");
-				break;
 			}
 		}
-	}
-	
-	// +==============================+
-	// |  Read From Program Instance  |
-	// +==============================+
-	if (app->programInstance.isOpen)
-	{
-		char readBuffer[256] = {};
 		
-		u32 numBytesRead = 1;
-		while (numBytesRead > 0)
+		// +==============================+
+		// |  Read From Program Instance  |
+		// +==============================+
+		if (app->programInstance.isOpen)
 		{
-			numBytesRead = platform->ReadProgramOutput(&app->programInstance, readBuffer, ArrayCount(readBuffer));
-			
-			if (numBytesRead > 0)
+			char readBuffer[256] = {};
+			while (u32 numBytesRead = platform->ReadProgramOutput(&app->programInstance, readBuffer, ArrayCount(readBuffer)))
 			{
 				// DEBUG_PrintLine("Read %u bytes from program: \"%.*s\"", numBytesRead, numBytesRead, readBuffer);
-				
-				if (GC->showPythonOutput)
-				{
-					DataReceived(readBuffer, numBytesRead);
-				}
+				ProcessPythonData(readBuffer, numBytesRead, true);
 			}
-			// else if (ButtonDown(Button_Control))
-			// {
-			// 	DEBUG_WriteLine("Nothing");
-			// }
+			
+			ProgramStatus_t programStatus = platform->GetProgramStatus(&app->programInstance);
+			if (programStatus != ProgramStatus_Running)
+			{
+				DEBUG_WriteLine("Program instance finished!");
+				platform->CloseProgramInstance(&app->programInstance);
+			}
 		}
 		
-		ProgramStatus_t programStatus = platform->GetProgramStatus(&app->programInstance);
-		if (programStatus != ProgramStatus_Running)
-		{
-			DEBUG_WriteLine("Program instance finished!");
-			platform->CloseProgramInstance(&app->programInstance);
-		}
-	}
-	
-	// +============================================+
-	// | Read Various Inputs and Route Accordingly  |
-	// +============================================+
-	if (true)
-	{
-		bool writeToComPort = (app->comPort.isOpen && (app->programInstance.isOpen == false || GC->sendInputToPython == false || GC->alsoSendInputToCom));
-		bool writeToProgram = (app->programInstance.isOpen && GC->sendInputToPython);
-		bool echoInput = GC->autoEchoInput;
-		
+		// +==============================+
+		// |  Route Dropped File Content  |
+		// +==============================+
 		if (app->droppedFile.content != nullptr && app->droppedFileProgress < app->droppedFile.size)
 		{
 			DEBUG_PrintLine("Writing \"%.*s\"", input->textInputLength, input->textInput);
 			u32 numBytesToWrite = app->droppedFile.size - app->droppedFileProgress;
-			if (numBytesToWrite > 32) { numBytesToWrite = 32; }
+			if (numBytesToWrite > FILE_SEND_MAX_CHUNK_SIZE) { numBytesToWrite = FILE_SEND_MAX_CHUNK_SIZE; }
 			const char* fileDataPntr = ((const char*)app->droppedFile.content) + app->droppedFileProgress;
 			
-			if (writeToComPort)
-			{
-				u32 writeResult = platform->WriteComPort(&app->comPort, fileDataPntr, numBytesToWrite);
-				if (writeResult == 0)
-				{
-					DEBUG_WriteLine("WriteComPort Error");
-				}
-				else
-				{
-					numBytesToWrite = writeResult;
-				}
-			}
-			
-			if (numBytesToWrite > 0)
-			{
-				if (echoInput) { DataReceived(fileDataPntr, numBytesToWrite); }
-				if (writeToProgram) { platform->WriteProgramInput(&app->programInstance, fileDataPntr, numBytesToWrite); }
-			}
+			ProcessInputData(fileDataPntr, numBytesToWrite, true);
 			
 			app->droppedFileProgress += numBytesToWrite;
 		}
-		
 		if (app->droppedFile.content != nullptr && app->droppedFileProgress >= app->droppedFile.size)
 		{
 			PopupInfo("Finished writing dropped file");
@@ -1884,104 +957,80 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 			app->droppedFileProgress = 0;
 		}
 		
-		if (input->textInputLength > 0)
+		// +==============================+
+		// |     Route Keyboard Input     |
+		// +==============================+
+		if (input->textInputLength > 0 && IsActiveElement(&ui->viewRec))
 		{
-			if (IsActiveElement(&ui->viewRec)) //route the input to the COM port
-			{
-				DEBUG_PrintLine("Writing \"%.*s\"", input->textInputLength, input->textInput);
-				if (echoInput) { DataReceived(&input->textInput[0], input->textInputLength); }
-				if (writeToComPort)
-				{
-					u32 writeResult = platform->WriteComPort(&app->comPort, &input->textInput[0], input->textInputLength);
-					if (writeResult == input->textInputLength)
-					{
-						app->txShiftRegister |= 0x80;
-					}
-					else if (writeResult == 0)
-					{
-						DEBUG_WriteLine("WriteComPort Error");
-					}
-					else
-					{
-						DEBUG_PrintLine("Wrote %u/%u bytes of text input", writeResult, input->textInputLength);
-					}
-				}
-				if (writeToProgram) { platform->WriteProgramInput(&app->programInstance, &input->textInput[0], input->textInputLength); }
-			}
+			DEBUG_PrintLine("Keyboard input \"%.*s\"", input->textInputLength, input->textInput);
+			ProcessInputData(&input->textInput[0], input->textInputLength, true);
 		}
 		
-		//TODO: Fix this
+		// +===============================+
+		// | Check for Send Button Pressed |
+		// +===============================+
 		if (IsInsideRec(ui->sendButtonRec, RenderMousePos) && input->mouseInsideWindow && !ui->mouseInMenu)
 		{
 			appOutput->cursorType = Cursor_Pointer;
 			if (ButtonReleased(MouseButton_Left) && IsInsideRec(ui->sendButtonRec, RenderMouseStartPos))
 			{
-				app->inputBox.chars[app->inputBox.numChars] = '\n';
-				app->inputBox.numChars++;
-				app->inputBox.chars[app->inputBox.numChars] = '\0';
+				HandleTextBoxEnter(&app->inputBox);
 			}
 		}
 		
 		// +==============================+
-		// |     Paste from Clipboard     |
+		// |  Route Paste from Clipboard  |
 		// +==============================+
 		if (IsActiveElement(&ui->viewRec) && ButtonDown(Button_Control) && ButtonPressed(Button_V))
 		{
 			TempPushMark();
 			
 			u32 clipboardDataSize = 0;
-			char* clipbardData = (char*)platform->CopyFromClipboard(TempArena, &clipboardDataSize);
+			char* clipboardData = (char*)platform->CopyFromClipboard(TempArena, &clipboardDataSize);
 			
-			if (clipbardData != nullptr)
+			if (clipboardData != nullptr)
 			{
 				StatusSuccess("Pasted %u bytes from clipboard", clipboardDataSize);
-				
-				char* sanatized = SanatizeStringAdvanced(clipbardData, clipboardDataSize, TempArena, true, false, true);
-				u32 sanatizedLength = (u32)strlen(sanatized);
-				
-				if (echoInput) { DataReceived(sanatized, sanatizedLength); }
-				if (writeToComPort)
-				{
-					platform->WriteComPort(&app->comPort, sanatized, sanatizedLength);
-					app->txShiftRegister |= 0x80;
-				}
-				if (writeToProgram) { platform->WriteProgramInput(&app->programInstance, sanatized, sanatizedLength); }
+				ProcessInputData(clipboardData, clipboardDataSize, true);
 			}
 			
 			TempPopMark();
 		}
-	}
-	
-	// +==============================+
-	// |    Drag and Dropped Files    |
-	// +==============================+
-	if (input->numDroppedFiles > 0)
-	{
-		for (u32 fIndex = 0; fIndex < input->numDroppedFiles; fIndex++)
+		
+		// +==============================+
+		// |    Drag and Dropped Files    |
+		// +==============================+
+		if (input->numDroppedFiles > 0)
 		{
-			const char* filePath = input->droppedFiles[fIndex];
-			
-			FileInfo_t fileInfo = platform->ReadEntireFile(filePath);
-			if (fileInfo.content != nullptr)
+			for (u32 fIndex = 0; fIndex < input->numDroppedFiles; fIndex++)
 			{
-				if (app->droppedFile.content == nullptr)
+				const char* filePath = input->droppedFiles[fIndex];
+				
+				FileInfo_t fileInfo = platform->ReadEntireFile(filePath);
+				if (fileInfo.content != nullptr)
 				{
-					PopupInfo("Writing %u bytes from \"%s\"", fileInfo.size, filePath);
-					app->droppedFileProgress = 0;
-					app->droppedFile = fileInfo;
+					if (app->droppedFile.content == nullptr)
+					{
+						PopupInfo("Writing %u bytes from \"%s\"", fileInfo.size, filePath);
+						app->droppedFileProgress = 0;
+						app->droppedFile = fileInfo;
+					}
+					else
+					{
+						PopupError("Already writing file to port");
+					}
 				}
 				else
 				{
-					PopupError("Already writing file to port");
+					PopupError("Failed to open dropped file \"%s\"", filePath);
 				}
-			}
-			else
-			{
-				PopupError("Failed to open dropped file \"%s\"", filePath);
 			}
 		}
 	}
 	
+	// +--------------------------------------------------------------+
+	// |                      Check UI Elements                       |
+	// +--------------------------------------------------------------+
 	// +==============================+
 	// |       Toggle Line Wrap       |
 	// +==============================+
@@ -2052,7 +1101,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 			{
 				char* tempComName = ArenaString(TempArena, NtStr(app->comPort.name));
 				platform->CloseComPort(&app->mainHeap, &app->comPort);
-				ClearConsole();
+				// ClearConsole();
 				RefreshComPortList();
 				app->comMenu.comListSelectedIndex = app->availablePorts.count;
 				PopupError("Closed \"%s\"", tempComName);
@@ -2063,7 +1112,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	//+================================+
 	//|         Show COM Menu          |
 	//+================================+
-	if ((ButtonPressed(Button_O) || ButtonPressed(Button_D)) && ButtonDown(Button_Control))
+	if (ButtonPressed(Button_D) && ButtonDown(Button_Control))
 	{
 		ComMenuToggle(&app->comMenu);
 		
@@ -2154,7 +1203,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	// +==================================+
 	// |      Toggle Output To File       |
 	// +==================================+
-	if (ButtonPressed(Button_F) && ButtonDown(Button_Control))
+	if (ButtonPressed(Button_O) && ButtonDown(Button_Control))
 	{
 		char* outputFileName = TempCombine(GetPortUserName(app->comPort.name), "_Output.txt");
 		
@@ -2221,92 +1270,6 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	{
 		app->showDebugMenu = !app->showDebugMenu;
 	}
-	
-	// +==============================+
-	// |         Debug Popups         |
-	// +==============================+
-	#if 0
-	#if DEBUG
-	{
-		if (ButtonPressed(Button_1))
-		{
-			PopupDebug("Something interesting is happening behind the scenes");
-			StatusDebug("Something interesting is happening behind the scenes");
-		}
-		if (ButtonPressed(Button_2))
-		{
-			PopupInfo("We are working :)");
-			StatusInfo("We are working :)");
-		}
-		if (ButtonPressed(Button_3))
-		{
-			PopupSuccess("That was awesome! Do it again.");
-			StatusSuccess("That was awesome! Do it again.");
-		}
-		if (ButtonPressed(Button_4))
-		{
-			PopupError("An error has occurred. The world might be ending...");
-			StatusError("An error has occurred. The world might be ending...");
-		}
-		if (ButtonPressed(Button_5))
-		{
-			PopupErrorTimed(10000, "This is a really long message for the user to read. Because it is so long we are going to give you 10 seconds to read it.");
-			StatusErrorTimed(10000, "This is a really long message for the user to read. Because it is so long we are going to give you 10 seconds to read it.");
-		}
-		
-		// +==============================+
-		// |        Debug Message         |
-		// +==============================+
-		if (ButtonPressed(Button_F2))
-		{
-			u32 testMessageLength = (u32)strlen(testMessage);
-			if (app->programInstance.isOpen && ButtonDown(Button_Shift))
-			{
-				DEBUG_PrintLine("Writing to program instance \"%.*s\"", testMessageLength, testMessage);
-				
-				u32 numBytesWritten = platform->WriteProgramInput(&app->programInstance, &testMessage[0], testMessageLength);
-				if ((i32)numBytesWritten != testMessageLength)
-				{
-					DEBUG_PrintLine("Only wrote %u/%u bytes to program instance", numBytesWritten, testMessageLength);
-				}
-			}
-			else
-			{
-				DataReceived(testMessage, testMessageLength);
-			}
-		}
-		
-		if (ButtonPressed(Button_F1) && app->lineList.charDataSize >= 1)
-		{
-			DropCharData(app->lineList.charDataSize - 1);
-		}
-		
-		if (ButtonPressed(Button_F3))
-		{
-			char* testPath = platform->GetAbsolutePath(TempArena, "Resources/test.txt");
-			PopupInfoTimed(100000, "%s", testPath);
-		}
-		
-		#if 0
-		static bool testBoxSelected = false;
-		if (input->mouseInsideWindow && ButtonReleased(MouseButton_Left) && !ui->mouseInMenu)
-		{
-			if (IsInsideRec(RenderMousePos, app->testTextBox.drawRec) &&
-				IsInsideRec(RenderMouseStartPos, app->testTextBox.drawRec))
-			{
-				if (!testBoxSelected) { app->testTextBox.cursorBegin = app->testTextBox.numChars; app->testTextBox.cursorEnd = app->testTextBox.cursorBegin; }
-				testBoxSelected = true;
-			}
-			else if (!IsInsideRec(RenderMouseStartPos, app->testTextBox.drawRec))
-			{
-				testBoxSelected = false;
-			}
-		}
-		TextBoxUpdate(&app->testTextBox, testBoxSelected && platform->windowHasFocus);
-		#endif
-	}
-	#endif
-	#endif
 	
 	RecalculateUiElements(ui, false);
 	TextBoxRellocate(&app->inputBox, ui->textInputRec);
@@ -2422,33 +1385,6 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 			else
 			{
 				StatusError("No python script defined!");
-			}
-		}
-	}
-	
-	// +==================================+
-	// |     Test Regular Expression      |
-	// +==================================+
-	if (ButtonPressed(Button_E) && ButtonDown(Button_Control))
-	{
-		u32 selectionLength = GetSelection(app->selectionStart, app->selectionEnd, false, nullptr);
-		if (selectionLength > 0)
-		{
-			const char* countExpression = GetRegularExpression(&app->regexList, GC->genericCountRegexName);
-			if (countExpression != nullptr)
-			{
-				TempPushMark();
-				
-				char* selectionBuffer = TempString(selectionLength);
-				GetSelection(app->selectionStart, app->selectionEnd, false, selectionBuffer);
-				
-				TestRegularExpression(countExpression, selectionBuffer, selectionLength);
-				
-				TempPopMark();
-			}
-			else
-			{
-				DEBUG_WriteLine("Could not get Generic Count Regular Expression");
 			}
 		}
 	}
@@ -2750,9 +1686,9 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	RsClearColorBuffer(GC->colors.textBackground);
 	RsClearDepthBuffer(1.0f);
 	
-	//+--------------------------------------+
-	//|            Render Lines              |
-	//+--------------------------------------+
+	// +==============================+
+	// |         Render Lines         |
+	// +==============================+
 	{
 		r32 lineWrapWidth = ui->viewRec.width - GC->lineSpacing;
 		i32 firstLine = max(0, ui->firstRenderLine);
@@ -2819,9 +1755,9 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	RsClearColorBuffer(NewColor(Color_TransparentBlack));
 	RsClearDepthBuffer(1.0f);
 	
-	//+--------------------------------------+
-	//|          Render Selection            |
-	//+--------------------------------------+
+	// +==============================+
+	// |       Render Selection       |
+	// +==============================+
 	if (app->selectionStart.lineIndex != app->selectionEnd.lineIndex ||
 		app->selectionStart.charIndex != app->selectionEnd.charIndex)
 	{
@@ -2905,9 +1841,9 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		RsSetViewMatrix(Mat4_Identity);
 	}
 	
-	//+--------------------------------------+
-	//|           Post Processing            |
-	//+--------------------------------------+
+	// +==============================+
+	// |       Post Processing        |
+	// +==============================+
 	RsBindFrameBuffer(nullptr);
 	RsBindShader(&app->outlineShader);
 	RsUpdateShader();
@@ -2919,9 +1855,9 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	RsBindShader(&app->simpleShader);
 	RsUpdateShader();
 	
-	//+--------------------------------------+
-	//|    Render Line Gutter Elements       |
-	//+--------------------------------------+
+	// +==============================+
+	// | Render Line Gutter Elements  |
+	// +==============================+
 	RsDrawGradient(ui->gutterRec, GC->colors.gutter1, GC->colors.gutter2, Dir2_Right);
 	{
 		i32 firstLine = max(0, ui->firstRenderLine);
@@ -2948,9 +1884,9 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		RsSetViewMatrix(Mat4_Identity);
 	}
 	
-	//+--------------------------------------+
-	//|           Render Scrollbar           |
-	//+--------------------------------------+
+	// +==============================+
+	// |       Render Scrollbar       |
+	// +==============================+
 	{
 		RsDrawGradient(NewRec(ui->scrollBarGutterRec.x - 8, ui->scrollBarGutterRec.y, 8, ui->scrollBarGutterRec.height),
 			{Color_TransparentBlack}, {Color_HalfTransparentBlack}, Dir2_Right);
@@ -3274,9 +2210,9 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		}
 	}
 	
-	// +================================+
-	// |          Clear Button          |
-	// +================================+
+	// +==============================+
+	// |         Clear Button         |
+	// +==============================+
 	{
 		const char* clearStr = "Clear";
 		v2 textSize = MeasureString(&app->uiFont, clearStr);
@@ -3311,18 +2247,18 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		RsDrawTexturedRec(pythonIconRec, {Color_White});
 	}
 	
-	// +==================================+
-	// |         Generic Counter          |
-	// +==================================+
+	// +==============================+
+	// |       Generic Counter        |
+	// +==============================+
 	if (GetRegularExpression(&app->regexList, GC->genericCountRegexName) != nullptr)
 	{
 		// RsPrintString(NewVec2(mainMenuButtonsRight + 10, app->testFont.maxExtendUp + 10), GC->colors.foreground, 1.0f,
 		// 				"Counter: %u", app->genericCounter);
 	}
 	
-	// +==================================+
-	// |       Save To File Button        |
-	// +==================================+
+	// +==============================+
+	// |     Save To File Button      |
+	// +==============================+
 	if (app->selectionStart.lineIndex != app->selectionEnd.lineIndex ||
 		app->selectionStart.charIndex != app->selectionEnd.charIndex)
 	{
@@ -3354,9 +2290,9 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	TextBoxRender(&app->testTextBox, rs, testBoxSelected && platform->windowHasFocus);
 	#endif
 	
-	// +================================+
-	// |       Draw Debug Overlay       |
-	// +================================+
+	// +==============================+
+	// |      Draw Debug Overlay      |
+	// +==============================+
 	if (app->showDebugMenu)
 	{
 		rec overlayRec = NewRec(10, 10, (r32)RenderScreenSize.x - 10*2, (r32)RenderScreenSize.y - 10*2);

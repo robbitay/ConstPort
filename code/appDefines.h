@@ -46,14 +46,26 @@ Date:   06\08\2017
 #define POPUP_MESSAGE_BUFFER_SIZE  512//bytes
 #define MAX_INPUT_HISTORY          8
 #define INPUT_TEXT_BUFFER_SIZE     256//bytes
-#define INPUT_ARENA_SIZE           1024*1024 //bytes
+#define INPUT_ARENA_SIZE           32*1024 //bytes
 #define TRANSIENT_MAX_NUMBER_MARKS 16
 #define MAX_JSON_TOKENS            2048
 #define MAX_USER_PORT_NAMES        24
 #define MAX_USER_PORT_NAME_LENGTH  40 //bytes
 #define MAX_COM_READ_LOOPS         5
+#define FILE_SEND_MAX_CHUNK_SIZE   32
+#define MAX_SAVED_LINES            4095 //lines TODO: Make this into a GlobalConfig option
 
 #define GLOBAL_CONFIG_FILEPATH     "Resources/Configuration/GlobalConfig.json"
 #define OUTPUT_FILE_NAME           "Output.txt"
+
+#define REAL_LOGO_HEIGHT 75
+#define ABOUT_INFO_TEXT_PADDING 20
+#define ABOUT_INFO_FORMAT_STRING "Const Port is an application written by me, Taylor Robbins. "                  \
+"It's primarily been developed for my own purposes at work while developing embedded firmware applications.\n\n" \
+"I release it under an open source license in the hope that others might also find it useful.\n\n"               \
+"If you find any bugs or have any suggestions you can email me at robbitay@gmail.com.\n\n"                       \
+"Latest releases can be found on the development blog:\nhttps://www.SilTutorials.com/blog\n\n"                   \
+"More info on the HMN project page:\nhttps://ConstPort.Handmade.Network/\n\n"                                    \
+"Application Version %u.%u (build %u)\nPlatform Version %u.%u (build %u)\n"
 
 #endif // _APP_DEFINES_H
