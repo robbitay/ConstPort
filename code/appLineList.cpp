@@ -80,7 +80,7 @@ void LineListAppendData(LineList_t* lineList, const char* newChars, u32 numChars
 	Assert(lineList->lastLine != nullptr);
 	Assert(lineList->charDataBase != nullptr);
 	Assert(lineList->charDataSize + numChars < lineList->charDataMaxSize);
-	if (newChars == nullptr || numChars == 0) { Assert(false); return; }
+	if (newChars == nullptr || numChars == 0) { return; }
 	
 	Line_t* linePntr = lineList->lastLine;
 	Assert(linePntr->chars + linePntr->numChars == lineList->charDataBase + lineList->charDataSize);

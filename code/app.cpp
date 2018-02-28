@@ -1847,6 +1847,43 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		bool writeToProgram = (app->programInstance.isOpen && GC->sendInputToPython);
 		bool echoInput = GC->autoEchoInput;
 		
+		if (app->droppedFile.content != nullptr && app->droppedFileProgress < app->droppedFile.size)
+		{
+			DEBUG_PrintLine("Writing \"%.*s\"", input->textInputLength, input->textInput);
+			u32 numBytesToWrite = app->droppedFile.size - app->droppedFileProgress;
+			if (numBytesToWrite > 32) { numBytesToWrite = 32; }
+			const char* fileDataPntr = ((const char*)app->droppedFile.content) + app->droppedFileProgress;
+			
+			if (writeToComPort)
+			{
+				u32 writeResult = platform->WriteComPort(&app->comPort, fileDataPntr, numBytesToWrite);
+				if (writeResult == 0)
+				{
+					DEBUG_WriteLine("WriteComPort Error");
+				}
+				else
+				{
+					numBytesToWrite = writeResult;
+				}
+			}
+			
+			if (numBytesToWrite > 0)
+			{
+				if (echoInput) { DataReceived(fileDataPntr, numBytesToWrite); }
+				if (writeToProgram) { platform->WriteProgramInput(&app->programInstance, fileDataPntr, numBytesToWrite); }
+			}
+			
+			app->droppedFileProgress += numBytesToWrite;
+		}
+		
+		if (app->droppedFile.content != nullptr && app->droppedFileProgress >= app->droppedFile.size)
+		{
+			PopupInfo("Finished writing dropped file");
+			platform->FreeFileMemory(&app->droppedFile);
+			ClearStruct(app->droppedFile);
+			app->droppedFileProgress = 0;
+		}
+		
 		if (input->textInputLength > 0)
 		{
 			if (IsActiveElement(&ui->viewRec)) //route the input to the COM port
@@ -1855,13 +1892,25 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 				if (echoInput) { DataReceived(&input->textInput[0], input->textInputLength); }
 				if (writeToComPort)
 				{
-					platform->WriteComPort(&app->comPort, &input->textInput[0], input->textInputLength);
-					app->txShiftRegister |= 0x80;
+					u32 writeResult = platform->WriteComPort(&app->comPort, &input->textInput[0], input->textInputLength);
+					if (writeResult == input->textInputLength)
+					{
+						app->txShiftRegister |= 0x80;
+					}
+					else if (writeResult == 0)
+					{
+						DEBUG_WriteLine("WriteComPort Error");
+					}
+					else
+					{
+						DEBUG_PrintLine("Wrote %u/%u bytes of text input", writeResult, input->textInputLength);
+					}
 				}
 				if (writeToProgram) { platform->WriteProgramInput(&app->programInstance, &input->textInput[0], input->textInputLength); }
 			}
 		}
 		
+		//TODO: Fix this
 		if (IsInsideRec(ui->sendButtonRec, RenderMousePos) && input->mouseInsideWindow && !ui->mouseInMenu)
 		{
 			appOutput->cursorType = Cursor_Pointer;
@@ -1871,11 +1920,6 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 				app->inputBox.numChars++;
 				app->inputBox.chars[app->inputBox.numChars] = '\0';
 			}
-		}
-		
-		if (!app->comMenu.open && app->inputBox.numChars > 0 && app->inputBox.chars[app->inputBox.numChars-1] == '\n' && IsActiveElement(&app->inputBox))
-		{
-			
 		}
 		
 		// +==============================+
@@ -1906,42 +1950,34 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 			
 			TempPopMark();
 		}
-		
-		// +==============================+
-		// |    Drag and Dropped Files    |
-		// +==============================+
-		if (input->numDroppedFiles > 0)
+	}
+	
+	// +==============================+
+	// |    Drag and Dropped Files    |
+	// +==============================+
+	if (input->numDroppedFiles > 0)
+	{
+		for (u32 fIndex = 0; fIndex < input->numDroppedFiles; fIndex++)
 		{
-			for (u32 fIndex = 0; fIndex < input->numDroppedFiles; fIndex++)
+			const char* filePath = input->droppedFiles[fIndex];
+			
+			FileInfo_t fileInfo = platform->ReadEntireFile(filePath);
+			if (fileInfo.content != nullptr)
 			{
-				const char* filePath = input->droppedFiles[fIndex];
-				
-				FileInfo_t fileInfo = platform->ReadEntireFile(filePath);
-				if (fileInfo.content != nullptr)
+				if (app->droppedFile.content == nullptr)
 				{
-					StatusInfo("Writing %u bytes from dropped file", fileInfo.size);
-					
-					const char* dataToWrite = (const char*)fileInfo.content;
-					u32 dataSize = fileInfo.size;
-					
-					if (echoInput)
-					{
-						DataReceived(dataToWrite, dataSize);
-					}
-					if (writeToComPort)
-					{
-						platform->WriteComPort(&app->comPort, dataToWrite, dataSize);
-						app->txShiftRegister |= 0x80;
-					}
-					if (writeToProgram)
-					{
-						platform->WriteProgramInput(&app->programInstance, dataToWrite, dataSize);
-					}
+					PopupInfo("Writing %u bytes from \"%s\"", fileInfo.size, filePath);
+					app->droppedFileProgress = 0;
+					app->droppedFile = fileInfo;
 				}
 				else
 				{
-					PopupError("Failed to open dropped file \"%s\"", filePath);
+					PopupError("Already writing file to port");
 				}
+			}
+			else
+			{
+				PopupError("Failed to open dropped file \"%s\"", filePath);
 			}
 		}
 	}

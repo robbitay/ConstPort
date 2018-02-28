@@ -376,14 +376,28 @@ WriteComPort_DEFINITION(Win32_WriteComPort)
 	
 	bool32 writeResult = WriteFile(comPortPntr->handle, newChars, numChars, &numBytesWritten, NULL);
 	
-	if (writeResult)
+	if (writeResult > 0)
 	{
 		// Win32_PrintLine("Wrote %d bytes", numBytesWritten);
-		return;
+		return numBytesWritten;
 	}
 	else
 	{
+		DWORD errorCode = GetLastError();
+		switch (errorCode)
+		{
+			case ERROR_IO_PENDING: //The write is completing asynchronously
+			{
+				return numBytesWritten;
+			} break;
+			
+			default:
+			{
+				return 0;
+			} break;
+		}
 		Win32_WriteLine("COM port write failed");
+		return writeResult;
 	}
 }
 

@@ -100,6 +100,9 @@ struct AppData_t
 	ComMenu_t comMenu;
 	
 	AppThread_t testThread;
+	
+	u32 droppedFileProgress;
+	FileInfo_t droppedFile;
 };
 
 #endif // _APP_DATA_H
