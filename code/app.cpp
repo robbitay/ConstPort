@@ -127,9 +127,8 @@ char* GetElapsedString(u64 timespan)
 #define PopupErrorTimed(duration, formatString, ...)   PopupMessage(__func__, GC->colors.errorMessage,   duration, formatString, ##__VA_ARGS__)
 
 void ChangeActiveElement(const void* elementPntr);
-char* SanatizeStringAdvanced(const char* strPntr, u32 numChars, MemoryArena_t* arenaPntr,
-	bool keepNewLines = true, bool keepBackspaces = false, bool convertInvalidToHex = false);
 void HandleTextBoxEnter(TextBox_t* textBox);
+char* Sanatize(MemoryArena_t* arenaPntr, const char* strPntr, u32 numChars, u8 sanatizationMode, u32* numCharsOut = nullptr);
 
 // +--------------------------------------------------------------+
 // |                   Application Source Files                   |

@@ -119,4 +119,15 @@ typedef enum
 	Alignment_Right,
 } Alignment_t;
 
+typedef enum
+{
+	Sanatization_None = 0x00,
+	Sanatization_StandardizeLineEndings  = 0x01,
+	Sanatization_CustomLineEndings       = 0x02,
+	Sanatization_DeleteLineEndings       = 0x04,
+	Sanatization_ConvertInvalidToHex     = 0x08,
+	Sanatization_DeleteInvalidCharacters = 0x10,
+	Sanatization_RemoveBackspaces        = 0x20,
+} SanatizationMode_t;
+
 #endif // _APP_STRUCTS_H

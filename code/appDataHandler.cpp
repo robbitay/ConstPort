@@ -37,6 +37,137 @@ u32 SanatizeString(const char* charPntr, u32 numChars, char* outputBuffer = null
 	return result;
 }
 
+char* Sanatize(MemoryArena_t* arenaPntr, const char* strPntr, u32 numChars, u8 sanatizationMode, u32* numCharsOut)
+{
+	char* result = nullptr;
+	u32 resultLength = 0;
+	
+	if (sanatizationMode == Sanatization_None)
+	{
+		result = PushArray(arenaPntr, char, numChars);
+	}
+	
+	bool standardizeLineEndings  = IsFlagSet(sanatizationMode, Sanatization_StandardizeLineEndings);
+	bool customLineEndings       = IsFlagSet(sanatizationMode, Sanatization_CustomLineEndings);
+	bool deleteLineEndings       = IsFlagSet(sanatizationMode, Sanatization_DeleteLineEndings);
+	bool convertInvalidToHex     = IsFlagSet(sanatizationMode, Sanatization_ConvertInvalidToHex);
+	bool deleteInvalidCharacters = IsFlagSet(sanatizationMode, Sanatization_DeleteInvalidCharacters);
+	bool removeBackspaces        = IsFlagSet(sanatizationMode, Sanatization_RemoveBackspaces);
+	
+	const char* newLineStr = GC->newLineString;
+	u32 newLineStrLength = (u32)strlen(newLineStr);
+	
+	//Run this code twice, once to measure and once to actually copy into buffer
+	for (u8 round = 0; round < 2; round++)
+	{
+		Assert(round == 0 || result != nullptr);
+		
+		u32 fromIndex = 0;
+		u32 toIndex = 0;
+		bool lastNewLineCharWasDropped = false; //used so we don't drop consecutive \r\n\r\n\r\n...
+		while (fromIndex < numChars)
+		{
+			char c = strPntr[fromIndex];
+			char lastChar = '\0';
+			if (fromIndex > 0) { lastChar = strPntr[fromIndex-1]; }
+			char nextChar = '\0';strPntr[fromIndex+1];
+			bool newLineCharDropped = false;
+			
+			bool charHandled = false;
+			if (c == '\n' || c == '\r')
+			{
+				if (deleteLineEndings)
+				{
+					//Drop all new line characters
+					charHandled = true;
+				}
+				else if ((standardizeLineEndings || customLineEndings) && (lastChar == '\n' || lastChar == '\r') && lastChar != c && !lastNewLineCharWasDropped)
+				{
+					//Drop the second character in a standard new-line sequence
+					newLineCharDropped = true;
+					charHandled = true;
+				}
+				else
+				{
+					if (standardizeLineEndings)
+					{
+						if (result != nullptr) { result[toIndex] = '\n'; }
+						toIndex++;
+						charHandled = true;
+					}
+					else if (customLineEndings)
+					{
+						if (result != nullptr) { memcpy(&result[toIndex], newLineStr, newLineStrLength); }
+						toIndex += newLineStrLength;
+						charHandled = true;
+					}
+					else
+					{
+						//keep the character like it is
+						if (result != nullptr) { result[toIndex] = c; }
+						toIndex++;
+						charHandled = true;
+					}
+				}
+			}
+			else if (c == '\b')
+			{
+				if (removeBackspaces)
+				{
+					//Drop backspace characters
+					charHandled = true;
+				}
+			}
+			else if (IsCharClassPrintable(c) || c == '\t')
+			{
+				if (result != nullptr) { result[toIndex] = c; }
+				toIndex++;
+				charHandled = true;
+			}
+			
+			if (!charHandled)
+			{
+				if (deleteInvalidCharacters)
+				{
+					//drop the invalid character
+				}
+				else if (convertInvalidToHex)
+				{
+					if (result != nullptr)
+					{
+						result[toIndex+0] = '[';
+						result[toIndex+1] = UpperHexChar(c);
+						result[toIndex+2] = LowerHexChar(c);
+						result[toIndex+3] = ']';
+					}
+					toIndex += 4;
+				}
+				else
+				{
+					//keep the invalid character as it was
+					if (result != nullptr) { result[toIndex] = c; }
+					toIndex++;
+				}
+			}
+			
+			fromIndex++;
+			lastNewLineCharWasDropped = newLineCharDropped;
+		}
+		
+		resultLength = toIndex;
+		if (resultLength == 0) { break; }
+		if (round == 0)
+		{
+			result = (char*)ArenaPush_(arenaPntr, resultLength+1);
+		}
+		result[resultLength] = '\0';
+	}
+	
+	if (numCharsOut != nullptr) { *numCharsOut = resultLength; }
+	return result;
+}
+
+#if 0
 char* SanatizeStringAdvanced(const char* strPntr, u32 numChars, MemoryArena_t* arenaPntr,
 	bool keepNewLines, bool keepBackspaces, bool convertInvalidToHex)
 {
@@ -123,6 +254,7 @@ char* SanatizeStringAdvanced(const char* strPntr, u32 numChars, MemoryArena_t* a
 	
 	return result;
 }
+#endif
 
 void ReplaceLineWithCapture(Line_t* linePntr, const char* regexStr)
 {

@@ -415,12 +415,12 @@ void TextBoxUpdate(TextBox_t* tb, bool selected)
 			TempPushMark();
 			
 			u32 clipboardDataSize = 0;
-			char* clipbardData = (char*)platform->CopyFromClipboard(TempArena, &clipboardDataSize);
+			char* clipboardData = (char*)platform->CopyFromClipboard(TempArena, &clipboardDataSize);
 			
-			if (clipbardData != nullptr)
+			if (clipboardData != nullptr)
 			{
-				char* sanatized = SanatizeStringAdvanced(clipbardData, clipboardDataSize, TempArena, false, false, true);
-				u32 sanatizedLength = (u32)strlen(sanatized);
+				u32 sanatizedLength = 0;
+				char* sanatized = Sanatize(TempArena, clipboardData, clipboardDataSize, (Sanatization_ConvertInvalidToHex|Sanatization_DeleteLineEndings), &sanatizedLength);
 				
 				for (u32 cIndex = 0; cIndex < sanatizedLength; cIndex++)
 				{
