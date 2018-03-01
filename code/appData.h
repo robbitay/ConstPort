@@ -94,7 +94,7 @@ struct AppData_t
 	TextBox_t inputBox;
 	TextBox_t testTextBox;
 	Checkbox_t lineWrapCheckbox;
-	Checkbox_t lineNumbersCheckbox;
+	Checkbox_t hexModeCheckbox;
 	Checkbox_t elapsedBannersCheckbox;
 	
 	ComMenu_t comMenu;
@@ -103,6 +103,13 @@ struct AppData_t
 	
 	u32 droppedFileProgress;
 	FileInfo_t droppedFile;
+	
+	u32 hexLineBreakBeforeCharCount;
+	u8* hexLineBreakBeforeChars;
+	u32 hexLineBreakAfterCharCount;
+	u8* hexLineBreakAfterChars;
+	
+	u64 lastLineListPush;
 };
 
 #endif // _APP_DATA_H

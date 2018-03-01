@@ -148,4 +148,70 @@ const char* GetStopBitsString(StopBits_t stopBits)
 	};
 }
 
+u32 GetBaudRateValue(BaudRate_t baudRate)
+{
+	switch (baudRate)
+	{
+		case BaudRate_110:    return 110;
+		case BaudRate_300:    return 300;
+		case BaudRate_600:    return 600;
+		case BaudRate_1200:   return 1200;
+		case BaudRate_2400:   return 2400;
+		case BaudRate_4800:   return 4800;
+		case BaudRate_9600:   return 9600;
+		case BaudRate_14400:  return 14400;
+		case BaudRate_19200:  return 19200;
+		case BaudRate_38400:  return 38400;
+		case BaudRate_57600:  return 57600;
+		case BaudRate_115200: return 115200;
+		case BaudRate_128000: return 128000;
+		case BaudRate_256000: return 256000;
+		default: return 0;
+	};
+}
+
+//NOTE: Returns the time in microseconds
+r32 GetBitTimeForBaudRate(BaudRate_t baudRate)
+{
+	u32 baudRateValue = GetBaudRateValue(baudRate);
+	r32 result = 1000000.f / (r32)baudRateValue;
+	return result;
+	
+}
+
+u8 GetNumBitsForComSettings(const ComSettings_t* comSettingsPntr)
+{
+	u8 result = 0;
+	
+	result += 1; //Start bit is always there
+	
+	result += comSettingsPntr->numBits;
+	
+	if (comSettingsPntr->parity != Parity_None)
+	{
+		result += 1;
+	}
+	
+	if (comSettingsPntr->stopBits == StopBits_1)
+	{
+		result += 1;
+	}
+	else if (comSettingsPntr->stopBits == StopBits_1_5 || comSettingsPntr->stopBits == StopBits_2)
+	{
+		result += 2;
+	}
+	
+	return result;
+}
+
+u32 GetNumBytesInPeriodForComSettings(const ComSettings_t* comSettingsPntr, r32 periodMicro)
+{
+	u8 numBits = GetNumBitsForComSettings(comSettingsPntr);
+	r32 bitTime = GetBitTimeForBaudRate(comSettingsPntr->baudRate);
+	r32 byteTime = bitTime * (r32)numBits;
+	i32 result = FloorR32(periodMicro / byteTime);
+	if (result <= 0) { return 0; }
+	else { return (u32)result; }
+}
+
 #endif //  _OSX_COM_H

@@ -7,6 +7,7 @@
 	"elapsed_banner_enabled": true,
 	"elapsed_banner_time":    15, //secs
 	"elapsed_banner_height":  25, //px
+	"auto_new_line_time":     1000, //ms
 	
 	"mark_height":       1, //px
 	"thick_mark_height": 5, //px
@@ -29,7 +30,7 @@
 	"show_hover_cursor": true,
 	"highlight_hover_line": true,
 	"show_file_cursor": false,
-	"show_input_text_box": true,
+	"show_input_text_box": false,
 	
 	"rx_tx_led_delay":     4, //frames
 	"rx_tx_led_ring_size": 1, //frames
@@ -37,6 +38,10 @@
 	"circular_tx_led":     false,
 	
 	"new_line_string": "\n",
+	
+	"hex_max_line_length":         16, //bytes
+	"hex_line_break_before_chars": "7E",
+	"hex_line_break_after_chars":  "0A,0D",
 	
 	"auto_echo_input": false,
 	"show_file_after_saving": true,
@@ -64,9 +69,9 @@
 	"send_input_to_python":    true,
 	"also_send_input_to_com":  false,
 	"show_python_output":      true,
-	// "python_script":           "Resources/Scripts/hex.py",
+	"python_script":           "Resources/Scripts/hex.py",
 	// "python_script":           "Resources/Scripts/asciiHex.py",
-	"python_script":           "Resources/Scripts/bleUartCommands.py",
+	// "python_script":           "Resources/Scripts/bleUartCommands.py",
 	// "python_script":           "Resources/Scripts/testScript.py",
 	
 	"port_names":

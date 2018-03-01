@@ -12,6 +12,7 @@ void SaveSelectionToFile(TextLocation_t start, TextLocation_t end, bool openFile
 // +--------------------------------------------------------------+
 // |                       Helper Functions                       |
 // +--------------------------------------------------------------+
+#if 1
 u32 SanatizeString(const char* charPntr, u32 numChars, char* outputBuffer = nullptr)
 {
 	u32 result = 0;
@@ -36,8 +37,9 @@ u32 SanatizeString(const char* charPntr, u32 numChars, char* outputBuffer = null
 	
 	return result;
 }
+#endif
 
-char* Sanatize(MemoryArena_t* arenaPntr, const char* strPntr, u32 numChars, u8 sanatizationMode, u32* numCharsOut)
+char* Sanatize(MemoryArena_t* arenaPntr, const char* strPntr, u32 numChars, u16 sanatizationMode, u32* numCharsOut)
 {
 	char* result = nullptr;
 	u32 resultLength = 0;
@@ -45,6 +47,9 @@ char* Sanatize(MemoryArena_t* arenaPntr, const char* strPntr, u32 numChars, u8 s
 	if (sanatizationMode == Sanatization_None)
 	{
 		result = PushArray(arenaPntr, char, numChars);
+		memcpy(result, strPntr, numChars);
+		if (numCharsOut != nullptr) { *numCharsOut = numChars; }
+		return result;
 	}
 	
 	bool standardizeLineEndings  = IsFlagSet(sanatizationMode, Sanatization_StandardizeLineEndings);
@@ -53,9 +58,14 @@ char* Sanatize(MemoryArena_t* arenaPntr, const char* strPntr, u32 numChars, u8 s
 	bool convertInvalidToHex     = IsFlagSet(sanatizationMode, Sanatization_ConvertInvalidToHex);
 	bool deleteInvalidCharacters = IsFlagSet(sanatizationMode, Sanatization_DeleteInvalidCharacters);
 	bool removeBackspaces        = IsFlagSet(sanatizationMode, Sanatization_RemoveBackspaces);
+	bool leaveFirstFiveHex       = IsFlagSet(sanatizationMode, Sanatization_LeaveFirstFiveHex);
+	bool removeNullTerminators   = IsFlagSet(sanatizationMode, Sanatization_RemoveNullTerminators);
+	bool convertAllToHex         = IsFlagSet(sanatizationMode, Sanatization_ConvertAllToHex);
 	
 	const char* newLineStr = GC->newLineString;
 	u32 newLineStrLength = (u32)strlen(newLineStr);
+	// DEBUG_PrintLine("Sanatizing %u bytes \"%.*s\"", numChars, numChars, strPntr);
+	// DEBUG_PrintLine("New Line = %u bytes \"%s\"", newLineStrLength, newLineStr);
 	
 	//Run this code twice, once to measure and once to actually copy into buffer
 	for (u8 round = 0; round < 2; round++)
@@ -74,16 +84,30 @@ char* Sanatize(MemoryArena_t* arenaPntr, const char* strPntr, u32 numChars, u8 s
 			bool newLineCharDropped = false;
 			
 			bool charHandled = false;
-			if (c == '\n' || c == '\r')
+			
+			if (convertAllToHex)
+			{
+				if (result != nullptr)
+				{
+					result[toIndex+0] = UpperHexChar(c);
+					result[toIndex+1] = LowerHexChar(c);
+					result[toIndex+2] = ' ';
+				}
+				toIndex += 3;
+				charHandled = true;
+			}
+			else if (c == '\n' || c == '\r')
 			{
 				if (deleteLineEndings)
 				{
 					//Drop all new line characters
+					// DEBUG_WriteLine("dropped new line character");
 					charHandled = true;
 				}
 				else if ((standardizeLineEndings || customLineEndings) && (lastChar == '\n' || lastChar == '\r') && lastChar != c && !lastNewLineCharWasDropped)
 				{
 					//Drop the second character in a standard new-line sequence
+					// DEBUG_WriteLine("dropped second in sequence");
 					newLineCharDropped = true;
 					charHandled = true;
 				}
@@ -91,12 +115,14 @@ char* Sanatize(MemoryArena_t* arenaPntr, const char* strPntr, u32 numChars, u8 s
 				{
 					if (standardizeLineEndings)
 					{
+						// DEBUG_WriteLine("standardized new line character");
 						if (result != nullptr) { result[toIndex] = '\n'; }
 						toIndex++;
 						charHandled = true;
 					}
 					else if (customLineEndings)
 					{
+						// DEBUG_WriteLine("inserting custom new line");
 						if (result != nullptr) { memcpy(&result[toIndex], newLineStr, newLineStrLength); }
 						toIndex += newLineStrLength;
 						charHandled = true;
@@ -104,6 +130,7 @@ char* Sanatize(MemoryArena_t* arenaPntr, const char* strPntr, u32 numChars, u8 s
 					else
 					{
 						//keep the character like it is
+						// DEBUG_WriteLine("Leaving new line character");
 						if (result != nullptr) { result[toIndex] = c; }
 						toIndex++;
 						charHandled = true;
@@ -118,11 +145,28 @@ char* Sanatize(MemoryArena_t* arenaPntr, const char* strPntr, u32 numChars, u8 s
 					charHandled = true;
 				}
 			}
+			else if (c == '\0')
+			{
+				if (removeNullTerminators)
+				{
+					//Drop null term characters
+					charHandled = true;
+				}
+			}
 			else if (IsCharClassPrintable(c) || c == '\t')
 			{
 				if (result != nullptr) { result[toIndex] = c; }
 				toIndex++;
 				charHandled = true;
+			}
+			else if (c == 0x01 || c == 0x02 || c == 0x03 || c == 0x04 || c == 0x05)
+			{
+				if (leaveFirstFiveHex)
+				{
+					if (result != nullptr) { result[toIndex] = c; }
+					toIndex++;
+					charHandled = true;
+				}
 			}
 			
 			if (!charHandled)
@@ -776,23 +820,122 @@ void SaveSelectionToFile(TextLocation_t start, TextLocation_t end, bool openFile
 //Process functions take input, sanatize them, and then call the
 //appropriate Push function based off configuration options and application state
 
-void PushLineListData(const char* strPntr, u32 strLength, bool sanatize)
+void PushLineListData(const char* strPntr, u32 strLength, bool justSendNewLine = false)
 {
 	if (strLength == 0) { return; }
 	
-	Line_t* lastLine = app->lineList.lastLine;
+	bool useHexNewLineChar = false;
+	u8 hexNewLineChar = 0x00;
 	
-	for (u32 cIndex = 0; cIndex < strLength; cIndex++)
+	TempPushMark();
+	u32 sanatizedLength = 0;
+	char* sanatizedStr = nullptr;
+	
+	if (!app->hexModeCheckbox.checked)
 	{
-		char newChar = strPntr[cIndex];
-		if (newChar == '\n' || newChar == '\r')
+		sanatizedStr = Sanatize(TempArena, strPntr, strLength, Sanatization_None, &sanatizedLength);
+	}
+	else
+	{
+		sanatizedStr = Sanatize(TempArena, strPntr, strLength, Sanatization_StandardizeLineEndings, &sanatizedLength);
+	}
+	
+	Line_t* lastLine = app->lineList.lastLine;
+	for (u32 cIndex = 0; cIndex < sanatizedLength; cIndex++)
+	{
+		lastLine->timestamp = GetTimestamp(platform->localTime);
+		char newChar = sanatizedStr[cIndex];
+		bool pushCharacterBefore = false;
+		bool deleteCharacter     = false;
+		bool pushNewLine         = false;
+		bool pushCharacterAfter  = false;
+		
+		if (app->hexModeCheckbox.checked)
+		{
+			if (IsCharLineBreakBefore(newChar))
+			{
+				if (lastLine->numChars > 0) { pushNewLine = true; }
+				pushCharacterAfter = true;
+			}
+			else if (IsCharLineBreakAfter(newChar))
+			{
+				pushCharacterBefore = true;
+				pushNewLine = true;
+			}
+			else
+			{
+				pushCharacterBefore = true;
+				//TODO: This assumes our hex representation is always 3 bytes. Can we make this more robust?
+				if (GC->hexMaxLineLength > 0 && ((lastLine->numChars+1) / 3) + 1 >= (u32)GC->hexMaxLineLength)
+				{
+					pushNewLine = true;
+				}
+			}
+		}
+		else
+		{
+			if (newChar == '\n')
+			{
+				pushNewLine = true;
+			}
+			else if (newChar == '\b')
+			{
+				deleteCharacter = true;
+			}
+			else
+			{
+				pushCharacterBefore = true;
+			}
+		}
+		
+		if (justSendNewLine) { pushCharacterBefore = false; pushCharacterAfter = false; pushNewLine = true; deleteCharacter = false; }
+		
+		if (pushCharacterBefore)
+		{
+			if (app->hexModeCheckbox.checked)
+			{
+				if (lastLine->numChars > 0) { LineListAppendData(&app->lineList, " ", 1); }
+				char upperChar = UpperHexChar(newChar);
+				char lowerChar = LowerHexChar(newChar);
+				LineListAppendData(&app->lineList, &upperChar, 1);
+				LineListAppendData(&app->lineList, &lowerChar, 1);
+			}
+			else
+			{
+				LineListAppendData(&app->lineList, &newChar, 1);
+			}
+			
+			TriggerResults_t results = {};
+			results.addLineToBuffer = true;
+			ApplyRegexTriggers(&results, true, lastLine);
+			if (results.createNewLine) { ApplyRegexTriggers(&results, false, lastLine); }
+			
+			if (results.clearScreen)
+			{
+				ClearConsole();
+				lastLine = app->lineList.lastLine;
+			}
+			else if (results.createNewLine)
+			{
+				if (results.addLineToBuffer)
+				{
+					lastLine = LineListPushLine(&app->lineList);
+				}
+				else
+				{
+					LineListClearLine(&app->lineList);
+				}
+			}
+		}
+		
+		if (deleteCharacter)
+		{
+			bool charRemoved = LineListPopCharacter(&app->lineList);
+		}
+		
+		if (pushNewLine)
 		{
 			Line_t* finishedLine = lastLine;
-			
-			if (finishedLine->timestamp == 0)
-			{
-				finishedLine->timestamp = GetTimestamp(platform->localTime);
-			}
 			
 			if (app->writeToFile)
 			{
@@ -833,7 +976,14 @@ void PushLineListData(const char* strPntr, u32 strLength, bool sanatize)
 					}
 				}
 				platform->AppendFile(&app->outputFile, finishedLine->chars, finishedLine->numChars);
-				platform->AppendFile(&app->outputFile, "\r\n", 2);
+				if (platform->platformType == Platform_Windows)
+				{
+					platform->AppendFile(&app->outputFile, "\r\n", 2);
+				}
+				else
+				{
+					platform->AppendFile(&app->outputFile, "\n", 1);
+				}
 				
 				LineListClearLine(&app->lineList);
 			}
@@ -862,14 +1012,21 @@ void PushLineListData(const char* strPntr, u32 strLength, bool sanatize)
 				}
 			}
 		}
-		else if (newChar == '\b')
+		
+		if (pushCharacterAfter)
 		{
-			bool charRemoved = LineListPopCharacter(&app->lineList);
-		}
-		else
-		{
-			//TODO: Change invalid characters to something readable?
-			LineListAppendData(&app->lineList, &newChar, 1);
+			if (app->hexModeCheckbox.checked)
+			{
+				if (lastLine->numChars > 0) { LineListAppendData(&app->lineList, " ", 1); }
+				char upperChar = UpperHexChar(newChar);
+				char lowerChar = LowerHexChar(newChar);
+				LineListAppendData(&app->lineList, &upperChar, 1);
+				LineListAppendData(&app->lineList, &lowerChar, 1);
+			}
+			else
+			{
+				LineListAppendData(&app->lineList, &newChar, 1);
+			}
 			
 			TriggerResults_t results = {};
 			results.addLineToBuffer = true;
@@ -907,7 +1064,11 @@ void PushLineListData(const char* strPntr, u32 strLength, bool sanatize)
 		{
 			HandleDownsize(true, MAX_SAVED_LINES);
 		}
+		
+		app->lastLineListPush = platform->programTime;
 	}
+	
+	TempPopMark();
 }
 
 void PushComData(const char* strPntr, u32 strLength, bool sanatize)
@@ -917,25 +1078,37 @@ void PushComData(const char* strPntr, u32 strLength, bool sanatize)
 	
 	if (sanatize)
 	{
-		//TODO: Change line endings into whatever is defined in GlobalConfig
+		TempPushMark();
+		u32 sanatizedLength = strLength;
+		char* sanatized = Sanatize(TempArena, strPntr, strLength, Sanatization_CustomLineEndings, &sanatizedLength);
+		platform->WriteComPort(&app->comPort, sanatized, sanatizedLength);
+		TempPopMark();
 	}
-	
-	platform->WriteComPort(&app->comPort, strPntr, strLength);
+	else
+	{
+		platform->WriteComPort(&app->comPort, strPntr, strLength);
+	}
 	
 	app->txShiftRegister |= 0x80;
 }
 
-void PushPythonData(const char* strPntr, u32 strLength, bool sanatize)
+void PushPythonData(const char* strPntr, u32 strLength)
 {
 	if (strLength == 0) { return; }
 	if (app->programInstance.isOpen == false) { return; }
 	
-	if (sanatize)
+	if (false) //(GC->customLineEndings)//TODO: Add this option to GC?
 	{
-		//TODO: Change line endings into whatever is defined in GlobalConfig
+		TempPushMark();
+		u32 sanatizedLength = strLength;
+		char* sanatized = Sanatize(TempArena, strPntr, strLength, Sanatization_CustomLineEndings, &sanatizedLength);
+		platform->WriteProgramInput(&app->programInstance, sanatized, sanatizedLength);
+		TempPopMark();
 	}
-	
-	u32 writeResult = platform->WriteProgramInput(&app->programInstance, strPntr, strLength);
+	else
+	{
+		platform->WriteProgramInput(&app->programInstance, strPntr, strLength);
+	}
 }
 
 //NOTE: This should process clipboard data, keyboard input, and textbox data
@@ -943,58 +1116,43 @@ void ProcessInputData(const char* inputData, u32 inputDataLength, bool sanatize)
 {
 	if (inputDataLength == 0) { return; }
 	
-	if (sanatize)
-	{
-		//TODO: Sanatize the line endings to '\n'
-	}
-	
 	if (app->comPort.isOpen && !(app->programInstance.isOpen && GC->sendInputToPython && !GC->alsoSendInputToCom))
 	{
 		PushComData(inputData, inputDataLength, sanatize);
 	}
 	if (app->programInstance.isOpen && GC->sendInputToPython)
 	{
-		PushPythonData(inputData, inputDataLength, sanatize);
+		PushPythonData(inputData, inputDataLength);
 	}
 	if (GC->autoEchoInput)
 	{
-		PushLineListData(inputData, inputDataLength, sanatize);
+		PushLineListData(inputData, inputDataLength);
 	}
 }
 
-void ProcessComData(const char* comData, u32 comDataLength, bool sanatize)
+void ProcessComData(const char* comData, u32 comDataLength)
 {
 	if (comDataLength == 0) { return; }
-	
-	if (sanatize)
-	{
-		//TODO: Sanatize the line endings to '\n'
-	}
 	
 	bool sendDataToPython = (app->programInstance.isOpen && GC->sendComDataToPython);
 	if (sendDataToPython)
 	{
-		PushPythonData(comData, comDataLength, sanatize);
+		PushPythonData(comData, comDataLength);
 	}
 	if (!sendDataToPython || GC->alsoShowComData)
 	{
-		PushLineListData(comData, comDataLength, sanatize);
+		PushLineListData(comData, comDataLength);
 	}
 	
 	app->rxShiftRegister |= 0x80;
 }
 
-void ProcessPythonData(const char* pythonData, u32 pythonDataLength, bool sanatize)
+void ProcessPythonData(const char* pythonData, u32 pythonDataLength)
 {
 	if (pythonDataLength == 0) { return; }
 	
-	if (sanatize)
-	{
-		//TODO: Sanatize the line endings to '\n'
-	}
-	
 	if (GC->showPythonOutput)
 	{
-		PushLineListData(pythonData, pythonDataLength, sanatize);
+		PushLineListData(pythonData, pythonDataLength);
 	}
 }

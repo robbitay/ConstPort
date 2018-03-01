@@ -219,8 +219,8 @@ u8* GetHexForAsciiString(const char* inputStr, u32 inputStrLength, u32* numBytes
 		if (IsCharClassHexChar(c) && IsCharClassHexChar(nextChar))
 		{
 			Assert(bytePntr >= result && bytePntr < result + numBytes);
-			u8 upper = GetHexCarValue(c);
-			u8 lower = GetHexCarValue(nextChar);
+			u8 upper = GetHexCharValue(c);
+			u8 lower = GetHexCharValue(nextChar);
 			*bytePntr = (upper << 4) + (lower);
 			// DEBUG_PrintLine("Convert %c and %c to %u (%u+%u)", c, nextChar, *bytePntr, upper, lower);
 			bytePntr++;

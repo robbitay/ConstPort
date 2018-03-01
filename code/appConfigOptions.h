@@ -15,6 +15,7 @@ Date:   09\26\2017
 	ConfigurationBool  ("elapsed_banner_enabled",      elapsedBannerEnabled,   true);
 	ConfigurationInt32 ("elapsed_banner_time",         elapsedBannerTime,      15);
 	ConfigurationInt32 ("elapsed_banner_height",       elapsedBannerHeight,    25);
+	ConfigurationInt32 ("auto_new_line_time",          autoNewLineTime,        0);
 	ConfigurationInt32 ("mark_height",                 markHeight,             1);
 	ConfigurationInt32 ("thick_mark_height",           thickMarkHeight,        5);
 	ConfigurationInt32 ("status_message_time",         statusMessageTime,      3);
@@ -45,6 +46,10 @@ Date:   09\26\2017
 	ConfigurationBool  ("show_input_text_box",         showInputTextBox,       true);
 	
 	ConfigurationString("new_line_string",             newLineString,          nullptr);
+	
+	ConfigurationInt32 ("hex_max_line_length",         hexMaxLineLength,       256);
+	ConfigurationString("hex_line_break_before_chars", hexLineBreakBeforeChars,nullptr);
+	ConfigurationString("hex_line_break_after_chars",  hexLineBreakAfterChars, nullptr);
 	
 	ConfigurationInt32 ("popup_corner_radius",         popupCornerRadius,      7);
 	ConfigurationInt32 ("popup_outline_thickness",     popupOutlineThickness,  1);

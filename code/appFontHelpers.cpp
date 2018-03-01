@@ -37,6 +37,8 @@ inline v2 MeasureString(const Font_t* font, const char* string, u32 numChars)
 		else if (IsCharClassPrintable(string[cIndex]) == false)
 		{
 			//Don't do anything
+			u32 spaceIndex = GetFontCharIndex(font, ' ');
+			currentPos.x += font->chars[spaceIndex].advanceX;
 		}
 		else
 		{
@@ -214,10 +216,11 @@ i32 GetFormattedStrIndex(const Font_t* font, const char* string, u32 numCharacte
 		u32 numChars = FindNextFormatChunk(font, &string[cIndex], numCharacters - cIndex, maxWidth, preserveWords);
 		if (numChars == 0) { numChars = 1; }
 		
-		while (numChars > 1 && IsCharClassWhitespace(string[cIndex + numChars-1]))
-		{
-			numChars--;
-		}
+		//trim off whitespace
+		// while (numChars > 1 && IsCharClassWhitespace(string[cIndex + numChars-1]))
+		// {
+		// 	numChars--;
+		// }
 		
 		r32 yPos = numLines * font->lineHeight;
 		if (relativePos.y >= yPos)
@@ -230,6 +233,7 @@ i32 GetFormattedStrIndex(const Font_t* font, const char* string, u32 numCharacte
 			result += cIndex;
 		}
 		
+		//re-obtain the white space we trimmed off
 		if (cIndex+numChars < numCharacters && string[cIndex+numChars] == '\r')
 		{
 			numChars++;
@@ -238,10 +242,10 @@ i32 GetFormattedStrIndex(const Font_t* font, const char* string, u32 numCharacte
 		{
 			numChars++;
 		}
-		while (cIndex+numChars < numCharacters && string[cIndex+numChars] == ' ')
-		{
-			numChars++;
-		}
+		// while (cIndex+numChars < numCharacters && string[cIndex+numChars] == ' ')
+		// {
+		// 	numChars++;
+		// }
 		
 		numLines++;
 		cIndex += numChars;

@@ -128,7 +128,9 @@ char* GetElapsedString(u64 timespan)
 
 void ChangeActiveElement(const void* elementPntr);
 void HandleTextBoxEnter(TextBox_t* textBox);
-char* Sanatize(MemoryArena_t* arenaPntr, const char* strPntr, u32 numChars, u8 sanatizationMode, u32* numCharsOut = nullptr);
+char* Sanatize(MemoryArena_t* arenaPntr, const char* strPntr, u32 numChars, u16 sanatizationMode, u32* numCharsOut = nullptr);
+bool IsCharLineBreakBefore(char newChar);
+bool IsCharLineBreakAfter(char newChar);
 
 // +--------------------------------------------------------------+
 // |                   Application Source Files                   |
@@ -538,6 +540,62 @@ void HandleTextBoxEnter(TextBox_t* textBox)
 	}
 }
 
+void ParseLineBreakConfigOptions()
+{
+	if (app->hexLineBreakBeforeChars != nullptr)
+	{
+		ArenaPop(&app->mainHeap, app->hexLineBreakBeforeChars);
+		app->hexLineBreakBeforeChars = nullptr;
+	}
+	if (app->hexLineBreakAfterChars != nullptr)
+	{
+		ArenaPop(&app->mainHeap, app->hexLineBreakAfterChars);
+		app->hexLineBreakAfterChars = nullptr;
+	}
+	
+	app->hexLineBreakBeforeCharCount = 0;
+	app->hexLineBreakAfterCharCount = 0;
+	
+	if (GC->hexLineBreakBeforeChars != nullptr)
+	{
+		app->hexLineBreakBeforeChars = BytesFromMixedHexString(&app->mainHeap, NtStr(GC->hexLineBreakBeforeChars), &app->hexLineBreakBeforeCharCount);
+	}
+	if (GC->hexLineBreakAfterChars != nullptr)
+	{
+		app->hexLineBreakAfterChars = BytesFromMixedHexString(&app->mainHeap, NtStr(GC->hexLineBreakAfterChars), &app->hexLineBreakAfterCharCount);
+	}
+}
+
+bool IsCharLineBreakBefore(char newChar)
+{
+	if (app->hexLineBreakBeforeChars != nullptr)
+	{
+		for (u32 cIndex = 0; cIndex < app->hexLineBreakBeforeCharCount; cIndex++)
+		{
+			if (newChar == app->hexLineBreakBeforeChars[cIndex])
+			{
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+bool IsCharLineBreakAfter(char newChar)
+{
+	if (app->hexLineBreakAfterChars != nullptr)
+	{
+		for (u32 cIndex = 0; cIndex < app->hexLineBreakAfterCharCount; cIndex++)
+		{
+			if (newChar == app->hexLineBreakAfterChars[cIndex])
+			{
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
 //+================================================================+
 //|                       App Get Version                          |
 //+================================================================+
@@ -598,6 +656,7 @@ EXPORT AppInitialize_DEFINITION(App_Initialize)
 	// |    External Initializations    |
 	// +================================+
 	LoadGlobalConfiguration(platform, &app->globalConfig, &app->mainHeap);
+	ParseLineBreakConfigOptions();
 	InitializeUiElements(&app->uiElements);
 	InitializeRenderState();
 	InitializeMenuHandler(&app->menuHandler, &app->mainHeap);
@@ -662,8 +721,8 @@ EXPORT AppInitialize_DEFINITION(App_Initialize)
 	
 	InitializeCheckbox(&app->lineWrapCheckbox, NewRec(100, 10, 10, 10), &app->mainHeap, "Line Wrap", NewColor(Color_White));
 	CheckboxSet(&app->lineWrapCheckbox, GC->lineWrapEnabled);
-	InitializeCheckbox(&app->lineNumbersCheckbox, NewRec(100, 10, 10, 10), &app->mainHeap, "Gutters", NewColor(Color_White));
-	CheckboxSet(&app->lineNumbersCheckbox, GC->showLineNumbers);
+	InitializeCheckbox(&app->hexModeCheckbox, NewRec(100, 10, 10, 10), &app->mainHeap, "Hex Mode", NewColor(Color_White));
+	CheckboxSet(&app->hexModeCheckbox, false);
 	InitializeCheckbox(&app->elapsedBannersCheckbox, NewRec(100, 10, 10, 10), &app->mainHeap, "Elapsed Banners", NewColor(Color_White));
 	CheckboxSet(&app->elapsedBannersCheckbox, GC->elapsedBannerEnabled);
 	
@@ -822,6 +881,28 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		GLint frameHeight = dims[3];
 		DEBUG_PrintLine("FrameBufferSize = (%d, %d)", frameWidth, frameHeight);
 		DEBUG_PrintLine("Mouse Pos = (%f, %f)", RenderMousePos.x, RenderMousePos.y);
+		
+		if (app->comPort.isOpen)
+		{
+			r32 framesPerSecond = 60.0f;
+			u32 numBytesPerFrame = GetNumBytesInPeriodForComSettings(&app->comPort.settings, (1000000.0f / framesPerSecond));
+			DEBUG_PrintLine("%.2fus: %u bytes", (1000000.0f / framesPerSecond), numBytesPerFrame);
+		}
+		
+		DEBUG_Print("Hex Line Break Before Chars: [%u]{ ", app->hexLineBreakBeforeCharCount);
+		for (u32 cIndex = 0; cIndex < app->hexLineBreakBeforeCharCount; cIndex++)
+		{
+			DEBUG_Print("%02X ", app->hexLineBreakBeforeChars[cIndex]);
+		}
+		DEBUG_WriteLine("}");
+		DEBUG_Print("Hex Line Break After Chars: [%u]{ ", app->hexLineBreakAfterCharCount);
+		for (u32 cIndex = 0; cIndex < app->hexLineBreakAfterCharCount; cIndex++)
+		{
+			DEBUG_Print("%02X ", app->hexLineBreakAfterChars[cIndex]);
+		}
+		DEBUG_WriteLine("}");
+		
+		DEBUG_PrintLine("AutoNewLineTime = %d", GC->autoNewLineTime);
 	}
 	
 	// +==================================+
@@ -888,7 +969,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 				if (readResult > 0)
 				{
 					// DEBUG_PrintLine("Read %d bytes \"%.*s\"", readResult, readResult, buffer);
-					ProcessComData(buffer, readResult, true);
+					ProcessComData(buffer, readResult);
 				}
 				else if (readResult < 0)
 				{
@@ -923,7 +1004,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 			while (u32 numBytesRead = platform->ReadProgramOutput(&app->programInstance, readBuffer, ArrayCount(readBuffer)))
 			{
 				// DEBUG_PrintLine("Read %u bytes from program: \"%.*s\"", numBytesRead, numBytesRead, readBuffer);
-				ProcessPythonData(readBuffer, numBytesRead, true);
+				ProcessPythonData(readBuffer, numBytesRead);
 			}
 			
 			ProgramStatus_t programStatus = platform->GetProgramStatus(&app->programInstance);
@@ -939,12 +1020,14 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		// +==============================+
 		if (app->droppedFile.content != nullptr && app->droppedFileProgress < app->droppedFile.size)
 		{
-			DEBUG_PrintLine("Writing \"%.*s\"", input->textInputLength, input->textInput);
 			u32 numBytesToWrite = app->droppedFile.size - app->droppedFileProgress;
-			if (numBytesToWrite > FILE_SEND_MAX_CHUNK_SIZE) { numBytesToWrite = FILE_SEND_MAX_CHUNK_SIZE; }
+			r32 framesPerSecond = 60.0f;
+			u32 numBytesPerFrame = GetNumBytesInPeriodForComSettings(&app->comPort.settings, (1000000.0f / framesPerSecond));
+			if (numBytesToWrite > numBytesPerFrame) { numBytesToWrite = numBytesPerFrame; }
 			const char* fileDataPntr = ((const char*)app->droppedFile.content) + app->droppedFileProgress;
 			
-			ProcessInputData(fileDataPntr, numBytesToWrite, true);
+			DEBUG_PrintLine("Writing %u bytes from dropped file", numBytesToWrite);
+			ProcessInputData(fileDataPntr, numBytesToWrite, Sanatization_None);
 			
 			app->droppedFileProgress += numBytesToWrite;
 		}
@@ -961,7 +1044,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		// +==============================+
 		if (input->textInputLength > 0 && IsActiveElement(&ui->viewRec))
 		{
-			DEBUG_PrintLine("Keyboard input \"%.*s\"", input->textInputLength, input->textInput);
+			// DEBUG_PrintLine("Keyboard input \"%.*s\"", input->textInputLength, input->textInput);
 			ProcessInputData(&input->textInput[0], input->textInputLength, true);
 		}
 		
@@ -1025,6 +1108,23 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 				}
 			}
 		}
+		
+		// +==============================+
+		// | Check Auto New Line Timeout  |
+		// +==============================+
+		if (GC->autoNewLineTime > 0)
+		{
+			Line_t* lastLine = app->lineList.lastLine;
+			if (lastLine != nullptr && lastLine->numChars > 0 && app->lastLineListPush > 0 && platform->programTime >= app->lastLineListPush)
+			{
+				u64 difference = platform->programTime - app->lastLineListPush;
+				if (difference >= GC->autoNewLineTime)
+				{
+					DEBUG_WriteLine("Auto new line timeout hit");
+					PushLineListData("\n", 1, true);
+				}
+			}
+		}
 	}
 	
 	// +--------------------------------------------------------------+
@@ -1036,17 +1136,6 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	if (app->lineWrapCheckbox.checked != GC->lineWrapEnabled)
 	{
 		GC->lineWrapEnabled = app->lineWrapCheckbox.checked;
-	}
-	
-	// +==============================+
-	// |     Toggle Line Numbers      |
-	// +==============================+
-	if (app->lineNumbersCheckbox.checked != GC->showLineNumbers)
-	{
-		GC->showLineNumbers  = app->lineNumbersCheckbox.checked;
-		GC->scrollbarWidth   = app->lineNumbersCheckbox.checked ? 12 : 0;
-		GC->scrollbarPadding = app->lineNumbersCheckbox.checked ? 3 : 0;
-		GC->minGutterWidth   = app->lineNumbersCheckbox.checked ? 40 : 0;
 	}
 	
 	// +==============================+
@@ -1167,6 +1256,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		{
 			DisposeGlobalConfig(&app->globalConfig);
 			LoadGlobalConfiguration(platform, &app->globalConfig, &app->mainHeap);
+			ParseLineBreakConfigOptions();
 			DisposeRegexFile(&app->regexList);
 			LoadRegexFile(&app->regexList, "Resources/Configuration/RegularExpressions.rgx", &app->mainHeap);
 			LoadApplicationFonts();
@@ -1638,11 +1728,11 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	rec checkboxRec = NewRec(lastButtonRec.x + lastButtonRec.width + 5, 5, 15, 15);;
 	app->lineWrapCheckbox.drawRec = checkboxRec;
 	checkboxRec.y += checkboxRec.height + 2;
-	app->lineNumbersCheckbox.drawRec = checkboxRec;
+	app->hexModeCheckbox.drawRec = checkboxRec;
 	checkboxRec.y += checkboxRec.height + 2;
 	app->elapsedBannersCheckbox.drawRec = checkboxRec;
 	CheckboxUpdate(&app->lineWrapCheckbox);
-	CheckboxUpdate(&app->lineNumbersCheckbox);
+	CheckboxUpdate(&app->hexModeCheckbox);
 	CheckboxUpdate(&app->elapsedBannersCheckbox);
 	
 	// +==============================+
@@ -1909,6 +1999,9 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		RsDrawGradient(centerScrollBarRec, GC->colors.scrollbar1, GC->colors.scrollbar2, Dir2_Right);
 	}
 	
+	// +==============================+
+	// |     Redner Input TextBox     |
+	// +==============================+
 	TextBoxRender(&app->inputBox, IsActiveElement(&app->inputBox) && platform->windowHasFocus);
 	
 	// +==============================+
@@ -1928,6 +2021,25 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		RsDrawButton(ui->sendButtonRec, buttonColor, borderColor, 1);
 		RsBindFont(&app->uiFont);
 		RsDrawString(sendButtonText, textPos, textColor);
+		RsBindFont(&app->mainFont);
+	}
+	
+	// +==============================+
+	// |   Render File Progress Bar   |
+	// +==============================+
+	if (app->droppedFile.content != nullptr)
+	{
+		r32 percentComplete = (r32)app->droppedFileProgress / (r32)app->droppedFile.size;
+		
+		rec progressRec = app->inputBox.drawRec;
+		progressRec.height = 1; progressRec.y -= 2;
+		rec filledRec = progressRec;
+		filledRec.width *= percentComplete;
+		RsDrawRectangle(filledRec, GC->colors.successMessage);
+		
+		v2 textPos = progressRec.topLeft + progressRec.size;
+		RsBindFont(&app->uiFont);
+		RsPrintString(textPos, GC->colors.uiText, 1.0f, "%.1f%%", percentComplete*100);
 		RsBindFont(&app->mainFont);
 	}
 	
@@ -2131,7 +2243,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 	mainMenuSettingsRec.width = ui->clearButtonRec.x - mainMenuSettingsRec.x;
 	RsSetViewport(mainMenuSettingsRec);
 	CheckboxRender(&app->lineWrapCheckbox, &app->uiFont);
-	CheckboxRender(&app->lineNumbersCheckbox, &app->uiFont);
+	CheckboxRender(&app->hexModeCheckbox, &app->uiFont);
 	CheckboxRender(&app->elapsedBannersCheckbox, &app->uiFont);
 	RsSetViewport(NewRec(Vec2_Zero, NewVec2(platform->screenSize)));
 	

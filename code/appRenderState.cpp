@@ -455,6 +455,34 @@ void RsDrawCharacter(u32 charIndex, v2 bottomLeft, Color_t color, r32 scale = 1.
 	RsDrawTexturedRec(drawRectangle, color, sourceRectangle);
 }
 
+void RsDrawHexCharacter(u8 hexValue, v2 bottomLeft, Color_t color, r32 scale = 1.0f)
+{
+	const Font_t* boundFont = renderState->boundFont;
+	const FontCharInfo_t* spaceCharInfo = &boundFont->chars[GetFontCharIndex(boundFont, ' ')];
+	
+	rec charRec = NewRec(bottomLeft.x, bottomLeft.y + boundFont->maxExtendDown*scale - (boundFont->lineHeight-1)*scale, spaceCharInfo->advanceX*scale, (boundFont->lineHeight-1)*scale);
+	charRec.x = (r32)RoundR32(charRec.x);
+	charRec.y = (r32)RoundR32(charRec.y);
+	RsDrawRectangle(charRec, color);
+	RsDrawRectangle(NewRec(charRec.x, charRec.y, 1, charRec.height), GC->colors.textBackground);
+	// RsDrawButton(charRec, NewColor(Color_TransparentBlack), color, 1.0f);
+	
+	r32 innerCharScale = scale*5/8;
+	char upperHexChar = UpperHexChar(hexValue);
+	char lowerHexChar = LowerHexChar(hexValue);
+	u32 upperCharIndex = GetFontCharIndex(boundFont, upperHexChar);
+	const FontCharInfo_t* upperCharInfo = &boundFont->chars[upperCharIndex];
+	u32 lowerCharIndex = GetFontCharIndex(boundFont, lowerHexChar);
+	const FontCharInfo_t* lowerCharInfo = &boundFont->chars[lowerCharIndex];
+	
+	v2 charPosUpper = charRec.topLeft + NewVec2(1, upperCharInfo->height*innerCharScale + 1);
+	v2 charPosLower = charRec.topLeft + NewVec2(charRec.width - lowerCharInfo->width*innerCharScale - 1, charRec.height - 1);
+	// RsDrawCharacter(upperCharIndex, charPosUpper, color, innerCharScale);
+	// RsDrawCharacter(lowerCharIndex, charPosLower, color, innerCharScale);
+	RsDrawCharacter(upperCharIndex, charPosUpper, GC->colors.textBackground, innerCharScale);
+	RsDrawCharacter(lowerCharIndex, charPosLower, GC->colors.textBackground, innerCharScale);
+}
+
 void RsDrawString(const char* string, u32 numCharacters, v2 position, Color_t color, r32 scale = 1.0f, Alignment_t alignment = Alignment_Left)
 {
 	RsBindTexture(&renderState->boundFont->bitmap);
@@ -478,7 +506,10 @@ void RsDrawString(const char* string, u32 numCharacters, v2 position, Color_t co
 		}
 		else if (IsCharClassPrintable(string[cIndex]) == false)
 		{
-			//Don't do anything
+			//Draw
+			RsDrawHexCharacter(string[cIndex], currentPos, color, scale);
+			u32 spaceIndex = GetFontCharIndex(renderState->boundFont, ' ');
+			currentPos.x += renderState->boundFont->chars[spaceIndex].advanceX * scale;
 		}
 		else
 		{

@@ -52,7 +52,7 @@ Date:   06\08\2017
 #define MAX_USER_PORT_NAMES        24
 #define MAX_USER_PORT_NAME_LENGTH  40 //bytes
 #define MAX_COM_READ_LOOPS         5
-#define FILE_SEND_MAX_CHUNK_SIZE   32
+#define FILE_SEND_MAX_CHUNK_SIZE   175
 #define MAX_SAVED_LINES            4095 //lines TODO: Make this into a GlobalConfig option
 
 #define GLOBAL_CONFIG_FILEPATH     "Resources/Configuration/GlobalConfig.json"

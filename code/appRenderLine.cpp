@@ -56,7 +56,7 @@ v2 RenderLine(Line_t* linePntr, v2 position, r32 viewWidth, bool sizeOnly = fals
 		
 		if (GC->lineWrapEnabled)
 		{
-			RsDrawFormattedString(linePntr->chars, position, viewWidth, color, Alignment_Left, GC->lineWrapPreserveWords);
+			RsDrawFormattedString(linePntr->chars, linePntr->numChars, position, viewWidth, color, Alignment_Left, GC->lineWrapPreserveWords);
 		}
 		else
 		{

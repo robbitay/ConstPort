@@ -100,6 +100,57 @@ u8 ByteFromHexChars(const char* charPntr)
 	return 16*HexCharValue(charPntr[0]) + HexCharValue(charPntr[1]);
 }
 
+u8* BytesFromMixedHexString(MemoryArena_t* arenaPntr, const char* strPntr, u32 strLength, u32* numBytesOut)
+{
+	u32 resultCount = 0;
+	u8* result = nullptr;
+	*numBytesOut = 0;
+	
+	//Run this code twice. Once to count the number of bytes and allocate space, then once to fill the space with data
+	for (u8 round = 0; round < 2; round++)
+	{
+		resultCount = 0;
+		u32 fromIndex = 0;
+		u32 toIndex = 0;
+		while (fromIndex < strLength)
+		{
+			char c = strPntr[fromIndex];
+			char nextChar = '\0';
+			if (fromIndex+1 < strLength) { nextChar = strPntr[fromIndex+1]; }
+			
+			if (IsCharClassHexChar(c) && IsCharClassHexChar(nextChar))
+			{
+				u8 value = ByteFromHexChars(&strPntr[fromIndex]);
+				if (result != nullptr) { result[toIndex] = value; }
+				toIndex++;
+				fromIndex += 2;
+			}
+			else if (IsCharClassHexChar(c))
+			{
+				u8 value = HexCharValue(c);
+				if (result != nullptr) { result[toIndex] = value; }
+				toIndex++;
+				fromIndex++;
+			}
+			else { fromIndex++; } //Skip characters that aren't hex representations
+		}
+		
+		if (round == 0) //Sizing round
+		{
+			if (toIndex == 0) //No valid hex characters found
+			{
+				*numBytesOut = 0;
+				return nullptr;
+			}
+			
+			result = PushArray(arenaPntr, u8, toIndex);
+			*numBytesOut = toIndex;
+		}
+	}
+	
+	return result;
+}
+
 ConfigError_t TryParseColor(const char* charPntr, i32 numChars, Color_t* colorOut)
 {
 	if ((numChars == 6 || numChars == 8) && IsHexString(charPntr, numChars))
