@@ -7,7 +7,7 @@
 	"elapsed_banner_enabled": true,
 	"elapsed_banner_time":    15, //secs
 	"elapsed_banner_height":  25, //px
-	"auto_new_line_time":     1000, //ms
+	"auto_new_line_time":     0,//1000, //ms
 	
 	"mark_height":       1, //px
 	"thick_mark_height": 5, //px
@@ -30,7 +30,7 @@
 	"show_hover_cursor": true,
 	"highlight_hover_line": true,
 	"show_file_cursor": false,
-	"show_input_text_box": false,
+	"show_input_text_box": true,
 	
 	"rx_tx_led_delay":     4, //frames
 	"rx_tx_led_ring_size": 1, //frames
