@@ -1134,14 +1134,17 @@ void ProcessComData(const char* comData, u32 comDataLength)
 {
 	if (comDataLength == 0) { return; }
 	
-	bool sendDataToPython = (app->programInstance.isOpen && GC->sendComDataToPython);
-	if (sendDataToPython)
+	if (!app->comRxPaused)
 	{
-		PushPythonData(comData, comDataLength);
-	}
-	if (!sendDataToPython || GC->alsoShowComData)
-	{
-		PushLineListData(comData, comDataLength);
+		bool sendDataToPython = (app->programInstance.isOpen && GC->sendComDataToPython);
+		if (sendDataToPython)
+		{
+			PushPythonData(comData, comDataLength);
+		}
+		if (!sendDataToPython || GC->alsoShowComData)
+		{
+			PushLineListData(comData, comDataLength);
+		}
 	}
 	
 	app->rxShiftRegister |= 0x80;

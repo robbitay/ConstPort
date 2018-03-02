@@ -24,13 +24,13 @@
 	"scroll_multiplier": 40,
 	"view_speed_divider": 4,
 	
+	"show_input_text_box": true,
 	"show_text_cursor": true,
 	"show_com_name_in_status_bar": true,
 	"show_line_numbers": true,
 	"show_hover_cursor": true,
 	"highlight_hover_line": true,
 	"show_file_cursor": false,
-	"show_input_text_box": true,
 	
 	"rx_tx_led_delay":     4, //frames
 	"rx_tx_led_ring_size": 1, //frames

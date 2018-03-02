@@ -1568,6 +1568,19 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		}
 	}
 	
+	// +======================================+
+	// | Check Pause Button Pressed (Rx LED)  |
+	// +======================================+
+	if (IsInsideRec(ui->rxLedRec, RenderMousePos) && input->mouseInsideWindow && !ui->mouseInMenu)
+	{
+		appOutput->cursorType = Cursor_Pointer;
+		if (ButtonReleased(MouseButton_Left) &&
+			IsInsideRec(ui->rxLedRec, RenderMouseStartPos))
+		{
+			app->comRxPaused = !app->comRxPaused;
+		}
+	}
+	
 	//+==================================+
 	//|    Save To File Button Press     |
 	//+==================================+
@@ -2271,8 +2284,18 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 		{
 			centerColor = GC->colors.receiveLedActive;
 		}
-		if (!GC->circularRxLed) { RsDrawRectangle(ui->rxLedRec, centerColor); }
-		else                    { RsDrawCircle(rxLedCenter, rxLedRadius, centerColor); }
+		if (app->comRxPaused)
+		{
+			rec leftRec = ui->rxLedRec;
+			leftRec.width = (leftRec.width/2);
+			leftRec.width -= 1;
+			rec rightRec = leftRec;
+			rightRec.x += rightRec.width + 1;
+			RsDrawRectangle(leftRec, centerColor);
+			RsDrawRectangle(rightRec, centerColor);
+		}
+		else if (!GC->circularRxLed) { RsDrawRectangle(ui->rxLedRec, centerColor); }
+		else                         { RsDrawCircle(rxLedCenter, rxLedRadius, centerColor); }
 		
 		v2 txLedCenter = ui->txLedRec.topLeft + ui->txLedRec.size/2;
 		r32 txLedRadius = ui->txLedRec.width/4 * 3;
@@ -2291,7 +2314,7 @@ EXPORT AppUpdate_DEFINITION(App_Update)
 			
 			if (IsFlagSet(app->rxShiftRegister, (1<<shift)))
 			{
-				if (GC->circularRxLed == false)
+				if (GC->circularRxLed == false || app->comRxPaused)
 				{
 					rec deflatedRec = RecInflate(ui->rxLedRec, (r32)(ringNumber+1) * GC->rxTxLedRingSize);
 					RsDrawButton(deflatedRec, {Color_TransparentBlack}, GC->colors.receiveLedRing, (r32)GC->rxTxLedRingSize);

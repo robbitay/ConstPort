@@ -110,6 +110,8 @@ struct AppData_t
 	u8* hexLineBreakAfterChars;
 	
 	u64 lastLineListPush;
+	
+	bool comRxPaused;
 };
 
 #endif // _APP_DATA_H
